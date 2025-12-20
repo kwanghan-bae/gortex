@@ -1,0 +1,27 @@
+# Environments
+.env
+.venv
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Databases & State
+*.db
+*.sqlite3
+gortex_sessions.db
+tech_radar.json
+
+# Logs
+logs/
+*.log
+
+# Workspace
+workspace/
+
+# OS
+.DS_Store
+Thumbs.db
