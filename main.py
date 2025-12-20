@@ -186,13 +186,13 @@ async def run_gortex():
     observer = GortexObserver()
     total_tokens, total_cost = 0, 0.0
     
-    # 전역 파일 캐시 로드 (Persistence)
+    # 세션별 파일 캐시 관리 (Isolation)
     cache_path = "logs/file_cache.json"
-    global_file_cache = {}
+    all_sessions_cache = {} # {thread_id: {path: hash}}
     if os.path.exists(cache_path):
         try:
-            with open(cache_path, "r") as f: global_file_cache = json.load(f)
-            logger.info(f"Loaded {len(global_file_cache)} items from file cache.")
+            with open(cache_path, "r") as f: all_sessions_cache = json.load(f)
+            logger.info(f"Loaded caches for {len(all_sessions_cache)} sessions.")
         except: pass
 
     workflow = compile_gortex_graph()
@@ -203,8 +203,16 @@ async def run_gortex():
     async with aiosqlite.connect(db_path) as db:
         memory = AsyncSqliteSaver(db)
         app = workflow.compile(checkpointer=memory)
+        
+        # 실제로는 사용자별/세션별 ID를 받아야 하지만, 여기서는 랜덤 생성
         thread_id = str(random.randint(1000, 9999))
         config = {"configurable": {"thread_id": thread_id}}
+        
+        # 현재 세션 캐시 초기화/로드
+        if thread_id not in all_sessions_cache:
+            all_sessions_cache[thread_id] = {}
+        session_cache = all_sessions_cache[thread_id]
+
         auth_engine = GortexAuth()
         evo_mem = EvolutionaryMemory()
         
@@ -228,15 +236,15 @@ async def run_gortex():
                         cmd_status = await handle_command(user_input, ui, observer)
                         if cmd_status == "skip": continue
                     
-                    # 상태 관리 및 최적화
-                    global_file_cache = {p: h for p, h in global_file_cache.items() if os.path.exists(p) and get_file_hash(p) == h}
+                    # 세션 캐시 유효성 검사
+                    session_cache = {p: h for p, h in session_cache.items() if os.path.exists(p) and get_file_hash(p) == h}
                     evo_mem.gc_rules() # 오래된 규칙 정리
 
                     initial_state = {
                         "messages": [("user", actual_input)],
                         "working_dir": os.getenv("WORKING_DIR", "./workspace"),
                         "coder_iteration": 0,
-                        "file_cache": global_file_cache,
+                        "file_cache": session_cache,
                         "active_constraints": evo_mem.get_active_constraints(user_input),
                         "api_call_count": auth_engine.get_call_count()
                     }
@@ -266,7 +274,7 @@ async def run_gortex():
                                 ui.update_sidebar(ui.current_agent, str(output.get("current_step", "N/A")), total_tokens, total_cost, len(initial_state["active_constraints"]))
                                 ui.update_logs({"agent": node_name, "event": "node_complete"})
                                 observer.log_event(node_name, "node_complete", output)
-                                if "file_cache" in output: global_file_cache.update(output["file_cache"])
+                                if "file_cache" in output: session_cache.update(output["file_cache"])
                                 await asyncio.sleep(0.01)
                                 ui.reset_thought_style()
                                 
@@ -275,13 +283,15 @@ async def run_gortex():
                         ui.chat_history.append(("system", "⚠️ 사용자에 의해 작업이 중단되었습니다."))
                         ui.update_main(ui.chat_history)
                         ui.stop_tool_progress(); ui.reset_thought_style()
-                        save_global_cache(global_file_cache) # 중단 시에도 캐시 저장
+                        all_sessions_cache[thread_id] = session_cache
+                        save_global_cache(all_sessions_cache) # 중단 시에도 캐시 저장
 
                     ui.current_agent = "Idle"; ui.complete_thought_style()
                     ui.update_sidebar("Idle", "N/A", total_tokens, total_cost, len(initial_state["active_constraints"]))
                     
-                    # 매 턴 종료 후 캐시 영속화 강화
-                    save_global_cache(global_file_cache)
+                    # 매 턴 종료 후 세션 캐시 영속화
+                    all_sessions_cache[thread_id] = session_cache
+                    save_global_cache(all_sessions_cache)
 
                 except KeyboardInterrupt: break
                 except Exception as e:
@@ -296,7 +306,8 @@ async def run_gortex():
     try:
         archive_dir = "logs/archives"; os.makedirs(archive_dir, exist_ok=True)
         if os.path.exists("tech_radar.json"): shutil.copy2("tech_radar.json", f"{archive_dir}/tech_radar_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
-        with open("logs/file_cache.json", "w") as f: json.dump(global_file_cache, f, ensure_ascii=False, indent=2)
+        all_sessions_cache[thread_id] = session_cache
+        with open("logs/file_cache.json", "w") as f: json.dump(all_sessions_cache, f, ensure_ascii=False, indent=2)
     except: pass
     console.print("\n[bold cyan]👋 Gortex session ended.[/bold cyan]")
 
