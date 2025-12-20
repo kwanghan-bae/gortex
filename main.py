@@ -21,6 +21,7 @@ from gortex.utils.token_counter import count_tokens, estimate_cost
 from gortex.core.auth import GortexAuth
 from gortex.core.evolutionary_memory import EvolutionaryMemory
 from gortex.utils.tools import get_file_hash
+from gortex.utils.indexer import SynapticIndexer
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -41,6 +42,15 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         ui.chat_history = []
         ui.update_main([])
         ui.update_thought("Chat history cleared.")
+        return "skip"
+    
+    elif cmd == "/index":
+        ui.chat_history.append(("system", "🔍 프로젝트 코드 인덱싱을 시작합니다..."))
+        ui.update_main(ui.chat_history)
+        indexer = SynapticIndexer()
+        indexer.scan_project()
+        ui.chat_history.append(("system", f"✅ 인덱싱 완료! {len(indexer.index)}개의 파일이 분석되었습니다."))
+        ui.update_main(ui.chat_history)
         return "skip"
     
     elif cmd == "/export":
@@ -261,6 +271,10 @@ async def run_gortex():
     from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
     import aiosqlite
     
+    # 부팅 시 자동 인덱싱 수행
+    indexer = SynapticIndexer()
+    indexer.scan_project()
+
     db_path = os.getenv("DB_PATH", "gortex_sessions.db")
     async with aiosqlite.connect(db_path) as db:
         memory = AsyncSqliteSaver(db)
