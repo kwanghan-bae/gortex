@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Evolution Logic Refined (v1.1.9)
+**Status:** Observation Visualization Enhanced (v1.2.0)
 
 ## 🧠 Current Context
-자가 진화 엔진의 지능이 한 단계 높아졌습니다. 이제 규칙이 단순 나열되는 것이 아니라, 적용 맥락(`context`)을 갖게 되었고, 반복되는 피드백은 '강화(`reinforcement`)됨'으로써 시스템에 더 강력하게 각인됩니다.
+도구 실행 결과(Observation)의 시각화 품질이 크게 향상되었습니다. 이제 JSON 데이터는 구조화된 형태로, 코드는 적절한 문법 하이라이팅과 함께 표시됩니다. 대시보드가 더 많은 정보를 안전하고 보기 좋게 전달할 수 있게 되었습니다.
 
 ## 🎯 Next Objective
-**Observation Visualization & Interface Polish**
-1. **`Observation` Refinement**: 도구 실행 결과가 복잡한 데이터(JSON, Table 등)일 경우, `ui/dashboard.py`에서 `Rich.Table`이나 `Rich.JSON`을 사용하여 더 정교하게 시각화하는 기능을 검토합니다.
-2. **Interactive Feedback**: 사용자가 에이전트의 답변 도중 즉시 피드백을 줄 수 있는 인터페이스(예: 특정 단축키로 중단 및 코멘트)를 구상합니다.
+**Interactive Interface & Table Detection**
+1. **Interactive Feedback**: 사용자가 에이전트의 긴 답변을 기다리지 않고 특정 키를 눌러 중단하거나 즉시 피드백을 줄 수 있는 '인터럽트' 메커니즘을 구상합니다.
+2. **ASCII Table Detection**: 셸 출력 중 텍스트 기반 테이블(예: `ls -l`의 결과나 pandas 출력)을 감지하여 `Rich.Table`로 예쁘게 다시 그리는 유틸리티를 추가합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 자가 진화 로직 고도화 완료 (v1.1.9).
-- 다음 목표: 도구 결과 시각화 정교화 및 인터페이스 개선.
+- 도구 결과 JSON/Code 시각화 완료 (v1.2.0).
+- 다음 목표: ASCII 테이블 감지 및 Rich.Table 변환 로직 추가.
 
 작업 목표:
-1. `ui/dashboard.py`의 `update_main` 메서드에서, `tool` 메시지의 내용이 JSON 형식인 경우 `Rich.JSON`을 사용하여 예쁘게 출력하도록 개선해줘.
-2. 에이전트가 `execute_shell`로 테이블 형태의 출력을 내보낼 경우, 이를 감지하여 `Rich.Table`로 렌더링을 시도하는 유틸리티를 추가해줘.
+1. `utils/tools.py` 또는 신규 유틸리티 파일에 텍스트 행/열 데이터를 분석하여 `Rich.Table` 객체로 변환하는 로직을 작성해줘.
+2. `ui/dashboard.py`에서 `tool` 메시지 처리 시 위 유틸리티를 연동하여 표 형식 데이터를 더 깔끔하게 보여줘.
 ```

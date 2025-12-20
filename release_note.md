@@ -1,10 +1,16 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Data**: 에이전트 도구 실행 결과(Observation)의 상세 시각화 개선
 - [ ] **Interface**: 사용자 피드백 루프를 더 간편하게 제공하는 CLI 단축키 제안
+- [ ] **Data**: 텍스트 기반 테이블(ASCII Table) 감지 및 Rich.Table 변환 로직 추가
 
 ## ✅ Completed
+### v1.2.0 (Enhanced Observation Visualization)
+- [x] `ui/dashboard.py`: 도구 실행 결과(`Observation`) 중 JSON 데이터 감지 및 `Rich.JSON` 렌더링 기능 추가
+- [x] `ui/dashboard.py`: SQL, Java 등 다양한 코드 패턴 감지 및 문법 하이라이팅 보강
+- [x] `ui/dashboard.py`: 관측 데이터 표시 한도를 2000자로 확장 및 가독성 개선
+- [x] `tests/test_ui.py`: UI 데이터 처리 및 로그 업데이트 단위 테스트 추가
+
 ### v1.1.9 (Evolution Refinement & Logic Tuning)
 - [x] `agents/analyst.py`: 규칙 추출 시 구체적 적용 상황을 명시하는 `context` 필드 추가
 - [x] `core/evolutionary_memory.py`: 동일 지침 중복 방지 및 `reinforcement_count` 기반 규칙 강화 로직 구현
