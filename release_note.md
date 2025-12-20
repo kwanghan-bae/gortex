@@ -1,11 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Researcher**: `agents/researcher.py` 구현
 - [ ] **Analyst**: `agents/analyst.py` 구현
 - [ ] **TrendScout**: `agents/trend_scout.py` 구현
 
 ## ✅ Completed
+### v1.0.6 (Agents: Researcher & Cache)
+- [x] `agents/researcher.py`: Playwright 기반 웹 스크래핑 및 요약 로직 구현
+- [x] `utils/cache.py`: Redis 싱글톤 캐시 매니저 구현 (폴백 포함)
+- [x] `tests/test_researcher.py`, `tests/test_cache.py`: 단위 테스트 통과
+
 ### v1.0.5 (Agents: Coder)
 - [x] `agents/coder.py`: Planner 계획 실행 및 CoVe(검증 후 수정) 루프 구현
 - [x] `tests/test_coder.py`: 30회 루프 제한 및 도구 호출 로직 테스트 통과

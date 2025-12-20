@@ -1,26 +1,28 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Coder Agent Implemented
+**Status:** Researcher & Cache Implemented
 
 ## 🧠 Current Context
-시스템의 손발인 `Coder`까지 구현되었습니다. 이제 Gortex는 계획을 세우고(Plan), 코드를 작성 및 수정(Code & Fix)할 수 있습니다.
-다음 단계는 외부 정보를 수집하여 에이전트의 지식을 확장하는 **`Researcher`**입니다.
+핵심 에이전트 팀(`Manager`, `Planner`, `Coder`, `Researcher`)이 모두 구축되었습니다.
+또한 Redis 캐시(`utils/cache.py`)를 통해 성능 최적화 기반을 마련했습니다.
+다음 단계는 데이터 분석 및 자가 진화를 위한 피드백 분석을 담당하는 **`Analyst`**입니다.
 
 ## 🎯 Next Objective
-**Agent Implementation Phase (Complete Core Team)**
-1. `gortex/agents/researcher.py`: Playwright를 사용하여 웹에서 정보를 수집하는 에이전트.
-   - `SPEC.md`의 성능 최적화(리소스 차단) 및 타임아웃 설정을 준수해야 함.
-   - `utils/cache.py` (Redis) 연동 필요 (구현 필요).
+**Agent Implementation Phase (Self-Evolution Prep)**
+1. `gortex/agents/analyst.py`: 두 가지 모드(Data Mode, Evolution Mode)를 가진 에이전트 구현.
+   - **Data Mode**: Pandas를 사용하여 CSV/Excel 데이터 분석.
+   - **Evolution Mode**: 사용자의 부정적 피드백 원인 분석 및 `experience.json`용 규칙 추출.
+2. `gortex/core/evolutionary_memory.py`: `experience.json` 관리 로직 구현 (필요시).
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- Coder 구현 완료.
-- 다음 목표: `agents/researcher.py` 구현 및 `utils/cache.py` 구현.
+- Researcher 및 Cache 구현 완료.
+- 다음 목표: `agents/analyst.py` 구현.
 
 주의사항:
-- Researcher는 Playwright 사용 시 이미지/폰트 로딩을 차단하여 속도를 높여야 함.
-- 검색 결과는 Redis(`utils/cache.py`)에 캐싱하여 중복 호출을 방지할 것.
+- Analyst는 Pandas를 사용하여 데이터를 처리해야 함.
+- 자가 진화(Evolution)를 위해 사용자의 "아니", "틀렸어" 같은 피드백에서 핵심 제약 조건을 추출하는 로직을 정밀하게 설계할 것.
 ```
