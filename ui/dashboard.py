@@ -46,7 +46,7 @@ class DashboardUI:
         # Progress bar for tools
         self.progress = Progress(
             TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
+            BarColumn(bar_width=None),
             TimeElapsedColumn(),
             transient=True
         )
@@ -82,9 +82,9 @@ class DashboardUI:
         msg_group = []
         for role, content in display_msgs:
             if role == "user":
-                msg_group.append(Panel(content, title="[bold green]User[/bold green]", border_style="green"))
+                msg_group.append(Panel(content, title="👤 [bold green]USER[/bold green]", border_style="green", padding=(0, 1)))
             elif role == "ai":
-                msg_group.append(Panel(content, title="[bold blue]Gortex[/bold blue]", border_style="blue"))
+                msg_group.append(Panel(content, title="🤖 [bold blue]GORTEX[/bold blue]", border_style="blue", padding=(0, 1)))
             elif role == "tool":
                 if isinstance(content, str):
                     display_content = content
@@ -97,7 +97,7 @@ class DashboardUI:
                         if (stripped.startswith("{}") and stripped.endswith("}")) or (stripped.startswith("[") and stripped.endswith("]")):
                             json.loads(stripped)
                             renderable = JSON(stripped)
-                            msg_group.append(Panel(renderable, title="🛠️ [bold yellow]Observation (JSON)[/bold yellow]", border_style="yellow", style="dim"))
+                            msg_group.append(Panel(renderable, title="🛠️ [bold yellow]OBSERVATION (JSON)[/bold yellow]", border_style="yellow", style="dim"))
                             continue
                     except:
                         pass
@@ -105,7 +105,7 @@ class DashboardUI:
                     # 2. 테이블 형식 검사
                     table_renderable = try_render_as_table(display_content)
                     if table_renderable:
-                        msg_group.append(Panel(table_renderable, title="🛠️ [bold yellow]Observation (Table)[/bold yellow]", border_style="yellow", style="dim"))
+                        msg_group.append(Panel(table_renderable, title="🛠️ [bold yellow]OBSERVATION (TABLE)[/bold yellow]", border_style="yellow", style="dim"))
                         continue
 
                     # 3. 코드 형태인 경우 하이라이팅
@@ -118,30 +118,30 @@ class DashboardUI:
                         elif "const " in display_content or "function " in display_content: lang = "javascript"
                         
                         syntax_content = Syntax(display_content, lang, theme="monokai", line_numbers=True, word_wrap=True)
-                        msg_group.append(Panel(syntax_content, title=f"🛠️ [bold yellow]Observation ({lang})[/bold yellow]", border_style="yellow", style="dim"))
+                        msg_group.append(Panel(syntax_content, title=f"🛠️ [bold yellow]OBSERVATION ({lang.upper()})[/bold yellow]", border_style="yellow", style="dim"))
                     else:
-                        msg_group.append(Panel(display_content, title="🛠️ [bold yellow]Observation[/bold yellow]", border_style="yellow", style="dim"))
+                        msg_group.append(Panel(display_content, title="🛠️ [bold yellow]OBSERVATION[/bold yellow]", border_style="yellow", style="dim"))
                 else:
-                    msg_group.append(Panel(content, title="🛠️ [bold yellow]Observation[/bold yellow]", border_style="yellow", style="dim"))
+                    msg_group.append(Panel(content, title="🛠️ [bold yellow]OBSERVATION[/bold yellow]", border_style="yellow", style="dim"))
             elif role == "system":
                 if isinstance(content, str):
                     msg_group.append(Text(f"⚙️ {content}", style="dim white"))
                 else:
                     msg_group.append(content)
         
-        self.layout["main"].update(Panel(Group(*msg_group), title="[bold cyan]🧠 Gortex Terminal[/bold cyan]"))
+        self.layout["main"].update(Panel(Group(*msg_group), title="[bold cyan]🧠 GORTEX TERMINAL[/bold cyan]", border_style="cyan"))
 
     def update_thought(self, thought: str, agent_name: str = "agent"):
         """에이전트의 사고 과정 실시간 업데이트 (시각 효과 추가)"""
         self.agent_thought = thought
         style = self.agent_colors.get(agent_name.lower(), "agent.manager")
-        title = f"💭 [{style}]Agent reasoning ({agent_name})[/{style}]"
-        self.layout["thought"].update(Panel(Text(thought, style="italic cyan"), title=title, border_style="cyan"))
+        title = f"💭 [{style}]AGENT REASONING ({agent_name.upper()})[/{style}]"
+        self.layout["thought"].update(Panel(Text(thought, style="italic cyan"), title=title, border_style="cyan", padding=(1, 2)))
 
     def update_logs(self, log_entry: dict):
         """최근 로그 업데이트"""
         self.recent_logs.append(log_entry)
-        if len(self.recent_logs) > 5:
+        if len(self.recent_logs) > 8: # 로그 개수 상향
             self.recent_logs.pop(0)
             
         log_table = Table.grid(expand=True)
@@ -149,22 +149,22 @@ class DashboardUI:
             agent = entry.get("agent", "Sys")
             event = entry.get("event", "event")
             style = self.agent_colors.get(agent.lower(), "dim white")
-            log_table.add_row(f"[{style}]{agent}[/{style}]", f"[dim]{event}[/dim]")
+            log_table.add_row(f"[{style}]{agent.upper()}[/{style}]", f"[dim]{event}[/dim]")
             
-        self.layout["logs"].update(Panel(log_table, title="📜 Trace Logs"))
+        self.layout["logs"].update(Panel(log_table, title="📜 [bold white]TRACE LOGS[/bold white]", border_style="white"))
 
     def reset_thought_style(self):
         """사고 패널의 스타일을 평상시로 복구"""
         if self.agent_thought:
             self.layout["thought"].update(
-                Panel(Text(self.agent_thought, style="italic cyan"), title="💭 [bold cyan]Agent reasoning[/bold cyan]", border_style="cyan")
+                Panel(Text(self.agent_thought, style="italic cyan"), title="💭 [bold cyan]AGENT REASONING[/bold cyan]", border_style="cyan", padding=(1, 2))
             )
 
     def complete_thought_style(self):
         """사고 완료 시 시각 효과 (녹색 강조)"""
         if self.agent_thought:
             self.layout["thought"].update(
-                Panel(Text(self.agent_thought, style="italic green"), title="✅ [bold green]Thought complete[/bold green]", border_style="green")
+                Panel(Text(self.agent_thought, style="italic green"), title="✅ [bold green]THOUGHT COMPLETE[/bold green]", border_style="green", padding=(1, 2))
             )
 
     def start_tool_progress(self, description: str):
@@ -197,35 +197,36 @@ class DashboardUI:
         # Status
         status_text = Text()
         status_text.append(f"Agent: ", style="bold")
-        status_text.append(f"{agent}\n", style=agent_style_name if agent != "Idle" else "green")
-        status_text.append(f"Step: ", style="bold")
+        agent_style = self.agent_colors.get(agent.lower(), "dim white")
+        status_text.append(f"{agent.upper()}\n", style=agent_style if agent != "Idle" else "green")
+        status_text.append(f"Step : ", style="bold")
         status_text.append(f"{step}\n")
-        status_text.append(f"Time: {datetime.now().strftime('%H:%M:%S')}", style="dim")
+        status_text.append(f"Time : {datetime.now().strftime('%H:%M:%S')}", style="dim")
         
         status_group = [status_text]
         if agent != "Idle":
             spinner_style = self.agent_spinners.get(agent.lower(), "dots")
-            status_group.append(Spinner(spinner_style, text=f"[{agent_style_name}]{agent} is active[/{agent_style_name}]"))
+            status_group.append(Spinner(spinner_style, text=f"[{agent_style}]{agent} is active[/{agent_style}]"))
 
-        self.layout["status"].update(Panel(Group(*status_group), title="📡 System Status", border_style=border_color))
+        self.layout["status"].update(Panel(Group(*status_group), title="📡 [bold]SYSTEM STATUS[/bold]", border_style=border_color))
 
         # Stats
         stats_table = Table.grid(expand=True)
         stats_table.add_row("Tokens:", f"[bold cyan]{tokens:,}[/bold cyan]")
-        stats_table.add_row("Cost:", f"[bold green]${cost:.6f}[/bold green]")
+        stats_table.add_row("Cost  :", f"[bold green]${cost:.6f}[/bold green]")
         
         stats_group = [stats_table]
         if self.tool_task is not None:
             stats_group.append(Text("\n"))
             stats_group.append(self.progress)
 
-        self.layout["stats"].update(Panel(Group(*stats_group), title="📊 Usage Stats", border_style=border_color))
+        self.layout["stats"].update(Panel(Group(*stats_group), title="📊 [bold]USAGE STATS[/bold]", border_style=border_color))
 
         # Evolution
         evo_text = Text(f"Active Rules: {rules}\n", style="bold magenta")
         if rules > 0:
             evo_text.append("[LEARNED MODE]", style="blink magenta")
-        self.layout["evolution"].update(Panel(evo_text, title="🧬 Evolution", border_style=border_color))
+        self.layout["evolution"].update(Panel(evo_text, title="🧬 [bold]EVOLUTION[/bold]", border_style=border_color))
 
     def render(self):
         return self.layout

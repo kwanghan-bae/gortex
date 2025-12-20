@@ -57,10 +57,17 @@ class OptimizerAgent:
 3. 시스템 효율성이나 안정성을 높이기 위한 구체적인 개선 코드 또는 설정 변경안을 제시하라.
 
 [분석 가이드라인]
-- 만약 API 할당량 초과가 잦다면: "core/auth.py의 Jitter 대기 시간을 20% 늘리거나, 특정 노드에서 더 가벼운 모델(flash-lite)을 쓰도록 수정하라"와 같은 구체적인 태스크를 생성하라.
+- 만약 API 할당량 초과가 잦다면: "core/auth.py의 switch_account 메서드 내 wait_time 범위를 10~20초로 늘리거나, 특정 노드에서 더 가벼운 모델(flash-lite)을 쓰도록 수정하라"와 같은 구체적인 태스크를 생성하라.
 - 만약 특정 도구에서 에러가 반복된다면: 해당 도구의 예외 처리 로직을 보강하는 태스크를 생성하라.
 
+[태스크 생성 사례 (Few-shot)]
+- 사례 1: 429 에러 빈발 시
+  "improvement_task": "core/auth.py 파일을 수정하여 switch_account 함수의 wait_time 지터 범위를 random.uniform(10.0, 20.0)으로 상향 조정하라."
+- 사례 2: 파일 읽기 권한 에러 반복 시
+  "improvement_task": "utils/tools.py의 read_file 함수에 PermissionError 예외 처리 로직을 추가하고 에러 발생 시 사용자에게 chmod 제안 메시지를 출력하도록 수정하라."
+
 [Recent Logs]
+
 {json.dumps(compact_logs, ensure_ascii=False, indent=2)}
 
 결과는 반드시 다음 JSON 형식을 따라라:
