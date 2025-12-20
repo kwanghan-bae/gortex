@@ -6,9 +6,15 @@
 - [x] **Interface**: 대시보드 로그 위젯에 에이전트별 색상 필터링 추가
 - [x] **Intelligence**: 자가 수정(Self-Correction) 패턴 분석 및 진화 규칙 자동 생성 로직 기초 설계
 - [x] **Infrastructure**: 다중 사용자 세션 관리를 위한 스레드 분리 및 상태 격리 강화
-- [ ] **Infrastructure**: 세션 상태(Snapshot) 수동 익스포트 및 복구 도구 구현
+- [x] **Infrastructure**: 세션 상태(Snapshot) 수동 익스포트 및 복구 도구 구현
+- [ ] **Interface**: `/import` 시 이전 세션의 '생각(Thought)' 로그도 복구하여 추론 일관성 유지
 
 ## ✅ Completed
+### v1.5.6 (Session Snapshot & Recovery)
+- [x] `main.py`: `/export` 명령어로 현재 세션의 대화 내역 및 파일 캐시를 JSON으로 저장하는 기능 구현
+- [x] `main.py`: `/import [path]` 명령어로 외부 스냅샷 파일을 로드하여 현재 세션에 주입하는 기능 구현
+- [x] `main.py`: `handle_command` 시그니처 개선으로 세션 컨텍스트 접근성 향상
+
 ### v1.5.5 (Session Isolation & Persistence)
 - [x] `main.py`: `global_file_cache`를 `thread_id` 기반의 `all_sessions_cache`로 개편하여 다중 세션 격리 구현
 - [x] `main.py`: 세션 시작 시 해당 스레드의 전용 캐시를 로드하고 종료/중단 시 개별적으로 저장하는 로직 강화
