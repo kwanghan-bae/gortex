@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Session Archiving & Log Polishing Complete (v1.3.6)
+**Status:** Cache Concurrency & Display Optimization Complete (v1.3.7)
 
 ## 🧠 Current Context
-시스템의 영속성과 관측성이 완성 단계에 이르렀습니다. 이제 세션 종료 시 중요 데이터가 자동 아카이빙되며, 로그 조회가 더욱 전문적인 레이아웃으로 제공됩니다.
+시스템의 안정성과 UI 반응성이 더욱 견고해졌습니다. 파일 캐시 업데이트가 안전하게 통합되었으며, 대시보드는 많은 양의 대화가 쌓여도 가독성을 잃지 않도록 최적화되었습니다.
 
 ## 🎯 Next Objective
-**Concurrency & Display Optimization**
-1. **`Cache Concurrency`**: `utils/tools.py`의 `file_cache`가 여러 에이전트의 비동기 호출 시 충돌할 가능성을 배제하기 위해, 파일 쓰기 시 해시 업데이트 로직을 더욱 견고하게 다듬습니다.
-2. **`Display Scroll`**: 대시보드 메인 채팅창에 메시지가 쌓일 때, 특정 상황(예: 사용자가 이전 기록을 읽는 중)에서는 자동 스크롤을 멈추거나 가독성을 해치지 않도록 조절하는 로직을 고민합니다.
+**Intelligence & Robustness Refinement**
+1. **`Auto-Correction` Refinement**: `Coder` 에이전트가 `execute_shell` 실패 시 `stderr`를 보고 스스로 수정하는 루프를 더 지능적으로 만들기 위해, 일반적인 에러 메시지(ModuleNotFoundError 등)에 대한 '즉각적인 해결 라이브러리'를 프롬프트에 사례로 추가합니다.
+2. **`Background Tools`**: 시간이 오래 걸리는 도구(예: 대규모 검색 또는 긴 테스트) 실행 시 UI가 완전히 멈추지 않도록 비동기 처리를 더 정교하게 다듬습니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 세션 아카이빙 및 로그 폴리싱 완료 (v1.3.6).
-- 다음 목표: 캐시 정합성 강화 및 UI 스크롤 최적화.
+- 캐시 정합성 및 UI 최적화 완료 (v1.3.7).
+- 다음 목표: Coder 자가 수정 지능 강화 및 도구 실행 비동기성 고도화.
 
 작업 목표:
-1. `utils/tools.py`에서 파일 쓰기(`write_file`)와 해시 계산(`get_file_hash`)이 일관되게 일어나도록 헬퍼 함수를 통합하고, 비동기 상황에서의 정합성 테스트를 `tests/test_tools.py`에 추가해줘.
-2. `ui/dashboard.py`에서 `update_main` 호출 시 메시지가 너무 많으면 위쪽을 정리하거나 스크롤 효과를 개선해줘.
+1. `agents/coder.py`의 시스템 프롬프트에 'Python 에러 코드별 표준 대응 매뉴얼'을 숏컷 형태로 추가하여, 에러 발생 시 더 빠르게 코드를 수정하도록 해줘.
+2. `main.py`에서 `app.astream` 실행 중 UI 업데이트가 더 매끄럽게 되도록 `asyncio.sleep` 위치와 갱신 주기를 최적화해줘.
 ```

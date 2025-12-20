@@ -18,6 +18,14 @@ def get_file_hash(path: str) -> str:
     except Exception:
         return ""
 
+def write_file_with_hash(path: str, content: str) -> Tuple[str, str]:
+    """
+    파일을 작성하고 새로운 해시를 반환하는 통합 함수.
+    """
+    write_result = write_file(path, content)
+    new_hash = get_file_hash(path)
+    return write_result, new_hash
+
 def write_file(path: str, content: str) -> str:
     """
     안전한 원자적(Atomic) 파일 쓰기를 수행합니다.
@@ -36,7 +44,7 @@ def write_file(path: str, content: str) -> str:
             os.makedirs(backup_dir, exist_ok=True)
             backup_path = os.path.join(backup_dir, f"{os.path.basename(path)}.{timestamp}.bak")
             shutil.copy2(path, backup_path)
-            logger.info(f"Backup created: {backup_path}")
+            logger.debug(f"Backup created: {backup_path}")
         
         # Atomic Write
         tmp_path = path + ".tmp"
@@ -63,7 +71,7 @@ def execute_shell(command: str, timeout: int = 300) -> str:
             return f"❌ Security Alert: Forbidden command detected ('{cmd}'). Execution blocked."
     
     try:
-        logger.info(f"Executing: {command}")
+        logger.debug(f"Executing: {command}")
         
         # 2. 실행
         result = subprocess.run(
@@ -99,19 +107,15 @@ def execute_shell(command: str, timeout: int = 300) -> str:
 def list_files(directory: str = ".") -> str:
     """
     현재 작업 디렉토리의 파일 목록을 반환합니다.
-    .git, venv, __pycache__ 등 불필요한 디렉토리는 제외합니다.
     """
     try:
         files = []
         ignore_dirs = {{'.git', 'venv', '__pycache__', '.DS_Store', 'logs', 'site-packages'}}
         
         for root, dirs, filenames in os.walk(directory):
-            # 무시할 디렉토리 필터링
             dirs[:] = [d for d in dirs if d not in ignore_dirs]
-            
             for f in filenames:
-                if f in ignore_dirs:
-                    continue
+                if f in ignore_dirs: continue
                 rel_path = os.path.relpath(os.path.join(root, f), directory)
                 files.append(rel_path)
         

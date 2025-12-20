@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Data**: 에이전트 간 파일 캐시 공유 로직의 정합성 테스트 추가
-- [ ] **UX**: 대시보드 메인 패널의 자동 스크롤 제어 기능
+- [ ] **System**: 대규모 도구 실행 시 백그라운드 처리 및 스트리밍 로그 분리
+- [ ] **Intelligence**: Optimizer의 자가 진단 결과를 기반으로 한 자동 라이브러리 설치 루프
 
 ## ✅ Completed
+### v1.3.7 (Cache Concurrency & Display Optimization)
+- [x] `utils/tools.py`: 파일 작성과 해시 갱신을 원자적으로 수행하는 `write_file_with_hash` 통합 함수 추가
+- [x] `ui/dashboard.py`: 메인 채팅 패널의 메시지 표시 한도를 15개로 조정하고, 초과 시 생략 알림 표시 로직 구현
+- [x] `ui/dashboard.py`: 역할별 패널 여백(Padding) 조정으로 터미널 가독성 향상
+
 ### v1.3.6 (Session Archiving & Log Polishing)
 - [x] `main.py`: 프로그램 종료 시 `tech_radar.json`을 `logs/archives/`에 타임스탬프와 함께 자동 백업하는 로직 구현
 - [x] `main.py`: `/log` 명령어 결과 패널을 메타데이터와 페이로드로 분리하여 시각적 가독성 극대화

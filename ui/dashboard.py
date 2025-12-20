@@ -77,10 +77,17 @@ class DashboardUI:
         }
 
     def update_main(self, messages: list):
-        """메인 채팅 패널 업데이트 (역할별 구분 강화)"""
-        display_msgs = messages[-10:] # 최근 10개만 표시하여 가독성 유지
+        """메인 채팅 패널 업데이트 (역할별 구분 및 자동 요약 표시)"""
+        # 화면 정체를 방지하기 위해 최근 15개 메시지만 유지
+        display_msgs = messages[-15:]
         msg_group = []
+        
+        # 만약 메시지가 너무 많아 잘렸다면 알림 표시
+        if len(messages) > 15:
+            msg_group.append(Text(f"⬆️ (이전 {len(messages)-15}개의 메시지가 생략되었습니다. /history로 확인 가능)", style="dim white italic", justify="center"))
+
         for role, content in display_msgs:
+
             if role == "user":
                 msg_group.append(Panel(content, title="👤 [bold green]USER[/bold green]", border_style="green", padding=(0, 1)))
             elif role == "ai":
