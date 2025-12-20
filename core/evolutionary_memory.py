@@ -89,11 +89,30 @@ class EvolutionaryMemory:
         """컨텍스트와 매칭되는 활성 제약 조건(규칙) 목록 반환"""
         active_rules = []
         for rule in self.memory:
-            # 단순 키워드 매칭 (나중에 임베딩 기반 검색으로 확장 가능)
             if any(pattern.lower() in context_text.lower() for pattern in rule["trigger_patterns"]):
                 active_rules.append(rule["learned_instruction"])
-                rule["usage_count"] += 1
+                rule["usage_count"] = rule.get("usage_count", 0) + 1
         
         if active_rules:
-            self._persist() # usage_count 업데이트 저장
+            self._persist()
         return active_rules
+
+    def gc_rules(self, min_usage: int = 1, max_age_days: int = 30):
+        """사용 빈도가 낮고 오래된 규칙 정리"""
+        now = datetime.now()
+        original_count = len(self.memory)
+        
+        def is_active(rule):
+            created_at = datetime.fromisoformat(rule.get("created_at", now.isoformat()))
+            age_days = (now - created_at).days
+            usage = rule.get("usage_count", 0)
+            # 생성된 지 max_age_days가 지났는데 사용 횟수가 min_usage 미만이면 삭제
+            if age_days > max_age_days and usage < min_usage:
+                return False
+            return True
+
+        self.memory = [r for r in self.memory if is_active(r)]
+        if len(self.memory) < original_count:
+            logger.info(f"Evolutionary Memory GC: Removed {original_count - len(self.memory)} rules.")
+            self._persist()
+

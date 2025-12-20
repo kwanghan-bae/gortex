@@ -1,10 +1,16 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Interface**: 대시보드 내 특정 로그 항목 클릭 시 상세 팝업 표시
-- [ ] **Animation**: 사이드바 패널의 개별 애니메이션 효과(Pulse 등) 추가
+- [ ] **Data**: 에이전트 도구 실행 결과의 시각적 상세화 (Rich.Table 자동 변환 강화)
+- [ ] **UX**: 대시보드 내 특정 로그 항목 클릭 시 상세 팝업 표시
 
 ## ✅ Completed
+### v1.5.0 (Evolutionary GC & System Cleanup)
+- [x] `core/evolutionary_memory.py`: 사용 빈도가 낮고 오래된 규칙을 자동으로 삭제하는 `gc_rules` 기능 구현
+- [x] `main.py`: 부팅 시 및 매 턴마다 불필요한 규칙 및 캐시를 정리하는 시스템 최적화 로직 통합
+- [x] `main.py`: 코드 구조 정리 및 중복 로직(API 카운트, 메모리 인스턴스) 제거
+- [x] `main.py`: 문법 오류(Docstring quotes) 전수 조사 및 수정
+
 ### v1.4.9 (Cache Persistence & History Optimization)
 - [x] `main.py`: `global_file_cache`를 `logs/file_cache.json`에 영속화하고 부팅 시 자동 복구하는 로직 구현
 - [x] `ui/dashboard.py`: 대화가 길어질 경우 성능 유지를 위해 전체 메시지 리스트를 50개로 제한(Cleanup)하는 로직 추가
