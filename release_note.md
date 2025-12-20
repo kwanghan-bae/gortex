@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Data**: 도구 실행 결과(Observation) 시각화 로직의 테이블 감지 성능 고도화
-- [ ] **Evolution**: Analyst의 규칙 추출 정확도 향상을 위한 멀티샷 프롬프팅 적용
+- [ ] **Interface**: 사용자 인터럽트(중단) 감지 및 즉각 피드백 루프 정교화
+- [ ] **Optimization**: 장기 세션에서의 컨텍스트 요약 성능 임계치 조정
 
 ## ✅ Completed
+### v1.2.6 (Few-shot Evolution & Markdown Tables)
+- [x] `agents/analyst.py`: 규칙 추출 정확도 향상을 위해 시스템 프롬프트에 3개의 Few-shot 사례 추가
+- [x] `utils/table_detector.py`: Markdown 스타일(`|` 구분자) 테이블 감지 및 파싱 로직 추가
+- [x] `tests/test_ui.py`: Markdown 테이블 감지 단위 테스트 추가 및 통과
+
 ### v1.2.5 (Intelligent Optimization & UI Feedback)
 - [x] `agents/optimizer.py`: 시스템 로그 분석 후 구조화된 'improvement_task'를 생성하도록 프롬프트 고도화
 - [x] `agents/optimizer.py`: `Manager`가 인지할 수 있는 형식으로 개선안을 전달하여 자동 최적화 기반 마련

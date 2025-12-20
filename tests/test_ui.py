@@ -38,5 +38,14 @@ class TestGortexUI(unittest.TestCase):
         self.assertIsNotNone(table)
         self.assertEqual(len(table.columns), 3)
 
+    def test_markdown_table_detection(self):
+        """Markdown 스타일 테이블 감지 테스트"""
+        from gortex.utils.table_detector import try_render_as_table
+        md_text = "| ID | Name | Role |\n|---|---|---|\n| 1 | Admin | Super |"
+        table = try_render_as_table(md_text)
+        self.assertIsNotNone(table)
+        self.assertEqual(len(table.columns), 3)
+        self.assertEqual(len(table.rows), 1)
+
 if __name__ == '__main__':
     unittest.main()

@@ -64,7 +64,45 @@ class AnalystAgent:
         - 명확성: 행동이 즉각적으로 정의되어야 함. "항상 X하라" 또는 "절대 Y하지 마라"
         - 트리거: 규칙이 활성화되어야 할 상황을 키워드로 정의 (예: 코딩, 한글, 파일 삭제)
 
+        [추출 사례 (Few-shot)]
+        Example 1:
+        User: "아니 변수명을 왜 카멜케이스로 써? 파이썬은 스네이크케이스가 기본이야."
+        Result: {
+            "feedback_detected": true,
+            "negative_signal_score": 8,
+            "instruction": "Python 코드 작성 시 모든 변수명과 함수명은 반드시 snake_case를 사용할 것.",
+            "context": "Python 코딩 및 리팩토링 시",
+            "trigger_patterns": ["python", "variable naming", "snake_case"],
+            "severity": 4,
+            "reason": "사용자가 파이썬 표준 스타일(PEP8) 준수를 강력히 요구함."
+        }
+
+        Example 2:
+        User: "앞으로 모든 답변은 한국어로만 해줘. 영어 섞지 말고."
+        Result: {
+            "feedback_detected": true,
+            "negative_signal_score": 9,
+            "instruction": "사용자에게 제공하는 모든 설명과 답변은 예외 없이 한국어(Korean)로 작성할 것.",
+            "context": "사용자와의 모든 대화 상황",
+            "trigger_patterns": ["answer language", "korean only"],
+            "severity": 5,
+            "reason": "사용자가 언어 설정을 최우선순위 제약 조건으로 명시함."
+        }
+
+        Example 3:
+        User: "테스트 코드 없으면 불안해서 못 쓰겠네. 항상 붙여줘."
+        Result: {
+            "feedback_detected": true,
+            "negative_signal_score": 7,
+            "instruction": "신규 기능 구현 또는 코드 수정 시 반드시 해당 로직을 검증하는 단위 테스트(pytest)를 포함할 것.",
+            "context": "코드 구현 및 수정 작업 시",
+            "trigger_patterns": ["coding", "test code", "unit test"],
+            "severity": 3,
+            "reason": "사용자가 코드의 안정성 확보를 위해 테스트 코드 작성을 의무화함."
+        }
+
         결과는 반드시 다음 JSON 형식을 따라라:
+
         {
             "feedback_detected": true/false,
             "negative_signal_score": 1~10 (신호의 명확성 및 강도),

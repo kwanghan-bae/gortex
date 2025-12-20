@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Intelligent Optimization & UI Feedback Complete (v1.2.5)
+**Status:** Few-shot Evolution & Markdown Tables Complete (v1.2.6)
 
 ## 🧠 Current Context
-시스템의 자기 개선 메커니즘이 더 구체화되었습니다. `Optimizer`는 이제 단순 분석을 넘어 `Manager`가 처리할 수 있는 형태의 태스크를 제안합니다. 또한 UI에서 에이전트의 '생각'이 완료되었음을 알려주는 시각적 피드백이 추가되어 사용자 경험이 향상되었습니다.
+시스템의 추출 능력과 시각화 능력이 한층 강화되었습니다. `Analyst`는 이제 구체적인 예시를 통해 더 정확한 규칙을 만들어내며, 대시보드는 Markdown 스타일의 표도 깔끔하게 렌더링할 수 있습니다.
 
 ## 🎯 Next Objective
-**Evolution Quality & Data Presentation**
-1. **`Analyst` Multi-shot**: 규칙 추출 시 더 높은 정확도를 위해 시스템 프롬프트에 다양한 성공/실패 사례(Few-shot)를 추가하여 `Evolution Mode`를 정교화합니다.
-2. **Table Detection Refinement**: `utils/table_detector.py`에서 불규칙한 공백이나 특수 문자가 포함된 텍스트 테이블을 더 정확하게 파싱하도록 정규식을 보강합니다.
+**User Interruption & Context Management**
+1. **`Interruption` Refinement**: 에이전트가 긴 답변을 하거나 복잡한 작업을 수행 중일 때, 사용자가 특정 입력을 통해 안전하게 중단하고 즉시 새로운 지시를 내릴 수 있는 흐름을 정교화합니다.
+2. **`Summarizer` Threshold**: 현재 12개 메시지 고정인 요약 임계치를 토큰 사용량에 따라 동적으로 조절하거나, 사용자가 원할 때 수동으로 요약(` /summarize`)하는 기능을 추가합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 최적화 태스크 구조화 및 UI 완료 효과 추가 완료 (v1.2.5).
-- 다음 목표: Analyst 추출 성능 고도화 및 테이블 감지 로직 정밀화.
+- Few-shot 규칙 추출 및 Markdown 테이블 지원 완료 (v1.2.6).
+- 다음 목표: 사용자 중단 루틴 및 요약 로직 고도화.
 
 작업 목표:
-1. `agents/analyst.py`의 `analyze_feedback` 메서드 프롬프트에 3개 이상의 Few-shot 예시를 추가하여 규칙 추출의 일관성을 높여줘.
-2. `utils/table_detector.py`에서 `|` 문자로 구분된 테이블(Markdown style)도 감지하여 `Rich.Table`로 변환하는 기능을 추가해줘.
+1. `main.py`의 실행 루프에서 에이전트 스트리밍 중 `Ctrl+C` 감지 시 즉시 현재 단계를 중단하고 `manager` 노드로 제어권을 넘기는 예외 처리 로직을 강화해줘.
+2. `/summarize` 명령어를 추가하여 사용자가 원할 때 즉시 `summarizer` 노드를 호출할 수 있게 해줘.
 ```

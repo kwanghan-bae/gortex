@@ -11,7 +11,35 @@ def try_render_as_table(text: str, title: str = "Data Table") -> Optional[Table]
     if len(lines) < 2:
         return None
 
-    # 1. 공백 기반 구분 (ls -l, ps, pandas 출력 등)
+    # 1. Markdown 스타일 테이블 (| 구분자)
+    if any('|' in line for line in lines[:2]):
+        # 파이프로 시작하고 끝나는지, 혹은 중간에 있는지 확인
+        header_line = lines[0].strip('|').strip()
+        header_parts = [p.strip() for p in header_line.split('|') if p.strip()]
+        
+        if len(header_parts) >= 2:
+            table = Table(title=title, show_header=True, header_style="bold cyan", border_style="magenta")
+            for h in header_parts:
+                table.add_column(h)
+            
+            count = 0
+            # 두 번째 줄이 구분선(---)인지 확인하고 건너뜀
+            start_idx = 1
+            if len(lines) > 1 and all(c in '-:| ' for c in lines[1]):
+                start_idx = 2
+                
+            for line in lines[start_idx:]:
+                row = [p.strip() for p in line.strip('|').split('|')]
+                # 데이터가 부족하면 빈 값으로 채우거나 남는 데이터는 버림
+                if len(row) >= len(header_parts):
+                    table.add_row(*row[:len(header_parts)])
+                    count += 1
+            
+            if count > 0:
+                return table
+
+    # 2. 공백 기반 구분 (ls -l, ps, pandas 출력 등)
+
     # 첫 줄을 헤더로 가정하고 컬럼 수 파악
     header_parts = re.split(r'\s{2,}', lines[0]) # 2개 이상의 공백으로 구분
     if len(header_parts) < 2:
