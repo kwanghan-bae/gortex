@@ -36,7 +36,17 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         constraints_str = "\n".join([f"- {c}" for c in state["active_constraints"]])
         base_instruction += f"\n\n[USER-SPECIFIC EVOLVED RULES (MUST FOLLOW)]\n{constraints_str}"
 
+    # 시스템 최적화 제안(Improvement Task)이 있는지 확인
+    system_improvement_msg = ""
+    for msg in reversed(state["messages"]):
+        content = msg.content if hasattr(msg, 'content') else str(msg)
+        if "최적화 전문가의 제안:" in content:
+            system_improvement_msg = content
+            base_instruction += f"\n\n[SYSTEM OPTIMIZATION REQUEST (HIGH PRIORITY)]\n{system_improvement_msg}"
+            break
+
     config = types.GenerateContentConfig(
+
         system_instruction=base_instruction,
         temperature=0.0,
         response_mime_type="application/json",

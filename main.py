@@ -107,6 +107,7 @@ async def run_gortex():
         console.print("Type 'exit' to quit. Press 'Ctrl+C' during execution to interrupt current task.\n")
 
         with Live(ui.layout, console=console, refresh_per_second=4) as live:
+            interrupted_last_time = False # 이전 작업 중단 여부 추적
             while True:
                 try:
                     # 사용자 입력 받기
@@ -117,6 +118,13 @@ async def run_gortex():
                     if user_input.lower() in ["exit", "quit", "q"]:
                         break
                     
+                    # 인터럽트 후 재개 시 맥락 주입
+                    if interrupted_last_time:
+                        actual_input = f"[CONTEXT: 이전 작업이 사용자에 의해 중단된 후 재개됨] {user_input}"
+                        interrupted_last_time = False
+                    else:
+                        actual_input = user_input
+
                     # 명령어 처리
                     cmd_status = "continue"
                     if user_input.startswith("/"):
@@ -126,7 +134,7 @@ async def run_gortex():
                     
                     # 2. 실행 및 스트리밍 업데이트
                     initial_state = {
-                        "messages": [("user", user_input)],
+                        "messages": [("user", actual_input)],
                         "working_dir": os.getenv("WORKING_DIR", "./workspace"),
                         "coder_iteration": 0,
                         "active_constraints": []
@@ -197,7 +205,7 @@ async def run_gortex():
                                 ui.reset_thought_style()
                                 
                     except KeyboardInterrupt:
-                        # 중단 시 현재 상태 저장 시도 (AsyncSqliteSaver가 자동으로 수행하지만 명시적 로그 남김)
+                        interrupted_last_time = True # 중단 플래그 설정
                         ui.chat_history.append(("system", "⚠️ 사용자에 의해 작업이 중단되었습니다. 현재까지의 상태는 안전하게 저장되었습니다."))
                         ui.update_main(ui.chat_history)
                         ui.stop_tool_progress()

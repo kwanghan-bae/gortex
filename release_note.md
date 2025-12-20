@@ -2,9 +2,15 @@
 
 ## 🚀 Backlog (To-Do)
 - [ ] **Interface**: 대시보드 내 특정 로그 항목 클릭 시 상세 팝업 표시
-- [ ] **Intelligence**: Optimizer의 개선안을 자동으로 적용하는 Self-Modifying 루프 시뮬레이션
+- [ ] **Data**: 도구 실행 결과(Observation)의 상세 시각화 개선 (Rich.Table 자동 변환 강화)
 
 ## ✅ Completed
+### v1.3.0 (Self-Modification & Interactive Recovery)
+- [x] `agents/manager.py`: `Optimizer`가 제안한 개선 태스크를 인지하고 `Planner`에게 우선순위로 전달하는 로직 구현
+- [x] `main.py`: 사용자 중단(`Ctrl+C`) 후 재개 시 에이전트가 상황을 인식할 수 있도록 맥락 주입 로직 추가
+- [x] `main.py`: `interrupted_last_time` 플래그를 통한 지능형 대화 상태 관리 구현
+- [x] `main.py`: 코드 정리 및 인터랙티브 흐름 최적화
+
 ### v1.2.9 (User Interruption & Log Browsing)
 - [x] `main.py`: 에이전트 실행 중 `Ctrl+C` 감지 시 세션 상태를 안전하게 보존하고 즉시 대기 모드로 복귀하는 로직 강화
 - [x] `main.py`: `/logs` 명령어 추가로 최근 10개의 트레이스 로그를 테이블 형식으로 조회 가능
