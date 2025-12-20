@@ -13,5 +13,15 @@ GORTEX_THEME = Theme({
     "radar.new": "bold magenta",
     "status.ok": "green",
     "status.busy": "yellow",
-    "status.error": "red"
+    "status.error": "red",
+    # Agent Specific Colors
+    "agent.manager": "bold cyan",
+    "agent.planner": "bold yellow",
+    "agent.coder": "bold green",
+    "agent.researcher": "bold blue",
+    "agent.analyst": "bold magenta",
+    "agent.trend_scout": "italic magenta",
+    "agent.summarizer": "dim cyan",
+    "agent.optimizer": "bold red"
 })
+

@@ -69,10 +69,10 @@ async def run_gortex():
                         for node_name, output in event.items():
                             ui.current_agent = node_name
                             
-                            # 사고 과정(Thought) 추출
+                            # 사고 과정(Thought) 추출 및 UI 반영 (에이전트 이름 포함)
                             thought = output.get("thought") or output.get("thought_process")
                             if thought:
-                                ui.update_thought(thought)
+                                ui.update_thought(thought, agent_name=node_name)
 
                             if "messages" in output:
                                 # 메시지 업데이트 및 토큰 계산
@@ -102,12 +102,15 @@ async def run_gortex():
                                 rules=len(initial_state["active_constraints"])
                             )
                             
-                            # 로그 기록
+                            # 로그 기록 및 UI 업데이트
+                            log_entry = {"agent": node_name, "event": "node_complete"}
+                            ui.update_logs(log_entry)
                             observer.log_event(node_name, "node_complete", output)
                             
                             # UI 효과 리셋 (다음 노드 실행 전 잠시 대기하며 반전 효과 유지)
                             await asyncio.sleep(0.1)
                             ui.reset_thought_style()
+
 
                     ui.current_agent = "Idle"
 

@@ -1,10 +1,16 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Data**: 에이전트 도구 실행 결과(Observation)의 상세 로깅 및 시각화 개선
-- [ ] **Polishing**: 대시보드 테마 고도화 및 애니메이션 추가
+- [ ] **Evolution**: Analyst 에이전트의 규칙 추출 성능 고도화 (프롬프트 튜닝)
+- [ ] **Data**: 에이전트 도구 실행 결과(Observation)의 상세 시각화 개선
 
 ## ✅ Completed
+### v1.1.8 (Advanced Theming & Log Analysis)
+- [x] `ui/dashboard_theme.py`: 에이전트별 전용 색상 정의 (Manager, Planner, Coder 등)
+- [x] `ui/dashboard.py`: 사이드바에 실시간 'Trace Logs' 패널 추가 및 최근 5개 이벤트 표시
+- [x] `ui/dashboard.py`: 에이전트별 색상을 상태창 및 사고(Thought) 패널에 적용하여 인지력 향상
+- [x] `main.py`: 실시간 로그 업데이트 연동 및 UI 데이터 흐름 최적화
+
 ### v1.1.7 (Observation Refinement & Resilience)
 - [x] `ui/dashboard.py`: 도구 실행 결과(`Observation`) 패널에 `Rich.Syntax` 하이라이팅 적용 (코드 자동 감지)
 - [x] `main.py`: 모든 API 키 소진 시(`Quota Exhausted`) 사용자 친화적인 경고 패널 출력 및 우아한 종료 구현
