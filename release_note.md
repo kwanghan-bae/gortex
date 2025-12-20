@@ -15,9 +15,15 @@
 - [x] **Interface**: 코드 인덱스 검색 결과를 시각화하여 보여주는 `/search [symbol]` 명령어 구현
 - [x] **Infrastructure**: `requirements.txt` 분석을 통해 누락된 의존성을 자동으로 설치하는 'Auto-Dependency' 노드 추가
 - [x] **Interface**: 인덱싱된 프로젝트의 전체적인 관계도를 시각화하는 `/map` 명령어 구현
-- [ ] **Infrastructure**: `setup.sh`를 개선하여 Docker 환경 구성을 자동화하는 'Containerization' 지원
+- [x] **Infrastructure**: `setup.sh`를 개선하여 Docker 환경 구성을 자동화하는 'Containerization' 지원
+- [ ] **Interface**: 현재 프로젝트를 ZIP 파일로 압축하여 다운로드 가능한 링크를 제공하는 `/bundle` 명령어 구현
 
 ## ✅ Completed
+### v1.6.5 (Docker Automation & Deployment)
+- [x] `utils/docker_gen.py`: 프로젝트의 의존성을 기반으로 최적화된 `Dockerfile` 및 `docker-compose.yml` 생성 엔진 구현
+- [x] `main.py`: 컨테이너 기반 배포 환경을 1초 만에 구성하는 `/dockerize` 명령어 추가
+- [x] `utils/docker_gen.py`: Python slim 이미지를 활용하여 경량화된 배포 이미지 구성 및 볼륨 마운트 설정 자동화
+
 ### v1.6.4 (Synaptic Map Visualization)
 - [x] `utils/indexer.py`: 모듈 간 `import` 관계 및 클래스 상속 구조를 추출하는 `generate_map` 로직 추가
 - [x] `main.py`: 프로젝트의 아키텍처를 계층적으로 시각화하는 `/map` 명령어 구현
