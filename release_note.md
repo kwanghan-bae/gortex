@@ -18,9 +18,15 @@
 - [x] **Infrastructure**: `setup.sh`를 개선하여 Docker 환경 구성을 자동화하는 'Containerization' 지원
 - [x] **Interface**: 현재 프로젝트를 ZIP 파일로 압축하여 다운로드 가능한 링크를 제공하는 `/bundle` 명령어 구현
 - [x] **Infrastructure**: `TrendScout` 에이전트를 확장하여 새로운 파이썬 라이브러리나 기술 스택의 취약점을 점검하는 'Security Scout' 기능 추가
-- [ ] **Infrastructure**: GitHub API 연동을 통해 프로젝트를 원격 저장소에 자동으로 푸시하는 '/deploy' 명령어 구현
+- [x] **Infrastructure**: GitHub API 연동을 통해 프로젝트를 원격 저장소에 자동으로 푸시하는 '/deploy' 명령어 구현
+- [ ] **Infrastructure**: 외부 API 연동(예: Slack, Discord)을 통해 작업 완료 시 알림을 보내는 'Notification' 시스템 구축
 
 ## ✅ Completed
+### v1.6.8 (Git Auto-Deploy & Synchronization)
+- [x] `utils/git_tool.py`: Git 명령어 실행 및 저장소 상태 파악을 위한 전용 유틸리티 클래스 신설
+- [x] `main.py`: 현재 변경 사항을 스테이징, 커밋, 푸시까지 일괄 처리하는 `/deploy` 명령어 구현
+- [x] `main.py`: 배포 전 `git status`를 통한 변경 사항 요약 제공 및 자동 생성된 의미 있는 커밋 메시지 적용
+
 ### v1.6.7 (Security Scout & Vulnerability Scanning)
 - [x] `agents/trend_scout.py`: `requirements.txt`를 읽고 주요 패키지의 알려진 보안 취약점(CVE)을 검색하는 `check_vulnerabilities` 구현
 - [x] `agents/trend_scout.py`: 검색된 취약점 정보를 분석하여 위험 수준(Severity)과 패치 권고안을 생성하는 로직 추가
