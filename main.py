@@ -23,6 +23,7 @@ from gortex.core.auth import GortexAuth
 from gortex.core.evolutionary_memory import EvolutionaryMemory
 from gortex.utils.tools import get_file_hash
 from gortex.utils.indexer import SynapticIndexer
+from gortex.utils.docker_gen import DockerGenerator
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -109,6 +110,14 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
                 for f in info["functions"]: func_tree.add(f"[bold green]{f}[/bold green]")
         
         ui.chat_history.append(("system", root_tree))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/dockerize":
+        gen = DockerGenerator()
+        res1 = gen.generate_dockerfile()
+        res2 = gen.generate_compose()
+        ui.chat_history.append(("system", f"{res1}\n{res2}\n\n[bold yellow]Next Step:[/bold yellow] 'docker-compose up --build -d'를 실행하여 컨테이너를 가동하세요."))
         ui.update_main(ui.chat_history)
         return "skip"
     
