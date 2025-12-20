@@ -16,9 +16,15 @@
 - [x] **Infrastructure**: `requirements.txt` 분석을 통해 누락된 의존성을 자동으로 설치하는 'Auto-Dependency' 노드 추가
 - [x] **Interface**: 인덱싱된 프로젝트의 전체적인 관계도를 시각화하는 `/map` 명령어 구현
 - [x] **Infrastructure**: `setup.sh`를 개선하여 Docker 환경 구성을 자동화하는 'Containerization' 지원
-- [ ] **Interface**: 현재 프로젝트를 ZIP 파일로 압축하여 다운로드 가능한 링크를 제공하는 `/bundle` 명령어 구현
+- [x] **Interface**: 현재 프로젝트를 ZIP 파일로 압축하여 다운로드 가능한 링크를 제공하는 `/bundle` 명령어 구현
+- [ ] **Infrastructure**: `TrendScout` 에이전트를 확장하여 새로운 파이썬 라이브러리나 기술 스택의 취약점을 점검하는 'Security Scout' 기능 추가
 
 ## ✅ Completed
+### v1.6.6 (Project Bundling & Export)
+- [x] `main.py`: 현재 프로젝트의 소스 코드와 설정을 ZIP 파일로 압축하는 `/bundle` 명령어 구현
+- [x] `main.py`: `venv`, `.git`, `logs/bundles` 등 불필요한 디렉토리를 압축 대상에서 제외하는 필터링 로직 적용
+- [x] `main.py`: 생성된 번들 파일을 `logs/bundles` 디렉토리에 타임스탬프와 함께 저장하여 이력 관리 지원
+
 ### v1.6.5 (Docker Automation & Deployment)
 - [x] `utils/docker_gen.py`: 프로젝트의 의존성을 기반으로 최적화된 `Dockerfile` 및 `docker-compose.yml` 생성 엔진 구현
 - [x] `main.py`: 컨테이너 기반 배포 환경을 1초 만에 구성하는 `/dockerize` 명령어 추가

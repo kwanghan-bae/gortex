@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Docker Automation & Deployment Complete (v1.6.5)
+**Status:** Project Bundling & Export Complete (v1.6.6)
 
 ## 🧠 Current Context
-프로젝트를 컨테이너화하여 어디서든 동일한 환경으로 실행할 수 있는 `/dockerize` 기능이 도입되었습니다. 이제 Gortex는 코드 작성뿐만 아니라 배포 환경 구성까지 자동화된 파이프라인을 갖추게 되었습니다.
+프로젝트 전체를 압축하여 번들로 만드는 `/bundle` 기능이 추가되었습니다. 이제 사용자는 Gortex가 작성한 결과물을 하나의 아카이브로 즉시 추출하여 실제 서비스에 적용하거나 백업할 수 있습니다.
 
 ## 🎯 Next Objective
-**Project Bundling & Export**
-1. **`Bundle Generator`**: 현재 작업 중인 프로젝트의 소스 코드와 설정을 하나의 ZIP 파일로 묶는 기능을 구현합니다.
-2. **`Download Interface`**: `/bundle` 명령어를 통해 생성된 아카이브의 경로를 제공하여 사용자가 결과물을 손쉽게 내려받을 수 있도록 합니다.
+**Security Scout (Vulnerability Scanning)**
+1. **`Vulnerability Check`**: `TrendScout` 에이전트를 확장하여, 현재 `requirements.txt`에 명시된 패키지들의 알려진 보안 취약점(CVE)을 인터넷 검색을 통해 점검합니다.
+2. **`Patch Recommendation`**: 취약점이 발견된 경우, 보안 패치가 적용된 최신 버전으로 업데이트할 것을 `Optimizer`에게 제안하거나 사용자에게 경고를 표시합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- Docker 환경 자동 구성 완료 (v1.6.5).
-- 다음 목표: 프로젝트 전체 번들링 기능 구현.
+- 프로젝트 번들링 기능 구현 완료 (v1.6.6).
+- 다음 목표: 보안 취약점 점검 기능(Security Scout) 구축.
 
 작업 목표:
-1. `main.py`에 `/bundle` 명령어를 추가하여 현재 프로젝트 디렉토리(venv, logs 등 제외)를 ZIP으로 압축하는 기능을 구현해줘.
-2. 생성된 ZIP 파일을 `logs/bundles` 디렉토리에 저장하고 사용자에게 완료 메시지를 표시해줘.
+1. `agents/trend_scout.py`를 수정하거나 확장하여 `requirements.txt`를 읽고 보안 취약점을 검색하는 기초 로직을 작성해줘.
+2. 발견된 취약점 정보를 `tech_radar.json` 또는 대시보드에 경고 형태로 출력해줘.
 ```
