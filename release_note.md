@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **System**: 대규모 도구 실행 시 백그라운드 처리 및 스트리밍 로그 분리
-- [ ] **Data**: 에이전트 도구 실행 결과의 시각적 상세화 (Rich.Table 자동 변환 강화)
+- [ ] **System**: 비정상 종료 시 미처 저장되지 않은 인메모리 캐시 복구 전략 고도화
+- [ ] **UX**: 대시보드 메인 패널의 자동 스크롤 제어 기능 보강
 
 ## ✅ Completed
+### v1.4.8 (Log Filtering & Self-Modification Loop)
+- [x] `main.py`: `/logs [agent] [event] [limit]` 형식의 필터링 명령어 구현으로 대규모 로그 분석 최적화
+- [x] `agents/manager.py`: `Optimizer`의 최적화 제안 발견 시 강제로 `Planner`로 라우팅하는 자기 개조 루프 완결
+- [x] `main.py`: 로그 필터링 결과 역순(최신순) 표시 및 가독성 개선
+
 ### v1.4.7 (Visual Refinement & Coder Intelligence)
 - [x] `ui/dashboard.py`: 사이드바 각 패널(Status, Stats, Evolution)의 타이틀 색상을 활성 에이전트 색상과 동기화하여 시각적 일관성 강화
 - [x] `agents/coder.py`: 'Standard Error Response Manual'에 Python 구문 오류 해결을 위한 3단계 체크리스트 추가

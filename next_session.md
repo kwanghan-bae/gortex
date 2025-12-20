@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Visual Refinement & Coder Intelligence Complete (v1.4.7)
+**Status:** Log Filtering & Self-Modification Loop Complete (v1.4.8)
 
 ## 🧠 Current Context
-대시보드 UI가 더 세련되게 다듬어졌으며, `Coder` 에이전트의 자가 수정 지능이 매뉴얼화를 통해 강화되었습니다. 이제 시스템은 오류 상황에서 더 체계적으로 대응하며, 사용자는 UI를 통해 현재 어떤 에이전트가 어떤 성격의 작업을 하는지 색상으로 직관적으로 알 수 있습니다.
+시스템의 디버깅 인터페이스가 완성되었습니다. 이제 수천 개의 로그 중에서도 원하는 에이전트나 이벤트만 골라볼 수 있으며, `Optimizer`와 `Manager`의 연동을 통해 시스템이 스스로를 개선하는 전체 흐름이 잡혔습니다.
 
 ## 🎯 Next Objective
-**System Scalability & Real-world Robustness**
-1. **`Log Persistence & Search`**: `trace.jsonl` 로그 파일이 누적됨에 따라, 사용자가 특정 키워드나 에이전트명으로 로그를 검색할 수 있는 기능을 강화합니다. (예: `/logs researcher error`)
-2. **`Self-Modification Loop Completion`**: `Optimizer`가 제안한 개선안을 `Planner`가 승인하고 `Coder`가 실제로 `core/` 또는 `utils/`의 소스 코드를 안전하게 수정하는 전체 시나리오를 실증합니다.
+**System Resilience & UX Polish**
+1. **`Cache Persistence`**: 현재 메모리에만 존재하는 `global_file_cache`를 세션 종료 시 `persistence.py`를 통해 디스크에 저장하고, 다음 부팅 시 자동으로 복구하는 기능을 구현합니다.
+2. **`Scroll Management`**: 대시보드 메인 패널에 메시지가 100개 이상 쌓일 경우, 성능 저하를 방지하기 위해 오래된 메시지를 자동으로 아카이빙하거나 메모리에서 정리하는 로직을 추가합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- UI 테마 정밀화 및 Coder 매뉴얼 보강 완료 (v1.4.7).
-- 다음 목표: 로그 검색 기능 추가 및 자기 개조 루프 실증.
+- 로그 필터링 및 자기 개조 루프 완성 (v1.4.8).
+- 다음 목표: 캐시 영속성 및 대규모 대화 최적화.
 
 작업 목표:
-1. `main.py`의 `/logs` 명령어에 검색 기능을 추가하여 `/logs [agent] [event]`와 같이 필터링해서 볼 수 있게 해줘.
-2. `agents/optimizer.py`에서 생성된 `improvement_task`를 `Manager`가 받으면, 이를 즉시 `Planner`에게 '시스템 개조 미션'으로 전달하도록 로직을 최종 점검해줘.
+1. `main.py` 종료 시 `global_file_cache`를 `logs/file_cache.json`으로 저장하고, 시작 시 이를 다시 읽어오는 로직을 추가해줘.
+2. `ui/dashboard.py`에서 `update_main` 호출 시 `messages` 리스트가 너무 길면(예: 50개 이상) 성능을 위해 앞쪽을 잘라내는 로직을 강화해줘.
 ```

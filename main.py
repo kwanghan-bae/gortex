@@ -111,27 +111,40 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         return "scout"
 
     elif cmd == "/logs":
-
         log_path = "logs/trace.jsonl"
         if os.path.exists(log_path):
-            with open(log_path, "r") as f:
-                lines = f.readlines()
-                total_lines = len(lines)
-                skip = int(cmd_parts[1]) if len(cmd_parts) > 1 else 0
-                limit = int(cmd_parts[2]) if len(cmd_parts) > 2 else 10
-                end_idx = max(0, total_lines - skip)
-                start_idx = max(0, end_idx - limit)
-                recent_logs = [json.loads(line) for line in lines[start_idx:end_idx]]
+            try:
+                # /logs [filter_agent] [filter_event] [limit]
+                filter_agent = cmd_parts[1].lower() if len(cmd_parts) > 1 and not cmd_parts[1].isdigit() else None
+                filter_event = cmd_parts[2].lower() if len(cmd_parts) > 2 and not cmd_parts[2].isdigit() else None
+                limit = int(cmd_parts[-1]) if cmd_parts[-1].isdigit() else 10
                 
-                log_table = Table(title=f"Trace Logs (Page: {start_idx}~{end_idx-1})", show_header=True, header_style="bold magenta")
-                log_table.add_column("Idx", justify="right")
-                log_table.add_column("Time")
-                log_table.add_column("Agent")
-                log_table.add_column("Event")
-                
-                for i, entry in enumerate(reversed(recent_logs)):
-                    log_table.add_row(str(end_idx-1-i), entry.get("timestamp", "").split("T")[-1][:8], entry.get("agent"), entry.get("event"))
-                ui.chat_history.append(("system", log_table))
+                with open(log_path, "r") as f:
+                    all_lines = f.readlines()
+                    filtered_logs = []
+                    
+                    for i, line in enumerate(all_lines):
+                        entry = json.loads(line)
+                        if filter_agent and filter_agent not in entry.get("agent", "").lower(): continue
+                        if filter_event and filter_event not in entry.get("event", "").lower(): continue
+                        filtered_logs.append((i, entry))
+                    
+                    display_logs = filtered_logs[-limit:]
+                    
+                    title = f"Trace Logs (Filtered: {filter_agent or 'All'}/{filter_event or 'All'})"
+                    log_table = Table(title=title, show_header=True, header_style="bold magenta")
+                    log_table.add_column("Idx", justify="right")
+                    log_table.add_column("Time")
+                    log_table.add_column("Agent")
+                    log_table.add_column("Event")
+                    
+                    for idx, entry in reversed(display_logs):
+                        ts = entry.get("timestamp", "").split("T")[-1][:8]
+                        log_table.add_row(str(idx), ts, entry.get("agent"), entry.get("event"))
+                    
+                    ui.chat_history.append(("system", log_table))
+            except Exception as e:
+                ui.chat_history.append(("system", f"사용법: /logs [agent] [event] [limit] (에러: {e})"))
         else:
             ui.chat_history.append(("system", "로그 파일이 존재하지 않습니다."))
         ui.update_main(ui.chat_history)

@@ -43,7 +43,9 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         if "최적화 전문가의 제안:" in content:
             system_improvement_msg = content
             base_instruction += f"\n\n[SYSTEM OPTIMIZATION REQUEST (HIGH PRIORITY)]\n{system_improvement_msg}"
+            base_instruction += "\n결정: 현재 시스템 최적화 요청이 있으므로, 무조건 'next_node'를 'planner'로 지정하라."
             break
+
 
     config = types.GenerateContentConfig(
 
