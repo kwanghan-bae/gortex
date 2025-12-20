@@ -28,26 +28,37 @@ class TestGortexOptimizer(unittest.TestCase):
         """Optimizer 로그 분석 및 LLM 호출 테스트"""
         mock_auth = mock_auth_cls.return_value
         mock_res = MagicMock()
-        mock_res.text = "개선 제안: 파일을 먼저 확인하세요."
+        mock_res.text = json.dumps({
+            "analysis": "문제점: 파일 에러 빈발. 개선 제안: 파일을 먼저 확인하세요.",
+            "improvement_task": "Add file checks",
+            "priority": "high"
+        })
         mock_auth.generate.return_value = mock_res
 
         agent = OptimizerAgent(log_path=self.log_path)
         result = agent.analyze_performance()
         
-        self.assertIn("개선 제안", result)
+        self.assertIsInstance(result, dict)
+        self.assertIn("개선 제안", result["analysis"])
         self.assertEqual(mock_auth.generate.call_count, 1)
+
 
     @patch('gortex.agents.optimizer.OptimizerAgent')
     def test_optimizer_node(self, mock_agent_cls):
         """Optimizer 노드 실행 테스트"""
         mock_agent = mock_agent_cls.return_value
-        mock_agent.analyze_performance.return_value = "Mocked Analysis"
+        mock_agent.analyze_performance.return_value = {
+            "analysis": "Mocked Analysis",
+            "improvement_task": "Do something",
+            "priority": "low"
+        }
         
         state = {"messages": []}
         result = optimizer_node(state)
         
         self.assertEqual(result["next_node"], "manager")
         self.assertIn("Mocked Analysis", result["messages"][0][1])
+
 
 if __name__ == '__main__':
     unittest.main()

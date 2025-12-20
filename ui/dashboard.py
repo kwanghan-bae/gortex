@@ -150,6 +150,13 @@ class DashboardUI:
                 Panel(Text(self.agent_thought, style="italic cyan"), title="💭 [bold cyan]Agent reasoning[/bold cyan]", border_style="cyan")
             )
 
+    def complete_thought_style(self):
+        """사고 완료 시 시각 효과 (녹색 강조)"""
+        if self.agent_thought:
+            self.layout["thought"].update(
+                Panel(Text(self.agent_thought, style="italic green"), title="✅ [bold green]Thought complete[/bold green]", border_style="green")
+            )
+
     def start_tool_progress(self, description: str):
         """도구 실행 진행 바 시작"""
         if self.tool_task is None:

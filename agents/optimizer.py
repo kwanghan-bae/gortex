@@ -59,22 +59,56 @@ class OptimizerAgent:
 [Recent Logs]
 {json.dumps(compact_logs, ensure_ascii=False, indent=2)}
 
-응답은 한국어로 작성하고, '문제점', '원인 분석', '개선 제안'의 형식을 갖춰라.
+결과는 반드시 다음 JSON 형식을 따라라:
+{{
+    "analysis": "문제점 및 원인 분석 결과 (한국어)",
+    "improvement_task": "에이전트가 즉시 수행할 수 있는 구체적인 작업 지시문 (예: 'utils/tools.py의 에러 핸들링 보강')",
+    "priority": "high/medium/low"
+}}
 """
 
         try:
-            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], None)
-            return response.text
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {
+                "response_mime_type": "application/json"
+            })
+            
+            # 응답에서 JSON 추출 시도 (강화된 로직)
+            json_text = response.text
+            json_match = re.search(r'\{.*\}', json_text, re.DOTALL)
+            if json_match:
+                return json.loads(json_match.group())
+            
+            # 파싱 실패 시 기본값
+            return {
+                "analysis": json_text,
+                "improvement_task": None,
+                "priority": "medium"
+            }
         except Exception as e:
             logger.error(f"Optimizer analysis failed: {e}")
-            return f"최적화 분석 중 오류 발생: {e}"
+            return {
+                "analysis": f"최적화 분석 중 오류 발생: {e}",
+                "improvement_task": None,
+                "priority": "low"
+            }
+
+import re
+
 
 def optimizer_node(state: GortexState) -> Dict[str, Any]:
     """Optimizer 노드 엔트리 포인트"""
     agent = OptimizerAgent()
-    analysis = agent.analyze_performance()
+    res = agent.analyze_performance()
     
-    return {
-        "messages": [("ai", f"🚀 [System Optimization Report]\n\n{analysis}")],
+    updates = {
+        "thought": f"시스템 로그 분석 결과: {res.get('analysis')}",
+        "messages": [("ai", f"🚀 [System Optimization Report]\n\n{res.get('analysis')}")],
         "next_node": "manager"
     }
+    
+    # 개선 작업이 있다면 메시지에 추가하여 Manager가 다음 태스크로 인식하게 함
+    if res.get("improvement_task"):
+        updates["messages"].append(("system", f"최적화 전문가의 제안: {res.get('improvement_task')}"))
+        
+    return updates
+

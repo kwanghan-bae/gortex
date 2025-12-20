@@ -1,10 +1,17 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Animation**: 대시보드 UI 요소 간 전환 시 더 역동적인 시각 효과 추가
-- [ ] **Self-Cognition**: Optimizer 에이전트의 로그 분석을 통한 자동 핫픽스 생성 기능
+- [ ] **Data**: 도구 실행 결과(Observation) 시각화 로직의 테이블 감지 성능 고도화
+- [ ] **Evolution**: Analyst의 규칙 추출 정확도 향상을 위한 멀티샷 프롬프팅 적용
 
 ## ✅ Completed
+### v1.2.5 (Intelligent Optimization & UI Feedback)
+- [x] `agents/optimizer.py`: 시스템 로그 분석 후 구조화된 'improvement_task'를 생성하도록 프롬프트 고도화
+- [x] `agents/optimizer.py`: `Manager`가 인지할 수 있는 형식으로 개선안을 전달하여 자동 최적화 기반 마련
+- [x] `ui/dashboard.py`: 사고 과정 완료 시 녹색 테두리와 'Thought complete' 문구로 시각적 마감 효과 추가
+- [x] `main.py`: 에이전트 실행 완료 직후 UI 상태 동기화 로직 보강
+- [x] `tests/test_optimizer.py`: 구조화된 데이터 반환에 맞춘 단위 테스트 업데이트 완료
+
 ### v1.2.4 (CLI Commands & Error Recovery)
 - [x] `main.py`: 슬래시(/) 명령 처리기 구현 (`/clear`, `/history`, `/radar` 지원)
 - [x] `agents/coder.py`: 도구 실행 실패 시 `stderr`를 분석하여 문법 교정, 패키지 설치 등을 수행하는 자가 치유 로직 강화

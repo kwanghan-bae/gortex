@@ -3,6 +3,7 @@ import asyncio
 import random
 from rich.console import Console
 from rich.live import Live
+from rich.panel import Panel
 from dotenv import load_dotenv
 
 from gortex.core.graph import compile_gortex_graph
@@ -18,7 +19,7 @@ async def get_user_input(console: Console):
     return await asyncio.get_event_loop().run_in_executor(None, console.input, "[bold green]User > [/bold green]")
 
 async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObserver) -> bool:
-    """'/'로 시작하는 명령어를 처리합니다. 에이전트 실행이 필요 없으면 True 반환."""
+    "'/'로 시작하는 명령어를 처리합니다. 에이전트 실행이 필요 없으면 True 반환."
     cmd = user_input.lower().strip()
     
     if cmd == "/clear":
@@ -28,8 +29,6 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         return True
     
     elif cmd == "/history":
-        from gortex.core.persistence import list_checkpoints
-        # 영속성 레이어에서 기록을 가져오는 로직 (단순화)
         ui.chat_history.append(("system", "현재 세션의 대화 내역이 유지되고 있습니다."))
         ui.update_main(ui.chat_history)
         return True
@@ -90,8 +89,6 @@ async def run_gortex():
                             continue
                     
                     # 2. 실행 및 스트리밍 업데이트
-
-                    # 초기 상태 설정
                     initial_state = {
                         "messages": [("user", user_input)],
                         "working_dir": os.getenv("WORKING_DIR", "./workspace"),
@@ -99,7 +96,6 @@ async def run_gortex():
                         "active_constraints": []
                     }
                     
-                    # 릴리즈 노트에서 활성 제약 조건 가져오기 (Analyst/Evolution 로직)
                     from gortex.core.evolutionary_memory import EvolutionaryMemory
                     evo_mem = EvolutionaryMemory()
                     initial_state["active_constraints"] = evo_mem.get_active_constraints(user_input)
@@ -109,7 +105,7 @@ async def run_gortex():
                         for node_name, output in event.items():
                             ui.current_agent = node_name
                             
-                            # 도구 실행 감지 (메시지에 tool 역할이 포함된 경우)
+                            # 도구 실행 감지
                             has_tool_call = False
                             if "messages" in output:
                                 for m in output["messages"]:
@@ -123,7 +119,6 @@ async def run_gortex():
                                 ui.stop_tool_progress()
 
                             # 사고 과정(Thought) 추출 및 UI 반영 (에이전트 이름 포함)
-
                             thought = output.get("thought") or output.get("thought_process")
                             if thought:
                                 ui.update_thought(thought, agent_name=node_name)
@@ -138,7 +133,6 @@ async def run_gortex():
                                     else:
                                         role = msg.type
                                         content = msg.content
-                                        # role이 'ai', 'user', 'tool', 'system' 등인 경우 처리
                                         ui.chat_history.append((role, content))
                                     
                                     # 토큰 누적
@@ -165,13 +159,9 @@ async def run_gortex():
                             await asyncio.sleep(0.1)
                             ui.reset_thought_style()
 
-
                     ui.current_agent = "Idle"
-
-                    ui.update_thought("Ready for next command.")
+                    ui.complete_thought_style()
                     ui.update_sidebar("Idle", "N/A", total_tokens, total_cost, len(initial_state["active_constraints"]))
-
-
 
                 except KeyboardInterrupt:
                     break
@@ -181,10 +171,10 @@ async def run_gortex():
                         live.stop()
                         console.print("\n")
                         console.print(Panel(
-                            "[bold red]🚫 API 할당량 긴급 소진![/bold red]\n\n"
-                            "모든 Gemini API 키의 무료 할당량이 바닥났습니다.\n"
-                            "1. [yellow].env[/yellow] 파일에 새로운 API 키를 추가해주세요.\n"
-                            "2. 일정 시간 대기 후 다시 실행해주세요.\n\n"
+                            "[bold red]🚫 API 할당량 긴급 소진![/bold red]\n\n" 
+                            "모든 Gemini API 키의 무료 할당량이 바닥났습니다.\n" 
+                            "1. [yellow].env[/yellow] 파일에 새로운 API 키를 추가해주세요.\n" 
+                            "2. 일정 시간 대기 후 다시 실행해주세요.\n\n" 
                             "[dim]시스템을 안전하게 중단합니다.[/dim]",
                             title="Quota Emergency",
                             border_style="red",
@@ -195,7 +185,6 @@ async def run_gortex():
                     console.print(f"[bold red]Error: {e}[/bold red]")
                     observer.log_event("System", "error", str(e))
                     break
-
 
     console.print("\n[bold cyan]👋 Gortex session ended. State saved.[/bold cyan]")
 
