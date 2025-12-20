@@ -9,9 +9,16 @@
 - [x] **Infrastructure**: 세션 상태(Snapshot) 수동 익스포트 및 복구 도구 구현
 - [x] **Interface**: `/import` 시 이전 세션의 '생각(Thought)' 로그도 복구하여 추론 일관성 유지
 - [x] **Infrastructure**: API 키 할당량 소진 시 자동으로 다른 서비스(예: OpenAI, Anthropic)로 폴백하는 멀티 LLM 브리지 구축
-- [ ] **Infrastructure**: 대시보드에 실시간 LLM 공급자 상태(Gemini/OpenAI) 및 잔여 할당량 시각화
+- [x] **Interface**: 대시보드에 실시간 LLM 공급자 상태(Gemini/OpenAI) 및 잔여 할당량 시각화
+- [ ] **System**: 대규모 코드베이스 분석을 위한 'Synaptic Indexing' (Vector DB 기반 코드 검색) 엔진 구축
 
 ## ✅ Completed
+### v1.5.9 (LLM Status & Load Visualization)
+- [x] `core/auth.py`: 현재 활성 LLM 제공업체 정보를 반환하는 `get_provider` 메서드 추가
+- [x] `ui/dashboard.py`: 사이드바 `SYSTEM STATUS` 패널에 현재 사용 중인 LLM(Gemini/OpenAI) 정보 표시
+- [x] `ui/dashboard.py`: 1분당 API 호출 빈도를 시각적 바(Bar) 차트와 색상(Green/Yellow/Red)으로 표시하여 시스템 부하 시각화
+- [x] `main.py`: 메인 루프에서 실시간 LLM 상태 정보를 UI에 전달하도록 로직 통합
+
 ### v1.5.8 (Multi-LLM Fallback Bridge)
 - [x] `core/auth.py`: Gemini 할당량 소진 시 OpenAI로 즉시 전환하는 폴백 시스템 구축
 - [x] `core/auth.py`: Gemini 모델과 OpenAI 모델 간의 자동 매핑 테이블(`gpt-4o`, `gpt-4o-mini`) 구현
