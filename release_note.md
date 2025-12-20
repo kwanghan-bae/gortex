@@ -11,9 +11,15 @@
 - [x] **Infrastructure**: API 키 할당량 소진 시 자동으로 다른 서비스(예: OpenAI, Anthropic)로 폴백하는 멀티 LLM 브리지 구축
 - [x] **Interface**: 대시보드에 실시간 LLM 공급자 상태(Gemini/OpenAI) 및 잔여 할당량 시각화
 - [x] **System**: 대규모 코드베이스 분석을 위한 'Synaptic Indexing' (AST 기반 코드 검색) 엔진 구축
-- [ ] **Intelligence**: 인덱싱된 코드 구조를 LLM 프롬프트에 동적으로 주입하여 '코드 맥락 인식' 능력 고도화
+- [x] **Intelligence**: 인덱싱된 코드 구조를 LLM 프롬프트에 동적으로 주입하여 '코드 맥락 인식' 능력 고도화
+- [ ] **Interface**: 코드 인덱스 검색 결과를 시각화하여 보여주는 `/search [symbol]` 명령어 구현
 
 ## ✅ Completed
+### v1.6.1 (Context-Aware Reasoning)
+- [x] `agents/planner.py`: 사용자의 요청과 관련된 심볼(클래스/함수)의 위치 및 정의 정보를 인덱스에서 검색하여 프롬프트에 자동 주입
+- [x] `agents/planner.py`: 파일 경로를 명시하지 않은 요청에 대해서도 인덱스 정보를 바탕으로 정확한 대상 파일을 타겟팅하도록 지침 강화
+- [x] `agents/planner.py`: 메시지 포맷(Tuple/Object) 호환성 보강으로 시스템 안정성 확보
+
 ### v1.6.0 (Synaptic Indexing Engine)
 - [x] `utils/indexer.py`: AST(Abstract Syntax Tree) 분석을 통해 Python 코드의 클래스 및 함수 정의를 추출하는 인덱서 구현
 - [x] `main.py`: 부팅 시 프로젝트 코드를 자동 인덱싱하고 `logs/synaptic_index.json`으로 구조화된 데이터 저장
