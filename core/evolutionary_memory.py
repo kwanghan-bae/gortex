@@ -24,17 +24,20 @@ class EvolutionaryMemory:
                 return []
         return []
 
-    def save_rule(self, instruction: str, trigger_patterns: List[str], severity: int = 3, source_session: Optional[str] = None):
-        """새로운 규칙을 저장 (중복 체크 및 병합 로직 포함)"""
+    def save_rule(self, instruction: str, trigger_patterns: List[str], severity: int = 3, source_session: Optional[str] = None, context: Optional[str] = None):
+        """새로운 규칙을 저장 (중복 체크, 병합 및 우선순위 강화 로직 포함)"""
         # 1. 기존 규칙 중 동일한 지침이 있는지 확인
         for existing in self.memory:
             if existing["learned_instruction"].strip() == instruction.strip():
                 logger.info(f"Duplicate rule detected. Reinforcing existing rule: {existing['id']}")
                 # 트리거 패턴 병합 (중복 제거)
                 existing["trigger_patterns"] = list(set(existing["trigger_patterns"] + trigger_patterns))
-                # 중요도 업데이트 (더 높은 값으로)
+                # 중요도 업데이트 (더 높은 값으로) 및 강화 횟수 증가
                 existing["severity"] = max(existing["severity"], severity)
+                existing["reinforcement_count"] = existing.get("reinforcement_count", 0) + 1
                 existing["last_reinforced"] = datetime.now().isoformat()
+                if context:
+                    existing["context"] = context
                 self._persist()
                 return
 
@@ -44,7 +47,9 @@ class EvolutionaryMemory:
             "id": rule_id,
             "trigger_patterns": trigger_patterns,
             "learned_instruction": instruction,
+            "context": context,
             "severity": severity,
+            "reinforcement_count": 1,
             "source_session": source_session,
             "created_at": datetime.now().isoformat(),
             "last_reinforced": datetime.now().isoformat(),
@@ -53,6 +58,7 @@ class EvolutionaryMemory:
         self.memory.append(new_rule)
         self._persist()
         logger.info(f"New rule saved: {rule_id} - {instruction}")
+
 
 
     def _persist(self):

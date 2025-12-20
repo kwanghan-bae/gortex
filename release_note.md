@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Evolution**: Analyst 에이전트의 규칙 추출 성능 고도화 (프롬프트 튜닝)
 - [ ] **Data**: 에이전트 도구 실행 결과(Observation)의 상세 시각화 개선
+- [ ] **Interface**: 사용자 피드백 루프를 더 간편하게 제공하는 CLI 단축키 제안
 
 ## ✅ Completed
+### v1.1.9 (Evolution Refinement & Logic Tuning)
+- [x] `agents/analyst.py`: 규칙 추출 시 구체적 적용 상황을 명시하는 `context` 필드 추가
+- [x] `core/evolutionary_memory.py`: 동일 지침 중복 방지 및 `reinforcement_count` 기반 규칙 강화 로직 구현
+- [x] `tests/test_analyst.py`: 규칙 강화 및 병합 기능 검증 테스트 추가 및 통과
+
 ### v1.1.8 (Advanced Theming & Log Analysis)
 - [x] `ui/dashboard_theme.py`: 에이전트별 전용 색상 정의 (Manager, Planner, Coder 등)
 - [x] `ui/dashboard.py`: 사이드바에 실시간 'Trace Logs' 패널 추가 및 최근 5개 이벤트 표시

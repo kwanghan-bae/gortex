@@ -69,11 +69,13 @@ class AnalystAgent:
             "feedback_detected": true/false,
             "negative_signal_score": 1~10 (신호의 명확성 및 강도),
             "instruction": "AI가 앞으로 영구적으로 지켜야 할 범용적인 지침",
+            "context": "이 규칙이 적용되어야 할 구체적인 상황 (예: Python 코딩 중 함수 정의 시)",
             "trigger_patterns": ["트리거 키워드 1", "키워드 2"],
             "severity": 1~5,
             "reason": "사용자의 불만 원인 분석 결과"
         }
         """
+
 
 
         
@@ -118,9 +120,11 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             agent.memory.save_rule(
                 instruction=feedback["instruction"],
                 trigger_patterns=feedback["trigger_patterns"],
-                severity=feedback["severity"]
+                severity=feedback["severity"],
+                context=feedback.get("context")
             )
             return {
+
                 "messages": [("ai", f"새로운 규칙을 학습했습니다: '{feedback['instruction']}'")],
                 "next_node": "manager"
             }
