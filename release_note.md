@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **System**: 비정상 종료 시 미처 저장되지 않은 인메모리 캐시 복구 전략 고도화
-- [ ] **UX**: 대시보드 메인 패널의 자동 스크롤 제어 기능 보강
+- [ ] **Interface**: 대시보드 내 특정 로그 항목 클릭 시 상세 팝업 표시
+- [ ] **Animation**: 사이드바 패널의 개별 애니메이션 효과(Pulse 등) 추가
 
 ## ✅ Completed
+### v1.4.9 (Cache Persistence & History Optimization)
+- [x] `main.py`: `global_file_cache`를 `logs/file_cache.json`에 영속화하고 부팅 시 자동 복구하는 로직 구현
+- [x] `ui/dashboard.py`: 대화가 길어질 경우 성능 유지를 위해 전체 메시지 리스트를 50개로 제한(Cleanup)하는 로직 추가
+- [x] `main.py`: 종료 시 파일 캐시 및 기술 레이더 자동 아카이빙 강화
+
 ### v1.4.8 (Log Filtering & Self-Modification Loop)
 - [x] `main.py`: `/logs [agent] [event] [limit]` 형식의 필터링 명령어 구현으로 대규모 로그 분석 최적화
 - [x] `agents/manager.py`: `Optimizer`의 최적화 제안 발견 시 강제로 `Planner`로 라우팅하는 자기 개조 루프 완결

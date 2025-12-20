@@ -157,9 +157,20 @@ async def run_gortex():
     ui = DashboardUI(console)
     observer = GortexObserver()
     total_tokens, total_cost = 0, 0.0
+    
+    # 전역 파일 캐시 로드 (Persistence)
+    cache_path = "logs/file_cache.json"
     global_file_cache = {}
+    if os.path.exists(cache_path):
+        try:
+            with open(cache_path, "r") as f:
+                global_file_cache = json.load(f)
+            logger.info(f"Loaded {len(global_file_cache)} items from file cache.")
+        except:
+            pass
 
     workflow = compile_gortex_graph()
+
     from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
     import aiosqlite
     
@@ -273,7 +284,12 @@ async def run_gortex():
         os.makedirs(archive_dir, exist_ok=True)
         if os.path.exists("tech_radar.json"):
             shutil.copy2("tech_radar.json", f"{archive_dir}/tech_radar_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+        
+        # 파일 캐시 영속화
+        with open("logs/file_cache.json", "w") as f:
+            json.dump(global_file_cache, f, ensure_ascii=False, indent=2)
     except: pass
+
     console.print("\n[bold cyan]👋 Gortex session ended.[/bold cyan]")
 
 if __name__ == "__main__":

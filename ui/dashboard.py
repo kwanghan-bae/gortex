@@ -80,13 +80,19 @@ class DashboardUI:
 
     def update_main(self, messages: list):
         """메인 채팅 패널 업데이트 (역할별 구분 및 자동 요약 표시)"""
-        # 화면 정체를 방지하기 위해 최근 15개 메시지만 유지
+        # 성능 및 메모리 관리를 위해 전체 메시지 리스트도 50개로 제한
+        if len(messages) > 50:
+            # 보존할 개수만큼만 남기고 앞쪽 제거
+            del messages[:-50]
+
+        # 화면 표시용 15개 슬라이싱
         display_msgs = messages[-15:]
         msg_group = []
         
         # 만약 메시지가 너무 많아 잘렸다면 알림 표시
         if len(messages) > 15:
-            msg_group.append(Text(f"⬆️ (이전 {len(messages)-15}개의 메시지가 생략되었습니다. /history로 확인 가능)", style="dim white italic", justify="center"))
+            msg_group.append(Text(f"⬆️ (이전 대화 기록은 /logs 또는 /history로 확인 가능)", style="dim white italic", justify="center"))
+
 
         for role, content in display_msgs:
 
