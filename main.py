@@ -3,6 +3,8 @@ import asyncio
 import random
 import logging
 import json
+import shutil
+from datetime import datetime
 from rich.console import Console
 from rich.live import Live
 from rich.panel import Panel
@@ -55,7 +57,6 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         log_path = "logs/trace.jsonl"
         if os.path.exists(log_path):
             try:
-                # 인자가 없으면 마지막 로그(-1) 표시
                 index = int(cmd_parts[1]) if len(cmd_parts) > 1 else -1
                 with open(log_path, "r") as f:
                     lines = f.readlines()
@@ -68,21 +69,33 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
                         entry = json.loads(lines[actual_idx])
                         
                         from rich.json import JSON
+                        from rich.columns import Columns
+                        
+                        # 메타데이터와 페이로드 분리 표시
+                        meta_text = Text.assemble(
+                            ("TIME: ", "bold white"), (entry.get("timestamp", "").split("T")[-1][:8], "cyan"), "\n",
+                            ("AGENT: ", "bold white"), (entry.get("agent", "Unknown").upper(), "magenta"), "\n",
+                            ("EVENT: ", "bold white"), (entry.get("event", ""), "yellow")
+                        )
+                        
                         detail_panel = Panel(
-                            JSON(json.dumps(entry, ensure_ascii=False)), 
-                            title=f"🔍 LOG DETAIL [Index: {actual_idx}]", 
-                            border_style="magenta",
-                            subtitle=f"Agent: {entry.get('agent', 'Unknown')}"
+                            Group(
+                                Panel(meta_text, title="Metadata", border_style="dim"),
+                                Panel(JSON(json.dumps(entry.get("payload", {}), ensure_ascii=False)), title="Payload", border_style="blue")
+                            ),
+                            title=f"🔍 LOG DETAIL [#{actual_idx}]", 
+                            border_style="magenta"
                         )
                         ui.chat_history.append(("system", detail_panel))
                     else:
                         ui.chat_history.append(("system", f"인덱스 범위를 벗어났습니다. (현재 0 ~ {total_logs-1})"))
             except (ValueError, IndexError):
-                ui.chat_history.append(("system", "사용법: /log [index] (예: /log 5 또는 마지막 로그는 /log)"))
+                ui.chat_history.append(("system", "사용법: /log [index]"))
         else:
             ui.chat_history.append(("system", "로그 파일이 존재하지 않습니다."))
         ui.update_main(ui.chat_history)
         return "skip"
+
 
 
     elif cmd == "/summarize":
@@ -266,7 +279,21 @@ async def run_gortex():
                     observer.log_event("System", "error", str(e))
                     break
 
+    # 세션 아카이빙 (종료 전 백업)
+    try:
+        archive_dir = "logs/archives"
+        os.makedirs(archive_dir, exist_ok=True)
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        if os.path.exists("tech_radar.json"):
+            shutil.copy2("tech_radar.json", f"{archive_dir}/tech_radar_{ts}.json")
+            
+        logger.info(f"Session data archived to {archive_dir}")
+    except Exception as e:
+        logger.error(f"Archiving failed: {e}")
+
     console.print("\n[bold cyan]👋 Gortex session ended.[/bold cyan]")
+
 
 if __name__ == "__main__":
     try:

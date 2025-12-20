@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Polishing**: 대시보드 내 특정 로그 항목 선택 시 상세 팝업 표시
-- [ ] **System**: 세션 종료 시 요약본 및 기술 레이더 자동 백업 로직 정교화
+- [ ] **Data**: 에이전트 간 파일 캐시 공유 로직의 정합성 테스트 추가
+- [ ] **UX**: 대시보드 메인 패널의 자동 스크롤 제어 기능
 
 ## ✅ Completed
+### v1.3.6 (Session Archiving & Log Polishing)
+- [x] `main.py`: 프로그램 종료 시 `tech_radar.json`을 `logs/archives/`에 타임스탬프와 함께 자동 백업하는 로직 구현
+- [x] `main.py`: `/log` 명령어 결과 패널을 메타데이터와 페이로드로 분리하여 시각적 가독성 극대화
+- [x] `main.py`: 필수 모듈(`shutil`, `datetime`) 임포트 및 종료 루틴 안정화
+
 ### v1.3.5 (Visual Highlights & Cache Consistency)
 - [x] `ui/dashboard.py`: 사이드바 'Trace Logs' 패널에서 가장 최근 항목을 `[bold reverse]` 스타일로 강조하여 가시성 향상
 - [x] `tests/test_tools.py`: 파일 해시 비교를 통한 `file_cache`와 실제 파일 상태 간의 정합성 검증 테스트 추가
