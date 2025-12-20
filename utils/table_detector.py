@@ -84,6 +84,11 @@ def try_render_as_table(text: str, title: str = "Data Table") -> Optional[Table]
         # 단일 공백인 경우, 최소 3개 이상의 컬럼이 있어야 테이블로 간주 (오탐 방지)
         if len(header_parts) < 3:
             return None
+        
+        # 헤더가 숫자로만 이루어져 있다면 헤더가 없는 것으로 간주하고 가상 헤더 생성
+        if all(p.isdigit() for p in header_parts):
+            header_parts = [f"Col {i+1}" for i in range(len(header_parts))]
+            lines.insert(0, "") # 데이터 행으로 처리하기 위해 빈 줄 삽입 시뮬레이션 (아래 루프에서 보정)
 
     table = Table(title=title, show_header=True, header_style="bold yellow", border_style="blue")
     for h in header_parts:
@@ -91,6 +96,7 @@ def try_render_as_table(text: str, title: str = "Data Table") -> Optional[Table]
 
     count = 0
     for line in lines[1:]:
+        if not line.strip(): continue
         # 먼저 2개 이상의 공백으로 분리 시도
         row = re.split(r'\s{2,}', line)
         
@@ -102,7 +108,7 @@ def try_render_as_table(text: str, title: str = "Data Table") -> Optional[Table]
             table.add_row(*row)
             count += 1
         elif len(row) > len(header_parts):
-            # 컬럼이 더 많은 경우 마지막 컬럼에 합침 (예: 파일명에 공백이 있는 경우)
+            # 컬럼이 더 많은 경우 마지막 컬럼에 합침 (ls -l 등에서 파일명에 공백이 있는 경우 대응)
             table.add_row(*row[:len(header_parts)-1], " ".join(row[len(header_parts)-1:]))
             count += 1
         elif len(row) > 0 and len(row) < len(header_parts):

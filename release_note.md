@@ -1,10 +1,16 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Data**: 에이전트 도구 실행 결과의 시각적 상세화 (Rich.Table 자동 변환 강화)
-- [ ] **UX**: 대시보드 내 특정 로그 항목 클릭 시 상세 팝업 표시
+- [ ] **Interface**: 대규모 로그 조회 시 페이징 처리 로직 추가
+- [ ] **System**: 비정상 종료 시 미처 저장되지 않은 인메모리 캐시 복구 전략 고도화
 
 ## ✅ Completed
+### v1.5.1 (Visual Polish & Table Refinement)
+- [x] `utils/table_detector.py`: 헤더가 없거나 숫자로 된 행에 대한 지능형 감지 및 가상 헤더 생성 로직 보강
+- [x] `ui/dashboard.py`: 사이드바 패널의 타이틀 및 테두리에 에이전트 전용 스타일 적용 고도화
+- [x] `ui/dashboard.py`: 에이전트 상태 관리를 위한 `last_agent` 추적 및 UI 동기화 로직 추가
+- [x] `tests/test_ui.py`: 강화된 테이블 감지 로직에 대한 검증 완료
+
 ### v1.5.0 (Evolutionary GC & System Cleanup)
 - [x] `core/evolutionary_memory.py`: 사용 빈도가 낮고 오래된 규칙을 자동으로 삭제하는 `gc_rules` 기능 구현
 - [x] `main.py`: 부팅 시 및 매 턴마다 불필요한 규칙 및 캐시를 정리하는 시스템 최적화 로직 통합

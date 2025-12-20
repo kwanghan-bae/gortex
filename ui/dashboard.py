@@ -37,6 +37,7 @@ class DashboardUI:
         self.chat_history = []
         self.agent_thought = ""
         self.current_agent = "Idle"
+        self.last_agent = "Idle"
         self.current_step = "N/A"
         self.tokens_used = 0
         self.total_cost = 0.0
@@ -44,6 +45,7 @@ class DashboardUI:
         self.recent_logs = []
         
         # Progress bar for tools
+
         self.progress = Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),

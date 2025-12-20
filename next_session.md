@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Evolutionary GC & System Cleanup Complete (v1.5.0)
+**Status:** Visual Polish & Table Refinement Complete (v1.5.1)
 
 ## 🧠 Current Context
-시스템의 지식베이스와 코드가 대대적으로 정리되었습니다. 이제 Gortex는 사용되지 않는 낡은 규칙들을 스스로 정리하며, 최적화된 내부 로직을 통해 더 빠르고 정확하게 부팅됩니다. UI 역시 에이전트별 전용 애니메이션을 통해 더 전문적인 모습을 갖추었습니다.
+시스템의 시각적 피드백과 데이터 파싱 능력이 완성 단계에 이르렀습니다. 이제 에이전트의 활동은 색상과 애니메이션을 통해 대시보드에 역동적으로 반영되며, 불규칙한 데이터도 표 형식으로 깔끔하게 정리됩니다.
 
 ## 🎯 Next Objective
-**Visual Sophistication & Data Presentation**
-1. **`Table Detection Refinement`**: `utils/table_detector.py`의 정규식을 더 정교하게 다듬어, 단일 공백 구분 테이블이나 복잡한 텍스트 행도 완벽하게 `Rich.Table`로 복원합니다.
-2. **`Sidebar Animation`**: 사이드바의 각 섹션이 업데이트될 때 단순히 색상만 바뀌는 것이 아니라, `Rich.Live`를 활용하여 부드러운 Pulse 효과나 전환 애니메이션을 추가하는 방안을 연구합니다.
+**Operational Efficiency & Resilience**
+1. **`Log Paging`**: 로그가 수천 줄 이상 쌓일 경우를 대비해, `/logs [skip] [limit]` 형식의 페이징 조회 기능을 구현하여 응답 속도를 최적화합니다.
+2. **`Cache Recovery`**: 비정상 종료 시에도 `file_cache`의 상태를 보존하고 재개 시 자동으로 디스크와 동기화하는 영속성 로직을 강화합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 진화 규칙 GC 및 시스템 클린업 완료 (v1.5.0).
-- 다음 목표: 테이블 감지 정밀화 및 사이드바 애니메이션 고도화.
+- 시각 효과 및 테이블 감지 로직 고도화 완료 (v1.5.1).
+- 다음 목표: 로그 페이징 및 캐시 영속성 강화.
 
 작업 목표:
-1. `utils/table_detector.py`에서 컬럼명이 불분명한 경우에도 데이터의 패턴을 분석하여 테이블로 인식하는 휴리스틱 로직을 보강해줘.
-2. `ui/dashboard.py`에서 사이드바의 `border_style`이 변경될 때 사용자의 시선을 끌 수 있는 Pulse 효과를 흉내 내는 로직을 추가해줘.
+1. `main.py`의 `/logs` 명령어를 수정하여 대규모 로그 브라우징을 위한 페이징 로직을 추가해줘.
+2. 세션 종료 시 `global_file_cache`를 `logs/file_cache.json`으로 저장하고, 시작 시 이를 다시 복구하는 로직을 보강해줘.
 ```
