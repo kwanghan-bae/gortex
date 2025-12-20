@@ -70,15 +70,27 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
                         actual_idx = index if index >= 0 else total_logs + index
                         entry = json.loads(lines[actual_idx])
                         from rich.json import JSON
+                        from rich.table import Table
+                        
+                        # 메타데이터를 담은 테이블 생성
+                        meta_table = Table.grid(padding=(0, 1))
+                        meta_table.add_column("Key", style="bold white")
+                        meta_table.add_column("Value")
+                        meta_table.add_row("TIME:", f"[cyan]{entry.get('timestamp')}[/cyan]")
+                        meta_table.add_row("AGENT:", f"[magenta]{entry.get('agent', '').upper()}[/magenta]")
+                        meta_table.add_row("EVENT:", f"[yellow]{entry.get('event')}[/yellow]")
+                        
                         detail_panel = Panel(
                             Group(
-                                Panel(f"TIME: {entry.get('timestamp')}\nAGENT: {entry.get('agent')}\nEVENT: {entry.get('event')}", title="Metadata", border_style="dim"),
+                                Panel(meta_table, title="Metadata", border_style="dim"),
                                 Panel(JSON(json.dumps(entry.get("payload", {}), ensure_ascii=False)), title="Payload", border_style="blue")
                             ),
                             title=f"🔍 LOG DETAIL [#{actual_idx}]", 
-                            border_style="magenta"
+                            border_style="magenta",
+                            padding=(1, 2)
                         )
                         ui.chat_history.append(("system", detail_panel))
+
                     else:
                         ui.chat_history.append(("system", f"인덱스 범위를 벗어났습니다. (현재 0 ~ {total_logs-1})"))
             except (ValueError, IndexError):

@@ -1,75 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Evolution**: Analyst 에이전트의 규칙 추출 성능 고도화 (Context 기반 정교화)
 - [ ] **Interface**: 대시보드 내 특정 로그 항목 클릭 시 상세 팝업 표시
+- [ ] **System**: 비정상 종료 시 미처 저장되지 않은 인메모리 캐시 복구 전략 고도화
 
 ## ✅ Completed
-### v1.4.2 (Resilience UI & Self-Modification Flow)
-- [x] `main.py`: 할당량 소진(`Quota Exhausted`) 발생 시, Align.center를 활용한 풀스크린 스타일의 경고 레이아웃 구현
-- [x] `agents/planner.py`: 시스템 최적화 제안(Request) 수락 시 타당성 검토 후 즉시 실행 계획에 반영하도록 지침 보강
-- [x] `main.py`: 문법 오류 전수 수정 및 비동기 입력 처리 안정화 완료
-
-### v1.4.1 (UI Sophistication & Async Optimization)
-- [x] `ui/dashboard.py`: 사이드바 각 패널(Status, Stats, Evolution) 제목에 이모지 추가 및 상태별 테두리 색상 강조 로직 고도화
-- [x] `main.py`: 에이전트 스트리밍 중 UI 업데이트 주기(0.01s) 조정 및 제어권 양보 로직 최적화로 반응성 향상
-- [x] `ui/dashboard.py`: USAGE STATS 및 EVOLUTION 패널의 동적 스타일링 적용
-
-### v1.4.0 (Log Paging & Cache Recovery)
-- [x] `main.py`: `/logs [skip] [limit]` 페이징 명령어 구현으로 대규모 로그 브라우징 최적화
-- [x] `main.py`: 시스템 부팅 시 `global_file_cache`의 무결성을 디스크 상태와 대조하여 검증하는 'Cold Start' 로직 추가
-- [x] `main.py`: 매 턴 종료 후 에이전트의 로컬 캐시를 전역 캐시와 동기화하여 지식 유지 보장
-- [x] `main.py`: 최신 로그부터 보여주는 역순 페이징 UI 적용
-
-### v1.3.9 (FS Integrity & Security Refinement)
-- [x] `utils/tools.py`: `execute_shell` 실행 후 `os.listdir` 기반의 원시적인 파일 시스템 변경 감지 로직 구현 (HINT 반환 기능 강화)
-- [x] `utils/tools.py`: 보안 경고 메시지를 테스트 가이드에 맞춰 정교화 ("Execution blocked" 명시)
-- [x] `tests/test_tools.py`: 셸 명령을 통한 파일 생성 시의 시스템 힌트 감지 단위 테스트 추가 및 통과
-- [x] `utils/tools.py`: 들여쓰기 및 문법 오류 전수 조사 및 수정
-
-### v1.3.8 (Coder IQ Boost & UI Smoothness)
-- [x] `agents/coder.py`: 'Standard Error Response Manual' 추가로 ModuleNotFoundError, IndentationError 등에 대한 즉각 대응 지능 강화
-- [x] `main.py`: UI 갱신 대기 시간(0.05s) 및 위치 최적화로 에이전트 사고 과정 스트리밍 시각적 부드러움 향상
-- [x] `main.py`: 로깅 수준 및 비동기 처리 구조 정리
-
-### v1.3.7 (Cache Concurrency & Display Optimization)
-- [x] `utils/tools.py`: 파일 작성과 해시 갱신을 원자적으로 수행하는 `write_file_with_hash` 통합 함수 추가
-- [x] `ui/dashboard.py`: 메인 채팅 패널의 메시지 표시 한도를 15개로 조정하고, 초과 시 생략 알림 표시 로직 구현
-- [x] `ui/dashboard.py`: 역할별 패널 여백(Padding) 조정으로 터미널 가독성 향상
-
-### v1.3.6 (Session Archiving & Log Polishing)
-- [x] `main.py`: 프로그램 종료 시 `tech_radar.json`을 `logs/archives/`에 타임스탬프와 함께 자동 백업하는 로직 구현
-- [x] `main.py`: `/log` 명령어 결과 패널을 메타데이터와 페이로드로 분리하여 시각적 가독성 극대화
-- [x] `main.py`: 필수 모듈(`shutil`, `datetime`) 임포트 및 종료 루틴 안정화
-
-### v1.3.5 (Visual Highlights & Cache Consistency)
-- [x] `ui/dashboard.py`: 사이드바 'Trace Logs' 패널에서 가장 최근 항목을 `[bold reverse]` 스타일로 강조하여 가시성 향상
-- [x] `tests/test_tools.py`: 파일 해시 비교를 통한 `file_cache`와 실제 파일 상태 간의 정합성 검증 테스트 추가
-- [x] `ui/dashboard.py`: 에이전트 로그 개수 표시 및 스타일링 최적화
-
-### v1.3.4 (Context Hierarchies & Log Interaction)
-- [x] `utils/memory.py`: 시냅스 압축(요약) 시 중요 시스템 제약 조건([CRITICAL RULES])을 최상단에 고정 배치하는 계층적 요약 로직 구현
-- [x] `main.py`: `/log` 명령어 개선 (인자 없을 시 마지막 로그 표시, 음수 인덱스 지원)
-- [x] `main.py`: 로그 상세 조회 시 Panel 디자인 고도화 (에이전트 정보 및 구조화된 JSON 출력 강화)
-- [x] `utils/memory.py`: 대화 길이에 따른 동적 압축 강도 조절 지침 정교화
-
 ### v1.3.3 (Evolution Stability & Patch Validation)
-- [x] `core/evolutionary_memory.py`: 새로운 규칙 저장 시 트리거 패턴 유사도 분석을 통한 지능형 충돌 감지 및 병합 로직 구현
-- [x] `agents/planner.py`: `Optimizer`가 제안한 시스템 최적화 패치의 보안, 성능, 호환성 타당성을 검토하도록 프롬프트 고도화
-- [x] `core/evolutionary_memory.py`: 규칙 간 잠재적 충돌 시 로그 경고 및 추적용 메타데이터 추가
+- [x] `core/evolutionary_memory.py`: 새로운 규칙 저장 시 기존 규칙과의 트리거 패턴 유사도 분석을 통한 지능형 충돌 감지 및 병합 로직 구현
+- [x] `agents/planner.py`: 시스템 최적화 제안 수용 시 타당성 검토(보안, 성능, 호환성)를 거치도록 로직 강화
+- [x] `main.py`: `/log <index>` 명령어 출력 구조화 (Metadata 전용 테이블 적용으로 가독성 향상)
+- [x] `agents/analyst.py`: 규칙 추출 시 구체적인 적용 맥락(`context`) 필드 추가 및 활용
 
 ### v1.3.2 (Self-Modification Realization & UI Polish)
-- [x] `agents/optimizer.py`: 더 구체적인 코드 패치 지시문을 생성하도록 Few-shot 사례 주입 및 프롬프트 고도화
-- [x] `ui/dashboard.py`: 각 에이전트(Planner, Coder 등)마다 고유한 Spinner 스타일 적용으로 시각적 다양성 확보
-- [x] `ui/dashboard.py`: 대시보드 전체 텍스트를 대문자(Uppercase) 테마로 통일하여 전문적인 터미널 느낌 강화
-- [x] `ui/dashboard.py`: 사고 과정(Thought) 및 도구 관측(Observation) 패널의 여백 및 가독성 최적화
-
-### v1.3.1 (Advanced Table Detection & Log Detailed View)
-- [x] `utils/table_detector.py`: 단일 공백 구분 및 데이터 유실 가능성이 있는 행에 대한 복원 휴리스틱 로직 강화
-- [x] `main.py`: `/log <index>` 명령어 추가로 특정 로그의 상세 페이로드(JSON) 확인 기능 구현
-- [x] `main.py`: `/logs` 명령어 개선 (로그 인덱스 번호 표시 추가로 `/log`와 연동성 확보)
-- [x] `ui/dashboard.py`: Rich Renderable 객체 처리 로직 안정화
-- [x] `main.py`: 문법 오류 수정 및 명령어 처리기 안정화
-
-### v1.3.0 (Self-Modification & Interactive Recovery)
 ... (생략)

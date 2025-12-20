@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Resilience UI & Self-Modification Flow Complete (v1.4.2)
+**Status:** Evolution Stability & Log Structure Ready (v1.3.3+)
 
 ## 🧠 Current Context
-시스템의 안정성과 복구 능력이 완성되었습니다. 이제 할당량 소진 시에도 전문적인 UI로 대응하며, `Optimizer`의 제안이 `Planner`의 비판적 검토를 거쳐 실제 시스템 코드를 수정하는 '자기 개조 루프'가 이론적으로 완결되었습니다.
+시스템의 규칙 관리와 디버깅 인터페이스가 완성 단계에 접어들었습니다. 이제 충돌 감지 로직을 통해 규칙 베이스를 깨끗하게 유지하며, `/log` 명령을 통해 상세 데이터를 더 구조화된 형태로 확인할 수 있습니다.
 
 ## 🎯 Next Objective
-**Analyst Refinement & Log Interactivity**
-1. **`Analyst` Contextualization**: 규칙 추출 시 단순히 키워드뿐만 아니라, 해당 규칙이 적용되어야 할 구체적 맥락(`context`)을 JSON 필드에 추가하고, 이를 `EvolutionaryMemory`에서 활용하도록 개선합니다.
-2. **`Log Detail Popup`**: 사이드바의 'Trace Logs' 패널에 표시된 항목을 클릭하여 상세 내용을 보거나, `/log <index>` 명령 시 출력을 더 구조화(Metadata vs Payload 분리)합니다.
+**Operational Efficiency & UI Dynamics**
+1. **`Summarizer Refinement`**: 대화 요약 시 중요도가 높은 규칙(`severity >= 4`)을 요약본 최상단에 고정 배치하는 '중요 규칙 보존' 전략을 강화합니다.
+2. **`Visual Transitions`**: 에이전트 간 전환 시 사이드바 패널의 테두리 색상이 해당 에이전트의 테마 색상으로 부드럽게 바뀌도록 시각 효과를 추가합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 할당량 UI 및 패치 승인 프로세스 완료 (v1.4.2).
-- 다음 목표: Analyst 정교화 및 로그 상세 보기 강화.
+- 규칙 충돌 감지 및 로그 구조화 완료 (v1.3.3).
+- 다음 목표: 다단계 압축 전략 및 사이드바 색상 연동.
 
 작업 목표:
-1. `agents/analyst.py`에서 추출된 규칙에 `context` 필드를 추가하고, `core/evolutionary_memory.py`에서 이를 저장하도록 수정해줘.
-2. `ui/dashboard.py`에서 `/log` 명령어 결과를 보여줄 때 `Rich.Columns`를 사용하여 메타데이터와 내용을 좌우로 배치하거나 섹션을 분리해서 가독성을 극대화해줘.
+1. `utils/memory.py`에서 요약 시, `active_constraints` 중 높은 등급의 규칙을 요약문 최상단에 [CRITICAL] 태그와 함께 명시적으로 포함하도록 프롬프트를 보강해줘.
+2. `ui/dashboard.py`에서 `update_sidebar` 호출 시, 사이드바 패널들의 `border_style`이 현재 에이전트의 색상으로 동적 할당되도록 수정해줘.
 ```
