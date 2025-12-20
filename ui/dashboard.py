@@ -84,10 +84,8 @@ class DashboardUI:
             if role == "user":
                 msg_group.append(Panel(content, title="[bold green]User[/bold green]", border_style="green"))
             elif role == "ai":
-                # 에이전트 응답 (결과)
                 msg_group.append(Panel(content, title="[bold blue]Gortex[/bold blue]", border_style="blue"))
             elif role == "tool":
-                # 도구 실행 결과 (Observation) 요약 및 시각화 처리
                 if isinstance(content, str):
                     display_content = content
                     if len(content) > 2000:
@@ -111,40 +109,34 @@ class DashboardUI:
                         continue
 
                     # 3. 코드 형태인 경우 하이라이팅
-                    if any(x in display_content for x in ["import ", "def ", "class ", "void ", "public ", "{", "}", "const ", "SELECT ", "INSERT "]):
+                    code_keywords = ["import ", "def ", "class ", "void ", "public ", "{", "}", "const ", "SELECT ", "INSERT ", "UPDATE ", "DELETE ", "#!", "bash", "npm "]
+                    if any(x in display_content for x in code_keywords):
                         lang = "python"
-                        if "SELECT " in display_content: lang = "sql"
-                        elif "void " in display_content: lang = "java"
+                        if "SELECT " in display_content or "UPDATE " in display_content: lang = "sql"
+                        elif "void " in display_content or "public class " in display_content: lang = "java"
+                        elif "#!" in display_content or "npm " in display_content or "$ " in display_content: lang = "bash"
+                        elif "const " in display_content or "function " in display_content: lang = "javascript"
                         
                         syntax_content = Syntax(display_content, lang, theme="monokai", line_numbers=True, word_wrap=True)
                         msg_group.append(Panel(syntax_content, title=f"🛠️ [bold yellow]Observation ({lang})[/bold yellow]", border_style="yellow", style="dim"))
                     else:
                         msg_group.append(Panel(display_content, title="🛠️ [bold yellow]Observation[/bold yellow]", border_style="yellow", style="dim"))
                 else:
-                    # 문자열이 아닌 경우 (예: 이미 Rich 객체인 경우)
                     msg_group.append(Panel(content, title="🛠️ [bold yellow]Observation[/bold yellow]", border_style="yellow", style="dim"))
             elif role == "system":
-                # 시스템 메시지도 Rich 객체 지원
                 if isinstance(content, str):
                     msg_group.append(Text(f"⚙️ {content}", style="dim white"))
                 else:
                     msg_group.append(content)
         
-        self.layout["main"].update(
-            Panel(Group(*msg_group), title="[bold cyan]🧠 Gortex Terminal[/bold cyan]")
-        )
+        self.layout["main"].update(Panel(Group(*msg_group), title="[bold cyan]🧠 Gortex Terminal[/bold cyan]"))
 
     def update_thought(self, thought: str, agent_name: str = "agent"):
         """에이전트의 사고 과정 실시간 업데이트 (시각 효과 추가)"""
         self.agent_thought = thought
-        
-        # 에이전트별 색상 적용
         style = self.agent_colors.get(agent_name.lower(), "agent.manager")
         title = f"💭 [{style}]Agent reasoning ({agent_name})[/{style}]"
-        # 테두리 색상은 cyan으로 고정 (가독성 목적)
-        self.layout["thought"].update(
-            Panel(Text(thought, style="italic cyan"), title=title, border_style="cyan")
-        )
+        self.layout["thought"].update(Panel(Text(thought, style="italic cyan"), title=title, border_style="cyan"))
 
     def update_logs(self, log_entry: dict):
         """최근 로그 업데이트"""
@@ -196,9 +188,7 @@ class DashboardUI:
         self.total_cost = cost
         self.active_rules_count = rules
 
-        # 에이전트 스타일 추출
         agent_style_name = self.agent_colors.get(agent.lower(), "dim white")
-        # Rich 스타일 객체에서 색상 이름 추출 시도 (실패 시 기본색)
         try:
             border_color = self.console.get_style(agent_style_name).color.name
         except:
@@ -236,7 +226,6 @@ class DashboardUI:
         if rules > 0:
             evo_text.append("[LEARNED MODE]", style="blink magenta")
         self.layout["evolution"].update(Panel(evo_text, title="🧬 Evolution", border_style=border_color))
-
 
     def render(self):
         return self.layout

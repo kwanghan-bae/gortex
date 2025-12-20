@@ -108,7 +108,6 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         ui.update_main(ui.chat_history)
         return "skip"
 
-
     return "continue"
 
 async def run_gortex():
@@ -116,12 +115,10 @@ async def run_gortex():
     ui = DashboardUI(console)
     observer = GortexObserver()
     
-    # 누적 토큰 및 비용
     total_tokens = 0
     total_cost = 0.0
 
     workflow = compile_gortex_graph()
-    # Persistence 설정 (SQLite)
     from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
     import aiosqlite
     
@@ -138,10 +135,9 @@ async def run_gortex():
         console.print("Type 'exit' to quit. Press 'Ctrl+C' during execution to interrupt current task.\n")
 
         with Live(ui.layout, console=console, refresh_per_second=4) as live:
-            interrupted_last_time = False # 이전 작업 중단 여부 추적
+            interrupted_last_time = False
             while True:
                 try:
-                    # 사용자 입력 받기
                     live.stop()
                     user_input = await get_user_input(console)
                     live.start()
@@ -149,21 +145,18 @@ async def run_gortex():
                     if user_input.lower() in ["exit", "quit", "q"]:
                         break
                     
-                    # 인터럽트 후 재개 시 맥락 주입
                     if interrupted_last_time:
                         actual_input = f"[CONTEXT: 이전 작업이 사용자에 의해 중단된 후 재개됨] {user_input}"
                         interrupted_last_time = False
                     else:
                         actual_input = user_input
 
-                    # 명령어 처리
                     cmd_status = "continue"
                     if user_input.startswith("/"):
                         cmd_status = await handle_command(user_input, ui, observer)
                         if cmd_status == "skip":
                             continue
                     
-                    # 2. 실행 및 스트리밍 업데이트
                     initial_state = {
                         "messages": [("user", actual_input)],
                         "working_dir": os.getenv("WORKING_DIR", "./workspace"),
@@ -171,7 +164,6 @@ async def run_gortex():
                         "active_constraints": []
                     }
                     
-                    # 수동 요약 요청 시 더미 메시지를 채워 summarizer 트리거
                     if cmd_status == "summarize":
                         initial_state["messages"] = [("system", "Manual summary trigger")] * 12
 
@@ -181,11 +173,9 @@ async def run_gortex():
 
                     try:
                         async for event in app.astream(initial_state, config):
-                            # 이벤트 데이터를 UI에 반영
                             for node_name, output in event.items():
                                 ui.current_agent = node_name
                                 
-                                # 도구 실행 감지
                                 has_tool_call = False
                                 if "messages" in output:
                                     for m in output["messages"]:
@@ -198,7 +188,6 @@ async def run_gortex():
                                 else:
                                     ui.stop_tool_progress()
 
-                                # 사고 과정(Thought) 추출 및 UI 반영
                                 thought = output.get("thought") or output.get("thought_process")
                                 if thought:
                                     ui.update_thought(thought, agent_name=node_name)
@@ -213,7 +202,6 @@ async def run_gortex():
                                             content = msg.content
                                             ui.chat_history.append((role, content))
                                         
-                                        # content가 Rich Renderable(Table 등)인 경우 토큰 계산 제외
                                         if isinstance(content, str):
                                             new_tokens = count_tokens(content)
                                             total_tokens += new_tokens
@@ -236,12 +224,12 @@ async def run_gortex():
                                 ui.reset_thought_style()
                                 
                     except KeyboardInterrupt:
-                        interrupted_last_time = True # 중단 플래그 설정
-                        ui.chat_history.append(("system", "⚠️ 사용자에 의해 작업이 중단되었습니다. 현재까지의 상태는 안전하게 저장되었습니다."))
+                        interrupted_last_time = True
+                        ui.chat_history.append(("system", "⚠️ 사용자에 의해 작업이 중단되었습니다. 상태가 보존되었습니다."))
                         ui.update_main(ui.chat_history)
                         ui.stop_tool_progress()
                         ui.reset_thought_style()
-                        logger.info(f"Agent execution interrupted. Session {thread_id} state preserved.")
+                        logger.info("Agent execution interrupted.")
 
                     ui.current_agent = "Idle"
                     ui.complete_thought_style()
@@ -253,24 +241,24 @@ async def run_gortex():
                     error_msg = str(e)
                     if "할당량" in error_msg or "exhausted" in error_msg.lower():
                         live.stop()
-                        console.print("\n")
+                        console.clear()
+                        console.print("\n" * 3)
                         console.print(Panel(
-                            "[bold red]🚫 API 할당량 긴급 소진![/bold red]\n\n" 
-                            "모든 Gemini API 키의 무료 할당량이 바닥났습니다.\n" 
-                            "1. [yellow].env[/yellow] 파일에 새로운 API 키를 추가해주세요.\n" 
-                            "2. 일정 시간 대기 후 다시 실행해주세요.\n\n" 
-                            "[dim]시스템을 안전하게 중단합니다.[/dim]",
-                            title="Quota Emergency",
-                            border_style="red",
-                            expand=False
+                            "[bold red]🚫 API QUOTA EXHAUSTED[/bold red]\n\n" 
+                            "Gemini API 할당량이 모두 소진되었습니다.\n" 
+                            "1. .env 파일의 API 키를 확인해주세요.\n" 
+                            "2. 일정 시간 대기 후 다시 시도해주세요.\n\n" 
+                            "[dim]시스템을 안전하게 종료합니다. 엔터를 누르세요...[/dim]",
+                            title="System Emergency", border_style="red"
                         ))
+                        await asyncio.get_event_loop().run_in_executor(None, input, "")
                         break
                     
                     console.print(f"[bold red]Error: {e}[/bold red]")
                     observer.log_event("System", "error", str(e))
                     break
 
-    console.print("\n[bold cyan]👋 Gortex session ended. State saved.[/bold cyan]")
+    console.print("\n[bold cyan]👋 Gortex session ended.[/bold cyan]")
 
 if __name__ == "__main__":
     try:

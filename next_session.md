@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Context Optimization & UI Polish Complete (v1.3.4)
+**Status:** Advanced Table Detection & Log View Refined (v1.3.1+)
 
 ## 🧠 Current Context
-시스템의 운영 효율성과 시각적 역동성이 강화되었습니다. 이제 대화가 길어질수록 더 지능적으로 압축을 수행하며, 대시보드 UI는 현재 누가 작업 중인지 테두리 색상 변화를 통해 직관적으로 알려줍니다.
+시스템의 데이터 시각화와 디버깅 능력이 정점에 도달했습니다. 이제 복잡한 테이블 데이터도 더 유연하게 감지하며, 문제가 발생했을 때 `/log` 명령을 통해 시스템 내부의 상세한 페이로드를 즉시 확인할 수 있습니다. 문법 오류도 모두 수정되어 안정적인 구동이 가능합니다.
 
 ## 🎯 Next Objective
-**Detailed Observation & API Resilience**
-1. **`Observation Highlight`**: 도구 실행 결과(`Observation`) 패널에 `Rich.Syntax`를 적용할 때, 파일 확장자나 내용을 분석하여 더 정확한 언어로 하이라이팅되도록 개선합니다.
-2. **`Quota Resilience`**: 모든 API 키가 소진되었을 때, 프로그램이 단순히 종료되는 것이 아니라 사용자에게 즉시 알리고 키 수동 입력을 유도하거나 대기 시간을 제안하는 로직을 구체화합니다.
+**Full Automation & Visual Polish**
+1. **`Self-Modification` Realization**: `Optimizer`가 제안한 개선 태스크를 `Planner`가 실제 코드로 구현하고, 이를 다시 `main.py`에서 실행하여 시스템이 스스로 진화하는 과정을 완결합니다.
+2. **Advanced UI**: 에이전트마다 고유의 '사고 중' 애니메이션을 부여하거나, 대시보드 레이아웃을 더 세련되게 다듬는 작업을 진행합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 동적 압축 및 사이드바 테두리 색상 연동 완료 (v1.3.4).
-- 다음 목표: 도구 결과 시각화 정밀화 및 키 소진 대응 강화.
+- 테이블 감지 강화 및 로그 상세 조회 기능 추가 완료.
+- 다음 목표: 자기 개조 루프 완결 및 UI 테마 고도화.
 
 작업 목표:
-1. `ui/dashboard.py`에서 `tool` 메시지 렌더링 시, `content`의 내용을 보고 언어(python, json, shell, sql 등)를 더 똑똑하게 판별하여 Syntax 하이라이팅을 적용해줘.
-2. `main.py`에서 할당량 소진 에러 발생 시, 사용자에게 현재 상태를 설명하는 전용 레이아웃(Panel)을 보여준 뒤 종료하도록 보완해줘.
+1. `agents/optimizer.py`에서 생성된 `improvement_task`가 `Manager`를 거쳐 `Planner`에게 전달되었을 때, 실제 코드 수정까지 이어지는지 시뮬레이션하고 로직을 보강해줘.
+2. `ui/dashboard.py`에서 사이드바의 각 섹션이 더 구분 잘 가도록 스타일을 입혀줘.
 ```
