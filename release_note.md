@@ -2,9 +2,15 @@
 
 ## 🚀 Backlog (To-Do)
 - [ ] **Interface**: 사용자 피드백 루프를 더 간편하게 제공하는 CLI 단축키 제안
-- [ ] **Animation**: 대시보드 UI 요소 간 전환 시 더 역동적인 시각 효과 추가
+- [ ] **Reliability**: 에이전트 도구 호출 실패 시 재시도 전략 고도화
 
 ## ✅ Completed
+### v1.2.3 (Interactive Interruption & UI Polish)
+- [x] `main.py`: 비차단 방식의 사용자 입력(`get_user_input`) 도입 및 `Ctrl+C`를 통한 작업 중단 기반 마련
+- [x] `ui/dashboard.py`: 도구 실행 시 사이드바에 실시간 `Progress` 바 표시 기능 추가
+- [x] `ui/dashboard.py`: 에이전트 사고 과정(Thought) 업데이트 시 시각적 효과 및 에이전트별 색상 적용 완료
+- [x] `ui/dashboard.py`: JSON, Table, Code 등 다양한 도구 결과물 시각화 통합 완료
+
 ### v1.2.2 (Intelligent File Caching)
 - [x] `utils/tools.py`: 파일 내용의 MD5 해시를 계산하는 `get_file_hash` 유틸리티 추가
 - [x] `agents/planner.py`: 현재 `file_cache` 상태를 인지하여 중복 읽기 단계를 생략하도록 프롬프트 개선

@@ -13,6 +13,10 @@ from gortex.utils.token_counter import count_tokens, estimate_cost
 
 load_dotenv()
 
+async def get_user_input(console: Console):
+    """비차단 방식으로 사용자 입력을 받음"""
+    return await asyncio.get_event_loop().run_in_executor(None, console.input, "[bold green]User > [/bold green]")
+
 async def run_gortex():
     console = Console(theme=GORTEX_THEME)
     ui = DashboardUI(console)
@@ -37,14 +41,14 @@ async def run_gortex():
         config = {"configurable": {"thread_id": thread_id}}
         
         console.print(f"[bold cyan]🚀 Gortex v1.0 Initialized. (Thread ID: {thread_id})[/bold cyan]")
-        console.print("Type 'exit' to quit.\n")
+        console.print("Type 'exit' to quit. Press 'Ctrl+C' to stop current task.\n")
 
         with Live(ui.layout, console=console, refresh_per_second=4) as live:
             while True:
                 try:
-                    # 사용자 입력 받기 (Live UI 밖에서 처리)
+                    # 사용자 입력 받기
                     live.stop()
-                    user_input = console.input("[bold green]User > [/bold green]")
+                    user_input = await get_user_input(console)
                     live.start()
 
                     if user_input.lower() in ["exit", "quit", "q"]:
@@ -69,7 +73,21 @@ async def run_gortex():
                         for node_name, output in event.items():
                             ui.current_agent = node_name
                             
+                            # 도구 실행 감지 (메시지에 tool 역할이 포함된 경우)
+                            has_tool_call = False
+                            if "messages" in output:
+                                for m in output["messages"]:
+                                    if (isinstance(m, tuple) and m[0] == "tool") or (hasattr(m, 'type') and m.type == "tool"):
+                                        has_tool_call = True
+                                        break
+                            
+                            if has_tool_call:
+                                ui.start_tool_progress(f"Agent {node_name} is using tools...")
+                            else:
+                                ui.stop_tool_progress()
+
                             # 사고 과정(Thought) 추출 및 UI 반영 (에이전트 이름 포함)
+
                             thought = output.get("thought") or output.get("thought_process")
                             if thought:
                                 ui.update_thought(thought, agent_name=node_name)

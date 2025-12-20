@@ -6,6 +6,7 @@ from rich.console import Console, Group
 from rich.spinner import Spinner
 from rich.syntax import Syntax
 from rich.json import JSON
+from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn
 from gortex.utils.table_detector import try_render_as_table
 from datetime import datetime
 import json
@@ -42,7 +43,17 @@ class DashboardUI:
         self.active_rules_count = 0
         self.recent_logs = []
         
+        # Progress bar for tools
+        self.progress = Progress(
+            TextColumn("[progress.description]{task.description}"),
+            BarColumn(),
+            TimeElapsedColumn(),
+            transient=True
+        )
+        self.tool_task = None
+
         # 에이전트별 색상 매핑
+
         self.agent_colors = {
             "manager": "agent.manager",
             "planner": "agent.planner",
@@ -139,7 +150,21 @@ class DashboardUI:
                 Panel(Text(self.agent_thought, style="italic cyan"), title="💭 [bold cyan]Agent reasoning[/bold cyan]", border_style="cyan")
             )
 
+    def start_tool_progress(self, description: str):
+        """도구 실행 진행 바 시작"""
+        if self.tool_task is None:
+            self.tool_task = self.progress.add_task(description, total=None)
+        else:
+            self.progress.update(self.tool_task, description=description)
+
+    def stop_tool_progress(self):
+        """도구 실행 진행 바 중단"""
+        if self.tool_task is not None:
+            self.progress.remove_task(self.tool_task)
+            self.tool_task = None
+
     def update_sidebar(self, agent: str, step: str, tokens: int, cost: float, rules: int):
+
         """사이드바 정보 업데이트"""
         self.current_agent = agent
         self.current_step = step
@@ -166,7 +191,14 @@ class DashboardUI:
         stats_table = Table.grid(expand=True)
         stats_table.add_row("Tokens:", f"[bold cyan]{tokens:,}[/bold cyan]")
         stats_table.add_row("Cost:", f"[bold green]${cost:.6f}[/bold green]")
-        self.layout["stats"].update(Panel(stats_table, title="📊 Usage Stats"))
+        
+        stats_group = [stats_table]
+        if self.tool_task is not None:
+            stats_group.append(Text("\n"))
+            stats_group.append(self.progress)
+
+        self.layout["stats"].update(Panel(Group(*stats_group), title="📊 Usage Stats"))
+
 
         # Evolution
         evo_text = Text(f"Active Rules: {rules}\n", style="bold magenta")
