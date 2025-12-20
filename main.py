@@ -51,6 +51,32 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         ui.update_main(ui.chat_history)
         return "skip"
 
+    elif cmd == "/log":
+        log_path = "logs/trace.jsonl"
+        if os.path.exists(log_path):
+            try:
+                index = int(cmd_parts[1]) if len(cmd_parts) > 1 else -1
+                with open(log_path, "r") as f:
+                    lines = f.readlines()
+                    if 0 <= index < len(lines):
+                        entry = json.loads(lines[index])
+                    elif index == -1:
+                        entry = json.loads(lines[-1])
+                    else:
+                        ui.chat_history.append(("system", f"인덱스 범위를 벗어났습니다. (0 ~ {len(lines)-1})"))
+                        ui.update_main(ui.chat_history)
+                        return "skip"
+                    
+                    from rich.json import JSON
+                    detail_panel = Panel(JSON(json.dumps(entry, ensure_ascii=False)), title=f"Log Detail [Index: {index if index != -1 else len(lines)-1}]", border_style="magenta")
+                    ui.chat_history.append(("system", detail_panel))
+            except (ValueError, IndexError):
+                ui.chat_history.append(("system", "사용법: /log <index> (예: /log 5)"))
+        else:
+            ui.chat_history.append(("system", "로그 파일이 존재하지 않습니다."))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
     elif cmd == "/summarize":
         ui.chat_history.append(("system", "수동 요약을 요청하셨습니다. 다음 실행 시 요약이 수행됩니다."))
         ui.update_main(ui.chat_history)
@@ -61,22 +87,27 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         if os.path.exists(log_path):
             with open(log_path, "r") as f:
                 lines = f.readlines()
-                recent_logs = [json.loads(line) for line in lines[-10:]]
+                total_lines = len(lines)
+                start_idx = max(0, total_lines - 10)
+                recent_lines = lines[start_idx:]
+                recent_logs = [json.loads(line) for line in recent_lines]
                 
-                log_table = Table(title="Recent Trace Logs", show_header=True, header_style="bold magenta")
+                log_table = Table(title=f"Recent Trace Logs (Total: {total_lines})", show_header=True, header_style="bold magenta")
+                log_table.add_column("Idx", style="dim", justify="right")
                 log_table.add_column("Time", style="dim")
                 log_table.add_column("Agent", style="cyan")
                 log_table.add_column("Event")
                 
-                for entry in recent_logs:
+                for i, entry in enumerate(recent_logs):
                     ts = entry.get("timestamp", "").split("T")[-1][:8]
-                    log_table.add_row(ts, entry.get("agent", ""), entry.get("event", ""))
+                    log_table.add_row(str(start_idx + i), ts, entry.get("agent", ""), entry.get("event", ""))
                 
                 ui.chat_history.append(("system", log_table))
         else:
             ui.chat_history.append(("system", "로그 파일이 존재하지 않습니다."))
         ui.update_main(ui.chat_history)
         return "skip"
+
 
     return "continue"
 

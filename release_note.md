@@ -1,10 +1,16 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Interface**: 대시보드 내 특정 로그 항목 클릭 시 상세 팝업 표시
-- [ ] **Data**: 도구 실행 결과(Observation)의 상세 시각화 개선 (Rich.Table 자동 변환 강화)
+- [ ] **Polishing**: 대시보드 테마 고도화 및 에이전트별 전용 애니메이션 추가
+- [ ] **Intelligence**: Observer 데이터를 활용한 Optimizer의 자동 코드 패치 기능 실증
 
 ## ✅ Completed
+### v1.3.1 (Advanced Table Detection & Log Detailed View)
+- [x] `utils/table_detector.py`: 단일 공백 구분 및 데이터 유실 가능성이 있는 행에 대한 복원 휴리스틱 로직 강화
+- [x] `main.py`: `/log <index>` 명령어 추가로 특정 로그의 상세 페이로드(JSON) 확인 기능 구현
+- [x] `main.py`: `/logs` 명령어 개선 (로그 인덱스 번호 표시 추가로 `/log`와 연동성 확보)
+- [x] `ui/dashboard.py`: Rich Renderable 객체 처리 로직 안정화
+
 ### v1.3.0 (Self-Modification & Interactive Recovery)
 - [x] `agents/manager.py`: `Optimizer`가 제안한 개선 태스크를 인지하고 `Planner`에게 우선순위로 전달하는 로직 구현
 - [x] `main.py`: 사용자 중단(`Ctrl+C`) 후 재개 시 에이전트가 상황을 인식할 수 있도록 맥락 주입 로직 추가

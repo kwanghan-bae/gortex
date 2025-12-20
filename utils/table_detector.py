@@ -13,7 +13,8 @@ def try_render_as_table(text: str, title: str = "Data Table") -> Optional[Table]
         return None
 
     # --- Markdown 스타일 테이블 감지 (| 구분자) ---
-    if any('|' in line for line in lines[:2]):
+    # 파이프 기호가 포함된 라인이 2개 이상이면 마크다운 테이블로 의심
+    if sum(1 for line in lines[:3] if '|' in line) >= 1:
         header_line = lines[0].strip('|')
         header_parts = [p.strip() for p in header_line.split('|') if p.strip()]
         
@@ -30,10 +31,17 @@ def try_render_as_table(text: str, title: str = "Data Table") -> Optional[Table]
                 
             for line in lines[start_idx:]:
                 if '|' not in line: continue
+                # 파이프로 나누기 (양 끝 파이프 제거 후)
                 row = [p.strip() for p in line.strip('|').split('|')]
+                
                 # 데이터가 부족하면 빈 값으로 채우거나 남는 데이터는 버림
                 if len(row) >= len(header_parts):
                     table.add_row(*row[:len(header_parts)])
+                    count += 1
+                elif len(row) > 0:
+                    # 부족한 경우 빈 문자열로 채움
+                    row += [""] * (len(header_parts) - len(row))
+                    table.add_row(*row)
                     count += 1
             
             if count > 0:
@@ -49,17 +57,17 @@ def try_render_as_table(text: str, title: str = "Data Table") -> Optional[Table]
         count = 0
         for line in lines[1:]:
             row = [p.strip() for p in line.split(',')]
-            if len(row) == len(header_parts):
-                table.add_row(*row)
+            if len(row) >= len(header_parts):
+                table.add_row(*row[:len(header_parts)])
                 count += 1
         if count > 0:
             return table
 
     # --- 공백 기반 테이블 감지 (ls -l, pandas 출력 등) ---
-    # 2개 이상의 공백 또는 탭으로 구분된 경우
+    # 먼저 2개 이상의 공백 또는 탭으로 구분된 경우 시도
     header_parts = re.split(r'\s{2,}', lines[0])
     
-    # 만약 2개 이상의 공백으로 나뉘지 않는다면 단일 공백 시도 (위험도가 높으므로 제약 조건 추가)
+    # 만약 2개 이상의 공백으로 나뉘지 않는다면 단일 공백 시도
     if len(header_parts) < 2:
         header_parts = lines[0].split()
         # 단일 공백인 경우, 최소 3개 이상의 컬럼이 있어야 테이블로 간주 (오탐 방지)
@@ -83,8 +91,13 @@ def try_render_as_table(text: str, title: str = "Data Table") -> Optional[Table]
             table.add_row(*row)
             count += 1
         elif len(row) > len(header_parts):
-            # 컬럼이 더 많은 경우 마지막 컬럼에 합침 (ls -l 등에서 파일명에 공백이 있는 경우 대응)
+            # 컬럼이 더 많은 경우 마지막 컬럼에 합침 (예: 파일명에 공백이 있는 경우)
             table.add_row(*row[:len(header_parts)-1], " ".join(row[len(header_parts)-1:]))
+            count += 1
+        elif len(row) > 0 and len(row) < len(header_parts):
+            # 부족한 경우 빈 값으로 채움
+            row += [""] * (len(header_parts) - len(row))
+            table.add_row(*row)
             count += 1
 
     return table if count > 0 else None
