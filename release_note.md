@@ -8,9 +8,16 @@
 - [x] **Infrastructure**: 다중 사용자 세션 관리를 위한 스레드 분리 및 상태 격리 강화
 - [x] **Infrastructure**: 세션 상태(Snapshot) 수동 익스포트 및 복구 도구 구현
 - [x] **Interface**: `/import` 시 이전 세션의 '생각(Thought)' 로그도 복구하여 추론 일관성 유지
-- [ ] **Infrastructure**: API 키 할당량 소진 시 자동으로 다른 서비스(예: OpenAI, Anthropic)로 폴백하는 멀티 LLM 브리지 구축
+- [x] **Infrastructure**: API 키 할당량 소진 시 자동으로 다른 서비스(예: OpenAI, Anthropic)로 폴백하는 멀티 LLM 브리지 구축
+- [ ] **Infrastructure**: 대시보드에 실시간 LLM 공급자 상태(Gemini/OpenAI) 및 잔여 할당량 시각화
 
 ## ✅ Completed
+### v1.5.8 (Multi-LLM Fallback Bridge)
+- [x] `core/auth.py`: Gemini 할당량 소진 시 OpenAI로 즉시 전환하는 폴백 시스템 구축
+- [x] `core/auth.py`: Gemini 모델과 OpenAI 모델 간의 자동 매핑 테이블(`gpt-4o`, `gpt-4o-mini`) 구현
+- [x] `core/auth.py`: OpenAI 응답을 Gemini Response 객체와 호환되도록 덕타이핑 어댑터 추가
+- [x] `core/auth.py`: 안티-봇 지터(Anti-bot Jitter) 로직 유지 및 폴백 상태 전이 안정화
+
 ### v1.5.7 (Thought Log Persistence)
 - [x] `ui/dashboard.py`: 세션 전체의 사고 과정을 기록하는 `thought_history` 필드 추가 및 추적 로직 구현
 - [x] `main.py`: `/export` 시 사고 과정 히스토리를 포함하여 저장하도록 스냅샷 구조 확장
