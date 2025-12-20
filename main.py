@@ -102,25 +102,69 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
     elif cmd == "/logs":
         log_path = "logs/trace.jsonl"
         if os.path.exists(log_path):
-            with open(log_path, "r") as f:
-                lines = f.readlines()
-                total_lines = len(lines)
-                skip = int(cmd_parts[1]) if len(cmd_parts) > 1 else 0
-                limit = int(cmd_parts[2]) if len(cmd_parts) > 2 else 10
-                end_idx = max(0, total_lines - skip)
-                start_idx = max(0, end_idx - limit)
-                recent_logs = [json.loads(line) for line in lines[start_idx:end_idx]]
-                log_table = Table(title=f"Trace Logs (Page: {start_idx}~{end_idx-1})", show_header=True, header_style="bold magenta")
-                log_table.add_column("Idx", justify="right"); log_table.add_column("Time"); log_table.add_column("Agent"); log_table.add_column("Event")
-                for i, entry in enumerate(reversed(recent_logs)):
-                    log_table.add_row(str(end_idx-1-i), entry.get("timestamp", "").split("T")[-1][:8], entry.get("agent"), entry.get("event"))
-                ui.chat_history.append(("system", log_table))
+            try:
+                with open(log_path, "r") as f:
+                    lines = f.readlines()
+                    total_lines = len(lines)
+                    
+                    if total_lines == 0:
+                        ui.chat_history.append(("system", "기록된 로그가 없습니다."))
+                    else:
+                        # /logs [skip] [limit]
+                        skip = int(cmd_parts[1]) if len(cmd_parts) > 1 else 0
+                        limit = int(cmd_parts[2]) if len(cmd_parts) > 2 else 10
+                        
+                        # 최신 로그가 뒤에 있으므로 뒤에서부터 계산
+                        end_idx = max(0, total_lines - skip)
+                        start_idx = max(0, end_idx - limit)
+                        
+                        recent_logs = [json.loads(line) for line in lines[start_idx:end_idx]]
+                        
+                        log_table = Table(
+                            title=f"📜 Trace Logs (Showing {start_idx} to {end_idx-1} of {total_lines})", 
+                            show_header=True, 
+                            header_style="bold magenta",
+                            caption="사용법: /logs [skip] [limit] | /log [index] 상세조회"
+                        )
+                        log_table.add_column("Idx", justify="right", style="dim")
+                        log_table.add_column("Time", style="cyan")
+                        log_table.add_column("Agent", style="bold yellow")
+                        log_table.add_column("Event", style="green")
+                        
+                        # 최신 항목을 테이블 상단에 표시 (역순)
+                        for i, entry in enumerate(reversed(recent_logs)):
+                            curr_idx = end_idx - 1 - i
+                            timestamp = entry.get("timestamp", "").split("T")[-1][:8]
+                            log_table.add_row(
+                                str(curr_idx), 
+                                timestamp, 
+                                entry.get("agent", "N/A"), 
+                                entry.get("event", "N/A")
+                            )
+                        ui.chat_history.append(("system", log_table))
+            except ValueError:
+                ui.chat_history.append(("system", "❌ 잘못된 인자입니다. 사용법: /logs [skip] [limit]"))
+            except Exception as e:
+                ui.chat_history.append(("system", f"❌ 로그 조회 중 오류 발생: {str(e)}"))
         else:
             ui.chat_history.append(("system", "로그 파일이 존재하지 않습니다."))
         ui.update_main(ui.chat_history)
         return "skip"
 
     return "continue"
+
+def save_global_cache(cache):
+    """전역 파일 캐시를 안전하게 저장합니다."""
+    try:
+        cache_path = "logs/file_cache.json"
+        os.makedirs("logs", exist_ok=True)
+        # 원자적 저장을 위해 임시 파일 사용
+        tmp_path = cache_path + ".tmp"
+        with open(tmp_path, "w", encoding='utf-8') as f:
+            json.dump(cache, f, ensure_ascii=False, indent=2)
+        os.replace(tmp_path, cache_path)
+    except Exception as e:
+        logger.error(f"Failed to save global cache: {e}")
 
 async def run_gortex():
     console = Console(theme=GORTEX_THEME)
@@ -217,9 +261,13 @@ async def run_gortex():
                         ui.chat_history.append(("system", "⚠️ 사용자에 의해 작업이 중단되었습니다."))
                         ui.update_main(ui.chat_history)
                         ui.stop_tool_progress(); ui.reset_thought_style()
+                        save_global_cache(global_file_cache) # 중단 시에도 캐시 저장
 
                     ui.current_agent = "Idle"; ui.complete_thought_style()
                     ui.update_sidebar("Idle", "N/A", total_tokens, total_cost, len(initial_state["active_constraints"]))
+                    
+                    # 매 턴 종료 후 캐시 영속화 강화
+                    save_global_cache(global_file_cache)
 
                 except KeyboardInterrupt: break
                 except Exception as e:

@@ -1,10 +1,16 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Interface**: 대규모 로그 조회 시 페이징 처리 로직 추가
-- [ ] **System**: 비정상 종료 시 미처 저장되지 않은 인메모리 캐시 복구 전략 고도화
+- [x] **Interface**: 대규모 로그 조회 시 페이징 처리 로직 추가
+- [x] **System**: 비정상 종료 시 미처 저장되지 않은 인메모리 캐시 복구 전략 고도화
+- [ ] **Interface**: 대시보드 로그 위젯에 에이전트별 색상 필터링 추가
 
 ## ✅ Completed
+### v1.5.2 (Operational Resilience & Log Paging)
+- [x] `main.py`: `/logs [skip] [limit]` 명령어 구현으로 대규모 로그 브라우징 최적화 및 도움말 추가
+- [x] `main.py`: 매 턴 종료 시 및 사용자 중단(`KeyboardInterrupt`) 시 `global_file_cache` 자동 저장 로직 강화
+- [x] `main.py`: 원자적 파일 쓰기(`save_global_cache`)를 통한 캐시 데이터 무결성 보장
+
 ### v1.5.1 (Visual Polish & Table Refinement)
 - [x] `utils/table_detector.py`: 헤더가 없거나 숫자로 된 행에 대한 지능형 감지 및 가상 헤더 생성 로직 보강
 - [x] `ui/dashboard.py`: 사이드바 패널의 타이틀 및 테두리에 에이전트 전용 스타일 적용 고도화

@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Visual Polish & Table Refinement Complete (v1.5.1)
+**Status:** Operational Resilience & Log Paging Complete (v1.5.2)
 
 ## 🧠 Current Context
-시스템의 시각적 피드백과 데이터 파싱 능력이 완성 단계에 이르렀습니다. 이제 에이전트의 활동은 색상과 애니메이션을 통해 대시보드에 역동적으로 반영되며, 불규칙한 데이터도 표 형식으로 깔끔하게 정리됩니다.
+로그 페이징(`/logs`)과 캐시 영속성 로직이 강화되었습니다. 이제 시스템이 비정상적으로 종료되거나 사용자가 수동으로 중단하더라도 파일 캐시 상태가 안전하게 보존되며, 대규모 로그를 효율적으로 브라우징할 수 있는 기반이 마련되었습니다.
 
 ## 🎯 Next Objective
-**Operational Efficiency & Resilience**
-1. **`Log Paging`**: 로그가 수천 줄 이상 쌓일 경우를 대비해, `/logs [skip] [limit]` 형식의 페이징 조회 기능을 구현하여 응답 속도를 최적화합니다.
-2. **`Cache Recovery`**: 비정상 종료 시에도 `file_cache`의 상태를 보존하고 재개 시 자동으로 디스크와 동기화하는 영속성 로직을 강화합니다.
+**Advanced Monitoring & Intelligence**
+1. **`Log Filtering`**: `/logs` 명령어에 에이전트명이나 이벤트 종류별로 필터링하여 볼 수 있는 기능을 추가하여 분석 효율을 높입니다.
+2. **`Self-Correction Analysis`**: 에이전트가 실패 후 자가 수정한 내역을 별도로 추출하여 `Evolutionary Memory`에 자동으로 반영하는 로직을 검토합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 시각 효과 및 테이블 감지 로직 고도화 완료 (v1.5.1).
-- 다음 목표: 로그 페이징 및 캐시 영속성 강화.
+- 로그 페이징 및 캐시 영속성 강화 완료 (v1.5.2).
+- 다음 목표: 로그 필터링 고도화 및 자가 수정 분석 엔진 기초 설계.
 
 작업 목표:
-1. `main.py`의 `/logs` 명령어를 수정하여 대규모 로그 브라우징을 위한 페이징 로직을 추가해줘.
-2. 세션 종료 시 `global_file_cache`를 `logs/file_cache.json`으로 저장하고, 시작 시 이를 다시 복구하는 로직을 보강해줘.
+1. `main.py`의 `/logs` 명령어에 필터링 옵션(예: `/logs [limit] [agent_name]`)을 추가하여 특정 에이전트의 활동만 모아볼 수 있게 해줘.
+2. `agents/analyst.py` 또는 새로운 노드에서 로그를 분석하여 반복되는 오류 패턴을 찾아내는 로직을 구상해줘.
 ```
