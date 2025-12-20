@@ -25,7 +25,20 @@ class EvolutionaryMemory:
         return []
 
     def save_rule(self, instruction: str, trigger_patterns: List[str], severity: int = 3, source_session: Optional[str] = None):
-        """새로운 규칙을 저장"""
+        """새로운 규칙을 저장 (중복 체크 및 병합 로직 포함)"""
+        # 1. 기존 규칙 중 동일한 지침이 있는지 확인
+        for existing in self.memory:
+            if existing["learned_instruction"].strip() == instruction.strip():
+                logger.info(f"Duplicate rule detected. Reinforcing existing rule: {existing['id']}")
+                # 트리거 패턴 병합 (중복 제거)
+                existing["trigger_patterns"] = list(set(existing["trigger_patterns"] + trigger_patterns))
+                # 중요도 업데이트 (더 높은 값으로)
+                existing["severity"] = max(existing["severity"], severity)
+                existing["last_reinforced"] = datetime.now().isoformat()
+                self._persist()
+                return
+
+        # 2. 새로운 규칙 생성
         rule_id = f"RULE_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         new_rule = {
             "id": rule_id,
@@ -34,11 +47,13 @@ class EvolutionaryMemory:
             "severity": severity,
             "source_session": source_session,
             "created_at": datetime.now().isoformat(),
+            "last_reinforced": datetime.now().isoformat(),
             "usage_count": 0
         }
         self.memory.append(new_rule)
         self._persist()
         logger.info(f"New rule saved: {rule_id} - {instruction}")
+
 
     def _persist(self):
         try:

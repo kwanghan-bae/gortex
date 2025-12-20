@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Evolution**: Analyst 에이전트의 규칙 추출 성능 고도화
 - [ ] **Polishing**: 대시보드 애니메이션 및 레이아웃 최적화
+- [ ] **UI Refinement**: 실시간 에이전트 생각(Thought) 출력 가독성 개선
 
 ## ✅ Completed
+### v1.1.3 (Analyst & Memory Refinement)
+- [x] `agents/analyst.py`: 자가 진화 규칙 추출을 위한 프롬프트 고도화 (범용적 지침 추출 강화)
+- [x] `core/evolutionary_memory.py`: 중복 규칙 감지 및 강화(Reinforcement) 로직 추가
+- [x] `tests/test_analyst.py`: 규칙 중복 제거 및 병합 기능 테스트 추가 및 통과
+
 ### v1.1.2 (Portable Distribution)
 - [x] `setup.sh`: 가상환경 자동 생성 및 `requirements.txt` 기반 패키지 설치 로직 강화
 - [x] `run.sh`: 가상환경 자동 활성화 및 실행 실패 시 가이드 제공 래퍼 구현

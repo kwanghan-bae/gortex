@@ -60,5 +60,22 @@ class TestGortexAnalyst(unittest.TestCase):
         mem2 = EvolutionaryMemory(file_path=self.memory_path)
         self.assertEqual(len(mem2.memory), 1)
 
+    def test_evolutionary_memory_deduplication(self):
+        """규칙 중복 저장 및 병합 테스트"""
+        mem = EvolutionaryMemory(file_path=self.memory_path)
+        
+        # 1. 첫 번째 규칙 저장
+        mem.save_rule("Strict Typing", ["typing"], severity=2)
+        self.assertEqual(len(mem.memory), 1)
+        
+        # 2. 동일한 지침으로 두 번째 규칙 저장 (중복)
+        mem.save_rule("Strict Typing", ["python"], severity=4)
+        
+        # 3. 결과 검증 (개수는 그대로, 데이터는 병합되어야 함)
+        self.assertEqual(len(mem.memory), 1)
+        self.assertEqual(mem.memory[0]["severity"], 4) # 더 높은 severity 반영
+        self.assertIn("python", mem.memory[0]["trigger_patterns"])
+        self.assertIn("typing", mem.memory[0]["trigger_patterns"])
+
 if __name__ == '__main__':
     unittest.main()
