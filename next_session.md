@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Context Stability & UI Feedback Complete (v1.1.6)
+**Status:** Observation Refinement & Resilience Complete (v1.1.7)
 
 ## 🧠 Current Context
-장기 대화 시에도 학습된 규칙이 유지되도록 시냅스 압축 로직을 안정화했으며, 에이전트의 사고 과정을 더 역동적으로 보여주도록 UI를 개선했습니다. 이제 시스템은 더 끈기 있게 규칙을 준수하며 사용자에게 작업 상황을 명확히 전달합니다.
+시스템의 안정성이 크게 향상되었습니다. 이제 도구 실행 결과에서 코드가 포함된 경우 문법 하이라이팅이 적용되어 가독성이 높아졌으며, 모든 API 키가 소진되었을 때 시스템이 당황하지 않고 사용자에게 명확한 가이드를 제공하며 종료됩니다.
 
 ## 🎯 Next Objective
-**Detailed Observation & Final Polish**
-1. **Observation Detail**: 도구 실행 결과(`tool` 역할)가 파일 내용일 경우, 단순 텍스트보다 더 보기 좋게(예: 코드 하이라이팅 등) 표시하는 방안을 검토합니다.
-2. **Resilience**: 모든 API 키가 소진되었을 때 시스템이 우아하게 멈추고 사용자에게 키 교체를 안내하는 가이드를 출력합니다.
+**System Polishing & Detailed Logging**
+1. **Log Analysis**: `core/observer.py`의 JSONL 로그를 사용자가 대시보드 내에서 직접 조회하거나, 특정 에이전트의 '최근 활동 내역'을 요약해서 보여주는 기능을 검토합니다.
+2. **Advanced Theming**: `ui/dashboard_theme.py`를 보강하여 에이전트마다 고유의 색상을 부여하거나, 더 세련된 UI 스타일을 적용합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 시냅스 압축 안정화 및 Thought 강조 UI 추가 완료 (v1.1.6).
-- 다음 목표: 도구 결과 시각화 개선 및 예외 상황 대응 강화.
+- 도구 결과 하이라이팅 및 키 소진 예외 처리 완료 (v1.1.7).
+- 다음 목표: 로그 시각화 및 테마 고도화.
 
 작업 목표:
-1. `ui/dashboard.py`에서 도구 실행 결과(`Observation`) 패널에 `Rich`의 `Syntax` 하이라이팅을 적용하여 가독성을 높여줘.
-2. `core/auth.py`에서 모든 키가 소진되었을 때 발생하는 예외를 `main.py`에서 캐치하여 사용자에게 예쁘게(Panel 활용) 경고 메시지를 보여주도록 개선해줘.
+1. `ui/dashboard.py` 또는 별도의 팝업 기능을 통해 `logs/trace.jsonl`의 최근 이벤트를 브라우징할 수 있는 기능을 추가해줘.
+2. `ui/dashboard_theme.py`에 각 에이전트별(Planner, Coder, Researcher 등) 전용 색상을 정의하고 UI에 반영해줘.
 ```

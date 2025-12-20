@@ -4,9 +4,11 @@ from rich.table import Table
 from rich.text import Text
 from rich.console import Console, Group
 from rich.spinner import Spinner
+from rich.syntax import Syntax
 from datetime import datetime
 
 def create_layout() -> Layout:
+
     """대시보드 레이아웃 생성: 채팅(Main), 사고(Thought), 사이드바(Sidebar)"""
     layout = Layout()
     layout.split_row(
@@ -47,11 +49,20 @@ class DashboardUI:
                 # 에이전트 응답 (결과)
                 msg_group.append(Panel(content, title="[bold blue]Gortex[/bold blue]", border_style="blue"))
             elif role == "tool":
-                # 도구 실행 결과 (Observation) 요약 처리
+                # 도구 실행 결과 (Observation) 요약 및 하이라이팅 처리
                 display_content = content
                 if len(content) > 1000:
                     display_content = content[:500] + f"\n\n[... {len(content)-1000} characters truncated ...]\n\n" + content[-500:]
-                msg_group.append(Panel(display_content, title="🛠️ [bold yellow]Observation[/bold yellow]", border_style="yellow", style="dim"))
+                
+                # 코드 형태인 경우 하이라이팅 시도
+                if any(x in display_content for x in ["import ", "def ", "class ", "void ", "public ", "{", "}", "const "]):
+                    # 언어 추정 (단순화)
+                    lang = "python" if "import " in display_content or "def " in display_content else "text"
+                    syntax_content = Syntax(display_content, lang, theme="monokai", line_numbers=True, word_wrap=True)
+                    msg_group.append(Panel(syntax_content, title="🛠️ [bold yellow]Observation (Code)[/bold yellow]", border_style="yellow", style="dim"))
+                else:
+                    msg_group.append(Panel(display_content, title="🛠️ [bold yellow]Observation[/bold yellow]", border_style="yellow", style="dim"))
+
 
             elif role == "system":
                 msg_group.append(Text(f"⚙️ {content}", style="dim white"))

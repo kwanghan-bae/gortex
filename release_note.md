@@ -2,9 +2,14 @@
 
 ## 🚀 Backlog (To-Do)
 - [ ] **Data**: 에이전트 도구 실행 결과(Observation)의 상세 로깅 및 시각화 개선
-- [ ] **Resilience**: API 키 전체 소진 시 사용자에게 즉각적인 알림 및 대처 가이드 제공
+- [ ] **Polishing**: 대시보드 테마 고도화 및 애니메이션 추가
 
 ## ✅ Completed
+### v1.1.7 (Observation Refinement & Resilience)
+- [x] `ui/dashboard.py`: 도구 실행 결과(`Observation`) 패널에 `Rich.Syntax` 하이라이팅 적용 (코드 자동 감지)
+- [x] `main.py`: 모든 API 키 소진 시(`Quota Exhausted`) 사용자 친화적인 경고 패널 출력 및 우아한 종료 구현
+- [x] `ui/dashboard.py`: `Syntax` 및 `Text` 패널 레이아웃 최적화
+
 ### v1.1.6 (Context Stability & UI Feedback)
 - [x] `utils/memory.py`: 시냅스 압축 시 '활성 제약 조건(Evolved Rules)'이 누락되지 않도록 요약 프롬프트 보강
 - [x] `ui/dashboard.py`: 에이전트의 사고 과정(Thought) 업데이트 시 시각적 강조 효과(색상 변경) 추가

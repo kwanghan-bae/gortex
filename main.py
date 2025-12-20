@@ -119,9 +119,26 @@ async def run_gortex():
                 except KeyboardInterrupt:
                     break
                 except Exception as e:
+                    error_msg = str(e)
+                    if "🚫 모든 API 계정의 할당량이 소진되었습니다." in error_msg or "exhausted" in error_msg.lower():
+                        live.stop()
+                        console.print("\n")
+                        console.print(Panel(
+                            "[bold red]🚫 API 할당량 긴급 소진![/bold red]\n\n"
+                            "모든 Gemini API 키의 무료 할당량이 바닥났습니다.\n"
+                            "1. [yellow].env[/yellow] 파일에 새로운 API 키를 추가해주세요.\n"
+                            "2. 일정 시간 대기 후 다시 실행해주세요.\n\n"
+                            "[dim]시스템을 안전하게 중단합니다.[/dim]",
+                            title="Quota Emergency",
+                            border_style="red",
+                            expand=False
+                        ))
+                        break
+                    
                     console.print(f"[bold red]Error: {e}[/bold red]")
                     observer.log_event("System", "error", str(e))
                     break
+
 
     console.print("\n[bold cyan]👋 Gortex session ended. State saved.[/bold cyan]")
 
