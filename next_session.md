@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** LLM Status & Load Visualization Complete (v1.5.9)
+**Status:** Synaptic Indexing Engine Complete (v1.6.0)
 
 ## 🧠 Current Context
-시스템의 안정성과 가독성이 크게 향상되었습니다. 이제 Gortex는 어떤 LLM을 사용하고 있는지, 현재 부하가 어느 정도인지 실시간으로 보여주며, 필요시 자동으로 대체 엔진을 가동합니다.
+프로젝트의 코드 구조를 정적으로 분석하여 인덱싱하는 엔진이 구축되었습니다. 이제 시스템은 어떤 파일에 어떤 클래스와 함수가 있는지 알고 있으며, 이를 통해 대규모 코드베이스에서도 길을 잃지 않고 작업을 수행할 수 있는 준비가 되었습니다.
 
 ## 🎯 Next Objective
-**Synaptic Indexing Engine (Vector Search)**
-1. **`Code Indexing`**: 프로젝트 내의 모든 파일을 분석하여 주요 클래스, 함수, 변수들을 추출하고 이를 벡터화(또는 간단한 키워드 맵)하여 저장합니다.
-2. **`Semantic Search`**: 에이전트가 "로그인 로직 어디 있어?"라고 물으면, 단순 파일 검색이 아닌 인덱싱된 데이터를 바탕으로 가장 관련 높은 코드 조각과 위치를 즉시 찾아냅니다.
+**Context-Aware Reasoning (Index Injection)**
+1. **`Context Injection`**: 에이전트가 코드를 수정하거나 분석할 때, 인덱싱된 정보를 바탕으로 관련 있는 코드 정의(클래스/함수 시그니처)를 프롬프트에 자동으로 주입합니다.
+2. **`Ambiguity Resolution`**: 사용자가 "GortexAuth 고쳐줘"라고 했을 때, 인덱스 검색을 통해 즉시 `core/auth.py`의 위치를 파악하고 해당 클래스 구조를 읽어오는 지능형 라우팅을 구현합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- LLM 상태 및 부하 시각화 완료 (v1.5.9).
-- 다음 목표: 벡터 DB 기반(또는 지능형) 코드 인덱싱 엔진 구축.
+- AST 기반 코드 인덱싱 엔진 구축 완료 (v1.6.0).
+- 다음 목표: 인덱스 정보를 활용한 지능형 코드 맥락 인식.
 
 작업 목표:
-1. `utils/indexer.py`를 신설하여 로컬 파일들을 스캔하고 함수/클래스 정의를 추출하는 기초 로직을 작성해줘.
-2. 추출된 메타데이터를 `logs/synaptic_index.json`에 저장하고, 이를 통해 검색할 수 있는 `SynapticSearch` 클래스를 구현해줘.
+1. `agents/coder.py` 또는 `agents/planner.py`에서 `SynapticIndexer`의 검색 결과를 활용하여 필요한 코드 정의를 미리 읽어오는 로직을 추가해줘.
+2. 에이전트가 파일 경로를 명시적으로 알지 못해도 심볼명(클래스/함수명)만으로 작업을 시작할 수 있도록 'Symbol-to-Path' 해결 기능을 강화해줘.
 ```

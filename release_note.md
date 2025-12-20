@@ -10,9 +10,16 @@
 - [x] **Interface**: `/import` 시 이전 세션의 '생각(Thought)' 로그도 복구하여 추론 일관성 유지
 - [x] **Infrastructure**: API 키 할당량 소진 시 자동으로 다른 서비스(예: OpenAI, Anthropic)로 폴백하는 멀티 LLM 브리지 구축
 - [x] **Interface**: 대시보드에 실시간 LLM 공급자 상태(Gemini/OpenAI) 및 잔여 할당량 시각화
-- [ ] **System**: 대규모 코드베이스 분석을 위한 'Synaptic Indexing' (Vector DB 기반 코드 검색) 엔진 구축
+- [x] **System**: 대규모 코드베이스 분석을 위한 'Synaptic Indexing' (AST 기반 코드 검색) 엔진 구축
+- [ ] **Intelligence**: 인덱싱된 코드 구조를 LLM 프롬프트에 동적으로 주입하여 '코드 맥락 인식' 능력 고도화
 
 ## ✅ Completed
+### v1.6.0 (Synaptic Indexing Engine)
+- [x] `utils/indexer.py`: AST(Abstract Syntax Tree) 분석을 통해 Python 코드의 클래스 및 함수 정의를 추출하는 인덱서 구현
+- [x] `main.py`: 부팅 시 프로젝트 코드를 자동 인덱싱하고 `logs/synaptic_index.json`으로 구조화된 데이터 저장
+- [x] `main.py`: 수동 재인덱싱 명령어 `/index` 구현
+- [x] `utils/indexer.py`: 인덱싱된 데이터를 바탕으로 키워드 및 독스트링 검색이 가능한 `SynapticSearch` 기능 추가
+
 ### v1.5.9 (LLM Status & Load Visualization)
 - [x] `core/auth.py`: 현재 활성 LLM 제공업체 정보를 반환하는 `get_provider` 메서드 추가
 - [x] `ui/dashboard.py`: 사이드바 `SYSTEM STATUS` 패널에 현재 사용 중인 LLM(Gemini/OpenAI) 정보 표시
