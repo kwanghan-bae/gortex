@@ -36,6 +36,64 @@ class TrendScoutAgent:
         except Exception as e:
             logger.error(f"Failed to save tech radar: {e}")
 
+    async def check_vulnerabilities(self) -> List[str]:
+        """requirements.txt를 분석하여 알려진 보안 취약점 점검"""
+        req_path = "requirements.txt"
+        if not os.path.exists(req_path):
+            return ["requirements.txt 파일을 찾을 수 없어 보안 점검을 건너뜁니다."]
+
+        logger.info("🔍 Scanning for security vulnerabilities in dependencies...")
+        try:
+            with open(req_path, "r", encoding='utf-8') as f:
+                packages = [line.strip() for line in f if line.strip() and not line.startswith("#")]
+            
+            if not packages:
+                return ["점검할 패키지가 없습니다."]
+
+            findings = []
+            for pkg in packages[:10]: # 토큰 및 시간 절약을 위해 상위 10개 패키지 우선 점검
+                query = f"security vulnerability {pkg} python cve 2024 2025"
+                result = await self.researcher.search_and_summarize(query)
+                findings.append(f"Package: {pkg}\n{result}")
+
+            analysis_prompt = f"""
+            다음은 프로젝트 의존성 패키지들에 대한 보안 검색 결과이다.
+            심각한 취약점(Critical/High)이 발견되었는지 분석하고, 업데이트가 필요한 패키지 목록을 제안하라.
+            
+            [Search Results]
+            {""}
+            
+            결과는 반드시 다음 JSON 형식을 따라라:
+            {{
+                "vulnerabilities_found": true/false,
+                "risky_packages": [{{ "name": "패키지명", "cve": "CVE ID", "severity": "High/Medium", "recommendation": "최신 버전으로 업데이트 등" }}]
+            }}
+            """
+            
+            response = self.auth.generate("gemini-1.5-flash", [("user", analysis_prompt)], None)
+            res_data = json.loads(response.text)
+            
+            notifications = []
+            if res_data.get("vulnerabilities_found"):
+                for p in res_data.get("risky_packages", []):
+                    msg = f"⚠️ [보안 위험] {p['name']}: {p['recommendation']} ({p['severity']})"
+                    notifications.append(msg)
+                    # tech_radar에 보안 정보 기록
+                    if "security_alerts" not in self.radar_data:
+                        self.radar_data["security_alerts"] = []
+                    self.radar_data["security_alerts"].append({
+                        "package": p["name"],
+                        "detected_at": datetime.now().isoformat(),
+                        "details": p
+                    })
+                self._save_radar()
+                return notifications
+            return ["✅ 주요 패키지 보안 점검 결과, 알려진 심각한 취약점이 발견되지 않았습니다."]
+            
+        except Exception as e:
+            logger.error(f"Vulnerability scan failed: {e}")
+            return [f"보안 점검 중 오류 발생: {e}"]
+
     def should_scan(self, interval_hours: int = 24) -> bool:
         """마지막 스캔으로부터 지정된 시간이 지났는지 확인"""
         last_scan_str = self.radar_data.get("last_scan")
@@ -123,10 +181,14 @@ def trend_scout_node(state: GortexState) -> Dict[str, Any]:
         if loop.is_running():
             import concurrent.futures
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(lambda: asyncio.run(scout.scan_trends()))
-                notifications = future.result()
+                # 트렌드 스캔과 보안 점검 병렬 실행
+                f1 = executor.submit(lambda: asyncio.run(scout.scan_trends()))
+                f2 = executor.submit(lambda: asyncio.run(scout.check_vulnerabilities()))
+                notifications = f1.result() + f2.result()
         else:
-            notifications = loop.run_until_complete(scout.scan_trends())
+            n1 = loop.run_until_complete(scout.scan_trends())
+            n2 = loop.run_until_complete(scout.check_vulnerabilities())
+            notifications = n1 + n2
             
         return {
             "messages": [("ai", "\n".join(notifications))],
