@@ -24,6 +24,7 @@ from gortex.core.evolutionary_memory import EvolutionaryMemory
 from gortex.utils.tools import get_file_hash
 from gortex.utils.indexer import SynapticIndexer
 from gortex.utils.docker_gen import DockerGenerator
+from gortex.utils.git_tool import GitTool
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -141,6 +142,31 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
             ui.chat_history.append(("system", f"📦 프로젝트 번들링 완료: {bundle_path}"))
         except Exception as e:
             ui.chat_history.append(("system", f"❌ 번들링 실패: {str(e)}"))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/deploy":
+        gt = GitTool()
+        if not gt.is_repo():
+            ui.chat_history.append(("system", "❌ Git 저장소가 아닙니다. 'git init'을 먼저 수행하세요."))
+        else:
+            try:
+                status = gt.status()
+                if not status:
+                    ui.chat_history.append(("system", "✅ 변경 사항이 없습니다."))
+                else:
+                    ui.chat_history.append(("system", f"🚀 배포 시작...\n{status}"))
+                    ui.update_main(ui.chat_history)
+                    
+                    gt.add_all()
+                    msg = f"feat: Gortex Auto-Deploy ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})"
+                    gt.commit(msg)
+                    branch = gt.get_current_branch()
+                    gt.push(branch=branch)
+                    
+                    ui.chat_history.append(("system", f"✅ 배포 완료! ({branch} 브랜치로 푸시됨)"))
+            except Exception as e:
+                ui.chat_history.append(("system", f"❌ 배포 실패: {str(e)}"))
         ui.update_main(ui.chat_history)
         return "skip"
     
