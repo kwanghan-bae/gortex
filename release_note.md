@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Data**: 텍스트 기반 테이블(ASCII Table) 감지 성능 고도화 (불규칙한 공백 대응)
-- [ ] **Optimization**: 시냅스 압축 시 토큰 사용량 기반 동적 임계치 적용
+- [ ] **Interface**: 사용자 인터럽트(중단) 감지 및 즉각 피드백 루프 정교화
+- [ ] **Interface**: 대시보드 내 특정 로그 항목 클릭 시 상세 팝업 표시
 
 ## ✅ Completed
+### v1.2.8 (Table Refinement & Dynamic Thresholds)
+- [x] `utils/table_detector.py`: 단일 공백 구분 테이블 및 불규칙한 공백이 포함된 행에 대한 감지 로직 고도화
+- [x] `core/graph.py`: 총 토큰 수 추정치를 기반으로 한 동적 시냅스 압축(Summarizer) 임계치 도입 (5000 토큰 초과 시)
+- [x] `core/graph.py`: 에이전트 노드 임포트 누락 수정 및 워크플로우 안정화
+
 ### v1.2.7 (User Interruption & Manual Summary)
 - [x] `main.py`: 에이전트 실행 중 `Ctrl+C` 감지 시 전체 종료 대신 현재 작업만 안전하게 중단하도록 개선
 - [x] `main.py`: `/summarize` 명령어 추가로 사용자가 원할 때 즉시 시냅스 압축(요약) 수행 가능

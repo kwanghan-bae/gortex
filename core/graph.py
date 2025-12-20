@@ -13,13 +13,24 @@ from gortex.agents.analyst import analyst_node
 from gortex.agents.trend_scout import trend_scout_node
 from gortex.agents.optimizer import optimizer_node
 from gortex.utils.memory import summarizer_node
+from gortex.utils.token_counter import count_tokens
 
 def route_manager(state: GortexState) -> Literal["summarizer", "planner", "researcher", "analyst", "optimizer", "__end__"]:
-    """Manager의 결정에 따라 다음 노드로 라우팅. 대화가 길면 요약 노드 거침."""
+    """Manager의 결정에 따라 다음 노드로 라우팅. 대화가 길거나 토큰이 많으면 요약 노드 거침."""
     next_node = state.get("next_node", "__end__")
+    if next_node == "__end__":
+        return "__end__"
+
+    messages = state.get("messages", [])
     
-    # 메시지가 12개 이상이면 요약 노드로 먼저 이동
-    if len(state.get("messages", [])) >= 12 and next_node != "__end__":
+    # 요약 트리거 조건 1: 메시지 개수 (12개 이상)
+    msg_count_trigger = len(messages) >= 12
+    
+    # 요약 트리거 조건 2: 총 토큰 수 추정 (5000 토큰 이상)
+    total_tokens = sum(count_tokens(m.content if hasattr(m, 'content') else str(m)) for m in messages)
+    token_trigger = total_tokens >= 5000
+    
+    if msg_count_trigger or token_trigger:
         return "summarizer"
         
     return next_node
