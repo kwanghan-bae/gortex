@@ -58,5 +58,25 @@ class TestGortexTools(unittest.TestCase):
         result = execute_shell("sleep 2", timeout=1)
         self.assertIn("timed out", result)
 
+    def test_file_cache_consistency(self):
+        """파일 캐시 정합성(해시 비교) 테스트"""
+        from gortex.utils.tools import get_file_hash
+        target_file = os.path.join(self.test_dir, "cache_test.py")
+        
+        # 1. 파일 생성 및 해시 추출
+        content = "print('hello')"
+        write_file(target_file, content)
+        actual_hash = get_file_hash(target_file)
+        
+        # 2. 캐시 상태 모사
+        file_cache = {target_file: actual_hash}
+        
+        # 3. 파일 변경 후 정합성 깨짐 확인
+        with open(target_file, 'w') as f:
+            f.write("print('modified')")
+        
+        new_actual_hash = get_file_hash(target_file)
+        self.assertNotEqual(file_cache[target_file], new_actual_hash)
+
 if __name__ == '__main__':
     unittest.main()

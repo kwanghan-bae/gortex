@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Data**: 에이전트 도구 실행 결과(Observation)의 상세 시각화 개선 (Rich.Table 자동 변환 강화)
-- [ ] **Animation**: 대시보드 내 특정 로그 항목 선택 시 시각적 하이라이트 강화
+- [ ] **Polishing**: 대시보드 내 특정 로그 항목 선택 시 상세 팝업 표시
+- [ ] **System**: 세션 종료 시 요약본 및 기술 레이더 자동 백업 로직 정교화
 
 ## ✅ Completed
+### v1.3.5 (Visual Highlights & Cache Consistency)
+- [x] `ui/dashboard.py`: 사이드바 'Trace Logs' 패널에서 가장 최근 항목을 `[bold reverse]` 스타일로 강조하여 가시성 향상
+- [x] `tests/test_tools.py`: 파일 해시 비교를 통한 `file_cache`와 실제 파일 상태 간의 정합성 검증 테스트 추가
+- [x] `ui/dashboard.py`: 에이전트 로그 개수 표시 및 스타일링 최적화
+
 ### v1.3.4 (Context Hierarchies & Log Interaction)
 - [x] `utils/memory.py`: 시냅스 압축(요약) 시 중요 시스템 제약 조건([CRITICAL RULES])을 최상단에 고정 배치하는 계층적 요약 로직 구현
 - [x] `main.py`: `/log` 명령어 개선 (인자 없을 시 마지막 로그 표시, 음수 인덱스 지원)

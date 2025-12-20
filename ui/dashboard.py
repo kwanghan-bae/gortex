@@ -139,17 +139,22 @@ class DashboardUI:
         self.layout["thought"].update(Panel(Text(thought, style="italic cyan"), title=title, border_style="cyan", padding=(1, 2)))
 
     def update_logs(self, log_entry: dict):
-        """최근 로그 업데이트"""
+        """최근 로그 업데이트 (최신 항목 하이라이트)"""
         self.recent_logs.append(log_entry)
-        if len(self.recent_logs) > 8: # 로그 개수 상향
+        if len(self.recent_logs) > 8:
             self.recent_logs.pop(0)
             
         log_table = Table.grid(expand=True)
-        for entry in self.recent_logs:
+        for i, entry in enumerate(self.recent_logs):
             agent = entry.get("agent", "Sys")
             event = entry.get("event", "event")
             style = self.agent_colors.get(agent.lower(), "dim white")
-            log_table.add_row(f"[{style}]{agent.upper()}[/{style}]", f"[dim]{event}[/dim]")
+            
+            # 마지막 항목(가장 최근) 하이라이트 효과
+            if i == len(self.recent_logs) - 1:
+                log_table.add_row(f"[bold reverse {style}]{agent.upper()}[/]", f"[bold reverse white]{event}[/]")
+            else:
+                log_table.add_row(f"[{style}]{agent.upper()}[/{style}]", f"[dim]{event}[/dim]")
             
         self.layout["logs"].update(Panel(log_table, title="📜 [bold white]TRACE LOGS[/bold white]", border_style="white"))
 
