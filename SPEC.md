@@ -1,5 +1,15 @@
 # Gortex v1.0 Ultimate Technical Specification: Synaptic Orchestration & Evolutionary System
 
+**IMPORTANT: Core Instruction for AI Agents**
+> 이 문서를 읽는 모든 에이전트는 작업을 시작하기 전 반드시 다음 두 파일을 먼저 읽고 현재 맥락을 파악해야 합니다:
+> 1.  **`gortex/release_note.md`**: 전체적인 작업 진행 상황과 To-Do 리스트 확인.
+> 2.  **`gortex/next_session.md`**: 이전 세션에서 남긴 구체적인 기술적 맥락과 다음 목표 확인.
+>
+> **[CRITICAL] Commit Protocol:**
+> 1.  **Pre-Commit Check**: 커밋 전 반드시 `gortex/scripts/pre_commit.sh` 실행. (실패 시 커밋 금지)
+> 2.  **Documentation**: 작업 완료 시 `gortex/release_note.md`의 해당 항목을 `[x]`로 체크하고, `Completed` 섹션으로 이동.
+> 3.  **Confirmation**: `pre_commit.sh` 통과 결과를 사용자에게 보고하고, 커밋 진행 여부를 승인받을 것.
+
 **Version:** 1.1.0 (The Adaptive Edition)
 **Codename:** Synaptic Reborn
 **Based On:** `KORTEX Reborn v28.0` & `Gortex Preview Specs`
@@ -368,3 +378,60 @@ You are building 'Gortex', a local AI OS.
 5. **Active Intelligence:** Implement `agents/trend_scout.py` to update `tech_radar.json`.
 5. **UI:** Use `rich.console` for all output. No `print()`.
 ```
+
+---
+
+## 11. Workflow & Contribution Guidelines
+
+### 11.1 Work Management Files
+*   **`gortex/release_note.md`**: Acts as the central **Task Tracker**.
+    *   **To-Do**: List planned features or fixes here before starting.
+    *   **Done**: Move items here after verification.
+*   **`gortex/next_session.md`**: Persists **Context** for continuity.
+    *   Save the current state, unresolved issues, and specific instructions for the next AI session here.
+
+### 11.2 Commit Strategy
+1.  **Atomic Commits**: Each commit must represent a single, complete logical change.
+2.  **Verification First (The "Check" Phase)**:
+    *   Execute: `gortex/scripts/pre_commit.sh`
+    *   If passed: Report to user ("✅ 모든 테스트 통과했습니다. 커밋할까요?")
+    *   If failed: Fix code immediately. DO NOT COMMIT.
+3.  **Documentation Update**:
+    *   Update `gortex/release_note.md` (Mark as done).
+    *   Update `gortex/next_session.md` (Set next goal).
+4.  **Commit Messages**:
+    *   Language: **Korean (한국어)**.
+    *   Tone: Friendly and descriptive.
+
+---
+
+## 12. Continuous Development Guide
+
+This section ensures seamless handover between AI sessions.
+
+### 12.1 How to Command (The "Magic Phrase")
+To resume work exactly where it left off, simply type:
+
+> **"@docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가."**
+
+### 12.2 What Happens Next?
+When this command is issued, the AI Agent must:
+1.  **Read `gortex/release_note.md`**: Identify the top item in the **To-Do** list.
+2.  **Read `gortex/next_session.md`**: Load the specific context and implementation plan left by the previous session.
+3.  **Execute**:
+    *   Implement the code.
+    *   Verify with tests.
+    *   Commit with a Korean message.
+    *   Update `release_note.md` (move task to Completed) and `next_session.md` (set next target).
+
+### 12.3 Sample Prompt for Next Session (Copy & Paste)
+```markdown
+@docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
+현재 상태:
+- `core/auth.py` 구현 완료.
+- 다음 목표: `core/state.py` 및 `utils/tools.py` 구현.
+
+작업 완료 후에는 `release_note.md`를 업데이트하고, 다음 작업자를 위한 `next_session.md`를 작성해줘.
+```
+
+
