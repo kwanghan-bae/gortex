@@ -1,27 +1,25 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** TrendScout & Workflow Graph Implemented
+**Status:** Infrastructure & UI Complete (v1.0.9)
 
 ## 🧠 Current Context
-모든 에이전트와 이들을 연결하는 `StateGraph`(`core/graph.py`)가 준비되었습니다.
-이제 시스템을 실제로 구동하고 화려한 대시보드를 보여줄 **`main.py`**와 **`ui/dashboard.py`**를 완성해야 합니다.
+시스템의 모든 핵심 구성 요소(인증, 상태, 에이전트 팀, 워크플로우 그래프, 대시보드 UI, 관측 시스템)가 구축되었습니다. 이제 Gortex를 실제로 실행하여 사용자 피드백을 받고 세밀한 튜닝을 진행할 수 있는 단계입니다.
 
 ## 🎯 Next Objective
-**System Launch & UI Phase**
-1. `gortex/ui/dashboard.py`: Rich 라이브러리를 사용하여 실시간 에이전트 상태 및 로그를 보여주는 대시보드 레이아웃 구현.
-2. `gortex/main.py`: 사용자 입력을 받고 컴파일된 그래프를 실행하는 엔트리 포인트 구현.
-   - `AsyncSqliteSaver`를 통한 세션 영속성 확보.
-3. `core/observer.py`: 에이전트의 사고 과정을 구조화된 로그로 남기는 옵저버 구현.
+**Operational Refinement & Polish**
+1. **Live Debugging**: `main.py`를 실행하여 에이전트 간의 대화 흐름이 매끄러운지 확인하고, 필요시 프롬프트를 튜닝합니다.
+2. **Cost Tracking**: `ui/dashboard.py`에 실제 토큰 사용량을 계산하여 비용을 실시간으로 표시하는 기능을 강화합니다.
+3. **Animations**: Rich의 `Progress`나 `Spinner`를 활용하여 에이전트가 사고 중일 때의 시각적 피드백을 강화합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 에이전트 워크플로우 그래프 완성.
-- 다음 목표: `main.py` 및 `ui/dashboard.py` 구현.
+- 시스템 전체 통합 완료 (v1.0.9).
+- 모든 에이전트 및 UI 구동 가능.
 
-주의사항:
-- 대시보드는 Rich의 `Live`와 `Layout`을 활용하여 메인 채팅과 사이드바(상태창)를 구분할 것.
-- `main.py`에서는 사용자가 `exit`를 입력할 때까지 루프를 돌며, 중단 시 체크포인트를 저장해야 함.
+작업 목표:
+1. `main.py`를 실행해보며 UI 레이아웃을 다듬고, 에이전트 응답이 잘리는 현상이 없는지 확인해줘.
+2. 토큰 소모량을 정확히 추적하기 위한 유틸리티를 추가해줘.
 ```
