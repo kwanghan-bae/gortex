@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Manual Scout & Workflow Refined (v1.4.3)
+**Status:** Table Detection Polish & UI Progress Complete (v1.4.4)
 
 ## 🧠 Current Context
-시스템의 수동 제어와 최적화 루프가 더 강화되었습니다. 이제 사용자는 언제든 `/scout` 명령어로 최신 기술 트렌드를 강제 스캔할 수 있으며, `Optimizer`는 실제 코드 수정이 가능한 수준의 정밀한 지시문을 생성합니다.
+시스템의 시각적 완성도와 데이터 파싱 능력이 정점에 가까워지고 있습니다. 이제 대시보드는 거의 모든 형태의 표 데이터를 정확히 렌더링하며, 도구 실행 시 진행 상태를 더 역동적으로 보여줍니다.
 
 ## 🎯 Next Objective
-**Visual Presentation & Robustness**
-1. **`Table Detection` Polish**: `utils/table_detector.py`에서 Markdown 테이블(`|`) 감지 시, 셀 안의 공백이나 특수 문자가 섞인 경우에도 깨지지 않도록 정규식을 더 정교하게 다듬습니다.
-2. **`Background Progress`**: 시간이 오래 걸리는 도구 실행 시 대시보드의 `Progress` 바가 더 부드럽게 움직이도록 비동기 UI 업데이트 주기를 미세 조정합니다.
+**Concurrency Refinement & Real-world Usage**
+1. **`Background Execution`**: Researcher와 같이 외부 API나 브라우저를 사용하는 도구들이 실행되는 동안에도 UI가 부드럽게 유지되도록 비동기 처리(asyncio)의 세밀한 구간을 튜닝합니다.
+2. **`Adaptive Throttling`**: `429 Quota Exhausted` 에러가 자주 발생할 경우, 시스템이 스스로 사고의 깊이나 도구 사용 횟수를 일시적으로 제한하는 '능동적 스로틀링' 로직을 구상합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 수동 스카우트 명령어 및 최적화 태스크 고도화 완료 (v1.4.3).
-- 다음 목표: 테이블 감지 정밀화 및 UI 반응성 향상.
+- 테이블 파싱 및 진행 바 UI 고도화 완료 (v1.4.4).
+- 다음 목표: 비동기 처리 튜닝 및 능동적 스로틀링 구상.
 
 작업 목표:
-1. `utils/table_detector.py`에서 Markdown 표의 헤더와 데이터 행을 더 정확히 구분하도록 로직을 보강해줘.
-2. `ui/dashboard.py`에서 `Progress` 바가 진행 중일 때, 사이드바의 다른 정보들(Token, Cost)도 실시간으로 갱신되도록 연동을 확인해줘.
+1. `agents/researcher.py`에서 대규모 검색 수행 시 UI 갱신이 밀리지 않도록 `asyncio.sleep`을 적절히 주입하여 제어권을 양보해줘.
+2. `core/auth.py`에 최근 1분간의 API 호출 횟수를 카운트하는 로직을 추가하고, 임계치에 도달하면 `Optimizer`에게 알리는 기반을 마련해줘.
 ```

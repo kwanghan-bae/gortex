@@ -2,9 +2,14 @@
 
 ## 🚀 Backlog (To-Do)
 - [ ] **System**: 대규모 도구 실행 시 백그라운드 처리 및 스트리밍 로그 분리
-- [ ] **Data**: 에이전트 도구 실행 결과(Observation)의 상세 시각화 개선 (Markdown Table 정밀화)
+- [ ] **UX**: 사이드바 패널의 개별 애니메이션 효과(Pulse 등) 추가
 
 ## ✅ Completed
+### v1.4.4 (Table Detection Polish & UI Progress)
+- [x] `utils/table_detector.py`: Markdown 테이블 감지 로직 고도화 (구분선 미포함 또는 불규칙한 공백 대응 강화)
+- [x] `ui/dashboard.py`: 도구 실행 `Progress` 바에 `SpinnerColumn` 추가로 시각적 활동성 강화
+- [x] `ui/dashboard.py`: 사이드바 패널 높이(ratio) 재조정으로 정보 밀도 최적화
+
 ### v1.4.3 (Manual Scout & Workflow Refinement)
 - [x] `main.py`: 수동 기술 스캔 명령어 `/scout` 구현 및 `trend_scout` 노드 직접 트리거 로직 추가
 - [x] `main.py`: 명령어 처리기(`handle_command`) 반환값 고도화로 흐름 제어 유연성 확보

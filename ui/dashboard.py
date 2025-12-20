@@ -6,7 +6,7 @@ from rich.console import Console, Group
 from rich.spinner import Spinner
 from rich.syntax import Syntax
 from rich.json import JSON
-from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn
+from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn, SpinnerColumn
 from gortex.utils.table_detector import try_render_as_table
 from datetime import datetime
 import json
@@ -23,9 +23,9 @@ def create_layout() -> Layout:
         Layout(name="thought", ratio=3)
     )
     layout["sidebar"].split_column(
-        Layout(name="status", size=8),
-        Layout(name="stats", size=8),
-        Layout(name="evolution", size=8),
+        Layout(name="status", size=10),
+        Layout(name="stats", size=10),
+        Layout(name="evolution", size=10),
         Layout(name="logs")
     )
     return layout
@@ -45,12 +45,14 @@ class DashboardUI:
         
         # Progress bar for tools
         self.progress = Progress(
+            SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             BarColumn(bar_width=None),
             TimeElapsedColumn(),
             transient=True
         )
         self.tool_task = None
+
 
         # 에이전트별 색상 매핑
         self.agent_colors = {

@@ -13,39 +13,50 @@ def try_render_as_table(text: str, title: str = "Data Table") -> Optional[Table]
         return None
 
     # --- Markdown 스타일 테이블 감지 (| 구분자) ---
-    # 파이프 기호가 포함된 라인이 2개 이상이면 마크다운 테이블로 의심
-    if sum(1 for line in lines[:3] if '|' in line) >= 1:
-        header_line = lines[0].strip('|')
+    # 파이프 기호가 포함된 라인이 상단 3줄 내에 있는지 확인
+    if any('|' in line for line in lines[:3]):
+        # 헤더 후보 추출 (양 끝 파이프 제거 후 공백 제거)
+        header_line = lines[0].strip().strip('|')
         header_parts = [p.strip() for p in header_line.split('|') if p.strip()]
         
         if len(header_parts) >= 2:
-            table = Table(title=title, show_header=True, header_style="bold cyan", border_style="magenta")
-            for h in header_parts:
-                table.add_column(h)
-            
-            count = 0
+            # 두 번째 줄이 구분선(---)인지 확인
+            is_md_table = False
             start_idx = 1
-            # Markdown 구분선 (---|---|---) 감지 및 건너뛰기
-            if len(lines) > 1 and re.match(r'^[|:\s\-]+$', lines[1]):
-                start_idx = 2
-                
-            for line in lines[start_idx:]:
-                if '|' not in line: continue
-                # 파이프로 나누기 (양 끝 파이프 제거 후)
-                row = [p.strip() for p in line.strip('|').split('|')]
-                
-                # 데이터가 부족하면 빈 값으로 채우거나 남는 데이터는 버림
-                if len(row) >= len(header_parts):
-                    table.add_row(*row[:len(header_parts)])
-                    count += 1
-                elif len(row) > 0:
-                    # 부족한 경우 빈 문자열로 채움
-                    row += [""] * (len(header_parts) - len(row))
-                    table.add_row(*row)
-                    count += 1
+            if len(lines) > 1:
+                divider_line = lines[1].strip().strip('|')
+                if re.match(r'^[ \-\|\:]+$', divider_line) and '-' in divider_line:
+                    is_md_table = True
+                    start_idx = 2
             
-            if count > 0:
-                return table
+            # 구분선이 없더라도 파이프가 반복되면 테이블로 간주
+            if not is_md_table and sum(1 for line in lines[1:4] if '|' in line) >= 1:
+                is_md_table = True
+                start_idx = 1
+
+            if is_md_table:
+                table = Table(title=title, show_header=True, header_style="bold cyan", border_style="magenta")
+                for h in header_parts:
+                    table.add_column(h)
+                
+                count = 0
+                for line in lines[start_idx:]:
+                    if '|' not in line and '  ' not in line: continue
+                    # 파이프로 나누기 (양 끝 파이프 제거 후)
+                    row = [p.strip() for p in line.strip().strip('|').split('|')]
+                    
+                    if len(row) >= len(header_parts):
+                        table.add_row(*row[:len(header_parts)])
+                        count += 1
+                    elif len(row) > 0:
+                        # 부족한 경우 빈 문자열로 채움
+                        row += [""] * (len(header_parts) - len(row))
+                        table.add_row(*row)
+                        count += 1
+                
+                if count > 0:
+                    return table
+
 
     # --- CSV 스타일 감지 (콤마 구분) ---
     if ',' in lines[0] and len(lines[0].split(',')) >= 2:
