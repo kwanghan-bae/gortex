@@ -1,10 +1,16 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Interface**: 사용자 인터럽트(중단) 감지 및 즉각 피드백 루프 정교화
-- [ ] **Optimization**: 장기 세션에서의 컨텍스트 요약 성능 임계치 조정
+- [ ] **Data**: 텍스트 기반 테이블(ASCII Table) 감지 성능 고도화 (불규칙한 공백 대응)
+- [ ] **Optimization**: 시냅스 압축 시 토큰 사용량 기반 동적 임계치 적용
 
 ## ✅ Completed
+### v1.2.7 (User Interruption & Manual Summary)
+- [x] `main.py`: 에이전트 실행 중 `Ctrl+C` 감지 시 전체 종료 대신 현재 작업만 안전하게 중단하도록 개선
+- [x] `main.py`: `/summarize` 명령어 추가로 사용자가 원할 때 즉시 시냅스 압축(요약) 수행 가능
+- [x] `main.py`: 명령어 처리 결과에 따른 흐름 제어 및 상태 유지 로직 최적화
+- [x] `main.py`: 문법 오류 수정 및 비차단 입력 처리 안정화
+
 ### v1.2.6 (Few-shot Evolution & Markdown Tables)
 - [x] `agents/analyst.py`: 규칙 추출 정확도 향상을 위해 시스템 프롬프트에 3개의 Few-shot 사례 추가
 - [x] `utils/table_detector.py`: Markdown 스타일(`|` 구분자) 테이블 감지 및 파싱 로직 추가
