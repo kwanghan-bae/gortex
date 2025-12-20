@@ -105,33 +105,47 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
             try:
                 with open(log_path, "r") as f:
                     lines = f.readlines()
-                    total_lines = len(lines)
                     
-                    if total_lines == 0:
-                        ui.chat_history.append(("system", "기록된 로그가 없습니다."))
+                    # 필터링 로직 추가
+                    filter_keyword = cmd_parts[3].lower() if len(cmd_parts) > 3 else None
+                    
+                    parsed_logs = []
+                    for line in lines:
+                        entry = json.loads(line)
+                        if filter_keyword:
+                            agent = entry.get("agent", "").lower()
+                            event = entry.get("event", "").lower()
+                            if filter_keyword not in agent and filter_keyword not in event:
+                                continue
+                        parsed_logs.append(entry)
+                    
+                    total_filtered = len(parsed_logs)
+                    if total_filtered == 0:
+                        ui.chat_history.append(("system", f"검색 결과가 없습니다. (필터: {filter_keyword})" if filter_keyword else "기록된 로그가 없습니다."))
                     else:
-                        # /logs [skip] [limit]
                         skip = int(cmd_parts[1]) if len(cmd_parts) > 1 else 0
                         limit = int(cmd_parts[2]) if len(cmd_parts) > 2 else 10
                         
-                        # 최신 로그가 뒤에 있으므로 뒤에서부터 계산
-                        end_idx = max(0, total_lines - skip)
+                        end_idx = max(0, total_filtered - skip)
                         start_idx = max(0, end_idx - limit)
                         
-                        recent_logs = [json.loads(line) for line in lines[start_idx:end_idx]]
+                        recent_logs = parsed_logs[start_idx:end_idx]
+                        
+                        title = f"📜 Trace Logs"
+                        if filter_keyword: title += f" (Filter: '{filter_keyword}')"
+                        title += f" [{start_idx}~{end_idx-1} of {total_filtered}]"
                         
                         log_table = Table(
-                            title=f"📜 Trace Logs (Showing {start_idx} to {end_idx-1} of {total_lines})", 
+                            title=title, 
                             show_header=True, 
                             header_style="bold magenta",
-                            caption="사용법: /logs [skip] [limit] | /log [index] 상세조회"
+                            caption="사용법: /logs [skip] [limit] [filter] | /log [index] 상세조회"
                         )
                         log_table.add_column("Idx", justify="right", style="dim")
                         log_table.add_column("Time", style="cyan")
                         log_table.add_column("Agent", style="bold yellow")
                         log_table.add_column("Event", style="green")
                         
-                        # 최신 항목을 테이블 상단에 표시 (역순)
                         for i, entry in enumerate(reversed(recent_logs)):
                             curr_idx = end_idx - 1 - i
                             timestamp = entry.get("timestamp", "").split("T")[-1][:8]
@@ -143,7 +157,7 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
                             )
                         ui.chat_history.append(("system", log_table))
             except ValueError:
-                ui.chat_history.append(("system", "❌ 잘못된 인자입니다. 사용법: /logs [skip] [limit]"))
+                ui.chat_history.append(("system", "❌ 잘못된 인자입니다. 사용법: /logs [skip] [limit] [filter]"))
             except Exception as e:
                 ui.chat_history.append(("system", f"❌ 로그 조회 중 오류 발생: {str(e)}"))
         else:
