@@ -40,13 +40,14 @@ class SynapticIndexer:
         logger.info(f"✅ Indexing complete. Indexed {len(new_index)} files.")
 
     def _analyze_tree(self, tree: ast.AST) -> List[Dict[str, Any]]:
-        """AST를 분석하여 클래스와 함수 정보 추출"""
+        """AST를 분석하여 클래스, 함수, 임포트 정보 추출"""
         definitions = []
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
                 definitions.append({
                     "type": "class",
                     "name": node.name,
+                    "bases": [ast.unparse(b) for b in node.bases],
                     "line": node.lineno,
                     "docstring": ast.get_docstring(node)
                 })
@@ -58,7 +59,42 @@ class SynapticIndexer:
                     "args": [arg.arg for arg in node.args.args],
                     "docstring": ast.get_docstring(node)
                 })
+            elif isinstance(node, ast.Import):
+                for alias in node.names:
+                    definitions.append({
+                        "type": "import",
+                        "name": alias.name,
+                        "line": node.lineno
+                    })
+            elif isinstance(node, ast.ImportFrom):
+                definitions.append({
+                    "type": "import_from",
+                    "module": node.module,
+                    "names": [alias.name for alias in node.names],
+                    "line": node.lineno
+                })
         return definitions
+
+    def generate_map(self) -> Dict[str, Any]:
+        """프로젝트의 모듈간 관계 및 클래스 계층 구조 맵 생성"""
+        proj_map = {"nodes": {}, "edges": []}
+        for file_path, defs in self.index.items():
+            module_name = file_path.replace("/", ".").replace(".py", "")
+            proj_map["nodes"][module_name] = {
+                "file": file_path,
+                "classes": [d["name"] for d in defs if d["type"] == "class"],
+                "functions": [d["name"] for d in defs if d["type"] == "function"]
+            }
+            # 임포트 관계 추출
+            for d in defs:
+                if d["type"] == "import":
+                    proj_map["edges"].append({"from": module_name, "to": d["name"], "type": "dependency"})
+                elif d["type"] == "import_from" and d["module"]:
+                    proj_map["edges"].append({"from": module_name, "to": d["module"], "type": "dependency"})
+                elif d["type"] == "class" and d.get("bases"):
+                    for base in d["bases"]:
+                        proj_map["edges"].append({"from": d["name"], "to": base, "type": "inheritance"})
+        return proj_map
 
     def _save_index(self):
         """인덱스를 JSON 파일로 저장"""

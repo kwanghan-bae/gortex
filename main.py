@@ -9,6 +9,7 @@ from rich.console import Console
 from rich.live import Live
 from rich.panel import Panel
 from rich.table import Table
+from rich.tree import Tree
 from rich.text import Text
 from rich.align import Align
 from dotenv import load_dotenv
@@ -60,7 +61,6 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
             query = cmd_parts[1]
             indexer = SynapticIndexer()
             # 파일에서 인덱스 로드 로직이 indexer.__init__에 없으므로 수동 로드 또는 scan 필요
-            # 효율을 위해 파일이 있으면 로드하는 기능을 indexer에 추가하는 것이 좋음
             if os.path.exists(indexer.index_path):
                 with open(indexer.index_path, "r", encoding='utf-8') as f:
                     indexer.index = json.load(f)
@@ -84,6 +84,31 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
                         (r.get("docstring") or "N/A").split("\n")[0]
                     )
                 ui.chat_history.append(("system", table))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/map":
+        indexer = SynapticIndexer()
+        if os.path.exists(indexer.index_path):
+            with open(indexer.index_path, "r", encoding='utf-8') as f:
+                indexer.index = json.load(f)
+        else:
+            indexer.scan_project()
+            
+        proj_map = indexer.generate_map()
+        root_tree = Tree("📁 [bold cyan]Gortex Project Map[/bold cyan]")
+        
+        # 모듈별 노드 추가
+        for mod_name, info in proj_map["nodes"].items():
+            mod_tree = root_tree.add(f"📦 [bold yellow]{mod_name}[/bold yellow] ([dim]{info['file']}[/dim])")
+            if info["classes"]:
+                cls_tree = mod_tree.add("🏛️ [cyan]Classes[/cyan]")
+                for c in info["classes"]: cls_tree.add(f"[bold blue]{c}[/bold blue]")
+            if info["functions"]:
+                func_tree = mod_tree.add("λ [green]Functions[/green]")
+                for f in info["functions"]: func_tree.add(f"[bold green]{f}[/bold green]")
+        
+        ui.chat_history.append(("system", root_tree))
         ui.update_main(ui.chat_history)
         return "skip"
     
