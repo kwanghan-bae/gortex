@@ -14,9 +14,15 @@
 - [x] **Intelligence**: 인덱싱된 코드 구조를 LLM 프롬프트에 동적으로 주입하여 '코드 맥락 인식' 능력 고도화
 - [x] **Interface**: 코드 인덱스 검색 결과를 시각화하여 보여주는 `/search [symbol]` 명령어 구현
 - [x] **Infrastructure**: `requirements.txt` 분석을 통해 누락된 의존성을 자동으로 설치하는 'Auto-Dependency' 노드 추가
-- [ ] **Interface**: 인덱싱된 프로젝트의 전체적인 관계도를 시각화하는 `/map` 명령어 구현
+- [x] **Interface**: 인덱싱된 프로젝트의 전체적인 관계도를 시각화하는 `/map` 명령어 구현
+- [ ] **Infrastructure**: `setup.sh`를 개선하여 Docker 환경 구성을 자동화하는 'Containerization' 지원
 
 ## ✅ Completed
+### v1.6.4 (Synaptic Map Visualization)
+- [x] `utils/indexer.py`: 모듈 간 `import` 관계 및 클래스 상속 구조를 추출하는 `generate_map` 로직 추가
+- [x] `main.py`: 프로젝트의 아키텍처를 계층적으로 시각화하는 `/map` 명령어 구현
+- [x] `main.py`: `rich.tree.Tree`를 활용하여 모듈, 클래스, 함수 간의 포함 관계를 미려하게 출력
+
 ### v1.6.3 (Auto-Dependency Resolution)
 - [x] `utils/tools.py`: `execute_shell`에서 `pip install` 명령어 감지 시 패키지명을 `requirements.txt`에 자동 추가하는 기능 구현
 - [x] `agents/coder.py`: `ModuleNotFoundError` 발생 시 의존성을 설치하고 `requirements.txt`를 확인하도록 오류 대응 매뉴얼 고도화
