@@ -133,15 +133,64 @@ class AnalystAgent:
             logger.error(f"Feedback analysis parsing failed: {e}")
             return None
 
+    def analyze_self_correction(self, log_path: str = "logs/trace.jsonl") -> Optional[Dict[str, Any]]:
+        """로그에서 실패 후 성공한 패턴을 분석하여 최적화 규칙 추출"""
+        if not os.path.exists(log_path):
+            return None
+
+        try:
+            with open(log_path, "r") as f:
+                lines = f.readlines()
+                # 최근 100줄만 분석 (성능 및 토큰 절약)
+                recent_lines = lines[-100:]
+                log_content = "\n".join(recent_lines)
+
+            prompt = """
+            다음 로그 데이터를 분석하여 에이전트가 오류를 겪고 스스로 해결한 '성공적인 문제 해결 패턴'을 찾아내라.
+            찾아낸 패턴을 바탕으로, 앞으로 비슷한 오류를 방지할 수 있는 '영구적 지침(Constraint)'을 생성하라.
+
+            [분석 포인트]
+            1. Coder의 시도: `execute_shell`이 non-zero exit code를 반환했는가?
+            2. Coder의 수정: 이후 `write_file` 등을 통해 코드를 수정했는가?
+            3. 성공: 재시도한 `execute_shell`이 성공(exit code 0)했는가?
+
+            [규칙 생성 지침]
+            - 오류의 원인을 분석하여 구체적으로 작성하라.
+            - 예: "라이브러리 import 누락 시 `ImportError`가 발생하므로 사용 전 설치 여부를 먼저 확인하라."
+            - severity는 1~5 사이로 지정하라.
+
+            결과는 반드시 다음 JSON 형식을 따라라:
+            {
+                "pattern_detected": true/false,
+                "error_cause": "발견된 오류의 근본 원인",
+                "solution": "에이전트가 적용한 해결책",
+                "instruction": "앞으로 지켜야 할 영구적 지침",
+                "trigger_patterns": ["관련 키워드 1", "키워드 2"],
+                "severity": 1~5
+            }
+            """
+
+            config = types.GenerateContentConfig(
+                system_instruction=prompt,
+                temperature=0.0,
+                response_mime_type="application/json"
+            )
+            
+            response = self.auth.generate("gemini-1.5-flash", log_content, config)
+            res_data = json.loads(response.text)
+            if res_data.get("pattern_detected"):
+                return res_data
+            return None
+        except Exception as e:
+            logger.error(f"Self-correction analysis failed: {e}")
+            return None
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""
     agent = AnalystAgent()
-    last_msg = state["messages"][-1].content
+    last_msg = state["messages"][-1].content.lower()
 
-    # 1. 의도 판단 (Data Analysis vs Feedback Analysis)
-    # Manager가 이미 이 노드로 보냈으므로, 여기서는 세부 분기 수행
-    
-    # 데이터 파일 언급이 있는지 확인 (단순 체크)
+    # 1. 의도 판단
     data_files = [f for f in last_msg.split() if f.endswith(('.csv', '.xlsx', '.json'))]
     
     if data_files:
@@ -151,23 +200,36 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             "messages": [("ai", f"데이터 분석 결과입니다:\n{result}")],
             "next_node": "manager"
         }
-    else:
-        # Evolution Mode (Feedback Analysis)
-        feedback = agent.analyze_feedback(state["messages"])
-        if feedback:
+    elif "로그" in last_msg or "분석" in last_msg or "패턴" in last_msg:
+        # Self-Correction Analysis Mode
+        correction = agent.analyze_self_correction()
+        if correction:
             agent.memory.save_rule(
-                instruction=feedback["instruction"],
-                trigger_patterns=feedback["trigger_patterns"],
-                severity=feedback["severity"],
-                context=feedback.get("context")
+                instruction=correction["instruction"],
+                trigger_patterns=correction["trigger_patterns"],
+                severity=correction["severity"],
+                context=f"Self-Correction (Cause: {correction['error_cause']})"
             )
             return {
-
-                "messages": [("ai", f"새로운 규칙을 학습했습니다: '{feedback['instruction']}'")],
+                "messages": [("ai", f"자가 수정한 패턴을 분석하여 새 규칙을 학습했습니다:\n- 원인: {correction['error_cause']}\n- 지침: {correction['instruction']}")],
                 "next_node": "manager"
             }
+        else:
+            # Feedback Analysis (기존 로직 유지)
+            feedback = agent.analyze_feedback(state["messages"])
+            if feedback:
+                agent.memory.save_rule(
+                    instruction=feedback["instruction"],
+                    trigger_patterns=feedback["trigger_patterns"],
+                    severity=feedback["severity"],
+                    context=feedback.get("context")
+                )
+                return {
+                    "messages": [("ai", f"새로운 규칙을 학습했습니다: '{feedback['instruction']}'")],
+                    "next_node": "manager"
+                }
         
-        return {
-            "messages": [("ai", "요청하신 내용을 분석했으나 특이사항을 발견하지 못했습니다.")],
-            "next_node": "manager"
-        }
+    return {
+        "messages": [("ai", "요청하신 내용을 분석했으나 특이사항을 발견하지 못했습니다.")],
+        "next_node": "manager"
+    }
