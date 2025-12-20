@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Project Bundling & Export Complete (v1.6.6)
+**Status:** Security Scout & Vulnerability Scanning Complete (v1.6.7)
 
 ## 🧠 Current Context
-프로젝트 전체를 압축하여 번들로 만드는 `/bundle` 기능이 추가되었습니다. 이제 사용자는 Gortex가 작성한 결과물을 하나의 아카이브로 즉시 추출하여 실제 서비스에 적용하거나 백업할 수 있습니다.
+보안 취약점 점검 기능이 도입되어 Gortex가 작성하거나 사용하는 코드의 안정성이 한층 강화되었습니다. 이제 시스템은 외부 트렌드뿐만 아니라 내부의 보안 리스크까지 능동적으로 관리할 수 있습니다.
 
 ## 🎯 Next Objective
-**Security Scout (Vulnerability Scanning)**
-1. **`Vulnerability Check`**: `TrendScout` 에이전트를 확장하여, 현재 `requirements.txt`에 명시된 패키지들의 알려진 보안 취약점(CVE)을 인터넷 검색을 통해 점검합니다.
-2. **`Patch Recommendation`**: 취약점이 발견된 경우, 보안 패치가 적용된 최신 버전으로 업데이트할 것을 `Optimizer`에게 제안하거나 사용자에게 경고를 표시합니다.
+**Git Auto-Deploy & Synchronization**
+1. **`Git Integration`**: 현재 로컬 저장소의 상태를 원격 GitHub 저장소와 동기화하는 기능을 구현합니다.
+2. **`Deploy Command`**: `/deploy` 명령어를 통해 자동으로 커밋, 태그 생성, 그리고 원격 저장소 푸시를 일괄 처리하는 자동화 파이프라인을 구축합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 프로젝트 번들링 기능 구현 완료 (v1.6.6).
-- 다음 목표: 보안 취약점 점검 기능(Security Scout) 구축.
+- 보안 취약점 점검 기능 구현 완료 (v1.6.7).
+- 다음 목표: GitHub 자동 연동 및 배포 명령어 구현.
 
 작업 목표:
-1. `agents/trend_scout.py`를 수정하거나 확장하여 `requirements.txt`를 읽고 보안 취약점을 검색하는 기초 로직을 작성해줘.
-2. 발견된 취약점 정보를 `tech_radar.json` 또는 대시보드에 경고 형태로 출력해줘.
+1. `main.py`에 `/deploy` 명령어를 추가하여 현재 변경 사항을 자동으로 스테이징, 커밋(에이전트 생성 메시지 활용) 및 푸시하는 로직을 작성해줘.
+2. `utils/git_tool.py`를 신설하여 Git 명령어 실행 및 원격 저장소 상태를 체크하는 보조 기능을 구현해줘.
 ```

@@ -17,9 +17,16 @@
 - [x] **Interface**: 인덱싱된 프로젝트의 전체적인 관계도를 시각화하는 `/map` 명령어 구현
 - [x] **Infrastructure**: `setup.sh`를 개선하여 Docker 환경 구성을 자동화하는 'Containerization' 지원
 - [x] **Interface**: 현재 프로젝트를 ZIP 파일로 압축하여 다운로드 가능한 링크를 제공하는 `/bundle` 명령어 구현
-- [ ] **Infrastructure**: `TrendScout` 에이전트를 확장하여 새로운 파이썬 라이브러리나 기술 스택의 취약점을 점검하는 'Security Scout' 기능 추가
+- [x] **Infrastructure**: `TrendScout` 에이전트를 확장하여 새로운 파이썬 라이브러리나 기술 스택의 취약점을 점검하는 'Security Scout' 기능 추가
+- [ ] **Infrastructure**: GitHub API 연동을 통해 프로젝트를 원격 저장소에 자동으로 푸시하는 '/deploy' 명령어 구현
 
 ## ✅ Completed
+### v1.6.7 (Security Scout & Vulnerability Scanning)
+- [x] `agents/trend_scout.py`: `requirements.txt`를 읽고 주요 패키지의 알려진 보안 취약점(CVE)을 검색하는 `check_vulnerabilities` 구현
+- [x] `agents/trend_scout.py`: 검색된 취약점 정보를 분석하여 위험 수준(Severity)과 패치 권고안을 생성하는 로직 추가
+- [x] `agents/trend_scout.py`: 발견된 보안 경고를 `tech_radar.json`에 기록하여 영구적인 보안 추적 관리 지원
+- [x] `agents/trend_scout.py`: 트렌드 스캔과 보안 점검을 병렬로 실행하여 성능 최적화
+
 ### v1.6.6 (Project Bundling & Export)
 - [x] `main.py`: 현재 프로젝트의 소스 코드와 설정을 ZIP 파일로 압축하는 `/bundle` 명령어 구현
 - [x] `main.py`: `venv`, `.git`, `logs/bundles` 등 불필요한 디렉토리를 압축 대상에서 제외하는 필터링 로직 적용
