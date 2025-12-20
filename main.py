@@ -52,6 +52,40 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         ui.chat_history.append(("system", f"✅ 인덱싱 완료! {len(indexer.index)}개의 파일이 분석되었습니다."))
         ui.update_main(ui.chat_history)
         return "skip"
+
+    elif cmd == "/search":
+        if len(cmd_parts) < 2:
+            ui.chat_history.append(("system", "사용법: /search [symbol_name]"))
+        else:
+            query = cmd_parts[1]
+            indexer = SynapticIndexer()
+            # 파일에서 인덱스 로드 로직이 indexer.__init__에 없으므로 수동 로드 또는 scan 필요
+            # 효율을 위해 파일이 있으면 로드하는 기능을 indexer에 추가하는 것이 좋음
+            if os.path.exists(indexer.index_path):
+                with open(indexer.index_path, "r", encoding='utf-8') as f:
+                    indexer.index = json.load(f)
+            
+            results = indexer.search(query)
+            if not results:
+                ui.chat_history.append(("system", f"❌ '{query}'에 대한 검색 결과가 없습니다."))
+            else:
+                table = Table(title=f"🔍 Synaptic Search: '{query}'", show_header=True, header_style="bold magenta")
+                table.add_column("Type", style="cyan")
+                table.add_column("Symbol", style="bold yellow")
+                table.add_column("Location", style="green")
+                table.add_column("Description", style="dim", overflow="ellipsis")
+                
+                for r in results[:15]: # 최대 15개 표시
+                    type_style = "bold blue" if r["type"] == "class" else "bold green"
+                    table.add_row(
+                        Text(r["type"].upper(), style=type_style),
+                        r["name"],
+                        f"{r['file']}:{r['line']}",
+                        (r.get("docstring") or "N/A").split("\n")[0]
+                    )
+                ui.chat_history.append(("system", table))
+        ui.update_main(ui.chat_history)
+        return "skip"
     
     elif cmd == "/export":
         export_dir = "logs/exports"
