@@ -11,12 +11,24 @@ from gortex.agents.coder import coder_node
 from gortex.agents.researcher import researcher_node
 from gortex.agents.analyst import analyst_node
 from gortex.agents.trend_scout import trend_scout_node
+from gortex.utils.memory import summarizer_node
 
-def route_manager(state: GortexState) -> Literal["planner", "researcher", "analyst", "__end__"]:
-    """Manager의 결정에 따라 다음 노드로 라우팅"""
-    return state.get("next_node", "__end__")
+def route_manager(state: GortexState) -> Literal["summarizer", "planner", "researcher", "analyst", "__end__"]:
+    """Manager의 결정에 따라 다음 노드로 라우팅. 대화가 길면 요약 노드 거침."""
+    next_node = state.get("next_node", "__end__")
+    
+    # 메시지가 12개 이상이면 요약 노드로 먼저 이동
+    if len(state.get("messages", [])) >= 12 and next_node != "__end__":
+        return "summarizer"
+        
+    return next_node
+
+def route_after_summary(state: GortexState) -> str:
+    """요약 후 원래 가려던 노드로 복귀"""
+    return state.get("next_node", "manager")
 
 def route_coder(state: GortexState) -> Literal["coder", "manager", "__end__"]:
+
     """Coder의 작업 완료 여부에 따라 라우팅"""
     next_node = state.get("next_node", "manager")
     if next_node == "__end__":
@@ -37,6 +49,7 @@ def compile_gortex_graph():
     workflow.add_node("researcher", researcher_node)
     workflow.add_node("analyst", analyst_node)
     workflow.add_node("trend_scout", trend_scout_node)
+    workflow.add_node("summarizer", summarizer_node)
 
     # 3. 엣지 연결
     # 시스템 시작 시 먼저 트렌드 스캔 수행
@@ -48,6 +61,7 @@ def compile_gortex_graph():
         "manager",
         route_manager,
         {
+            "summarizer": "summarizer",
             "planner": "planner",
             "researcher": "researcher",
             "analyst": "analyst",
@@ -55,7 +69,20 @@ def compile_gortex_graph():
         }
     )
 
+    # Summarizer -> Target
+    workflow.add_conditional_edges(
+        "summarizer",
+        route_after_summary,
+        {
+            "planner": "planner",
+            "researcher": "researcher",
+            "analyst": "analyst",
+            "manager": "manager"
+        }
+    )
+
     # Planner -> Coder
+
     workflow.add_edge("planner", "coder")
 
     # Coder 루프 및 완료 후 Manager 복귀

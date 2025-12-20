@@ -9,6 +9,7 @@ from gortex.core.graph import compile_gortex_graph
 from gortex.ui.dashboard import DashboardUI
 from gortex.ui.dashboard_theme import GORTEX_THEME
 from gortex.core.observer import GortexObserver
+from gortex.utils.token_counter import count_tokens, estimate_cost
 
 load_dotenv()
 
@@ -17,7 +18,10 @@ async def run_gortex():
     ui = DashboardUI(console)
     observer = GortexObserver()
     
-    # 1. 그래프 컴파일
+    # 누적 토큰 및 비용
+    total_tokens = 0
+    total_cost = 0.0
+
     workflow = compile_gortex_graph()
     # Persistence 설정 (SQLite)
     from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
@@ -65,21 +69,29 @@ async def run_gortex():
                         for node_name, output in event.items():
                             ui.current_agent = node_name
                             if "messages" in output:
-                                # 메시지 업데이트 (단순 추가 방식)
+                                # 메시지 업데이트 및 토큰 계산
                                 for msg in output["messages"]:
+                                    content = ""
                                     if isinstance(msg, tuple):
+                                        role, content = msg
                                         ui.chat_history.append(msg)
                                     else:
-                                        # BaseMessage 객체인 경우
                                         role = "ai" if msg.type == "ai" else "system"
-                                        ui.chat_history.append((role, msg.content))
+                                        content = msg.content
+                                        ui.chat_history.append((role, content))
+                                    
+                                    # 토큰 누적
+                                    new_tokens = count_tokens(content)
+                                    total_tokens += new_tokens
+                                    total_cost += estimate_cost(new_tokens)
                             
                             # 통계 업데이트
                             ui.update_main(ui.chat_history)
                             ui.update_sidebar(
                                 agent=ui.current_agent,
                                 step=str(output.get("current_step", "N/A")),
-                                tokens=0, # 토큰 계산기 필요
+                                tokens=total_tokens,
+                                cost=total_cost,
                                 rules=len(initial_state["active_constraints"])
                             )
                             
@@ -87,7 +99,8 @@ async def run_gortex():
                             observer.log_event(node_name, "node_complete", output)
 
                     ui.current_agent = "Idle"
-                    ui.update_sidebar("Idle", "N/A", 0, len(initial_state["active_constraints"]))
+                    ui.update_sidebar("Idle", "N/A", total_tokens, total_cost, len(initial_state["active_constraints"]))
+
 
                 except KeyboardInterrupt:
                     break

@@ -2,9 +2,16 @@
 
 ## 🚀 Backlog (To-Do)
 - [ ] **Polishing**: 대시보드 테마 고도화 및 애니메이션 추가
-- [ ] **Optimization**: 토큰 계산기 및 비용 추적기 정밀 구현
+- [ ] **Self-Cognition**: Optimizer 에이전트의 자기 개선 로직 정밀 구현
 
 ## ✅ Completed
+### v1.1.0 (Refinement & Optimization)
+- [x] `utils/token_counter.py`: 토큰 계산 및 비용 추정 유틸리티 구현
+- [x] `utils/memory.py`: 12개 메시지 이상 시 작동하는 시냅스 압축(요약) 로직 구현
+- [x] `core/graph.py`: `summarizer` 노드 추가 및 워크플로우 통합
+- [x] `ui/dashboard.py`: 실시간 토큰 사용량 및 예상 비용 표시 기능 강화
+- [x] `tests/test_token_counter.py`: 토큰 계산기 단위 테스트 통과
+
 ### v1.0.9 (Infrastructure & UI)
 - [x] `main.py`: LangGraph 실행 엔진 및 SQLite 체크포인트 통합
 - [x] `ui/dashboard.py`: Rich 기반의 실시간 2분할(Chat/Status) 대시보드 구현

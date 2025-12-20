@@ -47,7 +47,7 @@ class DashboardUI:
             Panel(Group(*msg_group), title="[bold cyan]🧠 Gortex Terminal[/bold cyan]")
         )
 
-    def update_sidebar(self, agent: str, step: str, tokens: int, rules: int):
+    def update_sidebar(self, agent: str, step: str, tokens: int, cost: float, rules: int):
         """사이드바 정보 업데이트"""
         # Status
         status_text = Text()
@@ -62,12 +62,15 @@ class DashboardUI:
         # Stats
         stats_table = Table.grid(expand=True)
         stats_table.add_row("Tokens Used:", f"[bold cyan]{tokens:,}[/bold cyan]")
-        stats_table.add_row("Estimated Cost:", f"[bold green]${tokens * 0.0000001:.4f}[/bold green]") # Very rough estimate
+        stats_table.add_row("Est. Cost:", f"[bold green]${cost:.6f}[/bold green]")
         self.layout["stats"].update(Panel(stats_table, title="📊 Usage Stats"))
 
         # Evolution
-        evo_text = Text(f"Active Rules: {rules}", style="magenta")
+        evo_text = Text(f"Active Rules: {rules}", style="bold magenta")
+        if rules > 0:
+            evo_text.append("\n[LEARNED MODE]", style="blink magenta")
         self.layout["evolution"].update(Panel(evo_text, title="🧬 Evolution"))
+
 
     def render(self):
         """현재 상태를 Live UI에 출력할 준비"""
