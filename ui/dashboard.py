@@ -53,7 +53,6 @@ class DashboardUI:
         self.tool_task = None
 
         # 에이전트별 색상 매핑
-
         self.agent_colors = {
             "manager": "agent.manager",
             "planner": "agent.planner",
@@ -63,6 +62,18 @@ class DashboardUI:
             "trend_scout": "agent.trend_scout",
             "summarizer": "agent.summarizer",
             "optimizer": "agent.optimizer"
+        }
+        
+        # 에이전트별 애니메이션 스타일 매핑
+        self.agent_spinners = {
+            "manager": "dots",
+            "planner": "bouncingBar",
+            "coder": "simpleDotsScrolling",
+            "researcher": "earth",
+            "analyst": "pulse",
+            "trend_scout": "moon",
+            "summarizer": "aesthetic",
+            "optimizer": "runner"
         }
 
     def update_main(self, messages: list):
@@ -130,7 +141,7 @@ class DashboardUI:
         # 에이전트별 색상 적용
         style = self.agent_colors.get(agent_name.lower(), "agent.manager")
         title = f"💭 [{style}]Agent reasoning ({agent_name})[/{style}]"
-        # 테두리 색상은 Theme에서 가져옴
+        # 테두리 색상은 cyan으로 고정 (가독성 목적)
         self.layout["thought"].update(
             Panel(Text(thought, style="italic cyan"), title=title, border_style="cyan")
         )
@@ -178,7 +189,6 @@ class DashboardUI:
             self.tool_task = None
 
     def update_sidebar(self, agent: str, step: str, tokens: int, cost: float, rules: int):
-
         """사이드바 정보 업데이트"""
         self.current_agent = agent
         self.current_step = step
@@ -197,7 +207,8 @@ class DashboardUI:
         
         status_group = [status_text]
         if agent != "Idle":
-            status_group.append(Spinner("dots", text=f"[{agent_style}]{agent} is active[/{agent_style}]"))
+            spinner_style = self.agent_spinners.get(agent.lower(), "dots")
+            status_group.append(Spinner(spinner_style, text=f"[{agent_style}]{agent} is active[/{agent_style}]"))
 
         self.layout["status"].update(Panel(Group(*status_group), title="📡 System Status"))
 
@@ -212,7 +223,6 @@ class DashboardUI:
             stats_group.append(self.progress)
 
         self.layout["stats"].update(Panel(Group(*stats_group), title="📊 Usage Stats"))
-
 
         # Evolution
         evo_text = Text(f"Active Rules: {rules}\n", style="bold magenta")

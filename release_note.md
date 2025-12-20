@@ -1,10 +1,16 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Polishing**: 대시보드 테마 고도화 및 에이전트별 전용 애니메이션 추가
-- [ ] **Intelligence**: Observer 데이터를 활용한 Optimizer의 자동 코드 패치 기능 실증
+- [ ] **Evolution**: 추출된 규칙 간의 충돌 감지 및 해결 전략 구축
+- [ ] **Intelligence**: Optimizer가 제안한 패치를 Planner가 수락할지 결정하는 컨펌 로직 추가
 
 ## ✅ Completed
+### v1.3.2 (Self-Modification Realization & UI Polish)
+- [x] `agents/optimizer.py`: API 할당량 초과 등에 대응하는 구체적인 '파일 기반 작업 지시문' 생성 로직 강화
+- [x] `ui/dashboard.py`: 각 에이전트(Planner, Coder 등)마다 고유한 Spinner 스타일 적용으로 시각적 다양성 확보
+- [x] `ui/dashboard.py`: 전체 UI 레이아웃 및 들여쓰기 정리 완료
+- [x] `tests/test_optimizer.py`: 구조화된 데이터 반환 및 분석 로직 검증 완료
+
 ### v1.3.1 (Advanced Table Detection & Log Detailed View)
 - [x] `utils/table_detector.py`: 단일 공백 구분 및 데이터 유실 가능성이 있는 행에 대한 복원 휴리스틱 로직 강화
 - [x] `main.py`: `/log <index>` 명령어 추가로 특정 로그의 상세 페이로드(JSON) 확인 기능 구현

@@ -52,9 +52,13 @@ class OptimizerAgent:
 
         prompt = f"""너는 Gortex v1.0의 성능 최적화 전문가다.
 아래의 최근 시스템 로그(JSON)를 분석하여 다음을 수행하라:
-1. 반복적으로 발생하는 오류(error) 패턴이 있는가?
+1. 반복적으로 발생하는 오류(error) 패턴이 있는가? 특히 '429 Quota Exhausted'나 타임아웃을 확인하라.
 2. 특정 에이전트나 도구에서 심각한 지연(latency)이 발생하는가?
 3. 시스템 효율성이나 안정성을 높이기 위한 구체적인 개선 코드 또는 설정 변경안을 제시하라.
+
+[분석 가이드라인]
+- 만약 API 할당량 초과가 잦다면: "core/auth.py의 Jitter 대기 시간을 20% 늘리거나, 특정 노드에서 더 가벼운 모델(flash-lite)을 쓰도록 수정하라"와 같은 구체적인 태스크를 생성하라.
+- 만약 특정 도구에서 에러가 반복된다면: 해당 도구의 예외 처리 로직을 보강하는 태스크를 생성하라.
 
 [Recent Logs]
 {json.dumps(compact_logs, ensure_ascii=False, indent=2)}
@@ -62,10 +66,11 @@ class OptimizerAgent:
 결과는 반드시 다음 JSON 형식을 따라라:
 {{
     "analysis": "문제점 및 원인 분석 결과 (한국어)",
-    "improvement_task": "에이전트가 즉시 수행할 수 있는 구체적인 작업 지시문 (예: 'utils/tools.py의 에러 핸들링 보강')",
+    "improvement_task": "에이전트가 즉시 수행할 수 있는 구체적인 파일 기반 작업 지시문 (예: 'core/auth.py의 switch_account 메서드 내 wait_time 범위를 10~20초로 조정')",
     "priority": "high/medium/low"
 }}
 """
+
 
         try:
             response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {
