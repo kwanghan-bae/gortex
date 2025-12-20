@@ -5,6 +5,7 @@ from google.genai import types
 from gortex.core.auth import GortexAuth
 from gortex.core.state import GortexState
 from gortex.utils.tools import list_files
+from gortex.utils.indexer import SynapticIndexer
 
 logger = logging.getLogger("GortexPlanner")
 
@@ -14,17 +15,32 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
     사용자의 목표를 달성하기 위해 원자적 단위(Atomic Unit)의 실행 계획을 수립합니다.
     """
     auth = GortexAuth()
+    indexer = SynapticIndexer()
     
-    # 1. 현재 환경 파악
+    # 1. 인덱스 기반 맥락 정보 추출
+    last_msg_obj = state["messages"][-1]
+    last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
+    search_results = indexer.search(last_msg) if last_msg else []
+    
+    context_info = ""
+    if search_results:
+        context_info = "\n[Synaptic Index Search Results]\n"
+        for res in search_results[:5]: # 상위 5개만 주입
+            context_info += f"- {res['type'].upper()} '{res['name']}' in {res['file']} (Line {res['line']})\n"
+            if res.get('docstring'):
+                context_info += f"  Doc: {res['docstring'].split('\\n')[0]}\n"
+
+    # 2. 현재 환경 파악
     current_files = list_files(state.get("working_dir", "."))
     file_cache = state.get("file_cache", {})
     
-    # 2. 시스템 프롬프트 구성
+    # 3. 시스템 프롬프트 구성
     base_instruction = f"""너는 Gortex v1.0 시스템의 수석 아키텍트(Planner)다.
 현재 작업 디렉토리의 파일 구조를 분석하고, 사용자의 목표를 달성하기 위한 구체적이고 검증 가능한 단계(Step)들을 계획하라.
 
 [Current File Structure]
 {current_files}
+{context_info}
 
 [File Cache Status]
 현재 너는 {len(file_cache)}개 파일의 최신 내용을 기억하고 있다. 
@@ -32,27 +48,10 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
 중요한 변경이 예상되거나 확실하지 않다면 다시 읽는 계획을 세워라.
 
 [Planning Rules]
-
-1. 작업을 '원자적 단위(Atomic Unit)'로 쪼개라. (예: "로그인 구현" -> "파일 읽기" -> "코드 작성" -> "테스트 실행")
-
+1. 작업을 '원자적 단위(Atomic Unit)'로 쪼개라.
 2. 각 단계는 `coder` 에이전트가 수행할 수 있는 구체적인 행동이어야 한다.
-
-3. 시스템 최적화 제안(System Optimization Request)이 포함된 경우, 그 타당성을 반드시 검토하라. 
-   - [검토 기준]: 
-     1) 보안: 제안된 패치가 시스템 보안을 해치지 않는가? 
-     2) 성능: 실제적인 이득이 있는가? 
-     3) 호환성: 기존의 핵심 기능을 파괴하지 않는가?
-   - 제안이 현재 아키텍처에 적합한지 분석하여 `thought_process`에 명시하라.
-   - **[자기 개조]**: 제안이 타당하다면 즉시 `read_file`로 대상 파일을 확인하고, `write_file` 단계를 계획하여 시스템을 스스로 개선하라. 
-   - 타당하지 않다면 논리적인 이유를 밝히고 해당 단계를 거부하라.
-4. 사용 가능한 도구(Action):
-
-
-   - read_file: 파일 내용 확인 (수정 전 필수)
-   - write_file: 파일 생성 또는 수정
-   - execute_shell: 명령어 실행 (테스트, 설치 등)
-   - list_files: 디렉토리 확인
-4. 이미 존재하는 파일을 수정할 때는 반드시 먼저 읽는 단계를 포함하라.
+3. 심볼명(클래스/함수명)을 언급했으나 파일 경로를 모를 경우, 제공된 [Synaptic Index Search Results]를 참조하여 정확한 경로를 target으로 설정하라.
+4. 시스템 최적화 제안(System Optimization Request)이 포함된 경우, 그 타당성을 반드시 검토하라.
 5. 코드를 작성한 후에는 반드시 검증(테스트) 단계를 포함하라.
 
 [Output Schema (Strict JSON)]
