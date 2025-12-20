@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Synaptic Search UI & Interaction Complete (v1.6.2)
+**Status:** Auto-Dependency Resolution Complete (v1.6.3)
 
 ## 🧠 Current Context
-코드 검색 인터페이스가 완성되었습니다. 사용자와 에이전트 모두 프로젝트의 지식 베이스(인덱스)에 자유롭게 접근할 수 있으며, 이는 복잡한 대규모 프로젝트 작업 시의 인지 부하를 획기적으로 낮춰줍니다.
+에이전트가 코드를 실행하는 도중 발생하는 의존성 오류를 스스로 해결하고 프로젝트 설정(`requirements.txt`)을 업데이트하는 기능이 완성되었습니다. 이제 Gortex는 환경 설정에 구애받지 않고 더 독립적으로 개발 작업을 수행할 수 있습니다.
 
 ## 🎯 Next Objective
-**Auto-Dependency Resolution**
-1. **`Dependency Detection`**: 에이전트가 코드를 작성하거나 실행할 때 발생할 수 있는 `ModuleNotFoundError`를 감지합니다.
-2. **`Auto-Install Node`**: `Optimizer` 또는 새로운 `Installer` 노드를 통해 `pip install` 명령어를 생성하고, `requirements.txt`를 자동으로 업데이트하는 자가 수복 워크플로우를 구축합니다.
+**Synaptic Map Visualization**
+1. **`Relationship Mapping`**: 클래스 상속 관계나 함수 호출 관계를 분석하여 프로젝트의 전체적인 '지도(Map)'를 생성하는 기능을 구현합니다.
+2. **`Visual Architecture`**: `/map` 명령어를 통해 프로젝트의 주요 모듈 간 의존 관계를 Tree 또는 Graph 형태로 대시보드에 출력하여 아키텍처 이해를 돕습니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 코드 인덱스 검색 명령어 및 UI 구현 완료 (v1.6.2).
-- 다음 목표: 누락된 의존성 자동 설치 엔진 구축.
+- 누락 의존성 자동 설치 및 설정 업데이트 완료 (v1.6.3).
+- 다음 목표: 프로젝트 관계도 시각화(`/map`).
 
 작업 목표:
-1. `agents/coder.py`의 오류 대응 매뉴얼에 `ModuleNotFoundError` 발생 시 의존성 설치 단계를 계획하도록 지침을 보강해줘.
-2. `utils/tools.py`의 `execute_shell`에서 설치 명령어 실행 시 `requirements.txt`에 해당 패키지를 자동 추가하는 보조 기능을 검토해줘.
+1. `utils/indexer.py`를 확장하여 모듈 간의 `import` 관계 및 클래스 상속 관계를 추출하는 `generate_map` 기능을 구현해줘.
+2. `main.py`에 `/map` 명령어를 추가하여 프로젝트의 아키텍처를 계층적으로 보여주는 Tree UI를 구성해줘.
 ```

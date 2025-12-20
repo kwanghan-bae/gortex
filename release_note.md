@@ -13,9 +13,15 @@
 - [x] **System**: 대규모 코드베이스 분석을 위한 'Synaptic Indexing' (AST 기반 코드 검색) 엔진 구축
 - [x] **Intelligence**: 인덱싱된 코드 구조를 LLM 프롬프트에 동적으로 주입하여 '코드 맥락 인식' 능력 고도화
 - [x] **Interface**: 코드 인덱스 검색 결과를 시각화하여 보여주는 `/search [symbol]` 명령어 구현
-- [ ] **Infrastructure**: `requirements.txt` 분석을 통해 누락된 의존성을 자동으로 설치하는 'Auto-Dependency' 노드 추가
+- [x] **Infrastructure**: `requirements.txt` 분석을 통해 누락된 의존성을 자동으로 설치하는 'Auto-Dependency' 노드 추가
+- [ ] **Interface**: 인덱싱된 프로젝트의 전체적인 관계도를 시각화하는 `/map` 명령어 구현
 
 ## ✅ Completed
+### v1.6.3 (Auto-Dependency Resolution)
+- [x] `utils/tools.py`: `execute_shell`에서 `pip install` 명령어 감지 시 패키지명을 `requirements.txt`에 자동 추가하는 기능 구현
+- [x] `agents/coder.py`: `ModuleNotFoundError` 발생 시 의존성을 설치하고 `requirements.txt`를 확인하도록 오류 대응 매뉴얼 고도화
+- [x] `utils/tools.py`: 중복 패키지 추가 방지 및 대소문자 구분 없는 의존성 체크 로직 강화
+
 ### v1.6.2 (Synaptic Search UI & Interaction)
 - [x] `main.py`: 사용자가 코드 인덱스를 직접 쿼리할 수 있는 `/search [query]` 명령어 구현
 - [x] `main.py`: 검색 결과를 `rich.table.Table`을 활용하여 파일명, 라인, 심볼 타입, 독스트링 요약과 함께 시각화
