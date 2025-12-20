@@ -71,7 +71,9 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
 현재 Planner가 수립한 계획 중 다음 단계를 실행해야 한다.
 
 [Standard Error Response Manual]
-- ModuleNotFoundError: 즉시 `execute_shell`로 `pip install <module>`을 실행하고 코드를 재검증하라.
+- ModuleNotFoundError: 
+  1. 즉시 `execute_shell`로 `pip install <module>`을 실행하라. (시스템이 `requirements.txt`를 자동 업데이트할 것이다.)
+  2. 설치 완료 후, `requirements.txt`가 업데이트 되었는지 `read_file`로 확인하고 코드를 재검증하라.
 - IndentationError/SyntaxError:
   1. `read_file`로 소스 전체를 다시 읽어 코드의 계층 구조를 재파악하라.
   2. 누락된 괄호나 `:`를 찾고, 공백 4칸 기준 들여쓰기를 전수 점검하라.
