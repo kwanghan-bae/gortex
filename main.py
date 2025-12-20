@@ -25,6 +25,7 @@ from gortex.utils.tools import get_file_hash
 from gortex.utils.indexer import SynapticIndexer
 from gortex.utils.docker_gen import DockerGenerator
 from gortex.utils.git_tool import GitTool
+from gortex.utils.notifier import Notifier
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -167,6 +168,14 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
                     ui.chat_history.append(("system", f"✅ 배포 완료! ({branch} 브랜치로 푸시됨)"))
             except Exception as e:
                 ui.chat_history.append(("system", f"❌ 배포 실패: {str(e)}"))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/notify":
+        msg = user_input[8:].strip() if len(user_input) > 8 else "현재 Gortex 시스템이 정상 작동 중입니다."
+        notifier = Notifier()
+        notifier.send_notification(msg)
+        ui.chat_history.append(("system", "🔔 알림 전송을 완료했습니다."))
         ui.update_main(ui.chat_history)
         return "skip"
     
@@ -458,6 +467,11 @@ async def run_gortex():
                                     for msg in output["messages"]:
                                         role, content = (msg[0], msg[1]) if isinstance(msg, tuple) else (msg.type, msg.content)
                                         ui.chat_history.append((role, content))
+                                        
+                                        # [AUTO-NOTIFY] 작업 완료 시 알림
+                                        if role == "ai" and "모든 계획된 작업을 완료했습니다" in str(content):
+                                            Notifier().send_notification(f"세션 {thread_id}의 모든 작업이 성공적으로 완료되었습니다.", title="✅ Task Completed")
+
                                         if isinstance(content, str):
                                             t = count_tokens(content)
                                             total_tokens += t
