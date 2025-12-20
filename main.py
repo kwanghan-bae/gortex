@@ -241,10 +241,12 @@ async def run_gortex():
                                 ui.update_logs(log_entry)
                                 observer.log_event(node_name, "node_complete", output)
                                 
-                                await asyncio.sleep(0.1)
+                                # UI 반응성 향상을 위해 짧은 대기 (Thought 인지용)
+                                await asyncio.sleep(0.05)
                                 ui.reset_thought_style()
                                 
                     except KeyboardInterrupt:
+
                         interrupted_last_time = True
                         ui.chat_history.append(("system", "⚠️ 사용자에 의해 작업이 중단되었습니다. 상태가 보존되었습니다."))
                         ui.update_main(ui.chat_history)

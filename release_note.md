@@ -2,9 +2,14 @@
 
 ## 🚀 Backlog (To-Do)
 - [ ] **System**: 대규모 도구 실행 시 백그라운드 처리 및 스트리밍 로그 분리
-- [ ] **Intelligence**: Optimizer의 자가 진단 결과를 기반으로 한 자동 라이브러리 설치 루프
+- [ ] **Data**: 에이전트 간 파일 캐시 공유 로직의 정합성 테스트 추가
 
 ## ✅ Completed
+### v1.3.8 (Coder IQ Boost & UI Smoothness)
+- [x] `agents/coder.py`: 'Standard Error Response Manual' 추가로 ModuleNotFoundError, IndentationError 등에 대한 즉각 대응 지능 강화
+- [x] `main.py`: UI 갱신 대기 시간(0.05s) 및 위치 최적화로 에이전트 사고 과정 스트리밍 시각적 부드러움 향상
+- [x] `main.py`: 로깅 수준 및 비동기 처리 구조 정리
+
 ### v1.3.7 (Cache Concurrency & Display Optimization)
 - [x] `utils/tools.py`: 파일 작성과 해시 갱신을 원자적으로 수행하는 `write_file_with_hash` 통합 함수 추가
 - [x] `ui/dashboard.py`: 메인 채팅 패널의 메시지 표시 한도를 15개로 조정하고, 초과 시 생략 알림 표시 로직 구현

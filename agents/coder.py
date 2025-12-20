@@ -70,8 +70,15 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
     base_instruction = f"""너는 Gortex v1.0의 수석 개발자(Coder)다.
 현재 Planner가 수립한 계획 중 다음 단계를 실행해야 한다.
 
+[Standard Error Response Manual]
+- ModuleNotFoundError: 즉시 `execute_shell`로 `pip install <module>`을 실행하고 코드를 재검증하라.
+- IndentationError/SyntaxError: `read_file`로 소스 전체를 다시 읽고, 누락된 괄호나 들여쓰기를 정밀 교정하라.
+- FileNotFoundError: `list_files`로 파일 경로를 재확인하고, 상대 경로가 정확한지 검토하라.
+- PermissionError: `execute_shell`로 `chmod` 명령어를 사용하여 권한을 확보하라.
+
 [Current Step]
 {json.dumps(current_step, ensure_ascii=False, indent=2)}
+
 
 [Tool Output / Context]
 {tool_output if tool_output else "(Not executed yet)"}

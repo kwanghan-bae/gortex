@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Cache Concurrency & Display Optimization Complete (v1.3.7)
+**Status:** Coder IQ Boost & UI Smoothness Complete (v1.3.8)
 
 ## 🧠 Current Context
-시스템의 안정성과 UI 반응성이 더욱 견고해졌습니다. 파일 캐시 업데이트가 안전하게 통합되었으며, 대시보드는 많은 양의 대화가 쌓여도 가독성을 잃지 않도록 최적화되었습니다.
+시스템의 실무 능력과 사용자 경험이 한층 강화되었습니다. `Coder`는 이제 오류 발생 시 더 명확한 매뉴얼에 따라 행동하며, 대시보드는 에이전트의 활동을 끊김 없이 부드럽게 보여줍니다.
 
 ## 🎯 Next Objective
-**Intelligence & Robustness Refinement**
-1. **`Auto-Correction` Refinement**: `Coder` 에이전트가 `execute_shell` 실패 시 `stderr`를 보고 스스로 수정하는 루프를 더 지능적으로 만들기 위해, 일반적인 에러 메시지(ModuleNotFoundError 등)에 대한 '즉각적인 해결 라이브러리'를 프롬프트에 사례로 추가합니다.
-2. **`Background Tools`**: 시간이 오래 걸리는 도구(예: 대규모 검색 또는 긴 테스트) 실행 시 UI가 완전히 멈추지 않도록 비동기 처리를 더 정교하게 다듬습니다.
+**Concurrency & Data Reliability**
+1. **`Cache Integrity`**: 에이전트들이 파일 시스템을 조작할 때 `file_cache`가 실제 디스크 상태를 100% 반영하도록, 모든 파일 수정 도구(`write_file`, `execute_shell` 중 파일 생성 시)에 대한 해시 사후 검증을 의무화합니다.
+2. **`Background Execution`**: 사용자가 긴 조사를 요청했을 때, 대시보드 UI가 응답을 기다리는 동안에도 시스템 상태를 계속 보여줄 수 있도록 백그라운드 태스크 관리 로직을 고도화합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 캐시 정합성 및 UI 최적화 완료 (v1.3.7).
-- 다음 목표: Coder 자가 수정 지능 강화 및 도구 실행 비동기성 고도화.
+- Coder 지능 강화 및 UI 최적화 완료 (v1.3.8).
+- 다음 목표: 캐시 무결성 강화 및 백그라운드 실행 로직 정교화.
 
 작업 목표:
-1. `agents/coder.py`의 시스템 프롬프트에 'Python 에러 코드별 표준 대응 매뉴얼'을 숏컷 형태로 추가하여, 에러 발생 시 더 빠르게 코드를 수정하도록 해줘.
-2. `main.py`에서 `app.astream` 실행 중 UI 업데이트가 더 매끄럽게 되도록 `asyncio.sleep` 위치와 갱신 주기를 최적화해줘.
+1. `utils/tools.py`의 `execute_shell` 함수가 실행 후 현재 디렉토리의 파일 해시가 변경되었는지 감지하여 `state['file_cache']` 업데이트를 유도하는 힌트를 반환하도록 수정해줘.
+2. `tests/test_tools.py`에 파일 해시 충돌 및 대량 파일 변경 시의 캐시 정합성 테스트를 보강해줘.
 ```
