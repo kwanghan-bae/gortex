@@ -61,6 +61,7 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
             "thread_id": thread_id,
             "exported_at": datetime.now().isoformat(),
             "chat_history": serializable_history,
+            "thought_history": ui.thought_history,
             "file_cache": all_sessions_cache.get(thread_id, {}) if all_sessions_cache else {}
         }
         
@@ -84,7 +85,15 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
                         data = json.load(f)
                     
                     # 현재 세션에 데이터 주입
-                    ui.chat_history.extend(data.get("chat_history", []))
+                    imported_history = [(r, f"[RESTORED] {c}" if r != "system" else c) for r, c in data.get("chat_history", [])]
+                    ui.chat_history.extend(imported_history)
+                    
+                    if "thought_history" in data:
+                        ui.thought_history.extend(data["thought_history"])
+                        if data["thought_history"]:
+                            last_thought = data["thought_history"][-1]
+                            ui.update_thought(f"[RESTORED] {last_thought[1]}", agent_name=last_thought[0])
+
                     if all_sessions_cache is not None and thread_id:
                         all_sessions_cache[thread_id].update(data.get("file_cache", {}))
                     

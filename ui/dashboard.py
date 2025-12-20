@@ -36,6 +36,7 @@ class DashboardUI:
         self.layout = create_layout()
         self.chat_history = []
         self.agent_thought = ""
+        self.thought_history = [] # 세션 전체 사고 과정 기록
         self.current_agent = "Idle"
         self.last_agent = "Idle"
         self.current_step = "N/A"
@@ -151,6 +152,7 @@ class DashboardUI:
     def update_thought(self, thought: str, agent_name: str = "agent"):
         """에이전트의 사고 과정 실시간 업데이트 (시각 효과 추가)"""
         self.agent_thought = thought
+        self.thought_history.append((agent_name, thought, datetime.now().isoformat()))
         style = self.agent_colors.get(agent_name.lower(), "agent.manager")
         title = f"💭 [{style}]AGENT REASONING ({agent_name.upper()})[/{style}]"
         self.layout["thought"].update(Panel(Text(thought, style="italic cyan"), title=title, border_style="cyan", padding=(1, 2)))
