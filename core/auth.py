@@ -31,15 +31,26 @@ class GortexAuth:
         
         if not self.api_keys:
             logger.warning("⚠️ .env 파일에 GEMINI_API_KEY가 설정되지 않았습니다.")
-            # 테스트 환경 등을 위해 빈 리스트 허용, 실제 호출 시 에러 발생
         
         self.current_index = 0
         self.clients: List[genai.Client] = []
+        self.call_history: List[float] = [] # API 호출 기록 (최근 1분)
         
         for key in self.api_keys:
             self.clients.append(genai.Client(api_key=key))
 
+    def _track_call(self):
+        """호출 횟수 기록 및 1분 경과 기록 정리"""
+        now = time.time()
+        self.call_history.append(now)
+        # 1분(60초) 이전의 기록 삭제
+        self.call_history = [t for t in self.call_history if now - t < 60]
+        
+        if len(self.call_history) > 10: # 초당 1회 이상 빈발 시 경고 (무료 티어 기준)
+            logger.warning(f"🚀 API call frequency is high: {len(self.call_history)} calls/min")
+
     def get_client(self) -> genai.Client:
+
         """현재 활성화된 계정의 클라이언트 반환"""
         if not self.clients:
             raise ValueError("사용 가능한 Gemini API 클라이언트가 없습니다.")
@@ -65,7 +76,9 @@ class GortexAuth:
         if not self.clients:
              raise ValueError("API 클라이언트가 초기화되지 않았습니다. .env를 확인하세요.")
 
+        self._track_call()
         max_retries = len(self.clients) * 2
+
         
         for attempt in range(max_retries):
             try:

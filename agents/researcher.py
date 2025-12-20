@@ -72,7 +72,11 @@ class ResearcherAgent:
     async def search_and_summarize(self, query: str) -> str:
         """검색 쿼리를 기반으로 웹 조사 수행"""
         search_url = f"https://duckduckgo.com/html/?q={query}"
+        
+        # 비동기 제어권 양보 (UI 갱신 기회 부여)
+        await asyncio.sleep(0)
         return await self.scrape_url(search_url)
+
 
 def researcher_node(state: GortexState) -> Dict[str, Any]:
     """Researcher 노드 엔트리 포인트 (Sync wrapper for async)"""

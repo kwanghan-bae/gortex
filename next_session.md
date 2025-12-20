@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Table Detection Polish & UI Progress Complete (v1.4.4)
+**Status:** Async Responsiveness & Auth Monitoring Complete (v1.4.5)
 
 ## 🧠 Current Context
-시스템의 시각적 완성도와 데이터 파싱 능력이 정점에 가까워지고 있습니다. 이제 대시보드는 거의 모든 형태의 표 데이터를 정확히 렌더링하며, 도구 실행 시 진행 상태를 더 역동적으로 보여줍니다.
+시스템의 내부 모니터링과 UI 반응성이 더욱 정교해졌습니다. 이제 `Auth` 엔진은 자신의 활동 빈도를 스스로 감시하며, `Researcher`는 긴 작업을 수행하면서도 UI가 얼어붙지 않도록 제어권을 양보합니다.
 
 ## 🎯 Next Objective
-**Concurrency Refinement & Real-world Usage**
-1. **`Background Execution`**: Researcher와 같이 외부 API나 브라우저를 사용하는 도구들이 실행되는 동안에도 UI가 부드럽게 유지되도록 비동기 처리(asyncio)의 세밀한 구간을 튜닝합니다.
-2. **`Adaptive Throttling`**: `429 Quota Exhausted` 에러가 자주 발생할 경우, 시스템이 스스로 사고의 깊이나 도구 사용 횟수를 일시적으로 제한하는 '능동적 스로틀링' 로직을 구상합니다.
+**Adaptive Throttling & Advanced Logging**
+1. **`Adaptive Throttling`**: `Auth`에서 감지한 호출 빈도가 임계치를 넘을 경우, `Manager`가 다음 태스크의 사고 깊이를 낮추거나(Flash-Lite 모델 강제 등) 잠시 대기하도록 유도하는 능동적 부하 조절 로직을 구현합니다.
+2. **`Log Persistence`**: `trace.jsonl` 로그 파일이 너무 커질 경우를 대비해, 일정 용량 초과 시 자동으로 롤링(Rolling)하거나 압축 보관하는 유틸리티를 추가합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 테이블 파싱 및 진행 바 UI 고도화 완료 (v1.4.4).
-- 다음 목표: 비동기 처리 튜닝 및 능동적 스로틀링 구상.
+- API 호출 모니터링 및 비동기 반응성 개선 완료 (v1.4.5).
+- 다음 목표: 능동적 스로틀링 및 로그 로테이션 구현.
 
 작업 목표:
-1. `agents/researcher.py`에서 대규모 검색 수행 시 UI 갱신이 밀리지 않도록 `asyncio.sleep`을 적절히 주입하여 제어권을 양보해줘.
-2. `core/auth.py`에 최근 1분간의 API 호출 횟수를 카운트하는 로직을 추가하고, 임계치에 도달하면 `Optimizer`에게 알리는 기반을 마련해줘.
+1. `core/auth.py`의 호출 빈도 정보를 `state`에 포함시켜, `Manager`가 이를 보고 지능적으로 모델을 선택(Flash -> Flash-Lite)하도록 로직을 보강해줘.
+2. `core/observer.py`에 로그 파일 크기를 체크하여 10MB 초과 시 `.bak`으로 옮기는 간단한 로그 로테이션 기능을 추가해줘.
 ```
