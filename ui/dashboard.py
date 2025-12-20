@@ -47,8 +47,12 @@ class DashboardUI:
                 # 에이전트 응답 (결과)
                 msg_group.append(Panel(content, title="[bold blue]Gortex[/bold blue]", border_style="blue"))
             elif role == "tool":
-                # 도구 실행 결과 (Observation)
-                msg_group.append(Panel(content, title="🛠️ [bold yellow]Observation[/bold yellow]", border_style="yellow", style="dim"))
+                # 도구 실행 결과 (Observation) 요약 처리
+                display_content = content
+                if len(content) > 1000:
+                    display_content = content[:500] + f"\n\n[... {len(content)-1000} characters truncated ...]\n\n" + content[-500:]
+                msg_group.append(Panel(display_content, title="🛠️ [bold yellow]Observation[/bold yellow]", border_style="yellow", style="dim"))
+
             elif role == "system":
                 msg_group.append(Text(f"⚙️ {content}", style="dim white"))
         

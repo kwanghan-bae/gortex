@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Evolution**: Analyst 에이전트의 규칙 추출 성능 고도화 (프롬프트 튜닝)
-- [ ] **Data**: 에이전트 도구 실행 결과(Observation)의 상세 로깅 및 시각화 개선
+- [ ] **Animation**: 에이전트 전환 시 더 부드러운 전환 효과 연구
+- [ ] **Context**: 시냅스 압축(Summarizer) 시 핵심 규칙 유지 로직 강화
 
 ## ✅ Completed
+### v1.1.5 (Analyst Refinement & UI Polish)
+- [x] `agents/analyst.py`: 자가 진화 규칙 추출 프롬프트 고도화 (부정 신호 감지 민감도 향상)
+- [x] `ui/dashboard.py`: 도구 실행 결과(Observation)가 1000자 초과 시 자동 요약 표시 로직 추가
+- [x] `core/auth.py`: `.env` 파일 로딩 경로 개선 및 API 키 인식 안정성 확보
+
 ### v1.1.4 (UI & Dashboard Refinement)
 - [x] `ui/dashboard.py`: 실시간 에이전트 사고 과정(Thought)을 위한 전용 패널 추가
 - [x] `ui/dashboard.py`: 역할별(User, AI, Tool, System) 메시지 시각적 구분 강화
