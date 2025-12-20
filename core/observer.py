@@ -1,6 +1,8 @@
 import json
 import logging
 import uuid
+import os
+import shutil
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -14,12 +16,21 @@ class GortexObserver:
         self.log_path = log_path
         self.trace_id = str(uuid.uuid4())
         self._ensure_log_dir()
+        self._rotate_logs()
 
     def _ensure_log_dir(self):
-        import os
         os.makedirs(os.path.dirname(self.log_path), exist_ok=True)
 
+    def _rotate_logs(self, max_size_mb: int = 10):
+        """로그 파일 크기가 크면 백업"""
+        if os.path.exists(self.log_path):
+            if os.path.getsize(self.log_path) > max_size_mb * 1024 * 1024:
+                ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                shutil.move(self.log_path, f"{self.log_path}.{ts}.bak")
+                logger.info(f"Logs rotated: {self.log_path}.{ts}.bak")
+
     def log_event(self, agent: str, event_type: str, payload: Any, latency_ms: Optional[int] = None):
+
         """이벤트를 JSONL 형식으로 기록"""
         entry = {
             "timestamp": datetime.now().isoformat(),

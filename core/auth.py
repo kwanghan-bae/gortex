@@ -19,37 +19,57 @@ else:
 class GortexAuth:
     """
     Gemini API 할당량 제한(Quota Limit)을 극복하기 위한 듀얼 키 로테이션 클래스.
-    429 에러 발생 시 계정을 전환하고 Anti-bot Jitter를 수행합니다.
     """
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(GortexAuth, cls).__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
+
     def __init__(self):
+        if hasattr(self, '_initialized') and self._initialized:
+            return
+            
         self.api_keys: List[str] = [
             os.getenv("GEMINI_API_KEY_1"),
             os.getenv("GEMINI_API_KEY_2")
         ]
-        # 유효한 키만 필터링
         self.api_keys = [k for k in self.api_keys if k]
-        
-        if not self.api_keys:
-            logger.warning("⚠️ .env 파일에 GEMINI_API_KEY가 설정되지 않았습니다.")
         
         self.current_index = 0
         self.clients: List[genai.Client] = []
-        self.call_history: List[float] = [] # API 호출 기록 (최근 1분)
+        self.call_history: List[float] = []
         
         for key in self.api_keys:
             self.clients.append(genai.Client(api_key=key))
+        
+        self._initialized = True
+
+    @classmethod
+    def _reset(cls):
+        """인스턴스 초기화 (테스트용)"""
+        cls._instance = None
+
 
     def _track_call(self):
         """호출 횟수 기록 및 1분 경과 기록 정리"""
         now = time.time()
         self.call_history.append(now)
-        # 1분(60초) 이전의 기록 삭제
         self.call_history = [t for t in self.call_history if now - t < 60]
         
-        if len(self.call_history) > 10: # 초당 1회 이상 빈발 시 경고 (무료 티어 기준)
+        if len(self.call_history) > 10:
             logger.warning(f"🚀 API call frequency is high: {len(self.call_history)} calls/min")
 
+    def get_call_count(self) -> int:
+        """최근 1분간의 API 호출 횟수 반환"""
+        now = time.time()
+        self.call_history = [t for t in self.call_history if now - t < 60]
+        return len(self.call_history)
+
     def get_client(self) -> genai.Client:
+
 
         """현재 활성화된 계정의 클라이언트 반환"""
         if not self.clients:

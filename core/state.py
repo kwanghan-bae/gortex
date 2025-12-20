@@ -26,3 +26,5 @@ class GortexState(TypedDict):
     # 5. Advanced Memory & Evolution (기억 및 진화)
     history_summary: str     # 컨텍스트 압축 요약본
     active_constraints: List[str] # Evolution Engine에서 주입된 사용자 맞춤형 제약 조건
+    api_call_count: int      # 최근 API 호출 빈도 (스로틀링용)
+

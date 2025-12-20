@@ -2,9 +2,17 @@
 
 ## 🚀 Backlog (To-Do)
 - [ ] **System**: 대규모 도구 실행 시 백그라운드 처리 및 스트리밍 로그 분리
-- [ ] **Intelligence**: API 호출 빈도 기반 능동적 스로틀링(Throttling) 로직 완성
+- [ ] **Data**: 에이전트 도구 실행 결과의 시각적 상세화 (JSON/Table 외 추가 포맷)
 
 ## ✅ Completed
+### v1.4.6 (Adaptive Throttling & Log Rotation)
+- [x] `core/auth.py`: `GortexAuth`를 싱글톤 패턴으로 변경하여 전역 API 호출 빈도 추적 통합
+- [x] `core/state.py`: `GortexState`에 `api_call_count` 필드 추가
+- [x] `main.py`: 매 턴 시작 시 최근 API 호출 빈도를 상태에 주입하는 로직 구현
+- [x] `agents/manager.py`: API 호출 빈도가 높을 경우(`> 10/min`) 자동으로 더 가벼운 모델(`flash-lite`)을 사용하는 능동적 스로틀링 도입
+- [x] `core/observer.py`: `trace.jsonl` 로그 파일이 10MB 초과 시 자동으로 롤링(백업)하는 로직 추가
+- [x] `tests/test_auth.py`: 싱글톤 인스턴스 초기화 로직에 맞춘 단위 테스트 수정
+
 ### v1.4.5 (Async Responsiveness & Auth Monitoring)
 - [x] `agents/researcher.py`: 대규모 웹 스크래핑 루프 내 `asyncio.sleep(0)` 주입으로 UI 갱신 반응성 확보
 - [x] `core/auth.py`: 최근 1분간의 API 호출 횟수를 실시간으로 추적하는 `call_history` 모니터링 로직 구현

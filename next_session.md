@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Async Responsiveness & Auth Monitoring Complete (v1.4.5)
+**Status:** Adaptive Throttling & Log Rotation Complete (v1.4.6)
 
 ## 🧠 Current Context
-시스템의 내부 모니터링과 UI 반응성이 더욱 정교해졌습니다. 이제 `Auth` 엔진은 자신의 활동 빈도를 스스로 감시하며, `Researcher`는 긴 작업을 수행하면서도 UI가 얼어붙지 않도록 제어권을 양보합니다.
+시스템의 자기 보호 능력과 로그 관리 효율성이 강화되었습니다. 이제 Gortex는 API 사용량이 많아지면 스스로 가벼운 모델로 전환하여 비용과 할당량을 아끼며, 로그 파일의 무한 증식을 방지하는 로테이션 기능을 갖추었습니다.
 
 ## 🎯 Next Objective
-**Adaptive Throttling & Advanced Logging**
-1. **`Adaptive Throttling`**: `Auth`에서 감지한 호출 빈도가 임계치를 넘을 경우, `Manager`가 다음 태스크의 사고 깊이를 낮추거나(Flash-Lite 모델 강제 등) 잠시 대기하도록 유도하는 능동적 부하 조절 로직을 구현합니다.
-2. **`Log Persistence`**: `trace.jsonl` 로그 파일이 너무 커질 경우를 대비해, 일정 용량 초과 시 자동으로 롤링(Rolling)하거나 압축 보관하는 유틸리티를 추가합니다.
+**Visual Sophistication & System Resilience**
+1. **`Background Progress`**: 도구 실행(특히 Researcher) 중에도 대시보드 UI가 부드럽게 유지되도록 비동기 구조를 더욱 세밀하게 튜닝합니다.
+2. **`Self-Correction Manual`**: Coder 에이전트가 흔히 저지르는 실수(IndentationError 등)에 대한 '자가 수정 가이드'를 프롬프트에 더 구체적인 사례(Few-shot)로 추가하여 수리 속도를 높입니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- API 호출 모니터링 및 비동기 반응성 개선 완료 (v1.4.5).
-- 다음 목표: 능동적 스로틀링 및 로그 로테이션 구현.
+- 능동적 스로틀링 및 로그 로테이션 완료 (v1.4.6).
+- 다음 목표: UI 반응성 최적화 및 Coder 자가 수정 지능 강화.
 
 작업 목표:
-1. `core/auth.py`의 호출 빈도 정보를 `state`에 포함시켜, `Manager`가 이를 보고 지능적으로 모델을 선택(Flash -> Flash-Lite)하도록 로직을 보강해줘.
-2. `core/observer.py`에 로그 파일 크기를 체크하여 10MB 초과 시 `.bak`으로 옮기는 간단한 로그 로테이션 기능을 추가해줘.
+1. `ui/dashboard.py`에서 에이전트 전환이나 도구 실행 시 사이드바 패널의 타이틀 색상이 함께 변하도록 스타일링을 정밀화해줘.
+2. `agents/coder.py`의 시스템 프롬프트에 'Python 구문 오류(Syntax/Indent) 해결을 위한 3단계 체크리스트'를 추가해줘.
 ```

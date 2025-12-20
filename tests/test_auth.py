@@ -5,8 +5,11 @@ from gortex.core.auth import GortexAuth
 
 class TestGortexAuth(unittest.TestCase):
     def setUp(self):
+        # 싱글톤 인스턴스 초기화
+        GortexAuth._reset()
         # 환경 변수 Mocking
         self.env_patcher = patch('os.getenv')
+
         self.mock_getenv = self.env_patcher.start()
         # 기본적으로 두 개의 키가 있다고 가정
         self.mock_getenv.side_effect = lambda k: "fake_key_1" if k == "GEMINI_API_KEY_1" else ("fake_key_2" if k == "GEMINI_API_KEY_2" else None)

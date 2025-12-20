@@ -65,12 +65,20 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     )
 
     # 2. Gemini 호출을 통한 의도 분석 및 라우팅 결정
-    # 최근 메시지들을 바탕으로 판단
+    # 최근 API 호출 빈도에 따라 모델 선택 (Adaptive Throttling)
+    call_count = state.get("api_call_count", 0)
+    if call_count > 10:
+        model_id = "gemini-2.5-flash-lite"
+        logger.warning(f"⚠️ High API usage ({call_count}). Throttling to {model_id}")
+    else:
+        model_id = "gemini-1.5-flash"
+
     response = auth.generate(
-        model_id="gemini-1.5-flash", # 빠른 라우팅을 위해 flash 모델 사용
+        model_id=model_id,
         contents=state["messages"],
         config=config
     )
+
 
     # JSON 응답 파싱
     try:

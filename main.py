@@ -185,8 +185,10 @@ async def run_gortex():
                         "working_dir": os.getenv("WORKING_DIR", "./workspace"),
                         "coder_iteration": 0,
                         "file_cache": global_file_cache,
-                        "active_constraints": []
+                        "active_constraints": [],
+                        "api_call_count": observer.observer.auth.get_call_count() if hasattr(observer.observer, 'auth') else 0
                     }
+
                     
                     # 수동 모드 분기
                     if cmd_status == "summarize": 
@@ -196,8 +198,12 @@ async def run_gortex():
 
 
                     from gortex.core.evolutionary_memory import EvolutionaryMemory
+                    from gortex.core.auth import GortexAuth
                     evo_mem = EvolutionaryMemory()
+                    auth_engine = GortexAuth()
                     initial_state["active_constraints"] = evo_mem.get_active_constraints(user_input)
+                    initial_state["api_call_count"] = auth_engine.get_call_count()
+
 
                     try:
                         async for event in app.astream(initial_state, config):
