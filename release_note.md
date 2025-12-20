@@ -2,9 +2,15 @@
 
 ## 🚀 Backlog (To-Do)
 - [ ] **Evolution**: Analyst 에이전트의 규칙 추출 성능 고도화
-- [ ] **Deployment**: Docker Compose를 이용한 Redis/시스템 원클릭 배포 완성
+- [ ] **Polishing**: 대시보드 애니메이션 및 레이아웃 최적화
 
 ## ✅ Completed
+### v1.1.2 (Portable Distribution)
+- [x] `setup.sh`: 가상환경 자동 생성 및 `requirements.txt` 기반 패키지 설치 로직 강화
+- [x] `run.sh`: 가상환경 자동 활성화 및 실행 실패 시 가이드 제공 래퍼 구현
+- [x] `scripts/install_globally.sh`: 어디서든 `gortex` 명령어로 실행 가능하게 하는 글로벌 설치 스크립트 구현
+- [x] `SPEC.md`: 개인 사용자용 포터블 배포 사양 반영 (Redis/Docker 필수 해제)
+
 ### v1.1.1 (Self-Cognition & Polishing)
 - [x] `agents/optimizer.py`: 시스템 로그(`trace.jsonl`) 분석을 통한 병목 및 에러 패턴 감지 로직 구현
 - [x] `ui/dashboard.py`: 에이전트 활동 시 Spinner(Dots) 애니메이션 추가로 시각적 피드백 강화
