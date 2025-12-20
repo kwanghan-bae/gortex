@@ -7,9 +7,15 @@
 - [x] **Intelligence**: 자가 수정(Self-Correction) 패턴 분석 및 진화 규칙 자동 생성 로직 기초 설계
 - [x] **Infrastructure**: 다중 사용자 세션 관리를 위한 스레드 분리 및 상태 격리 강화
 - [x] **Infrastructure**: 세션 상태(Snapshot) 수동 익스포트 및 복구 도구 구현
-- [ ] **Interface**: `/import` 시 이전 세션의 '생각(Thought)' 로그도 복구하여 추론 일관성 유지
+- [x] **Interface**: `/import` 시 이전 세션의 '생각(Thought)' 로그도 복구하여 추론 일관성 유지
+- [ ] **Infrastructure**: API 키 할당량 소진 시 자동으로 다른 서비스(예: OpenAI, Anthropic)로 폴백하는 멀티 LLM 브리지 구축
 
 ## ✅ Completed
+### v1.5.7 (Thought Log Persistence)
+- [x] `ui/dashboard.py`: 세션 전체의 사고 과정을 기록하는 `thought_history` 필드 추가 및 추적 로직 구현
+- [x] `main.py`: `/export` 시 사고 과정 히스토리를 포함하여 저장하도록 스냅샷 구조 확장
+- [x] `main.py`: `/import` 시 마지막 사고 과정을 복구하고, 복구된 데이터에 `[RESTORED]` 태그를 부여하여 시각적 구분 강화
+
 ### v1.5.6 (Session Snapshot & Recovery)
 - [x] `main.py`: `/export` 명령어로 현재 세션의 대화 내역 및 파일 캐시를 JSON으로 저장하는 기능 구현
 - [x] `main.py`: `/import [path]` 명령어로 외부 스냅샷 파일을 로드하여 현재 세션에 주입하는 기능 구현
