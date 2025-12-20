@@ -6,6 +6,7 @@ from rich.console import Console, Group
 from rich.spinner import Spinner
 from rich.syntax import Syntax
 from rich.json import JSON
+from gortex.utils.table_detector import try_render_as_table
 from datetime import datetime
 import json
 
@@ -80,7 +81,14 @@ class DashboardUI:
                 except:
                     pass
 
-                # 2. 코드 형태인 경우 하이라이팅
+                # 2. 테이블 형식 검사 (ls -l, csv 등)
+                table_renderable = try_render_as_table(display_content)
+                if table_renderable:
+                    msg_group.append(Panel(table_renderable, title="🛠️ [bold yellow]Observation (Table)[/bold yellow]", border_style="yellow", style="dim"))
+                    continue
+
+                # 3. 코드 형태인 경우 하이라이팅
+
                 if any(x in display_content for x in ["import ", "def ", "class ", "void ", "public ", "{", "}", "const ", "SELECT ", "INSERT "]):
                     lang = "python"
                     if "SELECT " in display_content: lang = "sql"

@@ -30,5 +30,13 @@ class TestGortexUI(unittest.TestCase):
         self.ui.update_logs(log)
         self.assertEqual(len(self.ui.recent_logs), 1)
 
+    def test_table_detection(self):
+        """테이블 데이터 감지 테스트"""
+        from gortex.utils.table_detector import try_render_as_table
+        table_text = "ID    Name    Status\n1     Alice   Active\n2     Bob     Offline"
+        table = try_render_as_table(table_text)
+        self.assertIsNotNone(table)
+        self.assertEqual(len(table.columns), 3)
+
 if __name__ == '__main__':
     unittest.main()

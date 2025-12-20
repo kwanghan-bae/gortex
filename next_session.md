@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Observation Visualization Enhanced (v1.2.0)
+**Status:** ASCII Table Visualization Complete (v1.2.1)
 
 ## 🧠 Current Context
-도구 실행 결과(Observation)의 시각화 품질이 크게 향상되었습니다. 이제 JSON 데이터는 구조화된 형태로, 코드는 적절한 문법 하이라이팅과 함께 표시됩니다. 대시보드가 더 많은 정보를 안전하고 보기 좋게 전달할 수 있게 되었습니다.
+대시보드의 시각화 능력이 완성 단계에 접어들었습니다. 이제 JSON, 소스 코드뿐만 아니라 `ls -l`이나 데이터 프레임 출력과 같은 테이블 형식의 데이터도 깔끔하게 정돈된 표 형태로 확인할 수 있습니다.
 
 ## 🎯 Next Objective
-**Interactive Interface & Table Detection**
-1. **Interactive Feedback**: 사용자가 에이전트의 긴 답변을 기다리지 않고 특정 키를 눌러 중단하거나 즉시 피드백을 줄 수 있는 '인터럽트' 메커니즘을 구상합니다.
-2. **ASCII Table Detection**: 셸 출력 중 텍스트 기반 테이블(예: `ls -l`의 결과나 pandas 출력)을 감지하여 `Rich.Table`로 예쁘게 다시 그리는 유틸리티를 추가합니다.
+**Interactive Interruption & Performance Tuning**
+1. **Interactive Feedback**: 에이전트가 답변하는 도중 사용자가 개입하여 방향을 수정하거나 중단할 수 있는 기능을 검토합니다.
+2. **File Cache Refinement**: `state['file_cache']`를 더 지능적으로 활용하여, 이미 읽은 파일은 다시 읽지 않고 변경 사항만 체크하여 토큰 소모를 극도로 억제하는 로직을 고도화합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 도구 결과 JSON/Code 시각화 완료 (v1.2.0).
-- 다음 목표: ASCII 테이블 감지 및 Rich.Table 변환 로직 추가.
+- 테이블 시각화 유틸리티 통합 완료 (v1.2.1).
+- 다음 목표: 파일 캐시 로직 고도화 및 토큰 절약 최적화.
 
 작업 목표:
-1. `utils/tools.py` 또는 신규 유틸리티 파일에 텍스트 행/열 데이터를 분석하여 `Rich.Table` 객체로 변환하는 로직을 작성해줘.
-2. `ui/dashboard.py`에서 `tool` 메시지 처리 시 위 유틸리티를 연동하여 표 형식 데이터를 더 깔끔하게 보여줘.
+1. `agents/coder.py`와 `agents/planner.py`에서 `read_file` 호출 전 `state['file_cache']`를 확인하여 중복 읽기를 방지하는 로직을 추가해줘.
+2. 파일의 수정 시각(mtime)이나 해시를 비교하여 변경된 경우에만 캐시를 갱신하도록 `utils/tools.py`를 보강해줘.
 ```

@@ -2,9 +2,14 @@
 
 ## 🚀 Backlog (To-Do)
 - [ ] **Interface**: 사용자 피드백 루프를 더 간편하게 제공하는 CLI 단축키 제안
-- [ ] **Data**: 텍스트 기반 테이블(ASCII Table) 감지 및 Rich.Table 변환 로직 추가
+- [ ] **Context**: 에이전트 간 공유되는 파일 캐시 로직 고도화
 
 ## ✅ Completed
+### v1.2.1 (ASCII Table Visualization)
+- [x] `utils/table_detector.py`: 텍스트 기반 테이블(CSV, 공백 구분 표) 감지 및 `Rich.Table` 변환 유틸리티 구현
+- [x] `ui/dashboard.py`: 도구 실행 결과에서 테이블 형식을 자동 감지하여 시각화하도록 연동
+- [x] `tests/test_ui.py`: 테이블 감지 로직 단위 테스트 추가 및 통과
+
 ### v1.2.0 (Enhanced Observation Visualization)
 - [x] `ui/dashboard.py`: 도구 실행 결과(`Observation`) 중 JSON 데이터 감지 및 `Rich.JSON` 렌더링 기능 추가
 - [x] `ui/dashboard.py`: SQL, Java 등 다양한 코드 패턴 감지 및 문법 하이라이팅 보강
