@@ -12,9 +12,15 @@
 - [x] **Interface**: 대시보드에 실시간 LLM 공급자 상태(Gemini/OpenAI) 및 잔여 할당량 시각화
 - [x] **System**: 대규모 코드베이스 분석을 위한 'Synaptic Indexing' (AST 기반 코드 검색) 엔진 구축
 - [x] **Intelligence**: 인덱싱된 코드 구조를 LLM 프롬프트에 동적으로 주입하여 '코드 맥락 인식' 능력 고도화
-- [ ] **Interface**: 코드 인덱스 검색 결과를 시각화하여 보여주는 `/search [symbol]` 명령어 구현
+- [x] **Interface**: 코드 인덱스 검색 결과를 시각화하여 보여주는 `/search [symbol]` 명령어 구현
+- [ ] **Infrastructure**: `requirements.txt` 분석을 통해 누락된 의존성을 자동으로 설치하는 'Auto-Dependency' 노드 추가
 
 ## ✅ Completed
+### v1.6.2 (Synaptic Search UI & Interaction)
+- [x] `main.py`: 사용자가 코드 인덱스를 직접 쿼리할 수 있는 `/search [query]` 명령어 구현
+- [x] `main.py`: 검색 결과를 `rich.table.Table`을 활용하여 파일명, 라인, 심볼 타입, 독스트링 요약과 함께 시각화
+- [x] `main.py`: 클래스(Blue)와 함수(Green)를 색상으로 구분하여 가독성 향상 및 최대 15개 결과 제한 적용
+
 ### v1.6.1 (Context-Aware Reasoning)
 - [x] `agents/planner.py`: 사용자의 요청과 관련된 심볼(클래스/함수)의 위치 및 정의 정보를 인덱스에서 검색하여 프롬프트에 자동 주입
 - [x] `agents/planner.py`: 파일 경로를 명시하지 않은 요청에 대해서도 인덱스 정보를 바탕으로 정확한 대상 파일을 타겟팅하도록 지침 강화
