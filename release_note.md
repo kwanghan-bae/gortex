@@ -3,9 +3,14 @@
 ## 🚀 Backlog (To-Do)
 - [x] **Interface**: 대규모 로그 조회 시 페이징 처리 로직 추가
 - [x] **System**: 비정상 종료 시 미처 저장되지 않은 인메모리 캐시 복구 전략 고도화
-- [ ] **Interface**: 대시보드 로그 위젯에 에이전트별 색상 필터링 추가
+- [x] **Interface**: 대시보드 로그 위젯에 에이전트별 색상 필터링 추가
+- [ ] **Intelligence**: 자가 수정(Self-Correction) 패턴 분석 및 진화 규칙 자동 생성 로직 기초 설계
 
 ## ✅ Completed
+### v1.5.3 (Log Filtering & Paging Refinement)
+- [x] `main.py`: `/logs [skip] [limit] [filter]` 명령어 확장으로 에이전트명/이벤트별 검색 기능 구현
+- [x] `main.py`: 필터링 결과에 따른 동적 테이블 타이틀 및 요약 정보 표시 개선
+
 ### v1.5.2 (Operational Resilience & Log Paging)
 - [x] `main.py`: `/logs [skip] [limit]` 명령어 구현으로 대규모 로그 브라우징 최적화 및 도움말 추가
 - [x] `main.py`: 매 턴 종료 시 및 사용자 중단(`KeyboardInterrupt`) 시 `global_file_cache` 자동 저장 로직 강화
