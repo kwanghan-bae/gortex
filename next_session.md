@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Coder IQ Boost & UI Smoothness Complete (v1.3.8)
+**Status:** FS Integrity & Security Refined (v1.3.9)
 
 ## 🧠 Current Context
-시스템의 실무 능력과 사용자 경험이 한층 강화되었습니다. `Coder`는 이제 오류 발생 시 더 명확한 매뉴얼에 따라 행동하며, 대시보드는 에이전트의 활동을 끊김 없이 부드럽게 보여줍니다.
+시스템의 파일 조작 무결성과 보안성이 최상위 수준으로 강화되었습니다. 이제 `execute_shell`을 통한 간접적인 파일 시스템 변경도 시스템이 즉각 감지하여 에이전트에게 힌트를 제공합니다.
 
 ## 🎯 Next Objective
-**Concurrency & Data Reliability**
-1. **`Cache Integrity`**: 에이전트들이 파일 시스템을 조작할 때 `file_cache`가 실제 디스크 상태를 100% 반영하도록, 모든 파일 수정 도구(`write_file`, `execute_shell` 중 파일 생성 시)에 대한 해시 사후 검증을 의무화합니다.
-2. **`Background Execution`**: 사용자가 긴 조사를 요청했을 때, 대시보드 UI가 응답을 기다리는 동안에도 시스템 상태를 계속 보여줄 수 있도록 백그라운드 태스크 관리 로직을 고도화합니다.
+**Persistence & Log Scalability**
+1. **`Log Paging`**: 로그가 수천 줄 이상 쌓일 경우 `/logs` 명령이 느려질 수 있으므로, 시작 인덱스와 개수를 지정할 수 있는 페이징 로직(`/logs <skip> <limit>`)을 구현합니다.
+2. **`Cache Recovery`**: 시스템이 예기치 않게 종료되었을 때, `file_cache`의 마지막 상태를 `persistence.py`를 통해 안전하게 복구하고 디스크 해시와 다시 대조하는 'Cold Start' 최적화 로직을 구상합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- Coder 지능 강화 및 UI 최적화 완료 (v1.3.8).
-- 다음 목표: 캐시 무결성 강화 및 백그라운드 실행 로직 정교화.
+- 파일 변경 감지 힌트 및 보안 메시지 정교화 완료 (v1.3.9).
+- 다음 목표: 로그 페이징 및 캐시 복구 전략 구현.
 
 작업 목표:
-1. `utils/tools.py`의 `execute_shell` 함수가 실행 후 현재 디렉토리의 파일 해시가 변경되었는지 감지하여 `state['file_cache']` 업데이트를 유도하는 힌트를 반환하도록 수정해줘.
-2. `tests/test_tools.py`에 파일 해시 충돌 및 대량 파일 변경 시의 캐시 정합성 테스트를 보강해줘.
+1. `main.py`의 `/logs` 명령어를 수정하여 `/logs [skip] [limit]` 형식을 지원하게 하고, 역순(최신순) 페이징이 가능하도록 해줘.
+2. `core/persistence.py` (또는 `main.py`)에서 시작 시 `file_cache`의 유효성을 검사하고 손상된 경우 재구성하는 로직을 추가해줘.
 ```

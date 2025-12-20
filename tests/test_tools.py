@@ -78,5 +78,23 @@ class TestGortexTools(unittest.TestCase):
         new_actual_hash = get_file_hash(target_file)
         self.assertNotEqual(file_cache[target_file], new_actual_hash)
 
+    def test_execute_shell_fs_change_hint(self):
+        """셸 실행 후 파일 시스템 변경 감지 힌트 확인"""
+        # 현재 디렉토리에 테스트용 파일 생성
+        target_file = "test_fs_change.txt"
+        if os.path.exists(target_file):
+            os.remove(target_file)
+            
+        try:
+            # 파일 생성 명령 (STDOUT 출력이 없도록 간단하게)
+            result = execute_shell(f"echo 'new file' > {target_file}")
+            self.assertIn("SYSTEM HINT", result, f"Hint missing. Result was: {result}")
+        finally:
+            if os.path.exists(target_file):
+                os.remove(target_file)
+
+
+
+
 if __name__ == '__main__':
     unittest.main()

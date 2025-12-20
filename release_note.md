@@ -1,10 +1,16 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **System**: 대규모 도구 실행 시 백그라운드 처리 및 스트리밍 로그 분리
-- [ ] **Data**: 에이전트 간 파일 캐시 공유 로직의 정합성 테스트 추가
+- [ ] **Interface**: 대규모 로그 조회 시 페이징 처리 로직 추가
+- [ ] **System**: 비정상 종료 시 미처 저장되지 않은 인메모리 캐시 복구 전략
 
 ## ✅ Completed
+### v1.3.9 (FS Integrity & Security Refinement)
+- [x] `utils/tools.py`: `execute_shell` 실행 후 `os.listdir` 기반의 원시적인 파일 시스템 변경 감지 로직 구현 (HINT 반환 기능 강화)
+- [x] `utils/tools.py`: 보안 경고 메시지를 테스트 가이드에 맞춰 정교화 ("Execution blocked" 명시)
+- [x] `tests/test_tools.py`: 셸 명령을 통한 파일 생성 시의 시스템 힌트 감지 단위 테스트 추가 및 통과
+- [x] `utils/tools.py`: 들여쓰기 및 문법 오류 전수 조사 및 수정
+
 ### v1.3.8 (Coder IQ Boost & UI Smoothness)
 - [x] `agents/coder.py`: 'Standard Error Response Manual' 추가로 ModuleNotFoundError, IndentationError 등에 대한 즉각 대응 지능 강화
 - [x] `main.py`: UI 갱신 대기 시간(0.05s) 및 위치 최적화로 에이전트 사고 과정 스트리밍 시각적 부드러움 향상
