@@ -1,15 +1,38 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Interface**: 대시보드 내 특정 로그 항목 클릭 시 상세 팝업 표시
-- [ ] **System**: 비정상 종료 시 미처 저장되지 않은 인메모리 캐시 복구 전략 고도화
+- [ ] **System**: 대규모 도구 실행 시 백그라운드 처리 및 스트리밍 로그 분리
+- [ ] **Data**: 에이전트 도구 실행 결과(Observation)의 상세 시각화 개선 (Markdown Table 정밀화)
 
 ## ✅ Completed
-### v1.3.3 (Evolution Stability & Patch Validation)
-- [x] `core/evolutionary_memory.py`: 새로운 규칙 저장 시 기존 규칙과의 트리거 패턴 유사도 분석을 통한 지능형 충돌 감지 및 병합 로직 구현
-- [x] `agents/planner.py`: 시스템 최적화 제안 수용 시 타당성 검토(보안, 성능, 호환성)를 거치도록 로직 강화
-- [x] `main.py`: `/log <index>` 명령어 출력 구조화 (Metadata 전용 테이블 적용으로 가독성 향상)
-- [x] `agents/analyst.py`: 규칙 추출 시 구체적인 적용 맥락(`context`) 필드 추가 및 활용
+### v1.4.3 (Manual Scout & Workflow Refinement)
+- [x] `main.py`: 수동 기술 스캔 명령어 `/scout` 구현 및 `trend_scout` 노드 직접 트리거 로직 추가
+- [x] `main.py`: 명령어 처리기(`handle_command`) 반환값 고도화로 흐름 제어 유연성 확보
+- [x] `agents/optimizer.py`: 더 구체적이고 실행 가능한 '패치 지시문' 생성을 위한 프롬프트 강화
 
-### v1.3.2 (Self-Modification Realization & UI Polish)
+### v1.4.2 (Resilience UI & Self-Modification Flow)
+- [x] `main.py`: 할당량 소진(`Quota Exhausted`) 발생 시, Align.center를 활용한 풀스크린 스타일의 경고 레이아웃 구현
+- [x] `agents/planner.py`: 시스템 최적화 제안(Request) 수락 시 타당성 검토 후 즉시 실행 계획에 반영하도록 지침 보강
+- [x] `main.py`: 문법 오류 전수 수정 및 비동기 입력 처리 안정화 완료
+
+### v1.4.1 (UI Sophistication & Async Optimization)
+- [x] `ui/dashboard.py`: 사이드바 각 패널(Status, Stats, Evolution) 제목에 이모지 추가 및 상태별 테두리 색상 강조 로직 고도화
+- [x] `main.py`: 에이전트 스트리밍 중 UI 업데이트 주기(0.01s) 조정 및 제어권 양보 로직 최적화로 반응성 향상
+- [x] `ui/dashboard.py`: USAGE STATS 및 EVOLUTION 패널의 동적 스타일링 적용
+
+### v1.4.0 (Log Paging & Cache Recovery)
+- [x] `main.py`: `/logs [skip] [limit]` 페이징 명령어 구현으로 대규모 로그 브라우징 최적화
+- [x] `main.py`: 시스템 부팅 시 `global_file_cache`의 무결성을 디스크 상태와 대조하여 검증하는 'Cold Start' 로직 추가
+- [x] `main.py`: 매 턴 종료 후 에이전트의 로컬 캐시를 전역 캐시와 동기화하여 지식 유지 보장
+- [x] `main.py`: 최신 로그부터 보여주는 역순 페이징 UI 적용
+
+### v1.3.9 (FS Integrity & Security Refinement)
+- [x] `utils/tools.py`: `execute_shell` 실행 후 `os.listdir` 기반의 원시적인 파일 시스템 변경 감지 로직 구현 (HINT 반환 기능 강화)
+- [x] `utils/tools.py`: 보안 경고 메시지를 테스트 가이드에 맞춰 정교화 ("Execution blocked" 명시)
+- [x] `tests/test_tools.py`: 셸 명령을 통한 파일 생성 시의 시스템 힌트 감지 단위 테스트 추가 및 통과
+
+### v1.3.8 (Coder IQ Boost & UI Smoothness)
+- [x] `agents/coder.py`: 'Standard Error Response Manual' 추가로 ModuleNotFoundError, IndentationError 등에 대한 즉각 대응 지능 강화
+- [x] `main.py`: UI 갱신 대기 시간(0.05s) 및 위치 최적화로 에이전트 사고 과정 스트리밍 시각적 부드러움 향상
+
 ... (생략)

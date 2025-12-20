@@ -105,7 +105,13 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         ui.update_main(ui.chat_history)
         return "summarize"
 
+    elif cmd == "/scout":
+        ui.chat_history.append(("system", "기술 트렌드 수동 스캔을 요청하셨습니다."))
+        ui.update_main(ui.chat_history)
+        return "scout"
+
     elif cmd == "/logs":
+
         log_path = "logs/trace.jsonl"
         if os.path.exists(log_path):
             with open(log_path, "r") as f:
@@ -165,6 +171,7 @@ async def run_gortex():
                     actual_input = f"[CONTEXT: 이전 작업 중단 후 재개됨] {user_input}" if interrupted_last_time else user_input
                     interrupted_last_time = False
 
+                    # 명령어 처리
                     cmd_status = "continue"
                     if user_input.startswith("/"):
                         cmd_status = await handle_command(user_input, ui, observer)
@@ -180,7 +187,13 @@ async def run_gortex():
                         "file_cache": global_file_cache,
                         "active_constraints": []
                     }
-                    if cmd_status == "summarize": initial_state["messages"] = [("system", "Manual summary trigger")] * 12
+                    
+                    # 수동 모드 분기
+                    if cmd_status == "summarize": 
+                        initial_state["messages"] = [("system", "Manual summary trigger")] * 12
+                    elif cmd_status == "scout":
+                        initial_state["next_node"] = "trend_scout"
+
 
                     from gortex.core.evolutionary_memory import EvolutionaryMemory
                     evo_mem = EvolutionaryMemory()
