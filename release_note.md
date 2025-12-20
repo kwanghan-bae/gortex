@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **TrendScout**: `agents/trend_scout.py` 구현
-- [ ] **Infrastructure**: `core/graph.py` 및 `main.py` 통합
+- [ ] **Infrastructure**: `main.py` 구현 및 CLI 대시보드 완성
+- [ ] **Observer**: `core/observer.py` (FileLoggingCallbackHandler) 구현
 
 ## ✅ Completed
+### v1.0.8 (Agents: TrendScout & Graph)
+- [x] `agents/trend_scout.py`: 부팅 시 신규 모델 및 기술 트렌드 스캔 로직 구현
+- [x] `core/graph.py`: LangGraph를 활용한 전체 에이전트 워크플로우 통합
+- [x] `tests/test_trend_scout.py`: 트렌드 스캔 및 분석 테스트 통과
+
 ### v1.0.7 (Agents: Analyst & Evolution)
 - [x] `agents/analyst.py`: 데이터 분석(Pandas) 및 피드백 분석 모드 구현
 - [x] `core/evolutionary_memory.py`: `experience.json` 기반 자가 진화 메모리 관리 구현
