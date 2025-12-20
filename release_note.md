@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **System**: 대규모 도구 실행 시 백그라운드 처리 및 스트리밍 로그 분리
-- [ ] **UI**: 대시보드 사이드바 섹션 간 시각적 구분(색상/스타일) 고도화
+- [ ] **Resilience**: API 키 전체 소진 시 복구 가이드 레이아웃 정밀 튜닝
+- [ ] **Intelligence**: Observer 데이터를 활용한 Optimizer의 자동 코드 패치 기능 실증
 
 ## ✅ Completed
+### v1.4.1 (UI Sophistication & Async Optimization)
+- [x] `ui/dashboard.py`: 사이드바 각 패널(Status, Stats, Evolution) 제목에 이모지 추가 및 상태별 테두리 색상 강조 로직 고도화
+- [x] `main.py`: 에이전트 스트리밍 중 UI 업데이트 주기(0.01s) 조정 및 제어권 양보 로직 최적화로 반응성 향상
+- [x] `ui/dashboard.py`: USAGE STATS 및 EVOLUTION 패널의 동적 스타일링 적용
+
 ### v1.4.0 (Log Paging & Cache Recovery)
 - [x] `main.py`: `/logs [skip] [limit]` 페이징 명령어 구현으로 대규모 로그 브라우징 최적화
 - [x] `main.py`: 시스템 부팅 시 `global_file_cache`의 무결성을 디스크 상태와 대조하여 검증하는 'Cold Start' 로직 추가

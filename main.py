@@ -254,6 +254,7 @@ async def run_gortex():
                                             total_tokens += new_tokens
                                             total_cost += estimate_cost(new_tokens)
                                 
+                                # 통계 및 UI 업데이트
                                 ui.update_main(ui.chat_history)
                                 ui.update_sidebar(
                                     agent=ui.current_agent,
@@ -272,7 +273,8 @@ async def run_gortex():
                                 if "file_cache" in output:
                                     global_file_cache.update(output["file_cache"])
                                 
-                                await asyncio.sleep(0.1)
+                                # UI 갱신을 위해 명시적으로 제어권 양보
+                                await asyncio.sleep(0.01)
                                 ui.reset_thought_style()
                                 
                     except KeyboardInterrupt:

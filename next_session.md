@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Log Paging & Cache Recovery Ready (v1.4.0)
+**Status:** UI Sophistication & Async Optimization Complete (v1.4.1)
 
 ## 🧠 Current Context
-시스템의 데이터 무결성과 대규모 로그 관리 능력이 확보되었습니다. 이제 부팅 시 캐시를 검증하며, 수천 줄의 로그도 페이징을 통해 쾌적하게 조회할 수 있습니다.
+대시보드 UI가 한층 더 세련되고 정보 집약적으로 발전했습니다. 사이드바의 각 섹션은 고유의 아이콘과 강조 색상을 통해 상태를 명확히 전달하며, 내부적으로는 비동기 루프 최적화를 통해 매끄러운 사용자 경험을 제공합니다.
 
 ## 🎯 Next Objective
-**Concurrency & Visual Sophistication**
-1. **`Async Tool Execution`**: 시간이 많이 소요되는 도구(Researcher의 웹 검색 등) 실행 중에도 대시보드 UI가 완전히 차단되지 않고, 실시간으로 '진행 중'임을 더 역동적으로 보여주도록 비동기 구조를 개선합니다.
-2. **`Sidebar Sophistication`**: 사이드바의 각 패널(Status, Stats, Evolution, Logs)이 서로 다른 강조 색상이나 아이콘을 사용하여 더 전문적인 정보 가시성을 갖추도록 다듬습니다.
+**Resilience & Self-Evolution Realization**
+1. **`Quota UI`**: 모든 API 키가 소진되었을 때 나타나는 경고 화면을 대시보드와 일관성 있는 스타일의 전용 Full-screen Panel로 다듬습니다.
+2. **`Patch Simulation`**: `Optimizer`가 생성한 개선 태스크가 실제로 파일 시스템에 반영되는 전체 루프를 테스트하고, `Planner`가 제안을 수락했을 때 `Coder`가 정확히 해당 파일을 수정하도록 프롬프트 흐름을 최종 점검합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 로그 페이징 및 캐시 무결성 검증 완료 (v1.4.0).
-- 다음 목표: 비동기 도구 실행 개선 및 사이드바 시각화 고도화.
+- 사이드바 고도화 및 비동기 최적화 완료 (v1.4.1).
+- 다음 목표: 할당량 초과 UI 폴리싱 및 자기 개조 루프 실증.
 
 작업 목표:
-1. `ui/dashboard.py`에서 사이드바의 각 Panel 제목에 이모지와 전용 색상을 추가하여 섹션 구분을 더 명확히 해줘.
-2. `main.py`의 `run_gortex` 루프 내에서 에이전트 스트리밍과 UI 갱신 태스크를 더 세밀하게 분리하여 반응성을 높여줘.
+1. `main.py`의 Quota Emergency 패널을 `Rich.Align.center`와 `Rich.Panel`을 조합하여 더 경고 효과가 뚜렷한 풀스크린 스타일로 개선해줘.
+2. `agents/optimizer.py`에서 제안한 'improvement_task'가 실제 코드 수정으로 이어지는 과정을 디버그 모드로 확인하고, `Planner`가 이를 놓치지 않도록 시스템 지침을 보강해줘.
 ```

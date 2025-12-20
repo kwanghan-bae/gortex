@@ -232,13 +232,14 @@ class DashboardUI:
             stats_group.append(Text("\n"))
             stats_group.append(self.progress)
 
-        self.layout["stats"].update(Panel(Group(*stats_group), title="📊 [bold]USAGE STATS[/bold]", border_style=border_color))
+        self.layout["stats"].update(Panel(Group(*stats_group), title="📊 [bold]USAGE STATS[/bold]", border_style="green" if tokens > 0 else border_color))
 
         # Evolution
         evo_text = Text(f"Active Rules: {rules}\n", style="bold magenta")
         if rules > 0:
             evo_text.append("[LEARNED MODE]", style="blink magenta")
-        self.layout["evolution"].update(Panel(evo_text, title="🧬 [bold]EVOLUTION[/bold]", border_style=border_color))
+        self.layout["evolution"].update(Panel(evo_text, title="🧬 [bold]EVOLUTION[/bold]", border_style="magenta" if rules > 0 else border_color))
+
 
     def render(self):
         return self.layout
