@@ -32,7 +32,7 @@ async def get_user_input(console: Console):
     """비차단 방식으로 사용자 입력을 받음"""
     return await asyncio.get_event_loop().run_in_executor(None, console.input, "[bold green]User > [/bold green]")
 
-async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObserver) -> str:
+async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObserver, all_sessions_cache: dict = None, thread_id: str = None) -> str:
     """'/'로 시작하는 명령어를 처리합니다. 반환값에 따라 메인 루프의 행동을 결정합니다."""
     cmd_parts = user_input.lower().strip().split()
     cmd = cmd_parts[0]
@@ -43,6 +43,59 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         ui.update_thought("Chat history cleared.")
         return "skip"
     
+    elif cmd == "/export":
+        export_dir = "logs/exports"
+        os.makedirs(export_dir, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        export_path = f"{export_dir}/session_{thread_id}_{timestamp}.json"
+        
+        # 직렬화 가능한 형태로 변환 (Rich 객체 제외)
+        serializable_history = []
+        for role, content in ui.chat_history:
+            if isinstance(content, str):
+                serializable_history.append((role, content))
+            else:
+                serializable_history.append((role, f"[Rich Object: {type(content).__name__}]"))
+
+        data = {
+            "thread_id": thread_id,
+            "exported_at": datetime.now().isoformat(),
+            "chat_history": serializable_history,
+            "file_cache": all_sessions_cache.get(thread_id, {}) if all_sessions_cache else {}
+        }
+        
+        try:
+            with open(export_path, "w", encoding='utf-8') as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+            ui.chat_history.append(("system", f"✅ 세션이 성공적으로 내보내졌습니다: {export_path}"))
+        except Exception as e:
+            ui.chat_history.append(("system", f"❌ 내보내기 실패: {str(e)}"))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/import":
+        if len(cmd_parts) < 2:
+            ui.chat_history.append(("system", "사용법: /import [file_path]"))
+        else:
+            import_path = cmd_parts[1]
+            if os.path.exists(import_path):
+                try:
+                    with open(import_path, "r", encoding='utf-8') as f:
+                        data = json.load(f)
+                    
+                    # 현재 세션에 데이터 주입
+                    ui.chat_history.extend(data.get("chat_history", []))
+                    if all_sessions_cache is not None and thread_id:
+                        all_sessions_cache[thread_id].update(data.get("file_cache", {}))
+                    
+                    ui.chat_history.append(("system", f"✅ 세션 데이터를 '{import_path}'에서 불러왔습니다."))
+                except Exception as e:
+                    ui.chat_history.append(("system", f"❌ 불러오기 실패: {str(e)}"))
+            else:
+                ui.chat_history.append(("system", f"❌ 파일을 찾을 수 없습니다: {import_path}"))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
     elif cmd == "/history":
         ui.chat_history.append(("system", "현재 세션의 대화 내역이 유지되고 있습니다."))
         ui.update_main(ui.chat_history)
@@ -233,7 +286,7 @@ async def run_gortex():
 
                     cmd_status = "continue"
                     if user_input.startswith("/"):
-                        cmd_status = await handle_command(user_input, ui, observer)
+                        cmd_status = await handle_command(user_input, ui, observer, all_sessions_cache, thread_id)
                         if cmd_status == "skip": continue
                     
                     # 세션 캐시 유효성 검사
