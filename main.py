@@ -104,8 +104,13 @@ async def run_gortex():
                             
                             # 로그 기록
                             observer.log_event(node_name, "node_complete", output)
+                            
+                            # UI 효과 리셋 (다음 노드 실행 전 잠시 대기하며 반전 효과 유지)
+                            await asyncio.sleep(0.1)
+                            ui.reset_thought_style()
 
                     ui.current_agent = "Idle"
+
                     ui.update_thought("Ready for next command.")
                     ui.update_sidebar("Idle", "N/A", total_tokens, total_cost, len(initial_state["active_constraints"]))
 

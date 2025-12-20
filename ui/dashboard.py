@@ -61,11 +61,23 @@ class DashboardUI:
         )
 
     def update_thought(self, thought: str):
-        """에이전트의 사고 과정 실시간 업데이트"""
+        """에이전트의 사고 과정 실시간 업데이트 (시각 효과 추가)"""
         self.agent_thought = thought
+        
+        # 새로운 내용이 들어오면 타이틀을 강조하고 스타일 변경
+        title = "💭 [bold magenta]Agent reasoning (updated!)[/bold magenta]"
+        border_style = "magenta"
+        
         self.layout["thought"].update(
-            Panel(Text(thought, style="italic cyan"), title="💭 [bold cyan]Agent reasoning[/bold cyan]", border_style="cyan")
+            Panel(Text(thought, style="italic cyan"), title=title, border_style=border_style)
         )
+
+    def reset_thought_style(self):
+        """사고 패널의 스타일을 평상시로 복구 (main loop에서 호출)"""
+        if self.agent_thought:
+            self.layout["thought"].update(
+                Panel(Text(self.agent_thought, style="italic cyan"), title="💭 [bold cyan]Agent reasoning[/bold cyan]", border_style="cyan")
+            )
 
     def update_sidebar(self, agent: str, step: str, tokens: int, cost: float, rules: int):
         """사이드바 정보 업데이트"""

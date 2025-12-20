@@ -18,13 +18,16 @@ def compress_synapse(state: GortexState) -> GortexState:
     auth = GortexAuth()
     summary_model = "gemini-2.5-flash-lite"
     
-    prompt = """지금까지의 모든 대화 내용을 분석하여 다음 정보를 추출해줘:
+    prompt = f"""지금까지의 모든 대화 내용을 분석하여 다음 정보를 추출해줘:
 1. 현재 프로젝트의 목표
 2. 이미 완료된 작업 리스트
 3. 현재 직면한 문제점 및 남은 단계
 4. 주요 변수 및 설정값
+5. **[중요] 현재 적용 중인 시스템 제약 조건 및 규칙 (Evolved Rules)**
 
-이 정보를 바탕으로 대화를 요약해. 이전 대화 기록을 이 요약본으로 대체할 거야."""
+이 정보를 바탕으로 대화를 요약해. 특히 5번 항목(제약 조건)은 요약본에 반드시 명시적으로 포함되어야 해.
+이전 대화 기록을 이 요약본으로 대체할 거야."""
+
 
     try:
         response = auth.generate(summary_model, messages, None)

@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Animation**: 에이전트 전환 시 더 부드러운 전환 효과 연구
-- [ ] **Context**: 시냅스 압축(Summarizer) 시 핵심 규칙 유지 로직 강화
+- [ ] **Data**: 에이전트 도구 실행 결과(Observation)의 상세 로깅 및 시각화 개선
+- [ ] **Resilience**: API 키 전체 소진 시 사용자에게 즉각적인 알림 및 대처 가이드 제공
 
 ## ✅ Completed
+### v1.1.6 (Context Stability & UI Feedback)
+- [x] `utils/memory.py`: 시냅스 압축 시 '활성 제약 조건(Evolved Rules)'이 누락되지 않도록 요약 프롬프트 보강
+- [x] `ui/dashboard.py`: 에이전트의 사고 과정(Thought) 업데이트 시 시각적 강조 효과(색상 변경) 추가
+- [x] `main.py`: 노드 간 전환 시 UI 리셋 로직 연동으로 변화 인지력 향상
+
 ### v1.1.5 (Analyst Refinement & UI Polish)
 - [x] `agents/analyst.py`: 자가 진화 규칙 추출 프롬프트 고도화 (부정 신호 감지 민감도 향상)
 - [x] `ui/dashboard.py`: 도구 실행 결과(Observation)가 1000자 초과 시 자동 요약 표시 로직 추가

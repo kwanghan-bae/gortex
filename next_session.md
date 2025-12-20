@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Analyst Refinement & UI Polish Complete (v1.1.5)
+**Status:** Context Stability & UI Feedback Complete (v1.1.6)
 
 ## 🧠 Current Context
-에이전트의 자가 진화 능력이 더 정교해졌으며, 대형 도구 출력값에 의한 UI 마비 현상을 해결했습니다. 이제 시스템은 사용자의 불만을 더 잘 이해하고, 방대한 데이터를 안전하게 표시합니다.
+장기 대화 시에도 학습된 규칙이 유지되도록 시냅스 압축 로직을 안정화했으며, 에이전트의 사고 과정을 더 역동적으로 보여주도록 UI를 개선했습니다. 이제 시스템은 더 끈기 있게 규칙을 준수하며 사용자에게 작업 상황을 명확히 전달합니다.
 
 ## 🎯 Next Objective
-**Graph & Context Stabilization**
-1. **`Summarizer` Refinement**: 시냅스 압축 시, 사용자가 강조했던 '활성 제약 조건(active_constraints)'이 요약본에서 누락되지 않도록 프롬프트를 보강합니다.
-2. **Smooth Transitions**: 에이전트 간 전환 시 UI에서 더 명확한 시각적 피드백(예: 이전 Thought 보관 및 신규 Thought 강조)을 제공합니다.
+**Detailed Observation & Final Polish**
+1. **Observation Detail**: 도구 실행 결과(`tool` 역할)가 파일 내용일 경우, 단순 텍스트보다 더 보기 좋게(예: 코드 하이라이팅 등) 표시하는 방안을 검토합니다.
+2. **Resilience**: 모든 API 키가 소진되었을 때 시스템이 우아하게 멈추고 사용자에게 키 교체를 안내하는 가이드를 출력합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- Analyst 고도화 및 UI 요약 로직 추가 완료 (v1.1.5).
-- 다음 목표: Summarizer 노드 개선 및 UI 전환 효과 강화.
+- 시냅스 압축 안정화 및 Thought 강조 UI 추가 완료 (v1.1.6).
+- 다음 목표: 도구 결과 시각화 개선 및 예외 상황 대응 강화.
 
 작업 목표:
-1. `utils/memory.py`의 `compress_synapse` 함수에서, 현재 활성화된 '제약 조건'들이 요약본에 반드시 포함되도록 프롬프트를 수정해줘.
-2. 에이전트가 바뀔 때 UI의 'Thought' 패널이 번쩍이는 등의 효과를 추가하여 변화를 인지하기 쉽게 해줘.
+1. `ui/dashboard.py`에서 도구 실행 결과(`Observation`) 패널에 `Rich`의 `Syntax` 하이라이팅을 적용하여 가독성을 높여줘.
+2. `core/auth.py`에서 모든 키가 소진되었을 때 발생하는 예외를 `main.py`에서 캐치하여 사용자에게 예쁘게(Panel 활용) 경고 메시지를 보여주도록 개선해줘.
 ```
