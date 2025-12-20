@@ -106,28 +106,42 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
     elif cmd == "/logs":
         log_path = "logs/trace.jsonl"
         if os.path.exists(log_path):
-            with open(log_path, "r") as f:
-                lines = f.readlines()
-                total_lines = len(lines)
-                start_idx = max(0, total_lines - 10)
-                recent_lines = lines[start_idx:]
-                recent_logs = [json.loads(line) for line in recent_lines]
+            try:
+                # /logs [skip] [limit] 파싱
+                skip = int(cmd_parts[1]) if len(cmd_parts) > 1 else 0
+                limit = int(cmd_parts[2]) if len(cmd_parts) > 2 else 10
                 
-                log_table = Table(title=f"Recent Trace Logs (Total: {total_lines})", show_header=True, header_style="bold magenta")
-                log_table.add_column("Idx", style="dim", justify="right")
-                log_table.add_column("Time", style="dim")
-                log_table.add_column("Agent", style="cyan")
-                log_table.add_column("Event")
-                
-                for i, entry in enumerate(recent_logs):
-                    ts = entry.get("timestamp", "").split("T")[-1][:8]
-                    log_table.add_row(str(start_idx + i), ts, entry.get("agent", ""), entry.get("event", ""))
-                
-                ui.chat_history.append(("system", log_table))
+                with open(log_path, "r") as f:
+                    lines = f.readlines()
+                    total_lines = len(lines)
+                    
+                    # 최신순 페이징 계산
+                    end_idx = max(0, total_lines - skip)
+                    start_idx = max(0, end_idx - limit)
+                    
+                    recent_lines = lines[start_idx:end_idx]
+                    recent_logs = [json.loads(line) for line in recent_lines]
+                    
+                    log_table = Table(title=f"Trace Logs (Page: {start_idx}~{end_idx-1} / Total: {total_lines})", show_header=True, header_style="bold magenta")
+                    log_table.add_column("Idx", style="dim", justify="right")
+                    log_table.add_column("Time", style="dim")
+                    log_table.add_column("Agent", style="cyan")
+                    log_table.add_column("Event")
+                    
+                    # 표시도 최신순(역순)으로
+                    for i, entry in enumerate(reversed(recent_logs)):
+                        actual_line_idx = end_idx - 1 - i
+                        ts = entry.get("timestamp", "").split("T")[-1][:8]
+                        log_table.add_row(str(actual_line_idx), ts, entry.get("agent", ""), entry.get("event", ""))
+                    
+                    ui.chat_history.append(("system", log_table))
+            except (ValueError, IndexError):
+                ui.chat_history.append(("system", "사용법: /logs [skip] [limit] (예: /logs 10 5)"))
         else:
             ui.chat_history.append(("system", "로그 파일이 존재하지 않습니다."))
         ui.update_main(ui.chat_history)
         return "skip"
+
 
     return "continue"
 
@@ -138,8 +152,10 @@ async def run_gortex():
     
     total_tokens = 0
     total_cost = 0.0
+    global_file_cache = {} # 세션 간 파일 캐시 유지 (현재 메모리 기반)
 
     workflow = compile_gortex_graph()
+
     from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
     import aiosqlite
     
@@ -178,10 +194,20 @@ async def run_gortex():
                         if cmd_status == "skip":
                             continue
                     
+                    # 2. 실행 및 스트리밍 업데이트
+                    # 캐시 무결성 검사 (부팅/재개 시 디스크 상태와 대조)
+                    from gortex.utils.tools import get_file_hash
+                    valid_cache = {}
+                    for path, cached_hash in global_file_cache.items():
+                        if os.path.exists(path) and get_file_hash(path) == cached_hash:
+                            valid_cache[path] = cached_hash
+                    global_file_cache = valid_cache
+
                     initial_state = {
                         "messages": [("user", actual_input)],
                         "working_dir": os.getenv("WORKING_DIR", "./workspace"),
                         "coder_iteration": 0,
+                        "file_cache": global_file_cache,
                         "active_constraints": []
                     }
                     
@@ -237,12 +263,16 @@ async def run_gortex():
                                     rules=len(initial_state["active_constraints"])
                                 )
                                 
+                                # 로그 기록 및 UI 업데이트
                                 log_entry = {"agent": node_name, "event": "node_complete"}
                                 ui.update_logs(log_entry)
                                 observer.log_event(node_name, "node_complete", output)
                                 
-                                # UI 반응성 향상을 위해 짧은 대기 (Thought 인지용)
-                                await asyncio.sleep(0.05)
+                                # 전역 파일 캐시 동기화
+                                if "file_cache" in output:
+                                    global_file_cache.update(output["file_cache"])
+                                
+                                await asyncio.sleep(0.1)
                                 ui.reset_thought_style()
                                 
                     except KeyboardInterrupt:

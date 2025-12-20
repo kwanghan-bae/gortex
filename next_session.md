@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** FS Integrity & Security Refined (v1.3.9)
+**Status:** Log Paging & Cache Recovery Ready (v1.4.0)
 
 ## 🧠 Current Context
-시스템의 파일 조작 무결성과 보안성이 최상위 수준으로 강화되었습니다. 이제 `execute_shell`을 통한 간접적인 파일 시스템 변경도 시스템이 즉각 감지하여 에이전트에게 힌트를 제공합니다.
+시스템의 데이터 무결성과 대규모 로그 관리 능력이 확보되었습니다. 이제 부팅 시 캐시를 검증하며, 수천 줄의 로그도 페이징을 통해 쾌적하게 조회할 수 있습니다.
 
 ## 🎯 Next Objective
-**Persistence & Log Scalability**
-1. **`Log Paging`**: 로그가 수천 줄 이상 쌓일 경우 `/logs` 명령이 느려질 수 있으므로, 시작 인덱스와 개수를 지정할 수 있는 페이징 로직(`/logs <skip> <limit>`)을 구현합니다.
-2. **`Cache Recovery`**: 시스템이 예기치 않게 종료되었을 때, `file_cache`의 마지막 상태를 `persistence.py`를 통해 안전하게 복구하고 디스크 해시와 다시 대조하는 'Cold Start' 최적화 로직을 구상합니다.
+**Concurrency & Visual Sophistication**
+1. **`Async Tool Execution`**: 시간이 많이 소요되는 도구(Researcher의 웹 검색 등) 실행 중에도 대시보드 UI가 완전히 차단되지 않고, 실시간으로 '진행 중'임을 더 역동적으로 보여주도록 비동기 구조를 개선합니다.
+2. **`Sidebar Sophistication`**: 사이드바의 각 패널(Status, Stats, Evolution, Logs)이 서로 다른 강조 색상이나 아이콘을 사용하여 더 전문적인 정보 가시성을 갖추도록 다듬습니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 파일 변경 감지 힌트 및 보안 메시지 정교화 완료 (v1.3.9).
-- 다음 목표: 로그 페이징 및 캐시 복구 전략 구현.
+- 로그 페이징 및 캐시 무결성 검증 완료 (v1.4.0).
+- 다음 목표: 비동기 도구 실행 개선 및 사이드바 시각화 고도화.
 
 작업 목표:
-1. `main.py`의 `/logs` 명령어를 수정하여 `/logs [skip] [limit]` 형식을 지원하게 하고, 역순(최신순) 페이징이 가능하도록 해줘.
-2. `core/persistence.py` (또는 `main.py`)에서 시작 시 `file_cache`의 유효성을 검사하고 손상된 경우 재구성하는 로직을 추가해줘.
+1. `ui/dashboard.py`에서 사이드바의 각 Panel 제목에 이모지와 전용 색상을 추가하여 섹션 구분을 더 명확히 해줘.
+2. `main.py`의 `run_gortex` 루프 내에서 에이전트 스트리밍과 UI 갱신 태스크를 더 세밀하게 분리하여 반응성을 높여줘.
 ```

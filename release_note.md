@@ -1,10 +1,16 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Interface**: 대규모 로그 조회 시 페이징 처리 로직 추가
-- [ ] **System**: 비정상 종료 시 미처 저장되지 않은 인메모리 캐시 복구 전략
+- [ ] **System**: 대규모 도구 실행 시 백그라운드 처리 및 스트리밍 로그 분리
+- [ ] **UI**: 대시보드 사이드바 섹션 간 시각적 구분(색상/스타일) 고도화
 
 ## ✅ Completed
+### v1.4.0 (Log Paging & Cache Recovery)
+- [x] `main.py`: `/logs [skip] [limit]` 페이징 명령어 구현으로 대규모 로그 브라우징 최적화
+- [x] `main.py`: 시스템 부팅 시 `global_file_cache`의 무결성을 디스크 상태와 대조하여 검증하는 'Cold Start' 로직 추가
+- [x] `main.py`: 매 턴 종료 후 에이전트의 로컬 캐시를 전역 캐시와 동기화하여 지식 유지 보장
+- [x] `main.py`: 최신 로그부터 보여주는 역순 페이징 UI 적용
+
 ### v1.3.9 (FS Integrity & Security Refinement)
 - [x] `utils/tools.py`: `execute_shell` 실행 후 `os.listdir` 기반의 원시적인 파일 시스템 변경 감지 로직 구현 (HINT 반환 기능 강화)
 - [x] `utils/tools.py`: 보안 경고 메시지를 테스트 가이드에 맞춰 정교화 ("Execution blocked" 명시)
