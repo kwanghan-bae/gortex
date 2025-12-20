@@ -2,10 +2,21 @@ import os
 import shutil
 import subprocess
 import logging
+import hashlib
 from datetime import datetime
-from typing import Dict, Union
+from typing import Dict, Union, Tuple, Optional
 
 logger = logging.getLogger("GortexTools")
+
+def get_file_hash(path: str) -> str:
+    """파일 내용의 MD5 해시를 계산합니다."""
+    try:
+        if not os.path.exists(path):
+            return ""
+        with open(path, 'rb') as f:
+            return hashlib.md5(f.read()).hexdigest()
+    except Exception:
+        return ""
 
 def write_file(path: str, content: str) -> str:
     """
@@ -92,7 +103,7 @@ def list_files(directory: str = ".") -> str:
     """
     try:
         files = []
-        ignore_dirs = {'.git', 'venv', '__pycache__', '.DS_Store', 'logs', 'site-packages'}
+        ignore_dirs = {{'.git', 'venv', '__pycache__', '.DS_Store', 'logs', 'site-packages'}}
         
         for root, dirs, filenames in os.walk(directory):
             # 무시할 디렉토리 필터링
@@ -113,8 +124,9 @@ def read_file(path: str) -> str:
     파일의 내용을 읽어 반환합니다.
     """
     try:
+        if not os.path.exists(path):
+            return f"Error: File not found at {path}"
         with open(path, 'r', encoding='utf-8') as f:
             return f.read()
     except Exception as e:
         return f"Error reading file {path}: {str(e)}"
-

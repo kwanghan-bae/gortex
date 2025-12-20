@@ -17,6 +17,7 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
     
     # 1. 현재 환경 파악
     current_files = list_files(state.get("working_dir", "."))
+    file_cache = state.get("file_cache", {})
     
     # 2. 시스템 프롬프트 구성
     base_instruction = f"""너는 Gortex v1.0 시스템의 수석 아키텍트(Planner)다.
@@ -25,7 +26,13 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
 [Current File Structure]
 {current_files}
 
+[File Cache Status]
+현재 너는 {len(file_cache)}개 파일의 최신 내용을 기억하고 있다. 
+이미 읽은 파일(Cache에 존재)은 다시 'read_file'을 할 필요가 없으나, 
+중요한 변경이 예상되거나 확실하지 않다면 다시 읽는 계획을 세워라.
+
 [Planning Rules]
+
 1. 작업을 '원자적 단위(Atomic Unit)'로 쪼개라. (예: "로그인 구현" -> "파일 읽기" -> "코드 작성" -> "테스트 실행")
 2. 각 단계는 `coder` 에이전트가 수행할 수 있는 구체적인 행동이어야 한다.
 3. 사용 가능한 도구(Action):

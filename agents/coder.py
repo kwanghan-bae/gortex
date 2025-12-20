@@ -5,11 +5,12 @@ from typing import Dict, Any, List
 from google.genai import types
 from gortex.core.auth import GortexAuth
 from gortex.core.state import GortexState
-from gortex.utils.tools import read_file, write_file, execute_shell, list_files
+from gortex.utils.tools import read_file, write_file, execute_shell, list_files, get_file_hash
 
 logger = logging.getLogger("GortexCoder")
 
 def coder_node(state: GortexState) -> Dict[str, Any]:
+
     """
     Gortex 시스템의 개발자(Coder) 노드.
     Planner가 수립한 계획을 한 단계씩 실행하며, 검증(Verification)을 통해 코드를 완성합니다.
@@ -142,26 +143,32 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
             pass
 
         result_msg = ""
-        if fname == "write_file":
+        new_file_cache = state.get("file_cache", {}).copy()
 
+        if fname == "write_file":
             result_msg = write_file(fargs["path"], fargs["content"])
+            # 쓰기 후 해시 업데이트
+            new_file_cache[fargs["path"]] = get_file_hash(fargs["path"])
         elif fname == "read_file":
-            result_msg = read_file(fargs["path"])
+            path = fargs["path"]
+            current_hash = get_file_hash(path)
+            cached_hash = new_file_cache.get(path)
+            
+            if cached_hash == current_hash and current_hash != "":
+                result_msg = f"(Cache Hit) File content is unchanged. Use your memory."
+                logger.info(f"Cache hit for {path}")
+            else:
+                result_msg = read_file(path)
+                new_file_cache[path] = current_hash
         elif fname == "execute_shell":
             result_msg = execute_shell(fargs["command"])
         elif fname == "list_files":
             result_msg = list_files(fargs.get("directory", "."))
             
-        # 도구 실행 결과를 LLM에게 피드백하기 위해 메시지에 추가할 수도 있음
-        # 하지만 여기서는 상태 업데이트를 통해 제어
-        
-        # 만약 도구 실행이 성공적이고, LLM이 'success'라고 판단했다면 step 증가
-        # 하지만 지금은 도구 호출만 했으므로, 다음 iteration에서 결과를 분석해야 함.
-        # 따라서 step을 증가시키지 않고 iteration만 증가시킴.
-        
         return {
             "thought": coder_thought,
             "coder_iteration": current_iteration + 1,
+            "file_cache": new_file_cache,
             # 도구 실행 결과를 메시지에 추가하여 다음 턴에 문맥으로 사용
             "messages": [
                 ("ai", f"Executed {fname}"),
@@ -184,6 +191,7 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
                 "current_step": current_step_idx + 1,
                 "coder_iteration": 0, # 단계가 바뀌면 반복 횟수 초기화
                 "next_node": "coder", # 다음 단계 실행을 위해 다시 Coder 호출
+                "file_cache": state.get("file_cache", {}),
                 "messages": [("ai", f"Step {current_step_idx+1} 완료. 다음 단계로 이동.")]
             }
         else:
@@ -191,6 +199,7 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
             return {
                 "thought": coder_thought,
                 "coder_iteration": current_iteration + 1,
+                "file_cache": state.get("file_cache", {}),
                 "next_node": "coder"
             }
             
@@ -198,6 +207,8 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
         # JSON 파싱 실패 시 그냥 진행
         return {
             "coder_iteration": current_iteration + 1,
+            "file_cache": state.get("file_cache", {}),
             "next_node": "coder"
         }
+
 
