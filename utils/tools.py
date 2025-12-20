@@ -84,3 +84,37 @@ def execute_shell(command: str, timeout: int = 300) -> str:
         return f"❌ Error: Command timed out after {timeout} seconds."
     except Exception as e:
         return f"❌ Error executing command: {str(e)}"
+
+def list_files(directory: str = ".") -> str:
+    """
+    현재 작업 디렉토리의 파일 목록을 반환합니다.
+    .git, venv, __pycache__ 등 불필요한 디렉토리는 제외합니다.
+    """
+    try:
+        files = []
+        ignore_dirs = {'.git', 'venv', '__pycache__', '.DS_Store', 'logs', 'site-packages'}
+        
+        for root, dirs, filenames in os.walk(directory):
+            # 무시할 디렉토리 필터링
+            dirs[:] = [d for d in dirs if d not in ignore_dirs]
+            
+            for f in filenames:
+                if f in ignore_dirs:
+                    continue
+                rel_path = os.path.relpath(os.path.join(root, f), directory)
+                files.append(rel_path)
+        
+        return "\n".join(sorted(files))
+    except Exception as e:
+        return f"Error listing files: {str(e)}"
+
+def read_file(path: str) -> str:
+    """
+    파일의 내용을 읽어 반환합니다.
+    """
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return f.read()
+    except Exception as e:
+        return f"Error reading file {path}: {str(e)}"
+
