@@ -5,9 +5,15 @@
 - [x] **System**: 비정상 종료 시 미처 저장되지 않은 인메모리 캐시 복구 전략 고도화
 - [x] **Interface**: 대시보드 로그 위젯에 에이전트별 색상 필터링 추가
 - [x] **Intelligence**: 자가 수정(Self-Correction) 패턴 분석 및 진화 규칙 자동 생성 로직 기초 설계
-- [ ] **Infrastructure**: 다중 사용자 세션 관리를 위한 스레드 분리 및 상태 격리 강화
+- [x] **Infrastructure**: 다중 사용자 세션 관리를 위한 스레드 분리 및 상태 격리 강화
+- [ ] **Infrastructure**: 세션 상태(Snapshot) 수동 익스포트 및 복구 도구 구현
 
 ## ✅ Completed
+### v1.5.5 (Session Isolation & Persistence)
+- [x] `main.py`: `global_file_cache`를 `thread_id` 기반의 `all_sessions_cache`로 개편하여 다중 세션 격리 구현
+- [x] `main.py`: 세션 시작 시 해당 스레드의 전용 캐시를 로드하고 종료/중단 시 개별적으로 저장하는 로직 강화
+- [x] `main.py`: 세션별 캐시 유효성 검사 및 영속화 안정성 확보
+
 ### v1.5.4 (Self-Correction Analysis Engine)
 - [x] `agents/analyst.py`: 로그(`trace.jsonl`)를 분석하여 실패 후 성공한 패턴을 감지하는 `analyze_self_correction` 구현
 - [x] `agents/analyst.py`: 감지된 패턴을 바탕으로 `EvolutionaryMemory`에 새로운 영구 지침을 자동 등록하는 워크플로우 통합
