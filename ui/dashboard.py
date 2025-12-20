@@ -3,9 +3,11 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 from rich.console import Console, Group
+from rich.spinner import Spinner
 from datetime import datetime
 
 def create_layout() -> Layout:
+
     """대시보드 기본 레이아웃 생성"""
     layout = Layout()
     layout.split_row(
@@ -57,7 +59,12 @@ class DashboardUI:
         status_text.append(f"{step}\n")
         status_text.append(f"Time: {datetime.now().strftime('%H:%M:%S')}", style="dim")
         
-        self.layout["status"].update(Panel(status_text, title="📡 System Status"))
+        status_group = [status_text]
+        if agent != "Idle":
+            status_group.append(Spinner("dots", text=f"[bold yellow]{agent} is thinking...[/bold yellow]"))
+
+        self.layout["status"].update(Panel(Group(*status_group), title="📡 System Status"))
+
 
         # Stats
         stats_table = Table.grid(expand=True)

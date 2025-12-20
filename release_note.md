@@ -1,10 +1,16 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Polishing**: 대시보드 테마 고도화 및 애니메이션 추가
-- [ ] **Self-Cognition**: Optimizer 에이전트의 자기 개선 로직 정밀 구현
+- [ ] **Evolution**: Analyst 에이전트의 규칙 추출 성능 고도화
+- [ ] **Deployment**: Docker Compose를 이용한 Redis/시스템 원클릭 배포 완성
 
 ## ✅ Completed
+### v1.1.1 (Self-Cognition & Polishing)
+- [x] `agents/optimizer.py`: 시스템 로그(`trace.jsonl`) 분석을 통한 병목 및 에러 패턴 감지 로직 구현
+- [x] `ui/dashboard.py`: 에이전트 활동 시 Spinner(Dots) 애니메이션 추가로 시각적 피드백 강화
+- [x] `core/graph.py`: `optimizer` 노드 추가 및 워크플로우 통합
+- [x] `tests/test_optimizer.py`: 로그 분석 기능 단위 테스트 통과
+
 ### v1.1.0 (Refinement & Optimization)
 - [x] `utils/token_counter.py`: 토큰 계산 및 비용 추정 유틸리티 구현
 - [x] `utils/memory.py`: 12개 메시지 이상 시 작동하는 시냅스 압축(요약) 로직 구현

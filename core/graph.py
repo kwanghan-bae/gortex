@@ -11,9 +11,10 @@ from gortex.agents.coder import coder_node
 from gortex.agents.researcher import researcher_node
 from gortex.agents.analyst import analyst_node
 from gortex.agents.trend_scout import trend_scout_node
+from gortex.agents.optimizer import optimizer_node
 from gortex.utils.memory import summarizer_node
 
-def route_manager(state: GortexState) -> Literal["summarizer", "planner", "researcher", "analyst", "__end__"]:
+def route_manager(state: GortexState) -> Literal["summarizer", "planner", "researcher", "analyst", "optimizer", "__end__"]:
     """Manager의 결정에 따라 다음 노드로 라우팅. 대화가 길면 요약 노드 거침."""
     next_node = state.get("next_node", "__end__")
     
@@ -28,7 +29,6 @@ def route_after_summary(state: GortexState) -> str:
     return state.get("next_node", "manager")
 
 def route_coder(state: GortexState) -> Literal["coder", "manager", "__end__"]:
-
     """Coder의 작업 완료 여부에 따라 라우팅"""
     next_node = state.get("next_node", "manager")
     if next_node == "__end__":
@@ -50,6 +50,7 @@ def compile_gortex_graph():
     workflow.add_node("analyst", analyst_node)
     workflow.add_node("trend_scout", trend_scout_node)
     workflow.add_node("summarizer", summarizer_node)
+    workflow.add_node("optimizer", optimizer_node)
 
     # 3. 엣지 연결
     # 시스템 시작 시 먼저 트렌드 스캔 수행
@@ -65,6 +66,7 @@ def compile_gortex_graph():
             "planner": "planner",
             "researcher": "researcher",
             "analyst": "analyst",
+            "optimizer": "optimizer",
             "__end__": END
         }
     )
@@ -77,12 +79,12 @@ def compile_gortex_graph():
             "planner": "planner",
             "researcher": "researcher",
             "analyst": "analyst",
+            "optimizer": "optimizer",
             "manager": "manager"
         }
     )
 
     # Planner -> Coder
-
     workflow.add_edge("planner", "coder")
 
     # Coder 루프 및 완료 후 Manager 복귀
@@ -95,8 +97,9 @@ def compile_gortex_graph():
         }
     )
 
-    # Researcher & Analyst 완료 후 Manager 복귀
+    # Researcher & Analyst & Optimizer 완료 후 Manager 복귀
     workflow.add_edge("researcher", "manager")
     workflow.add_edge("analyst", "manager")
+    workflow.add_edge("optimizer", "manager")
 
     return workflow
