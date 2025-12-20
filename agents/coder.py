@@ -78,8 +78,12 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
 
 [Your Mission]
 1. 위 단계가 'write_file'이라면, 파일에 들어갈 코드를 작성하여 도구를 호출하라.
-2. 위 단계가 'execute_shell'이고 실행 결과(Tool Output)에 오류(Exit Code != 0)가 있다면, 원인을 분석하고 코드를 수정(write_file)하라. (Self-Correction)
+2. 위 단계가 'execute_shell'이고 실행 결과(Tool Output)에 오류(Exit Code != 0)가 있다면, **STDOUT과 STDERR를 정밀 분석하라.** 
+   - 문법 에러라면 오타나 누락된 괄호를 찾아 수정하라.
+   - 라이브러리 누락 에러라면 `pip install` 단계를 스스로 계획하여 실행하라.
+   - 권한 문제라면 `chmod` 등을 시도하라.
 3. 성공적으로 수행되었다면 'status': 'success'를 반환하여 다음 단계로 넘어가라.
+
 
 [Available Tools]
 - read_file(path)

@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Interactive Interruption & UI Polish Complete (v1.2.3)
+**Status:** CLI Commands & Error Recovery Complete (v1.2.4)
 
 ## 🧠 Current Context
-사용자 인터페이스가 매우 성숙해졌습니다. 이제 에이전트가 도구를 실행할 때 진행 바가 표시되며, 사고 과정은 에이전트별 색상과 함께 강조됩니다. 또한 비차단 입력 방식을 도입하여 시스템의 반응성을 높였습니다.
+시스템의 사용성과 안정성이 한 단계 더 발전했습니다. 이제 사용자는 `/clear`와 같은 명령어로 대화 흐름을 직접 제어할 수 있으며, `Coder` 에이전트는 파일 권한이나 라이브러리 누락 같은 실질적인 오류 상황에서도 당황하지 않고 `stderr`를 분석하여 스스로 문제를 해결하려 시도합니다.
 
 ## 🎯 Next Objective
-**Reliability & Real-world Usage Polish**
-1. **Tool Error Recovery**: 에이전트가 도구를 호출했으나 네트워크 오류나 파일 권한 문제로 실패했을 때, `Coder`가 단순히 재시도하는 것을 넘어 더 지능적으로 대처(예: 권한 수정 시도, 대체 도구 사용)하도록 프롬프트를 튜닝합니다.
-2. **CLI Accessibility**: 사용자가 특정 단축키(예: `/stop`, `/clear`)를 입력하여 대화 내역을 정리하거나 강제로 흐름을 제어할 수 있는 명령어 시스템을 강화합니다.
+**System Polishing & Intelligent Optimization**
+1. **`Optimizer` Enhancement**: `agents/optimizer.py`가 단순히 로그를 읽는 것을 넘어, 실제로 코드의 병목 구간을 발견하면 `Coder`에게 수정 제안(Patch Plan)을 보내는 연동 로직을 구체화합니다.
+2. **UI Interactivity**: 대시보드에서 특정 로그를 선택하면 상세 내용을 팝업으로 보여주거나, 에이전트 전환 시 더 명확한 시각적 효과를 주는 방안을 검토합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 인터랙티브 중단 및 UI 고도화 완료 (v1.2.3).
-- 다음 목표: 도구 복구 로직 강화 및 CLI 명령어 시스템 구축.
+- CLI 명령어 및 자가 치유 로직 강화 완료 (v1.2.4).
+- 다음 목표: Optimizer 에이전트 연동 및 UI 고도화.
 
 작업 목표:
-1. `agents/coder.py`에서 도구 실행 실패 시 `stderr`를 분석하여 스스로 '해결책'을 찾아 실행하는 로직을 보강해줘.
-2. `main.py`에서 사용자가 `/`로 시작하는 명령어를 입력했을 때 에이전트를 호출하지 않고 즉시 처리(예: `/clear`, `/history`, `/radar`)하는 로직을 추가해줘.
+1. `agents/optimizer.py`에서 생성된 개선안을 `Manager`가 인지하여 `Coder`에게 수정 태스크로 할당하는 워크플로우를 `core/graph.py`에 추가해줘.
+2. `ui/dashboard.py`에서 에이전트가 사고 과정(Thought)을 마칠 때 패널이 잠시 녹색으로 변하며 'Thought Complete' 메시지를 보여주는 효과를 추가해줘.
 ```

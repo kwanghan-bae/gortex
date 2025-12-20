@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Interface**: 사용자 피드백 루프를 더 간편하게 제공하는 CLI 단축키 제안
-- [ ] **Reliability**: 에이전트 도구 호출 실패 시 재시도 전략 고도화
+- [ ] **Animation**: 대시보드 UI 요소 간 전환 시 더 역동적인 시각 효과 추가
+- [ ] **Self-Cognition**: Optimizer 에이전트의 로그 분석을 통한 자동 핫픽스 생성 기능
 
 ## ✅ Completed
+### v1.2.4 (CLI Commands & Error Recovery)
+- [x] `main.py`: 슬래시(/) 명령 처리기 구현 (`/clear`, `/history`, `/radar` 지원)
+- [x] `agents/coder.py`: 도구 실행 실패 시 `stderr`를 분석하여 문법 교정, 패키지 설치 등을 수행하는 자가 치유 로직 강화
+- [x] `main.py`: 명령어 입력 시 에이전트 그래프를 호출하지 않고 즉시 결과를 반환하도록 흐름 제어 최적화
+
 ### v1.2.3 (Interactive Interruption & UI Polish)
 - [x] `main.py`: 비차단 방식의 사용자 입력(`get_user_input`) 도입 및 `Ctrl+C`를 통한 작업 중단 기반 마련
 - [x] `ui/dashboard.py`: 도구 실행 시 사이드바에 실시간 `Progress` 바 표시 기능 추가

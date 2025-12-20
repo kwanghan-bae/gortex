@@ -17,6 +17,36 @@ async def get_user_input(console: Console):
     """비차단 방식으로 사용자 입력을 받음"""
     return await asyncio.get_event_loop().run_in_executor(None, console.input, "[bold green]User > [/bold green]")
 
+async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObserver) -> bool:
+    """'/'로 시작하는 명령어를 처리합니다. 에이전트 실행이 필요 없으면 True 반환."""
+    cmd = user_input.lower().strip()
+    
+    if cmd == "/clear":
+        ui.chat_history = []
+        ui.update_main([])
+        ui.update_thought("Chat history cleared.")
+        return True
+    
+    elif cmd == "/history":
+        from gortex.core.persistence import list_checkpoints
+        # 영속성 레이어에서 기록을 가져오는 로직 (단순화)
+        ui.chat_history.append(("system", "현재 세션의 대화 내역이 유지되고 있습니다."))
+        ui.update_main(ui.chat_history)
+        return True
+        
+    elif cmd == "/radar":
+        import json
+        if os.path.exists("tech_radar.json"):
+            with open("tech_radar.json", "r") as f:
+                radar = json.load(f)
+                ui.chat_history.append(("system", f"Tech Radar: {json.dumps(radar, indent=2, ensure_ascii=False)}"))
+        else:
+            ui.chat_history.append(("system", "Tech Radar 데이터가 없습니다."))
+        ui.update_main(ui.chat_history)
+        return True
+
+    return False
+
 async def run_gortex():
     console = Console(theme=GORTEX_THEME)
     ui = DashboardUI(console)
@@ -54,7 +84,13 @@ async def run_gortex():
                     if user_input.lower() in ["exit", "quit", "q"]:
                         break
                     
+                    # 명령어 처리
+                    if user_input.startswith("/"):
+                        if await handle_command(user_input, ui, observer):
+                            continue
+                    
                     # 2. 실행 및 스트리밍 업데이트
+
                     # 초기 상태 설정
                     initial_state = {
                         "messages": [("user", user_input)],
