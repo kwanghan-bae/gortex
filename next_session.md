@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Self-Modification Logic Enhanced & UI Design Polished (v1.3.2)
+**Status:** Evolution Stability & Patch Validation Complete (v1.3.3)
 
 ## 🧠 Current Context
-시스템의 자기 개선을 위한 패치 지시문이 더 구체화되었으며, 대시보드 UI는 전문적인 터미널 테마와 에이전트별 전용 애니메이션을 통해 완성도를 높였습니다. 이제 시스템 최적화 제안이 실질적인 코드 수정으로 이어질 수 있는 고품질의 지시문을 생성합니다.
+시스템의 진화 과정과 자기 개선 로직이 더욱 성숙해졌습니다. 이제 지능적인 충돌 감지를 통해 규칙 베이스를 깨끗하게 유지하며, `Planner`는 외부의 개선 제안을 비판적으로 수용하여 시스템의 안정성을 보장합니다.
 
 ## 🎯 Next Objective
-**Conflict Resolution & Advanced Interaction**
-1. **`Rule Conflict` Resolution**: `core/evolutionary_memory.py`에서 새로운 규칙 저장 시 기존 규칙과의 충돌 여부를 단순히 경고하는 것을 넘어, 유사도를 분석하거나 중복을 지능적으로 합치는 로직을 보강합니다.
-2. **`Planner` Patch Evaluation**: `agents/planner.py`에서 시스템 최적화 요청을 받았을 때, 이를 분석하여 '수락/거절' 이유를 `thought_process`에 명시하도록 프롬프트를 보강합니다.
+**Long-term Efficiency & Visual Precision**
+1. **`Synaptic Hierarchies`**: 컨텍스트가 극도로 길어질 경우, 중요도가 낮은 정보는 버리고 핵심 규칙과 현재 목표만 유지하는 다단계 압축 전략을 구현합니다.
+2. **`Interactive Log Selection`**: 대시보드 사이드바의 'Trace Logs' 패널에 표시된 항목 중 하나를 선택하여 상세 페이로드를 볼 수 있는 기능을 강화합니다. (예: `/log <index>` 명령어 고도화)
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 최적화 패치 고도화 및 UI 폴리싱 완료 (v1.3.2).
-- 다음 목표: 규칙 충돌 감지 로직 및 패치 검토 로직 보강.
+- 규칙 충돌 감지 및 패치 비판적 검토 로직 완료 (v1.3.3).
+- 다음 목표: 다단계 시냅스 압축 및 로그 인터랙션 강화.
 
 작업 목표:
-1. `core/evolutionary_memory.py`에서 규칙 저장 시 트리거 패턴의 유사도를 분석하여 유사한 규칙이 이미 있다면 병합하거나 충돌 경고를 주는 로직을 더 정교화해줘.
-2. `agents/planner.py`에서 'SYSTEM OPTIMIZATION REQUEST'가 들어올 경우, 이를 비판적으로 검토한 뒤 실행 여부를 결정하고 그 이유를 `thought_process`에 포함하도록 수정해줘.
+1. `utils/memory.py`에서 요약 시, `severity`가 높은 진화 규칙들을 요약본의 최상단에 고정 배치하도록 프롬프트를 정교화해줘.
+2. `/log` 명령어를 인자 없이 입력하면 마지막 로그를 보여주고, 인자가 있으면 해당 번호의 로그를 더 화려한 Panel로 보여주도록 `main.py`를 다듬어줘.
 ```

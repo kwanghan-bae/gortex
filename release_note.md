@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Evolution**: 추출된 규칙 간의 충돌 감지 및 해결 전략 고도화
-- [ ] **Data**: 대시보드 내 특정 로그 항목 클릭 시 상세 팝업 표시
+- [ ] **Animation**: 대시보드 내 특정 로그 항목 선택 시 시각적 하이라이트 강화
+- [ ] **Data**: 에이전트 간 파일 캐시 공유 로직의 정합성 테스트 추가
 
 ## ✅ Completed
+### v1.3.3 (Evolution Stability & Patch Validation)
+- [x] `core/evolutionary_memory.py`: 새로운 규칙 저장 시 트리거 패턴 유사도 분석을 통한 지능형 충돌 감지 및 병합 로직 구현
+- [x] `agents/planner.py`: `Optimizer`가 제안한 시스템 최적화 패치의 보안, 성능, 호환성 타당성을 검토하도록 프롬프트 고도화
+- [x] `core/evolutionary_memory.py`: 규칙 간 잠재적 충돌 시 로그 경고 및 추적용 메타데이터 추가
+
 ### v1.3.2 (Self-Modification Realization & UI Polish)
 - [x] `agents/optimizer.py`: 더 구체적인 코드 패치 지시문을 생성하도록 Few-shot 사례 주입 및 프롬프트 고도화
 - [x] `ui/dashboard.py`: 각 에이전트(Planner, Coder 등)마다 고유한 Spinner 스타일 적용으로 시각적 다양성 확보

@@ -25,32 +25,40 @@ class EvolutionaryMemory:
         return []
 
     def save_rule(self, instruction: str, trigger_patterns: List[str], severity: int = 3, source_session: Optional[str] = None, context: Optional[str] = None):
-        """새로운 규칙을 저장 (중복 체크, 병합, 충돌 감지 및 우선순위 강화 로직 포함)"""
+        """새로운 규칙을 저장 (지능형 병합, 충돌 감지 및 우선순위 강화 로직)"""
+        new_patterns = set(trigger_patterns)
+        
         # 1. 기존 규칙 분석 (중복 및 충돌 검사)
         for existing in self.memory:
-            # 동일 지침 확인
-            if existing["learned_instruction"].strip() == instruction.strip():
+            existing_patterns = set(existing["trigger_patterns"])
+            # 지침의 유사도 계산 (단순화: 완전 일치 또는 포함 관계)
+            inst_match = existing["learned_instruction"].strip() == instruction.strip()
+            # 트리거 패턴 겹침 정도 (Intersection over Union 유사도)
+            intersection = existing_patterns.intersection(new_patterns)
+            union = existing_patterns.union(new_patterns)
+            pattern_similarity = len(intersection) / len(union) if union else 0
+
+            # CASE A: 동일한 지침인 경우 -> 패턴 병합 및 강화
+            if inst_match:
                 logger.info(f"Duplicate rule detected. Reinforcing existing rule: {existing['id']}")
-                existing["trigger_patterns"] = list(set(existing["trigger_patterns"] + trigger_patterns))
-                existing["severity"] = max(existing["severity"], severity)
+                existing["trigger_patterns"] = list(union)
+                existing["severity"] = max(existing.get("severity", 3), severity)
                 existing["reinforcement_count"] = existing.get("reinforcement_count", 0) + 1
                 existing["last_reinforced"] = datetime.now().isoformat()
                 if context: existing["context"] = context
                 self._persist()
                 return
             
-            # 충돌 감지 (단순화: 트리거 패턴이 50% 이상 겹치는데 지침이 다를 경우)
-            existing_patterns = set(existing["trigger_patterns"])
-            new_patterns = set(trigger_patterns)
-            intersection = existing_patterns.intersection(new_patterns)
-            
-            if len(intersection) > 0 and (len(intersection) >= len(new_patterns) / 2):
-                logger.warning(f"⚠️ Potential rule conflict detected with {existing['id']} over patterns: {intersection}")
-                # 충돌 발생 시 현재는 새 규칙을 추가하되 중요도(severity)를 조정하거나 로그에 기록
-                # (향후 LLM을 통한 자동 해결 로직으로 확장 가능)
+            # CASE B: 지침은 다르지만 트리거 패턴이 매우 유사한 경우 (충돌 위험)
+            if pattern_similarity >= 0.7:
+                logger.warning(f"⚠️ POTENTIAL CONFLICT: New rule for {new_patterns} might contradict existing rule {existing['id']} ({existing_patterns})")
+                # 중요도가 더 높은 쪽을 우선하거나, 사용자에게 알림을 줄 수 있는 데이터 추가
+                existing["conflict_warning"] = True
+                existing["potential_contradiction"] = instruction
 
         # 2. 새로운 규칙 생성
         rule_id = f"RULE_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
 
         new_rule = {
             "id": rule_id,
