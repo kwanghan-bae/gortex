@@ -19,9 +19,15 @@
 - [x] **Interface**: 현재 프로젝트를 ZIP 파일로 압축하여 다운로드 가능한 링크를 제공하는 `/bundle` 명령어 구현
 - [x] **Infrastructure**: `TrendScout` 에이전트를 확장하여 새로운 파이썬 라이브러리나 기술 스택의 취약점을 점검하는 'Security Scout' 기능 추가
 - [x] **Infrastructure**: GitHub API 연동을 통해 프로젝트를 원격 저장소에 자동으로 푸시하는 '/deploy' 명령어 구현
-- [ ] **Infrastructure**: 외부 API 연동(예: Slack, Discord)을 통해 작업 완료 시 알림을 보내는 'Notification' 시스템 구축
+- [x] **Infrastructure**: 외부 API 연동(예: Slack, Discord)을 통해 작업 완료 시 알림을 보내는 'Notification' 시스템 구축
+- [ ] **Interface**: 터미널 UI를 넘어 브라우저에서 Gortex의 활동을 실시간 모니터링할 수 있는 'Web Dashboard' 프레임워크 구축
 
 ## ✅ Completed
+### v1.6.9 (Multi-Channel Notifications)
+- [x] `utils/notifier.py`: Webhook을 통해 Slack 및 Discord로 실시간 메시지를 전송하는 알림 시스템 구축
+- [x] `main.py`: 사용자가 수동으로 상태 보고를 전송할 수 있는 `/notify [message]` 명령어 구현
+- [x] `main.py`: 에이전트가 모든 계획된 단계를 성공적으로 완료했을 때 외부 채널로 자동 축하 알림 전송 로직 통합
+
 ### v1.6.8 (Git Auto-Deploy & Synchronization)
 - [x] `utils/git_tool.py`: Git 명령어 실행 및 저장소 상태 파악을 위한 전용 유틸리티 클래스 신설
 - [x] `main.py`: 현재 변경 사항을 스테이징, 커밋, 푸시까지 일괄 처리하는 `/deploy` 명령어 구현
