@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Resilience**: API 키 전체 소진 시 복구 가이드 레이아웃 정밀 튜닝
-- [ ] **Intelligence**: Observer 데이터를 활용한 Optimizer의 자동 코드 패치 기능 실증
+- [ ] **Evolution**: Analyst 에이전트의 규칙 추출 성능 고도화 (Context 기반 정교화)
+- [ ] **Interface**: 대시보드 내 특정 로그 항목 클릭 시 상세 팝업 표시
 
 ## ✅ Completed
+### v1.4.2 (Resilience UI & Self-Modification Flow)
+- [x] `main.py`: 할당량 소진(`Quota Exhausted`) 발생 시, Align.center를 활용한 풀스크린 스타일의 경고 레이아웃 구현
+- [x] `agents/planner.py`: 시스템 최적화 제안(Request) 수락 시 타당성 검토 후 즉시 실행 계획에 반영하도록 지침 보강
+- [x] `main.py`: 문법 오류 전수 수정 및 비동기 입력 처리 안정화 완료
+
 ### v1.4.1 (UI Sophistication & Async Optimization)
 - [x] `ui/dashboard.py`: 사이드바 각 패널(Status, Stats, Evolution) 제목에 이모지 추가 및 상태별 테두리 색상 강조 로직 고도화
 - [x] `main.py`: 에이전트 스트리밍 중 UI 업데이트 주기(0.01s) 조정 및 제어권 양보 로직 최적화로 반응성 향상

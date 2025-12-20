@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** UI Sophistication & Async Optimization Complete (v1.4.1)
+**Status:** Resilience UI & Self-Modification Flow Complete (v1.4.2)
 
 ## 🧠 Current Context
-대시보드 UI가 한층 더 세련되고 정보 집약적으로 발전했습니다. 사이드바의 각 섹션은 고유의 아이콘과 강조 색상을 통해 상태를 명확히 전달하며, 내부적으로는 비동기 루프 최적화를 통해 매끄러운 사용자 경험을 제공합니다.
+시스템의 안정성과 복구 능력이 완성되었습니다. 이제 할당량 소진 시에도 전문적인 UI로 대응하며, `Optimizer`의 제안이 `Planner`의 비판적 검토를 거쳐 실제 시스템 코드를 수정하는 '자기 개조 루프'가 이론적으로 완결되었습니다.
 
 ## 🎯 Next Objective
-**Resilience & Self-Evolution Realization**
-1. **`Quota UI`**: 모든 API 키가 소진되었을 때 나타나는 경고 화면을 대시보드와 일관성 있는 스타일의 전용 Full-screen Panel로 다듬습니다.
-2. **`Patch Simulation`**: `Optimizer`가 생성한 개선 태스크가 실제로 파일 시스템에 반영되는 전체 루프를 테스트하고, `Planner`가 제안을 수락했을 때 `Coder`가 정확히 해당 파일을 수정하도록 프롬프트 흐름을 최종 점검합니다.
+**Analyst Refinement & Log Interactivity**
+1. **`Analyst` Contextualization**: 규칙 추출 시 단순히 키워드뿐만 아니라, 해당 규칙이 적용되어야 할 구체적 맥락(`context`)을 JSON 필드에 추가하고, 이를 `EvolutionaryMemory`에서 활용하도록 개선합니다.
+2. **`Log Detail Popup`**: 사이드바의 'Trace Logs' 패널에 표시된 항목을 클릭하여 상세 내용을 보거나, `/log <index>` 명령 시 출력을 더 구조화(Metadata vs Payload 분리)합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 사이드바 고도화 및 비동기 최적화 완료 (v1.4.1).
-- 다음 목표: 할당량 초과 UI 폴리싱 및 자기 개조 루프 실증.
+- 할당량 UI 및 패치 승인 프로세스 완료 (v1.4.2).
+- 다음 목표: Analyst 정교화 및 로그 상세 보기 강화.
 
 작업 목표:
-1. `main.py`의 Quota Emergency 패널을 `Rich.Align.center`와 `Rich.Panel`을 조합하여 더 경고 효과가 뚜렷한 풀스크린 스타일로 개선해줘.
-2. `agents/optimizer.py`에서 제안한 'improvement_task'가 실제 코드 수정으로 이어지는 과정을 디버그 모드로 확인하고, `Planner`가 이를 놓치지 않도록 시스템 지침을 보강해줘.
+1. `agents/analyst.py`에서 추출된 규칙에 `context` 필드를 추가하고, `core/evolutionary_memory.py`에서 이를 저장하도록 수정해줘.
+2. `ui/dashboard.py`에서 `/log` 명령어 결과를 보여줄 때 `Rich.Columns`를 사용하여 메타데이터와 내용을 좌우로 배치하거나 섹션을 분리해서 가독성을 극대화해줘.
 ```
