@@ -2,9 +2,14 @@
 
 ## 🚀 Backlog (To-Do)
 - [ ] **System**: 대규모 도구 실행 시 백그라운드 처리 및 스트리밍 로그 분리
-- [ ] **Data**: 에이전트 도구 실행 결과의 시각적 상세화 (JSON/Table 외 추가 포맷)
+- [ ] **Data**: 에이전트 도구 실행 결과의 시각적 상세화 (Rich.Table 자동 변환 강화)
 
 ## ✅ Completed
+### v1.4.7 (Visual Refinement & Coder Intelligence)
+- [x] `ui/dashboard.py`: 사이드바 각 패널(Status, Stats, Evolution)의 타이틀 색상을 활성 에이전트 색상과 동기화하여 시각적 일관성 강화
+- [x] `agents/coder.py`: 'Standard Error Response Manual'에 Python 구문 오류 해결을 위한 3단계 체크리스트 추가
+- [x] `ui/dashboard.py`: 패널 타이틀에 동적 스타일링 적용 로직 고도화
+
 ### v1.4.6 (Adaptive Throttling & Log Rotation)
 - [x] `core/auth.py`: `GortexAuth`를 싱글톤 패턴으로 변경하여 전역 API 호출 빈도 추적 통합
 - [x] `core/state.py`: `GortexState`에 `api_call_count` 필드 추가

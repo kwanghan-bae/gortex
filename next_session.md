@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Adaptive Throttling & Log Rotation Complete (v1.4.6)
+**Status:** Visual Refinement & Coder Intelligence Complete (v1.4.7)
 
 ## 🧠 Current Context
-시스템의 자기 보호 능력과 로그 관리 효율성이 강화되었습니다. 이제 Gortex는 API 사용량이 많아지면 스스로 가벼운 모델로 전환하여 비용과 할당량을 아끼며, 로그 파일의 무한 증식을 방지하는 로테이션 기능을 갖추었습니다.
+대시보드 UI가 더 세련되게 다듬어졌으며, `Coder` 에이전트의 자가 수정 지능이 매뉴얼화를 통해 강화되었습니다. 이제 시스템은 오류 상황에서 더 체계적으로 대응하며, 사용자는 UI를 통해 현재 어떤 에이전트가 어떤 성격의 작업을 하는지 색상으로 직관적으로 알 수 있습니다.
 
 ## 🎯 Next Objective
-**Visual Sophistication & System Resilience**
-1. **`Background Progress`**: 도구 실행(특히 Researcher) 중에도 대시보드 UI가 부드럽게 유지되도록 비동기 구조를 더욱 세밀하게 튜닝합니다.
-2. **`Self-Correction Manual`**: Coder 에이전트가 흔히 저지르는 실수(IndentationError 등)에 대한 '자가 수정 가이드'를 프롬프트에 더 구체적인 사례(Few-shot)로 추가하여 수리 속도를 높입니다.
+**System Scalability & Real-world Robustness**
+1. **`Log Persistence & Search`**: `trace.jsonl` 로그 파일이 누적됨에 따라, 사용자가 특정 키워드나 에이전트명으로 로그를 검색할 수 있는 기능을 강화합니다. (예: `/logs researcher error`)
+2. **`Self-Modification Loop Completion`**: `Optimizer`가 제안한 개선안을 `Planner`가 승인하고 `Coder`가 실제로 `core/` 또는 `utils/`의 소스 코드를 안전하게 수정하는 전체 시나리오를 실증합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 능동적 스로틀링 및 로그 로테이션 완료 (v1.4.6).
-- 다음 목표: UI 반응성 최적화 및 Coder 자가 수정 지능 강화.
+- UI 테마 정밀화 및 Coder 매뉴얼 보강 완료 (v1.4.7).
+- 다음 목표: 로그 검색 기능 추가 및 자기 개조 루프 실증.
 
 작업 목표:
-1. `ui/dashboard.py`에서 에이전트 전환이나 도구 실행 시 사이드바 패널의 타이틀 색상이 함께 변하도록 스타일링을 정밀화해줘.
-2. `agents/coder.py`의 시스템 프롬프트에 'Python 구문 오류(Syntax/Indent) 해결을 위한 3단계 체크리스트'를 추가해줘.
+1. `main.py`의 `/logs` 명령어에 검색 기능을 추가하여 `/logs [agent] [event]`와 같이 필터링해서 볼 수 있게 해줘.
+2. `agents/optimizer.py`에서 생성된 `improvement_task`를 `Manager`가 받으면, 이를 즉시 `Planner`에게 '시스템 개조 미션'으로 전달하도록 로직을 최종 점검해줘.
 ```

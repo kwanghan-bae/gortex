@@ -222,7 +222,7 @@ class DashboardUI:
             spinner_style = self.agent_spinners.get(agent.lower(), "dots")
             status_group.append(Spinner(spinner_style, text=f"[{agent_style}]{agent} is active[/{agent_style}]"))
 
-        self.layout["status"].update(Panel(Group(*status_group), title="📡 [bold]SYSTEM STATUS[/bold]", border_style=border_color))
+        self.layout["status"].update(Panel(Group(*status_group), title=f"📡 [bold {border_color}]SYSTEM STATUS[/]", border_style=border_color))
 
         # Stats
         stats_table = Table.grid(expand=True)
@@ -234,13 +234,14 @@ class DashboardUI:
             stats_group.append(Text("\n"))
             stats_group.append(self.progress)
 
-        self.layout["stats"].update(Panel(Group(*stats_group), title="📊 [bold]USAGE STATS[/bold]", border_style="green" if tokens > 0 else border_color))
+        self.layout["stats"].update(Panel(Group(*stats_group), title=f"📊 [bold {border_color}]USAGE STATS[/]", border_style="green" if tokens > 0 else border_color))
 
         # Evolution
         evo_text = Text(f"Active Rules: {rules}\n", style="bold magenta")
         if rules > 0:
             evo_text.append("[LEARNED MODE]", style="blink magenta")
-        self.layout["evolution"].update(Panel(evo_text, title="🧬 [bold]EVOLUTION[/bold]", border_style="magenta" if rules > 0 else border_color))
+        self.layout["evolution"].update(Panel(evo_text, title=f"🧬 [bold {border_color}]EVOLUTION[/]", border_style="magenta" if rules > 0 else border_color))
+
 
 
     def render(self):

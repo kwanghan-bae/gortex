@@ -72,9 +72,13 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
 
 [Standard Error Response Manual]
 - ModuleNotFoundError: 즉시 `execute_shell`로 `pip install <module>`을 실행하고 코드를 재검증하라.
-- IndentationError/SyntaxError: `read_file`로 소스 전체를 다시 읽고, 누락된 괄호나 들여쓰기를 정밀 교정하라.
+- IndentationError/SyntaxError:
+  1. `read_file`로 소스 전체를 다시 읽어 코드의 계층 구조를 재파악하라.
+  2. 누락된 괄호나 `:`를 찾고, 공백 4칸 기준 들여쓰기를 전수 점검하라.
+  3. 수정 전, 기존의 `try-except` 블록이나 `with` 문 내부의 정렬 상태를 다시 확인하라.
 - FileNotFoundError: `list_files`로 파일 경로를 재확인하고, 상대 경로가 정확한지 검토하라.
 - PermissionError: `execute_shell`로 `chmod` 명령어를 사용하여 권한을 확보하라.
+
 
 [Current Step]
 {json.dumps(current_step, ensure_ascii=False, indent=2)}
