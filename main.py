@@ -120,6 +120,29 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         ui.chat_history.append(("system", f"{res1}\n{res2}\n\n[bold yellow]Next Step:[/bold yellow] 'docker-compose up --build -d'를 실행하여 컨테이너를 가동하세요."))
         ui.update_main(ui.chat_history)
         return "skip"
+
+    elif cmd == "/bundle":
+        import zipfile
+        bundle_dir = "logs/bundles"
+        os.makedirs(bundle_dir, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        bundle_path = f"{bundle_dir}/gortex_project_{timestamp}.zip"
+        
+        ignore_patterns = {".git", "venv", "__pycache__", ".DS_Store", "logs/bundles", "logs/backups"}
+        
+        try:
+            with zipfile.ZipFile(bundle_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for root, dirs, files in os.walk("."):
+                    dirs[:] = [d for d in dirs if d not in ignore_patterns]
+                    for file in files:
+                        if file in ignore_patterns: continue
+                        file_path = os.path.join(root, file)
+                        zipf.write(file_path, os.path.relpath(file_path, "."))
+            ui.chat_history.append(("system", f"📦 프로젝트 번들링 완료: {bundle_path}"))
+        except Exception as e:
+            ui.chat_history.append(("system", f"❌ 번들링 실패: {str(e)}"))
+        ui.update_main(ui.chat_history)
+        return "skip"
     
     elif cmd == "/export":
         export_dir = "logs/exports"
