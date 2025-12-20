@@ -9,8 +9,12 @@ from dotenv import load_dotenv
 # 로깅 설정
 logger = logging.getLogger("GortexAuth")
 
-# .env 로드
-load_dotenv()
+# .env 로드 (프로젝트 루트 기준으로 검색)
+env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+if os.path.exists(env_path):
+    load_dotenv(env_path)
+else:
+    load_dotenv() # Fallback to default
 
 class GortexAuth:
     """
