@@ -77,40 +77,47 @@ class DashboardUI:
                 msg_group.append(Panel(content, title="[bold blue]Gortex[/bold blue]", border_style="blue"))
             elif role == "tool":
                 # 도구 실행 결과 (Observation) 요약 및 시각화 처리
-                display_content = content
-                if len(content) > 2000:
-                    display_content = content[:1000] + f"\n\n[... {len(content)-2000} characters truncated ...]\n\n" + content[-1000:]
-                
-                # 1. JSON 검사
-                try:
-                    stripped = display_content.strip()
-                    if (stripped.startswith("{}") and stripped.endswith("}")) or (stripped.startswith("[") and stripped.endswith("]")):
-                        json.loads(stripped)
-                        renderable = JSON(stripped)
-                        msg_group.append(Panel(renderable, title="🛠️ [bold yellow]Observation (JSON)[/bold yellow]", border_style="yellow", style="dim"))
-                        continue
-                except:
-                    pass
-
-                # 2. 테이블 형식 검사 (ls -l, csv 등)
-                table_renderable = try_render_as_table(display_content)
-                if table_renderable:
-                    msg_group.append(Panel(table_renderable, title="🛠️ [bold yellow]Observation (Table)[/bold yellow]", border_style="yellow", style="dim"))
-                    continue
-
-                # 3. 코드 형태인 경우 하이라이팅
-
-                if any(x in display_content for x in ["import ", "def ", "class ", "void ", "public ", "{", "}", "const ", "SELECT ", "INSERT "]):
-                    lang = "python"
-                    if "SELECT " in display_content: lang = "sql"
-                    elif "void " in display_content: lang = "java"
+                if isinstance(content, str):
+                    display_content = content
+                    if len(content) > 2000:
+                        display_content = content[:1000] + f"\n\n[... {len(content)-2000} characters truncated ...]\n\n" + content[-1000:]
                     
-                    syntax_content = Syntax(display_content, lang, theme="monokai", line_numbers=True, word_wrap=True)
-                    msg_group.append(Panel(syntax_content, title=f"🛠️ [bold yellow]Observation ({lang})[/bold yellow]", border_style="yellow", style="dim"))
+                    # 1. JSON 검사
+                    try:
+                        stripped = display_content.strip()
+                        if (stripped.startswith("{}") and stripped.endswith("}")) or (stripped.startswith("[") and stripped.endswith("]")):
+                            json.loads(stripped)
+                            renderable = JSON(stripped)
+                            msg_group.append(Panel(renderable, title="🛠️ [bold yellow]Observation (JSON)[/bold yellow]", border_style="yellow", style="dim"))
+                            continue
+                    except:
+                        pass
+
+                    # 2. 테이블 형식 검사
+                    table_renderable = try_render_as_table(display_content)
+                    if table_renderable:
+                        msg_group.append(Panel(table_renderable, title="🛠️ [bold yellow]Observation (Table)[/bold yellow]", border_style="yellow", style="dim"))
+                        continue
+
+                    # 3. 코드 형태인 경우 하이라이팅
+                    if any(x in display_content for x in ["import ", "def ", "class ", "void ", "public ", "{", "}", "const ", "SELECT ", "INSERT "]):
+                        lang = "python"
+                        if "SELECT " in display_content: lang = "sql"
+                        elif "void " in display_content: lang = "java"
+                        
+                        syntax_content = Syntax(display_content, lang, theme="monokai", line_numbers=True, word_wrap=True)
+                        msg_group.append(Panel(syntax_content, title=f"🛠️ [bold yellow]Observation ({lang})[/bold yellow]", border_style="yellow", style="dim"))
+                    else:
+                        msg_group.append(Panel(display_content, title="🛠️ [bold yellow]Observation[/bold yellow]", border_style="yellow", style="dim"))
                 else:
-                    msg_group.append(Panel(display_content, title="🛠️ [bold yellow]Observation[/bold yellow]", border_style="yellow", style="dim"))
+                    # 문자열이 아닌 경우 (예: 이미 Rich 객체인 경우)
+                    msg_group.append(Panel(content, title="🛠️ [bold yellow]Observation[/bold yellow]", border_style="yellow", style="dim"))
             elif role == "system":
-                msg_group.append(Text(f"⚙️ {content}", style="dim white"))
+                # 시스템 메시지도 Rich 객체 지원
+                if isinstance(content, str):
+                    msg_group.append(Text(f"⚙️ {content}", style="dim white"))
+                else:
+                    msg_group.append(content)
         
         self.layout["main"].update(
             Panel(Group(*msg_group), title="[bold cyan]🧠 Gortex Terminal[/bold cyan]")

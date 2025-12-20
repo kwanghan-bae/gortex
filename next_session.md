@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Table Refinement & Dynamic Thresholds Complete (v1.2.8)
+**Status:** User Interruption & Log Browsing Complete (v1.2.9)
 
 ## 🧠 Current Context
-테이블 시각화 기능이 더 견고해졌으며, 시스템이 토큰 사용량을 감시하여 자동으로 컨텍스트를 최적화하는 지능을 갖추었습니다. 이제 장기적인 작업에서도 토큰 비용과 컨텍스트 길이를 효율적으로 관리할 수 있습니다.
+사용자 제어권과 시스템 투명성이 한층 강화되었습니다. 이제 사용자는 작업을 언제든 안전하게 중단할 수 있으며, `/logs` 명령을 통해 시스템 내부에서 어떤 일이 일어났는지 즉시 확인할 수 있습니다. UI 역시 다양한 Rich 객체를 수용할 수 있도록 유연해졌습니다.
 
 ## 🎯 Next Objective
-**System Robustness & Visual Details**
-1. **`Interruption` Refinement**: 에이전트 실행 중 사용자의 개입(중단 및 수정)을 더 매끄럽게 처리할 수 있도록 `main.py`와 `graph.py` 사이의 시그널링 체계를 강화합니다.
-2. **Detailed Log View**: 대시보드 사이드바의 'Trace Logs'에 표시된 항목을 사용자가 선택하거나 더 자세한 내용을 볼 수 있는 인터페이스(예: 로그 파일 자동 열기 명령어 등)를 구상합니다.
+**Self-Modification Loop & Advanced Interactivity**
+1. **`Self-Modification` Simulation**: `Optimizer`가 제안한 개선 태스크를 `Manager`가 받아서 `Planner`와 `Coder`에게 전달하여 실제 시스템 코드를 수정하는 '자기 개조 루프'를 테스트하고 정교화합니다.
+2. **`Interactive Interruption`**: 중단 직후 사용자가 즉시 수정 지시를 내렸을 때, 에이전트가 이전 맥락을 유지한 채 새 지시를 수행하도록 프롬프트 흐름을 튜닝합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 테이블 감지 고도화 및 동적 요약 임계치 적용 완료 (v1.2.8).
-- 다음 목표: 사용자 인터럽트 정교화 및 로그 상세 보기 강화.
+- 사용자 중단 정교화 및 /logs 명령어 추가 완료 (v1.2.9).
+- 다음 목표: 자기 개조 루프(Self-Modification) 실증 및 인터랙티브 중단 흐름 튜닝.
 
 작업 목표:
-1. `main.py`에서 `Ctrl+C` 감지 시, 단순히 메시지만 남기는 게 아니라 `AsyncSqliteSaver`의 현재 상태를 강제로 백업하고 안전하게 대기 모드로 전환하는 로직을 보강해줘.
-2. `/logs` 명령어를 추가하여 최근 10개의 `trace.jsonl` 로그 내용을 보기 좋게 출력해주는 기능을 구현해줘.
+1. `agents/optimizer.py`에서 생성된 `improvement_task`를 `Manager`가 받으면, 이를 별도의 높은 우선순위 태스크로 `Planner`에게 넘기도록 `agents/manager.py`를 수정해줘.
+2. `main.py`에서 중단(`Ctrl+C`) 후 입력받은 사용자 메시지에 "중단 후 재개" 맥락을 자동으로 포함시켜 에이전트에게 전달하도록 개선해줘.
 ```

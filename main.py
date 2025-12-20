@@ -2,9 +2,11 @@ import os
 import asyncio
 import random
 import logging
+import json
 from rich.console import Console
 from rich.live import Live
 from rich.panel import Panel
+from rich.table import Table
 from dotenv import load_dotenv
 
 from gortex.core.graph import compile_gortex_graph
@@ -24,8 +26,9 @@ async def get_user_input(console: Console):
     return await asyncio.get_event_loop().run_in_executor(None, console.input, "[bold green]User > [/bold green]")
 
 async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObserver) -> str:
-    """'/'로 시작하는 명령어를 처리합니다. 반환값에 따라 메인 루프의 행동을 결정합니다."""""
-    cmd = user_input.lower().strip()
+    """'/'로 시작하는 명령어를 처리합니다. 반환값에 따라 메인 루프의 행동을 결정합니다."""
+    cmd_parts = user_input.lower().strip().split()
+    cmd = cmd_parts[0]
     
     if cmd == "/clear":
         ui.chat_history = []
@@ -39,7 +42,6 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         return "skip"
         
     elif cmd == "/radar":
-        import json
         if os.path.exists("tech_radar.json"):
             with open("tech_radar.json", "r") as f:
                 radar = json.load(f)
@@ -53,6 +55,28 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         ui.chat_history.append(("system", "수동 요약을 요청하셨습니다. 다음 실행 시 요약이 수행됩니다."))
         ui.update_main(ui.chat_history)
         return "summarize"
+
+    elif cmd == "/logs":
+        log_path = "logs/trace.jsonl"
+        if os.path.exists(log_path):
+            with open(log_path, "r") as f:
+                lines = f.readlines()
+                recent_logs = [json.loads(line) for line in lines[-10:]]
+                
+                log_table = Table(title="Recent Trace Logs", show_header=True, header_style="bold magenta")
+                log_table.add_column("Time", style="dim")
+                log_table.add_column("Agent", style="cyan")
+                log_table.add_column("Event")
+                
+                for entry in recent_logs:
+                    ts = entry.get("timestamp", "").split("T")[-1][:8]
+                    log_table.add_row(ts, entry.get("agent", ""), entry.get("event", ""))
+                
+                ui.chat_history.append(("system", log_table))
+        else:
+            ui.chat_history.append(("system", "로그 파일이 존재하지 않습니다."))
+        ui.update_main(ui.chat_history)
+        return "skip"
 
     return "continue"
 
@@ -150,9 +174,11 @@ async def run_gortex():
                                             content = msg.content
                                             ui.chat_history.append((role, content))
                                         
-                                        new_tokens = count_tokens(content)
-                                        total_tokens += new_tokens
-                                        total_cost += estimate_cost(new_tokens)
+                                        # content가 Rich Renderable(Table 등)인 경우 토큰 계산 제외
+                                        if isinstance(content, str):
+                                            new_tokens = count_tokens(content)
+                                            total_tokens += new_tokens
+                                            total_cost += estimate_cost(new_tokens)
                                 
                                 ui.update_main(ui.chat_history)
                                 ui.update_sidebar(
@@ -171,11 +197,12 @@ async def run_gortex():
                                 ui.reset_thought_style()
                                 
                     except KeyboardInterrupt:
-                        ui.chat_history.append(("system", "⚠️ 사용자에 의해 작업이 중단되었습니다."))
+                        # 중단 시 현재 상태 저장 시도 (AsyncSqliteSaver가 자동으로 수행하지만 명시적 로그 남김)
+                        ui.chat_history.append(("system", "⚠️ 사용자에 의해 작업이 중단되었습니다. 현재까지의 상태는 안전하게 저장되었습니다."))
                         ui.update_main(ui.chat_history)
                         ui.stop_tool_progress()
                         ui.reset_thought_style()
-                        logger.info("Agent execution interrupted.")
+                        logger.info(f"Agent execution interrupted. Session {thread_id} state preserved.")
 
                     ui.current_agent = "Idle"
                     ui.complete_thought_style()

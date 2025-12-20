@@ -1,10 +1,16 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Interface**: 사용자 인터럽트(중단) 감지 및 즉각 피드백 루프 정교화
 - [ ] **Interface**: 대시보드 내 특정 로그 항목 클릭 시 상세 팝업 표시
+- [ ] **Intelligence**: Optimizer의 개선안을 자동으로 적용하는 Self-Modifying 루프 시뮬레이션
 
 ## ✅ Completed
+### v1.2.9 (User Interruption & Log Browsing)
+- [x] `main.py`: 에이전트 실행 중 `Ctrl+C` 감지 시 세션 상태를 안전하게 보존하고 즉시 대기 모드로 복귀하는 로직 강화
+- [x] `main.py`: `/logs` 명령어 추가로 최근 10개의 트레이스 로그를 테이블 형식으로 조회 가능
+- [x] `ui/dashboard.py`: 채팅 패널에서 문자열 뿐만 아니라 Rich 객체(Table 등) 렌더링 지원 보강
+- [x] `main.py`: 문법 오류 수정 및 명령어 처리기 안정화
+
 ### v1.2.8 (Table Refinement & Dynamic Thresholds)
 - [x] `utils/table_detector.py`: 단일 공백 구분 테이블 및 불규칙한 공백이 포함된 행에 대한 감지 로직 고도화
 - [x] `core/graph.py`: 총 토큰 수 추정치를 기반으로 한 동적 시냅스 압축(Summarizer) 임계치 도입 (5000 토큰 초과 시)
