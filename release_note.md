@@ -1,10 +1,16 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
+- [ ] **Data**: 에이전트 도구 실행 결과(Observation)의 상세 시각화 개선 (Rich.Table 자동 변환 강화)
 - [ ] **Animation**: 대시보드 내 특정 로그 항목 선택 시 시각적 하이라이트 강화
-- [ ] **Data**: 에이전트 간 파일 캐시 공유 로직의 정합성 테스트 추가
 
 ## ✅ Completed
+### v1.3.4 (Context Hierarchies & Log Interaction)
+- [x] `utils/memory.py`: 시냅스 압축(요약) 시 중요 시스템 제약 조건([CRITICAL RULES])을 최상단에 고정 배치하는 계층적 요약 로직 구현
+- [x] `main.py`: `/log` 명령어 개선 (인자 없을 시 마지막 로그 표시, 음수 인덱스 지원)
+- [x] `main.py`: 로그 상세 조회 시 Panel 디자인 고도화 (에이전트 정보 및 구조화된 JSON 출력 강화)
+- [x] `utils/memory.py`: 대화 길이에 따른 동적 압축 강도 조절 지침 정교화
+
 ### v1.3.3 (Evolution Stability & Patch Validation)
 - [x] `core/evolutionary_memory.py`: 새로운 규칙 저장 시 트리거 패턴 유사도 분석을 통한 지능형 충돌 감지 및 병합 로직 구현
 - [x] `agents/planner.py`: `Optimizer`가 제안한 시스템 최적화 패치의 보안, 성능, 호환성 타당성을 검토하도록 프롬프트 고도화

@@ -55,27 +55,35 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         log_path = "logs/trace.jsonl"
         if os.path.exists(log_path):
             try:
+                # 인자가 없으면 마지막 로그(-1) 표시
                 index = int(cmd_parts[1]) if len(cmd_parts) > 1 else -1
                 with open(log_path, "r") as f:
                     lines = f.readlines()
-                    if 0 <= index < len(lines):
-                        entry = json.loads(lines[index])
-                    elif index == -1:
-                        entry = json.loads(lines[-1])
-                    else:
-                        ui.chat_history.append(("system", f"인덱스 범위를 벗어났습니다. (0 ~ {len(lines)-1})"))
-                        ui.update_main(ui.chat_history)
-                        return "skip"
+                    total_logs = len(lines)
                     
-                    from rich.json import JSON
-                    detail_panel = Panel(JSON(json.dumps(entry, ensure_ascii=False)), title=f"Log Detail [Index: {index if index != -1 else len(lines)-1}]", border_style="magenta")
-                    ui.chat_history.append(("system", detail_panel))
+                    if total_logs == 0:
+                        ui.chat_history.append(("system", "기록된 로그가 없습니다."))
+                    elif -total_logs <= index < total_logs:
+                        actual_idx = index if index >= 0 else total_logs + index
+                        entry = json.loads(lines[actual_idx])
+                        
+                        from rich.json import JSON
+                        detail_panel = Panel(
+                            JSON(json.dumps(entry, ensure_ascii=False)), 
+                            title=f"🔍 LOG DETAIL [Index: {actual_idx}]", 
+                            border_style="magenta",
+                            subtitle=f"Agent: {entry.get('agent', 'Unknown')}"
+                        )
+                        ui.chat_history.append(("system", detail_panel))
+                    else:
+                        ui.chat_history.append(("system", f"인덱스 범위를 벗어났습니다. (현재 0 ~ {total_logs-1})"))
             except (ValueError, IndexError):
-                ui.chat_history.append(("system", "사용법: /log <index> (예: /log 5)"))
+                ui.chat_history.append(("system", "사용법: /log [index] (예: /log 5 또는 마지막 로그는 /log)"))
         else:
             ui.chat_history.append(("system", "로그 파일이 존재하지 않습니다."))
         ui.update_main(ui.chat_history)
         return "skip"
+
 
     elif cmd == "/summarize":
         ui.chat_history.append(("system", "수동 요약을 요청하셨습니다. 다음 실행 시 요약이 수행됩니다."))
