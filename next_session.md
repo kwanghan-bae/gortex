@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Evolution Stability & Patch Validation Complete (v1.3.3)
+**Status:** Context Optimization & UI Polish Complete (v1.3.4)
 
 ## 🧠 Current Context
-시스템의 진화와 자기 개선 과정이 더 견고해졌습니다. 이제 규칙들 사이의 충돌을 감지할 수 있으며, `Planner`는 외부에서 제안된 개선안을 무조건 따르는 대신 현재 아키텍처에 맞는지 비판적으로 검토합니다.
+시스템의 운영 효율성과 시각적 역동성이 강화되었습니다. 이제 대화가 길어질수록 더 지능적으로 압축을 수행하며, 대시보드 UI는 현재 누가 작업 중인지 테두리 색상 변화를 통해 직관적으로 알려줍니다.
 
 ## 🎯 Next Objective
-**Operational Efficiency & UI Dynamics**
-1. **`Context Optimization`**: 장기 세션에서 토큰 소모를 더 줄이기 위해, 요약본(`.synapse`)을 계층화하거나 중요도가 낮은 대화는 과감히 삭제하는 전략을 구상합니다.
-2. **`Visual Transitions`**: 에이전트 간 전환 시 대시보드의 'Thought' 패널뿐만 아니라 사이드바의 상태창 전체가 더 부드럽고 역동적으로 변화하도록 UI 효과를 다듬습니다.
+**Detailed Observation & API Resilience**
+1. **`Observation Highlight`**: 도구 실행 결과(`Observation`) 패널에 `Rich.Syntax`를 적용할 때, 파일 확장자나 내용을 분석하여 더 정확한 언어로 하이라이팅되도록 개선합니다.
+2. **`Quota Resilience`**: 모든 API 키가 소진되었을 때, 프로그램이 단순히 종료되는 것이 아니라 사용자에게 즉시 알리고 키 수동 입력을 유도하거나 대기 시간을 제안하는 로직을 구체화합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 규칙 충돌 감지 및 패치 검토 로직 완료 (v1.3.3).
-- 다음 목표: 컨텍스트 압축 최적화 및 UI 전환 효과 강화.
+- 동적 압축 및 사이드바 테두리 색상 연동 완료 (v1.3.4).
+- 다음 목표: 도구 결과 시각화 정밀화 및 키 소진 대응 강화.
 
 작업 목표:
-1. `utils/memory.py`의 `compress_synapse` 함수에서, 요약본의 길이를 동적으로 조절(현재 토큰 상황에 따라)하는 로직을 검토해줘.
-2. `ui/dashboard.py`에서 에이전트가 교체될 때 사이드바의 'Status' 패널 색상이 에이전트 색상으로 부드럽게 바뀌도록 스타일링을 강화해줘.
+1. `ui/dashboard.py`에서 `tool` 메시지 렌더링 시, `content`의 내용을 보고 언어(python, json, shell, sql 등)를 더 똑똑하게 판별하여 Syntax 하이라이팅을 적용해줘.
+2. `main.py`에서 할당량 소진 에러 발생 시, 사용자에게 현재 상태를 설명하는 전용 레이아웃(Panel)을 보여준 뒤 종료하도록 보완해줘.
 ```

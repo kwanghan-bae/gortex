@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Animation**: 에이전트 전환 시 더 부드러운 전환 효과 및 사운드 피드백(선택)
-- [ ] **Context**: 토큰 소모 극대화를 위한 장기 세션에서의 중요 정보 압축 유지 전략
+- [ ] **Data**: 에이전트 도구 실행 결과(Observation)의 상세 시각화 개선
+- [ ] **Resilience**: API 키 전체 소진 시 사용자에게 즉각적인 알림 및 대처 가이드 제공
 
 ## ✅ Completed
+### v1.3.4 (Context Optimization & UI Polish)
+- [x] `utils/memory.py`: 대화 기록 길이에 따라 요약 강도를 조절(상세/간결)하는 동적 시냅스 압축 로직 구현
+- [x] `ui/dashboard.py`: 사이드바 패널(Status, Stats, Evolution)의 테두리 색상을 활성 에이전트 색상과 동기화하여 시인성 강화
+- [x] `ui/dashboard.py`: 에이전트별 색상 매핑 조회 로직 및 폴백 처리 보강
+
 ### v1.3.3 (Evolution Stability & Patch Validation)
 - [x] `core/evolutionary_memory.py`: 새로운 규칙 저장 시 기존 규칙과의 트리거 패턴 중복/충돌 감지 로직 구현
 - [x] `agents/planner.py`: `Optimizer`가 제안한 시스템 최적화 패치의 타당성을 검토하고 수락/거절 이유를 명시하도록 프롬프트 고도화

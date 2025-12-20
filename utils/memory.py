@@ -18,6 +18,9 @@ def compress_synapse(state: GortexState) -> GortexState:
     auth = GortexAuth()
     summary_model = "gemini-2.5-flash-lite"
     
+    # 동적 요약 강도 조절 (메시지가 많을수록 더 압축)
+    compression_ratio = "매우 간결하게" if len(messages) > 20 else "상세하게"
+    
     prompt = f"""지금까지의 모든 대화 내용을 분석하여 다음 정보를 추출해줘:
 1. 현재 프로젝트의 목표
 2. 이미 완료된 작업 리스트
@@ -25,8 +28,9 @@ def compress_synapse(state: GortexState) -> GortexState:
 4. 주요 변수 및 설정값
 5. **[중요] 현재 적용 중인 시스템 제약 조건 및 규칙 (Evolved Rules)**
 
-이 정보를 바탕으로 대화를 요약해. 특히 5번 항목(제약 조건)은 요약본에 반드시 명시적으로 포함되어야 해.
+이 정보를 바탕으로 대화를 {compression_ratio} 요약해. 특히 5번 항목(제약 조건)은 요약본에 반드시 명시적으로 포함되어야 해.
 이전 대화 기록을 이 요약본으로 대체할 거야."""
+
 
 
     try:

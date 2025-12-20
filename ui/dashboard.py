@@ -189,18 +189,25 @@ class DashboardUI:
             self.tool_task = None
 
     def update_sidebar(self, agent: str, step: str, tokens: int, cost: float, rules: int):
-        """사이드바 정보 업데이트"""
+        """사이드바 정보 업데이트 (에이전트 색상 연동 강화)"""
         self.current_agent = agent
         self.current_step = step
         self.tokens_used = tokens
         self.total_cost = cost
         self.active_rules_count = rules
 
+        # 에이전트 스타일 추출
+        agent_style_name = self.agent_colors.get(agent.lower(), "dim white")
+        # Rich 스타일 객체에서 색상 이름 추출 시도 (실패 시 기본색)
+        try:
+            border_color = self.console.get_style(agent_style_name).color.name
+        except:
+            border_color = "cyan" if agent != "Idle" else "white"
+
         # Status
         status_text = Text()
         status_text.append(f"Agent: ", style="bold")
-        agent_style = self.agent_colors.get(agent.lower(), "dim white")
-        status_text.append(f"{agent}\n", style=agent_style if agent != "Idle" else "green")
+        status_text.append(f"{agent}\n", style=agent_style_name if agent != "Idle" else "green")
         status_text.append(f"Step: ", style="bold")
         status_text.append(f"{step}\n")
         status_text.append(f"Time: {datetime.now().strftime('%H:%M:%S')}", style="dim")
@@ -208,9 +215,9 @@ class DashboardUI:
         status_group = [status_text]
         if agent != "Idle":
             spinner_style = self.agent_spinners.get(agent.lower(), "dots")
-            status_group.append(Spinner(spinner_style, text=f"[{agent_style}]{agent} is active[/{agent_style}]"))
+            status_group.append(Spinner(spinner_style, text=f"[{agent_style_name}]{agent} is active[/{agent_style_name}]"))
 
-        self.layout["status"].update(Panel(Group(*status_group), title="📡 System Status"))
+        self.layout["status"].update(Panel(Group(*status_group), title="📡 System Status", border_style=border_color))
 
         # Stats
         stats_table = Table.grid(expand=True)
@@ -222,13 +229,14 @@ class DashboardUI:
             stats_group.append(Text("\n"))
             stats_group.append(self.progress)
 
-        self.layout["stats"].update(Panel(Group(*stats_group), title="📊 Usage Stats"))
+        self.layout["stats"].update(Panel(Group(*stats_group), title="📊 Usage Stats", border_style=border_color))
 
         # Evolution
         evo_text = Text(f"Active Rules: {rules}\n", style="bold magenta")
         if rules > 0:
             evo_text.append("[LEARNED MODE]", style="blink magenta")
-        self.layout["evolution"].update(Panel(evo_text, title="🧬 Evolution"))
+        self.layout["evolution"].update(Panel(evo_text, title="🧬 Evolution", border_style=border_color))
+
 
     def render(self):
         return self.layout
