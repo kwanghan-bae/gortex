@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Self-Modification Realization & UI Polish Complete (v1.3.2)
+**Status:** Evolution Stability & Patch Validation Complete (v1.3.3)
 
 ## 🧠 Current Context
-시스템의 자기 개선 지능이 더 구체적인 액션으로 연결될 준비를 마쳤으며, 대시보드 UI는 에이전트별 전용 애니메이션을 통해 더 역동적인 피드백을 제공합니다. 이제 Gortex는 어떤 에이전트가 어떤 성격의 작업을 하는지 시각적으로 더 명확하게 전달합니다.
+시스템의 진화와 자기 개선 과정이 더 견고해졌습니다. 이제 규칙들 사이의 충돌을 감지할 수 있으며, `Planner`는 외부에서 제안된 개선안을 무조건 따르는 대신 현재 아키텍처에 맞는지 비판적으로 검토합니다.
 
 ## 🎯 Next Objective
-**Evolution Stability & Advanced Intelligence**
-1. **`Evolution Conflict`**: 추출된 규칙들이 서로 충돌하거나(예: "항상 한글로 답하라" vs "항상 영어로 답하라"), 중복될 경우 이를 감지하고 해결하는 `Analyst`의 후처리 로직을 구상합니다.
-2. **`Patch Confirmation`**: `Optimizer`가 제안한 개선안을 `Planner`가 무조건 수락하는 게 아니라, 타당성을 검토한 뒤 실행 여부를 결정하는 '상호 확인' 프로세스를 강화합니다.
+**Operational Efficiency & UI Dynamics**
+1. **`Context Optimization`**: 장기 세션에서 토큰 소모를 더 줄이기 위해, 요약본(`.synapse`)을 계층화하거나 중요도가 낮은 대화는 과감히 삭제하는 전략을 구상합니다.
+2. **`Visual Transitions`**: 에이전트 간 전환 시 대시보드의 'Thought' 패널뿐만 아니라 사이드바의 상태창 전체가 더 부드럽고 역동적으로 변화하도록 UI 효과를 다듬습니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 구체적 최적화 태스크 생성 및 에이전트별 Spinner 추가 완료 (v1.3.2).
-- 다음 목표: 규칙 충돌 감지 및 패치 승인 로직 구축.
+- 규칙 충돌 감지 및 패치 검토 로직 완료 (v1.3.3).
+- 다음 목표: 컨텍스트 압축 최적화 및 UI 전환 효과 강화.
 
 작업 목표:
-1. `core/evolutionary_memory.py`에서 새로운 규칙 저장 시 기존 규칙과의 유사도/충돌 여부를 체크하는 로직을 추가해줘.
-2. `agents/planner.py`에서 시스템 최적화 요청을 받았을 때, 이를 분석하여 '수락/거절' 이유를 `thought_process`에 명시하도록 프롬프트를 보강해줘.
+1. `utils/memory.py`의 `compress_synapse` 함수에서, 요약본의 길이를 동적으로 조절(현재 토큰 상황에 따라)하는 로직을 검토해줘.
+2. `ui/dashboard.py`에서 에이전트가 교체될 때 사이드바의 'Status' 패널 색상이 에이전트 색상으로 부드럽게 바뀌도록 스타일링을 강화해줘.
 ```

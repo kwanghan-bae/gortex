@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Evolution**: 추출된 규칙 간의 충돌 감지 및 해결 전략 구축
-- [ ] **Intelligence**: Optimizer가 제안한 패치를 Planner가 수락할지 결정하는 컨펌 로직 추가
+- [ ] **Animation**: 에이전트 전환 시 더 부드러운 전환 효과 및 사운드 피드백(선택)
+- [ ] **Context**: 토큰 소모 극대화를 위한 장기 세션에서의 중요 정보 압축 유지 전략
 
 ## ✅ Completed
+### v1.3.3 (Evolution Stability & Patch Validation)
+- [x] `core/evolutionary_memory.py`: 새로운 규칙 저장 시 기존 규칙과의 트리거 패턴 중복/충돌 감지 로직 구현
+- [x] `agents/planner.py`: `Optimizer`가 제안한 시스템 최적화 패치의 타당성을 검토하고 수락/거절 이유를 명시하도록 프롬프트 고도화
+- [x] `core/evolutionary_memory.py`: 충돌 감지 시 경고 로그 출력 및 안전한 규칙 관리 보장
+
 ### v1.3.2 (Self-Modification Realization & UI Polish)
 - [x] `agents/optimizer.py`: API 할당량 초과 등에 대응하는 구체적인 '파일 기반 작업 지시문' 생성 로직 강화
 - [x] `ui/dashboard.py`: 각 에이전트(Planner, Coder 등)마다 고유한 Spinner 스타일 적용으로 시각적 다양성 확보

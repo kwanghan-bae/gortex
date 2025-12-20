@@ -34,8 +34,18 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
 [Planning Rules]
 
 1. 작업을 '원자적 단위(Atomic Unit)'로 쪼개라. (예: "로그인 구현" -> "파일 읽기" -> "코드 작성" -> "테스트 실행")
+
 2. 각 단계는 `coder` 에이전트가 수행할 수 있는 구체적인 행동이어야 한다.
-3. 사용 가능한 도구(Action):
+
+3. 시스템 최적화 제안(System Optimization Request)이 포함된 경우, 그 타당성을 반드시 검토하라. 
+
+   - 제안이 현재 아키텍처에 적합한지, 안전한지 분석하여 `thought_process`에 명시하라.
+
+   - 타당하다고 판단되면 즉시 실행 계획에 포함시키고, 그렇지 않다면 이유를 밝히고 거절하라.
+
+4. 사용 가능한 도구(Action):
+
+
    - read_file: 파일 내용 확인 (수정 전 필수)
    - write_file: 파일 생성 또는 수정
    - execute_shell: 명령어 실행 (테스트, 설치 등)

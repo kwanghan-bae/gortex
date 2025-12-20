@@ -25,24 +25,33 @@ class EvolutionaryMemory:
         return []
 
     def save_rule(self, instruction: str, trigger_patterns: List[str], severity: int = 3, source_session: Optional[str] = None, context: Optional[str] = None):
-        """새로운 규칙을 저장 (중복 체크, 병합 및 우선순위 강화 로직 포함)"""
-        # 1. 기존 규칙 중 동일한 지침이 있는지 확인
+        """새로운 규칙을 저장 (중복 체크, 병합, 충돌 감지 및 우선순위 강화 로직 포함)"""
+        # 1. 기존 규칙 분석 (중복 및 충돌 검사)
         for existing in self.memory:
+            # 동일 지침 확인
             if existing["learned_instruction"].strip() == instruction.strip():
                 logger.info(f"Duplicate rule detected. Reinforcing existing rule: {existing['id']}")
-                # 트리거 패턴 병합 (중복 제거)
                 existing["trigger_patterns"] = list(set(existing["trigger_patterns"] + trigger_patterns))
-                # 중요도 업데이트 (더 높은 값으로) 및 강화 횟수 증가
                 existing["severity"] = max(existing["severity"], severity)
                 existing["reinforcement_count"] = existing.get("reinforcement_count", 0) + 1
                 existing["last_reinforced"] = datetime.now().isoformat()
-                if context:
-                    existing["context"] = context
+                if context: existing["context"] = context
                 self._persist()
                 return
+            
+            # 충돌 감지 (단순화: 트리거 패턴이 50% 이상 겹치는데 지침이 다를 경우)
+            existing_patterns = set(existing["trigger_patterns"])
+            new_patterns = set(trigger_patterns)
+            intersection = existing_patterns.intersection(new_patterns)
+            
+            if len(intersection) > 0 and (len(intersection) >= len(new_patterns) / 2):
+                logger.warning(f"⚠️ Potential rule conflict detected with {existing['id']} over patterns: {intersection}")
+                # 충돌 발생 시 현재는 새 규칙을 추가하되 중요도(severity)를 조정하거나 로그에 기록
+                # (향후 LLM을 통한 자동 해결 로직으로 확장 가능)
 
         # 2. 새로운 규칙 생성
         rule_id = f"RULE_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
         new_rule = {
             "id": rule_id,
             "trigger_patterns": trigger_patterns,
