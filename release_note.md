@@ -1,10 +1,15 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Analyst**: `agents/analyst.py` 구현
 - [ ] **TrendScout**: `agents/trend_scout.py` 구현
+- [ ] **Infrastructure**: `core/graph.py` 및 `main.py` 통합
 
 ## ✅ Completed
+### v1.0.7 (Agents: Analyst & Evolution)
+- [x] `agents/analyst.py`: 데이터 분석(Pandas) 및 피드백 분석 모드 구현
+- [x] `core/evolutionary_memory.py`: `experience.json` 기반 자가 진화 메모리 관리 구현
+- [x] `tests/test_analyst.py`: 데이터 분석 및 피드백 학습 테스트 통과
+
 ### v1.0.6 (Agents: Researcher & Cache)
 - [x] `agents/researcher.py`: Playwright 기반 웹 스크래핑 및 요약 로직 구현
 - [x] `utils/cache.py`: Redis 싱글톤 캐시 매니저 구현 (폴백 포함)
