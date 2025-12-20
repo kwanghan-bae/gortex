@@ -1,10 +1,16 @@
 # 📝 Gortex Release Notes & Work Log
 
 ## 🚀 Backlog (To-Do)
-- [ ] **Polishing**: 대시보드 애니메이션 및 레이아웃 최적화
-- [ ] **UI Refinement**: 실시간 에이전트 생각(Thought) 출력 가독성 개선
+- [ ] **Evolution**: Analyst 에이전트의 규칙 추출 성능 고도화 (프롬프트 튜닝)
+- [ ] **Data**: 에이전트 도구 실행 결과(Observation)의 상세 로깅 및 시각화 개선
 
 ## ✅ Completed
+### v1.1.4 (UI & Dashboard Refinement)
+- [x] `ui/dashboard.py`: 실시간 에이전트 사고 과정(Thought)을 위한 전용 패널 추가
+- [x] `ui/dashboard.py`: 역할별(User, AI, Tool, System) 메시지 시각적 구분 강화
+- [x] `agents/`: Manager, Planner, Coder 에이전트가 사고 과정을 UI로 전달하도록 수정
+- [x] `main.py`: 에이전트 이벤트 스트림에서 Thought 추출 및 UI 연동 로직 구현
+
 ### v1.1.3 (Analyst & Memory Refinement)
 - [x] `agents/analyst.py`: 자가 진화 규칙 추출을 위한 프롬프트 고도화 (범용적 지침 추출 강화)
 - [x] `core/evolutionary_memory.py`: 중복 규칙 감지 및 강화(Reinforcement) 로직 추가

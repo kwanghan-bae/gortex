@@ -72,8 +72,10 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         logger.info(f"Manager Thought: {res_data.get('thought')}")
         
         updates = {
+            "thought": res_data.get("thought"),
             "next_node": res_data.get("next_node", "__end__")
         }
+
         
         # 사용자에게 전달할 메시지가 있다면 추가
         if res_data.get("response_to_user"):

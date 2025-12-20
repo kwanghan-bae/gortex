@@ -108,11 +108,13 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
         plan_steps = [json.dumps(step, ensure_ascii=False) for step in plan_data["steps"]]
         
         return {
+            "thought_process": plan_data.get("thought_process"),
             "plan": plan_steps,
             "current_step": 0,
             "next_node": "coder",
             "messages": [("ai", f"계획을 수립했습니다: {plan_data.get('goal')} ({len(plan_steps)} steps)")]
         }
+
 
     except Exception as e:
         logger.error(f"Error parsing planner response: {e}")

@@ -133,8 +133,17 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
         
         logger.info(f"Coder invoking tool: {fname}")
         
+        # 텍스트 응답에서 생각 추출 시도 (JSON 파싱)
+        coder_thought = ""
+        try:
+            res_data = json.loads(response.text)
+            coder_thought = res_data.get("thought", "")
+        except:
+            pass
+
         result_msg = ""
         if fname == "write_file":
+
             result_msg = write_file(fargs["path"], fargs["content"])
         elif fname == "read_file":
             result_msg = read_file(fargs["path"])
@@ -151,23 +160,27 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
         # 따라서 step을 증가시키지 않고 iteration만 증가시킴.
         
         return {
+            "thought": coder_thought,
             "coder_iteration": current_iteration + 1,
             # 도구 실행 결과를 메시지에 추가하여 다음 턴에 문맥으로 사용
             "messages": [
                 ("ai", f"Executed {fname}"),
-                ("tool", result_msg) # ToolMessage 형식이 이상적이나 단순화
+                ("tool", result_msg) 
             ],
             "next_node": "coder" # 자신을 다시 호출하여 결과 검증
         }
+
     
     # 도구 호출 없이 텍스트 응답만 온 경우 (JSON 파싱 시도)
     try:
         res_text = response.text
         res_data = json.loads(res_text)
+        coder_thought = res_data.get("thought", "")
         
         if res_data.get("status") == "success":
             # 현재 단계 완료 -> 다음 단계로 이동
             return {
+                "thought": coder_thought,
                 "current_step": current_step_idx + 1,
                 "coder_iteration": 0, # 단계가 바뀌면 반복 횟수 초기화
                 "next_node": "coder", # 다음 단계 실행을 위해 다시 Coder 호출
@@ -176,13 +189,15 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
         else:
             # 아직 진행 중이거나 실패
             return {
+                "thought": coder_thought,
                 "coder_iteration": current_iteration + 1,
                 "next_node": "coder"
             }
             
     except Exception:
-        # JSON 파싱 실패 시 그냥 진행 (보통 도구 호출이 없으면 생각만 한 것일 수 있음)
+        # JSON 파싱 실패 시 그냥 진행
         return {
             "coder_iteration": current_iteration + 1,
             "next_node": "coder"
         }
+

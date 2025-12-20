@@ -68,6 +68,12 @@ async def run_gortex():
                         # 이벤트 데이터를 UI에 반영
                         for node_name, output in event.items():
                             ui.current_agent = node_name
+                            
+                            # 사고 과정(Thought) 추출
+                            thought = output.get("thought") or output.get("thought_process")
+                            if thought:
+                                ui.update_thought(thought)
+
                             if "messages" in output:
                                 # 메시지 업데이트 및 토큰 계산
                                 for msg in output["messages"]:
@@ -76,8 +82,9 @@ async def run_gortex():
                                         role, content = msg
                                         ui.chat_history.append(msg)
                                     else:
-                                        role = "ai" if msg.type == "ai" else "system"
+                                        role = msg.type
                                         content = msg.content
+                                        # role이 'ai', 'user', 'tool', 'system' 등인 경우 처리
                                         ui.chat_history.append((role, content))
                                     
                                     # 토큰 누적
@@ -85,7 +92,7 @@ async def run_gortex():
                                     total_tokens += new_tokens
                                     total_cost += estimate_cost(new_tokens)
                             
-                            # 통계 업데이트
+                            # 통계 및 UI 업데이트
                             ui.update_main(ui.chat_history)
                             ui.update_sidebar(
                                 agent=ui.current_agent,
@@ -99,7 +106,9 @@ async def run_gortex():
                             observer.log_event(node_name, "node_complete", output)
 
                     ui.current_agent = "Idle"
+                    ui.update_thought("Ready for next command.")
                     ui.update_sidebar("Idle", "N/A", total_tokens, total_cost, len(initial_state["active_constraints"]))
+
 
 
                 except KeyboardInterrupt:
