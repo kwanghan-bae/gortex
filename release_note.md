@@ -4,9 +4,15 @@
 - [x] **Interface**: 대규모 로그 조회 시 페이징 처리 로직 추가
 - [x] **System**: 비정상 종료 시 미처 저장되지 않은 인메모리 캐시 복구 전략 고도화
 - [x] **Interface**: 대시보드 로그 위젯에 에이전트별 색상 필터링 추가
-- [ ] **Intelligence**: 자가 수정(Self-Correction) 패턴 분석 및 진화 규칙 자동 생성 로직 기초 설계
+- [x] **Intelligence**: 자가 수정(Self-Correction) 패턴 분석 및 진화 규칙 자동 생성 로직 기초 설계
+- [ ] **Infrastructure**: 다중 사용자 세션 관리를 위한 스레드 분리 및 상태 격리 강화
 
 ## ✅ Completed
+### v1.5.4 (Self-Correction Analysis Engine)
+- [x] `agents/analyst.py`: 로그(`trace.jsonl`)를 분석하여 실패 후 성공한 패턴을 감지하는 `analyze_self_correction` 구현
+- [x] `agents/analyst.py`: 감지된 패턴을 바탕으로 `EvolutionaryMemory`에 새로운 영구 지침을 자동 등록하는 워크플로우 통합
+- [x] `agents/analyst.py`: 데이터 분석, 자가 수정 분석, 피드백 분석의 지능형 분기 로직 강화
+
 ### v1.5.3 (Log Filtering & Paging Refinement)
 - [x] `main.py`: `/logs [skip] [limit] [filter]` 명령어 확장으로 에이전트명/이벤트별 검색 기능 구현
 - [x] `main.py`: 필터링 결과에 따른 동적 테이블 타이틀 및 요약 정보 표시 개선
