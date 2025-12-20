@@ -78,6 +78,10 @@ class GortexAuth:
         self.call_history = [t for t in self.call_history if now - t < 60]
         return len(self.call_history)
 
+    def get_provider(self) -> str:
+        """현재 활성화된 LLM 제공업체명 반환"""
+        return self._provider.upper()
+
     def switch_account(self, error_message: str) -> bool:
         """다음 Gemini 계정으로 전환하거나 OpenAI로 폴백함"""
         if self.current_index < len(self.clients) - 1:

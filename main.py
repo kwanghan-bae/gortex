@@ -333,7 +333,15 @@ async def run_gortex():
                                             total_cost += estimate_cost(t)
                                 
                                 ui.update_main(ui.chat_history)
-                                ui.update_sidebar(ui.current_agent, str(output.get("current_step", "N/A")), total_tokens, total_cost, len(initial_state["active_constraints"]))
+                                ui.update_sidebar(
+                                    ui.current_agent, 
+                                    str(output.get("current_step", "N/A")), 
+                                    total_tokens, 
+                                    total_cost, 
+                                    len(initial_state["active_constraints"]),
+                                    auth_engine.get_provider(),
+                                    auth_engine.get_call_count()
+                                )
                                 ui.update_logs({"agent": node_name, "event": "node_complete"})
                                 observer.log_event(node_name, "node_complete", output)
                                 if "file_cache" in output: session_cache.update(output["file_cache"])
@@ -349,7 +357,15 @@ async def run_gortex():
                         save_global_cache(all_sessions_cache) # 중단 시에도 캐시 저장
 
                     ui.current_agent = "Idle"; ui.complete_thought_style()
-                    ui.update_sidebar("Idle", "N/A", total_tokens, total_cost, len(initial_state["active_constraints"]))
+                    ui.update_sidebar(
+                        "Idle", 
+                        "N/A", 
+                        total_tokens, 
+                        total_cost, 
+                        len(initial_state["active_constraints"]),
+                        auth_engine.get_provider(),
+                        auth_engine.get_call_count()
+                    )
                     
                     # 매 턴 종료 후 세션 캐시 영속화
                     all_sessions_cache[thread_id] = session_cache

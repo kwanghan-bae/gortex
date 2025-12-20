@@ -204,8 +204,8 @@ class DashboardUI:
             self.progress.remove_task(self.tool_task)
             self.tool_task = None
 
-    def update_sidebar(self, agent: str, step: str, tokens: int, cost: float, rules: int):
-        """사이드바 정보 업데이트 (에이전트 색상 연동 강화)"""
+    def update_sidebar(self, agent: str, step: str, tokens: int, cost: float, rules: int, provider: str = "GEMINI", call_count: int = 0):
+        """사이드바 정보 업데이트 (에이전트 및 LLM 상태 시각화 강화)"""
         self.current_agent = agent
         self.current_step = step
         self.tokens_used = tokens
@@ -223,6 +223,18 @@ class DashboardUI:
         status_text.append(f"Agent: ", style="bold")
         agent_style = self.agent_colors.get(agent.lower(), "dim white")
         status_text.append(f"{agent.upper()}\n", style=agent_style if agent != "Idle" else "green")
+        status_text.append(f"LLM  : ", style="bold")
+        provider_style = "bold blue" if provider == "GEMINI" else "bold green"
+        status_text.append(f"{provider}\n", style=provider_style)
+        
+        # 호출 빈도 시각화 (0~20 호출/분 기준)
+        status_text.append(f"Load : ", style="bold")
+        bars = min(10, (call_count + 1) // 2)
+        load_color = "green" if bars < 4 else ("yellow" if bars < 8 else "red")
+        status_text.append("█" * bars, style=load_color)
+        status_text.append("░" * (10 - bars), style="dim")
+        status_text.append(f" ({call_count}/min)\n", style="dim")
+
         status_text.append(f"Step : ", style="bold")
         status_text.append(f"{step}\n")
         status_text.append(f"Time : {datetime.now().strftime('%H:%M:%S')}", style="dim")
