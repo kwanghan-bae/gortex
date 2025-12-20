@@ -79,19 +79,25 @@ done
 # ==========================================
 if [ $WARNINGS -gt 0 ]; then
     echo -e "${YELLOW}🚨 Total Warnings: $WARNINGS${NC}"
+    
     # 대화형 모드(터미널)인 경우에만 사용자 입력 대기
     if [ -t 0 ]; then
-        read -p "Do you want to proceed with the commit despite warnings? (y/N): " choice
+        read -p "경고를 무시하고 커밋을 진행하시겠습니까? (y/N): " choice
         case "$choice" in 
-          y|Y ) echo -e "${GREEN}✅ Proceeding...${NC}";;
-          * ) echo -e "${RED}❌ Commit aborted by user.${NC}"; exit 1;;
+          y|Y ) echo -e "${GREEN}✅ 경고를 무시하고 진행합니다.${NC}";;
+          * ) echo -e "${RED}❌ 사용자에 의해 커밋이 중단되었습니다.${NC}"; exit 1;;
         esac
     else
-        # 비대화형 환경(Agent 등)에서는 경고만 출력하고 통과 (또는 정책에 따라 실패 처리 가능)
-        echo -e "${YELLOW}⚠️  Non-interactive mode detected. Proceeding with warnings.${NC}"
+        # 비대화형 환경(Agent)에서는 경고를 로그에 남기고 통과
+        echo -e "${YELLOW}⚠️  비대화형 모드 감지: 경고를 무시하고 진행합니다.${NC}"
     fi
 else
+
     echo -e "${GREEN}✅ All Checks Passed! Ready to commit.${NC}"
+    echo -e "\n${YELLOW}💡 Commit Message Guide:${NC}"
+    echo -e "   Format: type: description (in Korean)"
+    echo -e "   Types: feat, fix, docs, style, refactor, test, chore"
+    echo -e "   Example: 'feat: 사용자 로그인 기능 구현 (테스트 완료)'"
 fi
 
 exit 0
