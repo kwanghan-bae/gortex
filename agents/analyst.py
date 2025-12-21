@@ -237,6 +237,47 @@ class AnalystAgent:
             logger.info(f"✅ Knowledge GC complete: Removed {removed} items.")
         return removed
 
+    def generate_anti_failure_rule(self, error_log: str, attempt_context: str) -> Optional[Dict[str, Any]]:
+        """오류 근본 원인 분석 후 재발 방지 규칙 생성 및 저장"""
+        logger.info("🔍 Generating anti-failure rule based on error...")
+        
+        prompt = f"""다음은 코딩 작업 중 발생한 테스트 실패 로그와 맥락이다.
+        이 실수가 다시는 발생하지 않도록 구체적이고 실행 가능한 '실패 방지 규칙'을 JSON으로 생성하라.
+        단순한 오타 수정이 아닌, 논리적 설계나 아키텍처적 주의 사항 위주로 작성하라.
+        
+        [Error Log]
+        {error_log}
+        
+        [Context]
+        {attempt_context}
+        
+        결과 형식:
+        {{
+            "instruction": "에이전트가 앞으로 따라야 할 지침",
+            "trigger_patterns": ["이 규칙이 활성화될 키워드 리스트"],
+            "severity": 1~5,
+            "reason": "왜 이 규칙이 필요한가"
+        }}
+        """
+        try:
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
+            res_data = json.loads(response.text)
+            
+            if res_data.get("instruction"):
+                self.memory.save_rule(
+                    instruction=res_data["instruction"],
+                    trigger_patterns=res_data["trigger_patterns"],
+                    severity=res_data.get("severity", 3),
+                    source_session="reflective_debugging",
+                    context=f"Root Cause: {res_data.get('reason')} | Log: {error_log[:200]}"
+                )
+                logger.info(f"🛡️ New anti-failure rule saved: {res_data['instruction'][:50]}...")
+                return res_data
+        except Exception as e:
+            logger.error(f"Failed to generate anti-failure rule: {e}")
+            
+        return None
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""
     agent = AnalystAgent()

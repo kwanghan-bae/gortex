@@ -257,9 +257,18 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
             "next_node": "coder", "messages": [("ai", f"Step {current_step_idx+1} 완료.")]
         }
     elif status == "failed":
+        # [Reflective Debugging] 실패 원인 분석 및 규칙 생성
+        from gortex.agents.analyst import AnalystAgent
+        analyst = AnalystAgent()
+        rule_data = analyst.generate_anti_failure_rule(tool_output, coder_thought)
+        
+        msg = "⚠️ 반복 실패로 분석을 수행했습니다."
+        if rule_data:
+            msg += f"\n🛡️ 새로운 방어 규칙이 생성되었습니다: {rule_data['instruction']}"
+            
         return {
-            "thought": f"Failed: {coder_thought}", "thought_tree": coder_tree,
-            "next_node": "analyst", "messages": [("ai", "⚠️ 반복 실패로 분석을 요청합니다.")]
+            "thought": f"Failed: {coder_thought}. Reflection complete.", "thought_tree": coder_tree,
+            "next_node": "analyst", "messages": [("ai", msg)]
         }
     else:
         return {

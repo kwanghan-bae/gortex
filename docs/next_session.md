@@ -1,23 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 성찰적 디버깅 및 실패 방지 규칙 자동 생성 (Reflective Debugging v1)
+- 에이전트 페르소나 동적 관리 및 생성 (Persona Lab v1)
 
 ## Context
-- `Coder`가 버그를 수정할 때 단순히 동작하게만 만드는 경향이 있어, 나중에 같은 실수가 반복될 수 있음.
-- 테스트 실패 시 `Analyst`를 호출하여 오류의 근본 원인(RCA)을 분석하고, 이를 `EvolutionaryMemory`에 새로운 '제약 조건'으로 자동 등록해야 함.
+- v2.3.0에서 도입된 '토론 페르소나(Innovation, Stability)'가 현재는 코드 내에 하드코딩되어 있어 확장이 어려움.
+- 사용자가 상황에 맞는 새로운 페르소나(예: 'Security Expert', 'UX Specialist')를 정의하고, Manager가 이를 필요에 따라 에이전트에게 할당할 수 있는 관리 체계가 필요함.
 
 ## Scope
 ### Do
-- `agents/coder.py`에서 테스트 실패 시 `Analyst`에게 RCA를 요청하는 로직 강화.
-- `agents/analyst.py`에 오류 로그를 분석하여 '다시는 이런 실수를 하지 않기 위한 규칙'을 제안하는 `generate_anti_failure_rule` 메서드 추가.
-- 생성된 규칙을 `experience.json`에 자동으로 반영하여 시스템의 면역력을 높임.
+- `gortex/docs/PERSONAS.md` 파일을 생성하여 시스템 페르소나 카탈로그 구축.
+- `agents/manager.py`가 상황에 따라 적절한 페르소나 조합을 선택하도록 로직 고도화.
+- `agents/swarm.py`에서 `PERSONAS.md`에 정의된 페르소나 지침을 동적으로 읽어와 프롬프트에 주입.
 
 ### Do NOT
-- 단순 오타 수정까지 규칙으로 만들지 말 것 (논리적 모순이나 아키텍처 위반 중심).
+- 기존의 기본적인 페르소나(Innovation, Stability) 삭제 금지 (기본값으로 유지).
 
 ## Expected Outputs
-- `agents/coder.py`, `agents/analyst.py`, `core/evolutionary_memory.py` 수정.
+- `docs/PERSONAS.md` 생성, `agents/manager.py`, `agents/swarm.py` 수정.
 
 ## Completion Criteria
-- 의도적으로 오류가 포함된 코드를 작성했을 때, 테스트 실패 -> 분석 -> 신규 규칙 생성 및 반영 과정이 확인되어야 함.
+- 새로운 페르소나를 `PERSONAS.md`에 추가했을 때, 토론 시 해당 페르소나의 지침이 프롬프트에 반영되는 것이 로그로 확인되어야 함.
