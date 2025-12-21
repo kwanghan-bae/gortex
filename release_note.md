@@ -25,9 +25,16 @@
 - [x] **Interface**: 사용자의 복잡한 요구사항을 시각적 다이어그램으로 변환하여 보여주는 'Architecture Sketcher' 기능 추가
 - [x] **System**: 대규모 로그 데이터를 벡터화하여 유사한 오류 해결 사례를 검색하는 'Semantic Log Search' 엔진 추가
 - [x] **Infrastructure**: 에이전트의 작업 성과를 리포트로 자동 요약하여 제공하는 'Executive Reporter' 기능 구현
-- [ ] **Interface**: 대시보드에 현재 세션의 주요 성과를 시각적으로 보여주는 'Achievement Timeline' 위젯 추가
+- [x] **Interface**: 대시보드에 현재 세션의 주요 성과를 시각적으로 보여주는 'Achievement Timeline' 트래킹 구현
+- [ ] **Infrastructure**: 다중 언어 지원을 위한 'Synaptic Translator' 노드 및 다국어 UI 프레임워크 구축
 
 ## ✅ Completed
+### v1.8.1 (Achievement Timeline Widget)
+- [x] `ui/dashboard.py`: 세션의 주요 마일스톤을 시간순으로 기록하는 `achievements` 데이터 구조 및 관리 로직 추가
+- [x] `main.py`: 에이전트의 작업 완료, 계획 수립, 파일 수정 등 성공적인 이벤트를 감지하여 성과 타임라인에 자동 등록
+- [x] `ui/dashboard.py`: 등록된 성과 데이터를 웹 대시보드로 실시간 브로드캐스팅하여 시각적 피드백 강화
+- [x] `ui/dashboard.py`: 성과 잠금 해제(Achievement Unlocked) 시 로그 기록 및 아이콘 기반 시각화 준비
+
 ### v1.8.0 (Executive Performance Reporter)
 - [x] `agents/analyst.py`: 로그 데이터를 분석하여 성공률, 비용, 지연 시간, 주요 성과를 요약하는 `generate_performance_report` 구현
 - [x] `main.py`: 분석된 성과를 마크다운 형식으로 출력하는 `/report` 명령어 추가

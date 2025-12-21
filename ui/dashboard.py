@@ -49,6 +49,7 @@ class DashboardUI:
         self.recent_logs = []
         self.provider = "GEMINI"
         self.call_count = 0
+        self.achievements = [] # 주요 마일스톤 성과 기록
         
         # Progress bar for tools
         self.progress = Progress(
@@ -107,6 +108,7 @@ class DashboardUI:
             "thought": self.agent_thought,
             "thought_tree": self.thought_tree,
             "diagram": self.current_diagram,
+            "achievements": self.achievements,
             "chat_history": [
                 (r, c if isinstance(c, str) else "[Rich Object]") 
                 for r, c in self.chat_history[-10:]
@@ -308,6 +310,20 @@ class DashboardUI:
         if rules > 0:
             evo_text.append("[LEARNED MODE]", style="blink magenta")
         self.layout["evolution"].update(Panel(evo_text, title=f"🧬 [bold {border_color}]EVOLUTION[/]", border_style="magenta" if rules > 0 else border_color))
+
+    def add_achievement(self, text: str, icon: str = "🏆"):
+        """새로운 성과(마일스톤)를 타임라인에 추가"""
+        timestamp = datetime.now().strftime("%H:%M:%S")
+        self.achievements.append({
+            "time": timestamp,
+            "text": text,
+            "icon": icon
+        })
+        # 최신 5개만 보존 고려 가능하나, 여기서는 전체 보존
+        logger.info(f"✨ Achievement Unlocked: {text}")
+        
+        if self.web_manager:
+            asyncio.create_task(self._broadcast_to_web())
 
     def render(self):
         return self.layout

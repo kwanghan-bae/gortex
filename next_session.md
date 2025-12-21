@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Executive Performance Reporter Complete (v1.8.0)
+**Status:** Achievement Timeline Widget Complete (v1.8.1)
 
 ## 🧠 Current Context
-성과 리포팅 시스템이 구축되어 이제 시스템의 가치를 정량적/정성적으로 증명할 수 있습니다. 지연 시간, 비용, 성공한 작업들이 일목요연하게 정리되어 사용자에게 제공됩니다.
+성과 타임라인 기능이 도입되어 이제 Gortex가 달성한 주요 마일스톤들이 실시간으로 기록되고 시각화됩니다. 이는 사용자에게 시스템의 진행 상황을 더 긍정적이고 직관적으로 전달하는 역할을 합니다.
 
 ## 🎯 Next Objective
-**Achievement Timeline Widget**
-1. **`Achievement Tracking`**: 에이전트가 주요 마일스톤(예: 파일 생성 성공, 테스트 통과, 배포 완료)을 달성할 때마다 이를 별도의 'Achievement' 리스트에 기록합니다.
-2. **`Visual Timeline`**: 대시보드 하단 또는 별도 패널에 시간순으로 달성한 성과들을 아이콘과 함께 표시하는 타임라인 위젯을 구현합니다.
+**Synaptic Translator (Multi-language Support)**
+1. **`Multi-language Engine`**: 사용자가 다른 언어(예: 영어, 일본어)로 질문하더라도 내부적으로는 한국어 제약 조건을 유지하면서 자연스럽게 응답할 수 있는 번역 브리지를 구축합니다.
+2. **`Language Detection`**: 입력 언어를 자동 감지하여, 응답 언어를 사용자의 선호에 맞추는 지능형 언어 선택 로직을 구현합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 성과 리포팅 시스템 구현 완료 (v1.8.0).
-- 다음 목표: 성과 타임라인(Achievement Timeline) 위젯 추가.
+- 성과 타임라인 트래킹 기능 완료 (v1.8.1).
+- 다음 목표: 다국어 지원 엔진(Synaptic Translator) 구축.
 
 작업 목표:
-1. `ui/dashboard.py`에 주요 성과를 시간순으로 저장하고 표시하는 `achievements` 필드와 관련 UI 로직을 추가해줘.
-2. `main.py`에서 에이전트의 성공 메시지를 감지하여 `ui.add_achievement`를 호출하는 로직을 보강해줘.
+1. `utils/translator.py`를 신설하여 입력 언어를 감지하고 필요시 번역을 수행하는 기초 로직을 작성해줘.
+2. `Manager` 노드에서 사용자의 입력 언어를 판단하여, 시스템 제약 조건(한국어 우선)과 사용자의 편의성 사이의 균형을 맞추는 프롬프트를 보강해줘.
 ```

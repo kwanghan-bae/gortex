@@ -520,9 +520,15 @@ async def run_gortex():
                                         role, content = (msg[0], msg[1]) if isinstance(msg, tuple) else (msg.type, msg.content)
                                         ui.chat_history.append((role, content))
                                         
-                                        # [AUTO-NOTIFY] 작업 완료 시 알림
-                                        if role == "ai" and "모든 계획된 작업을 완료했습니다" in str(content):
-                                            Notifier().send_notification(f"세션 {thread_id}의 모든 작업이 성공적으로 완료되었습니다.", title="✅ Task Completed")
+                                        # [ACHIEVEMENT] 주요 마일스톤 감지
+                                        if role == "ai":
+                                            if "모든 계획된 작업을 완료했습니다" in str(content):
+                                                ui.add_achievement("All planned tasks completed!", icon="✅")
+                                                Notifier().send_notification(f"세션 {thread_id}의 모든 작업이 성공적으로 완료되었습니다.", title="✅ Task Completed")
+                                            elif "계획을 수립했습니다" in str(content):
+                                                ui.add_achievement(f"New plan established: {output.get('goal', 'Unknown Goal')}", icon="🗺️")
+                                            elif "Successfully wrote to" in str(content):
+                                                ui.add_achievement(f"File updated: {str(content).split('/')[-1]}", icon="📝")
 
                                         if isinstance(content, str):
                                             t = count_tokens(content)
