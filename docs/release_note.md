@@ -11,13 +11,19 @@
 - [x] **Infrastructure**: 축적된 지식 중 유효하지 않거나 중복된 정보를 정리하는 'Knowledge GC' 노드 추가
 - [x] **Intelligence**: 특정 라이브러리의 최신 API 문서를 실시간 학습하여 적용하는 'Live Documentation Learning' 구현
 - [x] **Intelligence**: 테스트 실패 로그를 분석하여 근본 원인을 추론하고 '실패 방지 규칙'을 자동 생성하는 'Reflective Debugging' 노드 추가
-- [ ] **Interface**: 에이전트의 페르소나(Innovation, Stability 등)를 동적으로 관리하고 생성하는 'Persona Lab' 구현
+- [x] **Interface**: 에이전트의 페르소나(Innovation, Stability 등)를 동적으로 관리하고 생성하는 'Persona Lab' 구현
+- [ ] **Intelligence**: 기술 부채 상위 파일을 대상으로 자동 리팩토링 및 테스트 검증을 수행하는 'Auto-Refactor Loop' 가동
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.3.8 (Persona Lab & Dynamic Personality)
+- [x] `docs/PERSONAS.md`: 에이전트 성격과 행동 지침을 정의하는 중앙 집중형 페르소나 카탈로그 구축
+- [x] `agents/manager.py`: 요청 맥락에 따라 최적의 전문가 그룹(Security, UX 등)을 선택하는 상황 인지형 페르소나 할당 로직 구현
+- [x] `agents/swarm.py`: 외부 문서에서 페르소나 지침을 동적으로 추출하여 프롬프트에 주입하는 'Dynamic Persona Injection' 엔진 안착
 
 ### v2.3.7 (Reflective Debugging & Immunity)
 - [x] `agents/analyst.py`: 테스트 실패 패턴을 분석하여 재발 방지 지침을 자동 도출하는 `generate_anti_failure_rule` 엔진 구현

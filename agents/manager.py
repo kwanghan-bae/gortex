@@ -31,6 +31,15 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     # 내부 처리는 한국어 맥락을 포함한 원문 활용
     internal_input = lang_info.get("translated_text", raw_input) if not lang_info.get("is_korean") else raw_input
 
+    # [Persona Lab] 상황별 페르소나 선택 전략
+    recommended_personas = ["Innovation", "Stability"]
+    if any(k in internal_input.lower() for k in ["보안", "security", "취약점", "auth"]):
+        recommended_personas.append("Security Expert")
+    if any(k in internal_input.lower() for k in ["ui", "ux", "디자인", "dashboard", "화면"]):
+        recommended_personas.append("UX Specialist")
+    
+    persona_context = f"현재 요청의 성격에 따라 다음 페르소나 중 2개 이상을 선택하여 토론을 구성하라: {', '.join(recommended_personas)}"
+
     # 2. 장기 기억 소환 (Recall)
     long_term_knowledge = ltm.recall(internal_input)
     ltm_context = ""
@@ -66,7 +75,7 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
 [Speculative Reasoning Rules]
 사용자의 요청이 복잡하거나 해결 방법이 여러 가지인 경우, 'swarm' 노드를 통해 병렬 검토하라. 
 만약 작업의 위험도가 높거나(Risk > 0.7), 시스템의 핵심 구조를 변경하는 요청인 경우 반드시 **'토론 모드(Debate Mode)'**를 활성화하라. 
-이 경우 계획(`parallel_tasks`)에 "관점 토론: [주제]" 형식을 포함시키고, 에이전트들이 상반된 페르소나(Innovation vs Stability)를 갖도록 지시하라.
+이 경우 계획(`parallel_tasks`)에 "관점 토론: [주제]" 형식을 포함시키고, {persona_context}를 통해 에이전트들이 상반된 전문 페르소나를 갖도록 지시하라.
 
 [Macro Learning Rules]
 1. 사용자가 "배워(Learn): [명령어]는 [작업1], [작업2]...를 의미해"라고 하면, 이를 새로운 매크로로 저장하도록 'analyst'에게 요청하라.

@@ -1,6 +1,8 @@
 import asyncio
 import logging
 import time
+import os
+import re
 from typing import Dict, Any, List
 from gortex.core.state import GortexState
 from gortex.core.auth import GortexAuth
@@ -11,6 +13,30 @@ from gortex.utils.message_queue import GortexMessageQueue
 
 logger = logging.getLogger("GortexSwarm")
 
+def get_persona_instruction(persona_name: str) -> str:
+    """docs/PERSONAS.md에서 특정 페르소나의 지침을 읽어옴"""
+    persona_path = "docs/PERSONAS.md"
+    if not os.path.exists(persona_path):
+        return f"[Persona: {persona_name}] (지침 파일을 찾을 수 없습니다.)"
+    
+    try:
+        with open(persona_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        
+        # 더 유연한 파싱 (페르소나 섹션 추출)
+        pattern = rf"### .*?{persona_name}.*?\n(.*?)(?=\n### |$)"
+        match = re.search(pattern, content, re.DOTALL | re.IGNORECASE)
+        if match:
+            persona_section = match.group(1)
+            # 행동 지침 문구 추출
+            instr_match = re.search(r"행동 지침.*?: \"(.*?)\"", persona_section)
+            if instr_match:
+                return f"[Persona: {persona_name}] {instr_match.group(1)}"
+    except Exception as e:
+        logger.warning(f"Failed to parse personas: {e}")
+        
+    return f"[Persona: {persona_name}] 너의 역할에 충실하라."
+
 async def execute_parallel_task(task_desc: str, state: GortexState, persona: str = None) -> Dict[str, Any]:
     """단일 하위 작업 또는 시나리오를 수행하고 상태 델타 및 점수 반환"""
     auth = GortexAuth()
@@ -18,15 +44,12 @@ async def execute_parallel_task(task_desc: str, state: GortexState, persona: str
     
     start_time = time.time()
     
-    # 1. 과거 유사 성공 사례 확인 (Experience Weight)
+    # 1. 과거 유사 성공 사례 확인
     past_cases = log_search.search_similar_cases(task_desc, limit=1)
     experience_weight = 0.2 if past_cases else 0.0
     
-    persona_instruction = ""
-    if persona == "Innovation":
-        persona_instruction = "[Persona: Innovation] 너는 파격적이고 혁신적인 해결책을 선호한다. 신기술 도입과 구조적 개선에 집중하라."
-    elif persona == "Stability":
-        persona_instruction = "[Persona: Stability] 너는 보수적이고 안정적인 해결책을 선호한다. 보안, 하위 호환성, 리스크 최소화에 집중하라."
+    # 2. 페르소나 지침 동적 획득
+    persona_instruction = get_persona_instruction(persona) if persona else ""
 
     prompt = f"""{persona_instruction}
     다음 시나리오 또는 작업을 수행하라: {task_desc}
