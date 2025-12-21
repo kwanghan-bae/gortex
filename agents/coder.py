@@ -70,6 +70,12 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
     base_instruction = f"""너는 Gortex v1.0의 수석 개발자(Coder)다.
 현재 Planner가 수립한 계획 중 다음 단계를 실행해야 한다.
 
+[Mental Sandbox Rules]
+도구를 호출하기 전, 반드시 다음 사항을 미리 '시뮬레이션'하라:
+1. 예상 결과: 이 도구가 성공했을 때 시스템 상태는 어떻게 변하는가?
+2. 위험 분석: 잘못된 경로, 권한 부족, 무한 루프, 데이터 유실 등의 위험이 있는가?
+3. 안전 가드: 위험이 감지되면 도구 호출을 중단하고 'failed' 상태와 함께 안전한 대안을 제시하라.
+
 [Standard Error Response Manual]
 - ModuleNotFoundError: 
   1. 즉시 `execute_shell`로 `pip install <module>`을 실행하라. (시스템이 `requirements.txt`를 자동 업데이트할 것이다.)
@@ -108,7 +114,7 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
 {{
   "thought": "생각의 과정",
   "thought_tree": [ {{"id": "1", "text": "...", "type": "analysis"}} ],
-  "tool_call": {{ "name": "tool_name", "args": {{ ... }} }} OR null,
+  "simulation": {{ "expected_outcome": "...", "risk_level": "Low/Medium/High", "safeguard_action": "..." }},
   "status": "success" | "in_progress" | "failed"
 }}
 """
@@ -135,14 +141,23 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
                             "id": {"type": "STRING"},
                             "parent_id": {"type": "STRING", "nullable": True},
                             "text": {"type": "STRING"},
-                            "type": {"type": "STRING", "enum": ["analysis", "action", "verification"]}
+                            "type": {"type": "STRING", "enum": ["analysis", "action", "verification", "simulation"]}
                         },
                         "required": ["id", "text", "type"]
                     }
                 },
+                "simulation": {
+                    "type": "OBJECT",
+                    "properties": {
+                        "expected_outcome": {"type": "STRING"},
+                        "risk_level": {"type": "STRING", "enum": ["Low", "Medium", "High"]},
+                        "safeguard_action": {"type": "STRING"}
+                    },
+                    "required": ["expected_outcome", "risk_level", "safeguard_action"]
+                },
                 "status": {"type": "STRING", "enum": ["success", "in_progress", "failed"]}
             },
-            "required": ["thought", "thought_tree", "status"]
+            "required": ["thought", "thought_tree", "simulation", "status"]
         }
     )
     

@@ -23,9 +23,16 @@
 - [x] **Interface**: 터미널 UI를 넘어 브라우저에서 Gortex의 활동을 실시간 모니터링할 수 있는 'Web Dashboard' 프레임워크 구축
 - [x] **Infrastructure**: 에이전트의 도구 호출 로그를 분석하여 비용과 지연 시간을 최적화하는 'Performance Profiler' 노드 구현
 - [x] **Interface**: 사용자의 복잡한 요구사항을 시각적 다이어그램으로 변환하여 보여주는 'Architecture Sketcher' 기능 추가
-- [ ] **Intelligence**: 에이전트가 도구 호출 전 예상 결과를 미리 시뮬레이션하는 'Mental Sandbox' 로직 구현
+- [x] **Intelligence**: 에이전트가 도구 호출 전 예상 결과를 미리 시뮬레이션하는 'Mental Sandbox' 로직 구현
+- [ ] **System**: 대규모 로그 데이터를 벡터화하여 유사한 오류 해결 사례를 검색하는 'Semantic Log Search' 엔진 추가
 
 ## ✅ Completed
+### v1.7.8 (Mental Sandbox & Pre-Action Simulation)
+- [x] `agents/coder.py`: 도구 호출 전 예상 결과와 위험 요소를 분석하는 Mental Sandbox 규칙 및 지침 추가
+- [x] `agents/coder.py`: 위험도가 높은 작업(데이터 유실 등) 감지 시 도구 실행을 스스로 중단하고 안전한 대안을 제시하도록 로직 보강
+- [x] `agents/coder.py`: 응답 스키마에 `simulation` 필드를 추가하여 에이전트의 사전 시뮬레이션 결과를 명시적으로 기록
+- [x] `agents/coder.py`: 사고 과정 트리와 시뮬레이션 결과를 연동하여 더 안전하고 정교한 개발 환경 구축
+
 ### v1.7.7 (Architecture Sketcher & Mermaid Integration)
 - [x] `agents/planner.py`: 시스템 설계 시 Mermaid 형식의 다이어그램 코드를 생성하는 `diagram_code` 필드 및 지침 추가
 - [x] `ui/dashboard.py`: 생성된 아키텍처 다이어그램 데이터를 수용하고 웹 대시보드로 실시간 스트리밍하는 인터페이스 확장
