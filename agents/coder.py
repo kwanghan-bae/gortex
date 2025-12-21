@@ -73,6 +73,11 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
 [Self-Healing]
 - 시스템 힌트(HINT)로 과거 해결책이 제공되면, 이를 최우선으로 적용하라.
 
+[Testing Guidelines]
+- 테스트 코드는 반드시 Python 표준 `unittest` 프레임워크를 사용하라.
+- 테스트 파일명은 `tests/test_<module>.py` 형식을 따르라.
+- 가능한 한 외부 의존성을 배제하고 `unittest.mock`을 활용하라.
+
 [Precision Editing Rules]
 - 파일 전체를 바꾸기보다 특정 부분만 수정하는 것이 효율적이라면 `apply_patch` 도구를 사용하라.
 
