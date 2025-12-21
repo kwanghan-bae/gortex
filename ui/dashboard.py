@@ -475,3 +475,25 @@ class DashboardUI:
 
     def render(self):
         return self.layout
+
+    def set_mode(self, mode: str):
+        """작업 맥락에 따라 UI 레이아웃 비율 동적 조정"""
+        if mode == "coding":
+            self.layout["content"]["main"].ratio = 6
+            self.layout["content"]["thought"].ratio = 4
+            self.layout["sidebar"].ratio = 3
+        elif mode == "research":
+            self.layout["content"]["main"].ratio = 7
+            self.layout["sidebar"].ratio = 4 # 사이드바 확대
+        elif mode == "debugging":
+            self.layout["sidebar"]["logs"].size = 20 # 로그 패널 확대
+            self.layout["sidebar"]["status"].size = 8
+        elif mode == "analyst":
+            self.layout["sidebar"]["stats"].size = 15 # 통계 패널 확대
+        else: # standard
+            self.layout["content"]["main"].ratio = 7
+            self.layout["content"]["thought"].ratio = 3
+            self.layout["sidebar"].ratio = 3
+            self.layout["sidebar"]["logs"].size = None # 가변
+            
+        logger.info(f"🎭 UI Layout adjusted to: {mode}")

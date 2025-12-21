@@ -79,6 +79,14 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
 만약 사용자의 주관적인 취향이 중요하거나, 여러 기술적 선택지 중 트레이드오프가 뚜렷한 상황이라면 독단적으로 결정하지 마라.
 이 경우 `requires_user_input`을 true로 설정하고, `question_to_user`에 선택지의 장단점을 포함한 정중한 질문을 작성하라. 사용자의 답변은 시스템의 장기적인 선호도 규칙으로 학습될 것이다.
 
+[Adaptive UI Rules]
+현재 수행할 작업의 성격에 맞춰 `ui_mode`를 설정하라.
+- coding: 복잡한 코드 작성 또는 리팩토링 시 (시뮬레이션 패널 강조)
+- research: 웹 검색 및 최신 기술 조사 시 (검색 결과 및 지식 그래프 강조)
+- debugging: 테스트 실패 분석 및 오류 수정 시 (로그 및 성찰 리포트 강조)
+- analyst: 데이터 분석 및 시각화 시 (차트 및 성과 리포트 강조)
+- standard: 일반적인 대화 및 복합 작업 시
+
 [Speculative Reasoning Rules]
 사용자의 요청이 복잡하거나 해결 방법이 여러 가지인 경우, 'swarm' 노드를 통해 병렬 검토하라. 
 만약 작업의 위험도가 높거나(Risk > 0.7), 시스템의 핵심 구조를 변경하는 요청인 경우 반드시 **'토론 모드(Debate Mode)'**를 활성화하라. 
@@ -187,6 +195,11 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
                     "type": "STRING",
                     "description": "사용자에게 물어볼 구체적인 질문 내용"
                 },
+                "ui_mode": {
+                    "type": "STRING",
+                    "enum": ["coding", "research", "analyst", "debugging", "standard"],
+                    "description": "현재 작업 맥락에 가장 적합한 UI 레이아웃 모드"
+                },
                 "parallel_tasks": {
                     "type": "ARRAY",
                     "items": {"type": "STRING"},
@@ -246,7 +259,8 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
             "thought_tree": res_data.get("thought_tree"),
             "next_node": target_node,
             "assigned_model": assigned_model,
-            "agent_energy": new_energy
+            "agent_energy": new_energy,
+            "ui_mode": res_data.get("ui_mode", "standard")
         }
         
         if res_data.get("parallel_tasks"):

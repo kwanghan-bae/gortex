@@ -791,6 +791,10 @@ async def run_gortex():
                                 if output.get("diagram_code"):
                                     ui.current_diagram = output["diagram_code"]
                                 
+                                # [ADAPTIVE UI] 작업 맥락에 따른 레이아웃 자동 전환
+                                if output.get("ui_mode"):
+                                    ui.set_mode(output["ui_mode"])
+
                                 # [VISUAL SIMULATION] 도구 실행 전 미래 상태 시뮬레이션 스트리밍
                                 if output.get("simulation") and ui.web_manager:
                                     sim_delta = output["simulation"].get("expected_graph_delta")

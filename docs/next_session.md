@@ -1,23 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 작업 맥락 인지형 UI 레이아웃 및 테마 자동 전환 (Adaptive UI v1)
+- 작업 완료 자동 기록 및 문서 갱신 (Auto-Finalizer v1)
 
 ## Context
-- 현재 대시보드 레이아웃은 고정되어 있어, 리서치 위주의 작업이나 대규모 리팩토링 시 중요한 정보가 가려질 수 있음.
-- 에이전트가 현재 '리서치' 중이면 웹 검색 결과와 지식 노드를, '코딩' 중이면 시뮬레이션과 테스트 결과를 전면에 배치하는 동적 레이아웃 엔진이 필요함.
+- 현재는 에이전트가 작업을 마친 후 문서 업데이트(Release Note, Session Record)를 제가 수동으로 수행하거나 별도의 단계로 처리하고 있음.
+- 에이전트가 "미션 완료"를 선언하는 즉시, 스스로 이번 세션에서 한 일을 요약하고 `release_note.md`와 `session_XXXX.md`를 작성하는 자율적 정리 기능이 필요함.
 
 ## Scope
 ### Do
-- `agents/manager.py`에서 현재 작업의 성격(Context)을 분류하여 UI 상태로 전달.
-- `ui/dashboard.py`에 작업 맥락에 따른 레이아웃 프리셋(Coding, Research, Debugging) 기능 추가.
-- 매 턴마다 에이전트의 페르소나에 맞는 색상 테마 자동 적용.
+- `agents/analyst.py`에 세션 전체 활동을 요약하여 문서를 작성하는 `auto_finalize_session` 메서드 추가.
+- `main.py` 종료 시 또는 미션 완료 선언 시 이 메서드를 자동으로 트리거함.
+- `next_session.md`까지 자동으로 갱신하여 다음 작업을 준비함.
 
 ### Do NOT
-- 사용자가 설정한 기본 테마를 완전히 무시하지 말 것 (조화롭게 조절).
+- 사용자의 최종 승인 없이 `main.py`를 완전히 종료하지 말 것 (기록 완료 후 대기).
 
 ## Expected Outputs
-- `agents/manager.py`, `ui/dashboard.py`, `main.py` 수정.
+- `agents/analyst.py`, `main.py` 수정.
 
 ## Completion Criteria
-- Researcher가 활동할 때는 리서치 패널이 강조되고, Coder가 활동할 때는 시뮬레이션 패널이 강조되는 동적 전환 과정이 확인되어야 함.
+- 에이전트가 작업을 마쳤을 때, `docs/` 하위의 모든 관련 문서가 최신화되어 있는 것이 확인되어야 함.
