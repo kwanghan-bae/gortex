@@ -851,6 +851,12 @@ async def run_gortex():
                                             total_tokens += t
                                             total_cost += estimate_cost(t)
                                 
+                                # [PREDICTIVE ACTIONS] 실시간 행동 예측
+                                next_actions = []
+                                try:
+                                    next_actions = AnalystAgent().predict_next_actions(initial_state)
+                                except: pass
+
                                 ui.update_main(ui.chat_history)
                                 ui.update_sidebar(
                                     ui.current_agent, 
@@ -863,7 +869,8 @@ async def run_gortex():
                                     avg_latency,
                                     energy=agent_energy,
                                     efficiency=last_efficiency,
-                                    knowledge_lineage=output.get("knowledge_lineage")
+                                    knowledge_lineage=output.get("knowledge_lineage"),
+                                    suggested_actions=next_actions
                                 )
                                 ui.update_logs({"agent": node_name, "event": "node_complete"})
                                 
@@ -954,7 +961,9 @@ async def run_gortex():
                         auth_engine.get_call_count(),
                         total_latency_ms // max(1, node_count),
                         energy=agent_energy,
-                        efficiency=last_efficiency
+                        efficiency=last_efficiency,
+                        knowledge_lineage=output.get("knowledge_lineage") if 'output' in locals() else None,
+                        suggested_actions=next_actions
                     )
                     
                     # [CAUSAL GRAPH] 전체 인과 관계 시각화 데이터 브로드캐스팅

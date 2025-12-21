@@ -61,6 +61,7 @@ class DashboardUI:
         self.active_debate = [] # 현재 진행 중인 토론 데이터
         self.target_language = "ko" # 웹 UI 타겟 언어
         self.knowledge_lineage = [] # 지식 출처 계보
+        self.suggested_actions = [] # 예측된 다음 행동 제안
         
         # Progress bar for tools
         self.progress = Progress(
@@ -350,8 +351,8 @@ class DashboardUI:
             self.progress.remove_task(self.tool_task)
             self.tool_task = None
 
-    def update_sidebar(self, agent: str, step: str, tokens: int, cost: float, rules: int, provider: str = "GEMINI", call_count: int = 0, avg_latency: int = 0, energy: int = 100, efficiency: float = 100.0, knowledge_lineage: list = None):
-        """사이드바 정보 업데이트 (에이전트, LLM, 성능 상태 및 지식 계보 시각화)"""
+    def update_sidebar(self, agent: str, step: str, tokens: int, cost: float, rules: int, provider: str = "GEMINI", call_count: int = 0, avg_latency: int = 0, energy: int = 100, efficiency: float = 100.0, knowledge_lineage: list = None, suggested_actions: list = None):
+        """사이드바 정보 업데이트 (에이전트, 성능 및 행동 예측 시각화)"""
         self.current_agent = agent
         self.current_step = step
         self.tokens_used = tokens
@@ -361,8 +362,8 @@ class DashboardUI:
         self.call_count = call_count
         self.energy = energy
         self.efficiency = efficiency
-        if knowledge_lineage is not None:
-            self.knowledge_lineage = knowledge_lineage
+        if knowledge_lineage is not None: self.knowledge_lineage = knowledge_lineage
+        if suggested_actions is not None: self.suggested_actions = suggested_actions
         
         if self.web_manager:
             asyncio.create_task(self._broadcast_to_web())
@@ -402,6 +403,13 @@ class DashboardUI:
 
         status_text.append(f"Step : ", style="bold")
         status_text.append(f"{step}\n")
+        
+        # 다음 행동 제안 시각화
+        if self.suggested_actions:
+            status_text.append(f"🚀 Next? \n", style="bold yellow")
+            for i, act in enumerate(self.suggested_actions):
+                status_text.append(f" {i+1}. {act.get('label')}\n", style="dim cyan")
+
         status_text.append(f"Time : {datetime.now().strftime('%H:%M:%S')}", style="dim")
         
         status_group = [status_text]

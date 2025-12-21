@@ -450,6 +450,31 @@ class AnalystAgent:
         except Exception as e:
             logger.error(f"Failed to memorize thought: {e}")
 
+    def predict_next_actions(self, state: GortexState) -> List[Dict[str, str]]:
+        """현재 맥락을 분석하여 사용자의 다음 행동을 예측 및 제안"""
+        logger.info("🔮 Predicting next user actions based on context...")
+        
+        prompt = f"""지금까지의 작업 진행 상황과 대화 맥락을 분석하라.
+        사용자가 다음에 요청할 가능성이 가장 높은 작업 3가지를 예측하고, 각각에 대해 간단한 제안 문구와 예상 명령어를 생성하라.
+        
+        [Recent Progress]
+        {state['messages'][-10:]}
+        
+        결과 형식 (JSON):
+        {{
+            "predictions": [
+                {{ "label": "제안 문구 (예: 방금 작성한 코드의 테스트를 실행할까요?)", "command": "예상 명령어 (예: /test 또는 unittest 실행 요청)" }}
+            ]
+        }}
+        """
+        try:
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
+            res_data = json.loads(response.text)
+            return res_data.get("predictions", [])[:3]
+        except Exception as e:
+            logger.error(f"Prediction failed: {e}")
+            return []
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""
     agent = AnalystAgent()
