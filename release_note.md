@@ -36,9 +36,16 @@
 - [x] **Infrastructure**: 병렬 작업 간의 데이터 충돌을 방지하고 상태를 안전하게 병합하는 'State Merger' 로직 고도화
 - [x] **Intelligence**: 에이전트가 작업 중 발생한 감정적/논리적 교착 상태를 감지하여 스스로 재설정(Reset)하는 'Mental Reboot' 기능 구현
 - [x] **System**: 에이전트가 코드를 작성할 때 사용자의 스타일을 학습하여 반영하는 'Style Mimicry' 엔진 추가
-- [ ] **Infrastructure**: 시스템 내부의 모든 노드 간 통신을 암호화하여 보안을 강화하는 'Secure Node Transport' 구축
+- [x] **Infrastructure**: 시스템 내부의 모든 노드 간 통신 및 상태 보호를 위한 'Secure Node Transport' 구축
+- [ ] **Interface**: 웹 대시보드에서 시스템의 보안 상태를 시각적으로 확인하는 'Security Shield' 대시보드 추가
 
 ## ✅ Completed
+### v1.9.6 (Secure Node Transport & E2E Encryption)
+- [x] `utils/crypto.py`: Fernet 대칭키 암호화와 PBKDF2 키 파생 함수를 활용한 강력한 데이터 보호 유틸리티 구현
+- [x] `core/persistence.py`: 세션 상태 저장 및 복구 시 민감한 필드(history_summary 등)를 자동 암복호화하는 보안 강화 로직 추가
+- [x] `main.py`: 보안 엔진(GortexCrypto)을 메인 루프에 통합하여 실행 시점의 모든 데이터 영속성을 보호
+- [x] `utils/crypto.py`: 외부 라이브러리(cryptography) 부재 시 안전한 폴백 처리 및 보안 경고 시스템 구축
+
 ### v1.9.5 (Style Mimicry & Personalized Coding)
 - [x] `agents/analyst.py`: 프로젝트의 기존 소스 코드를 분석하여 고유한 명명법, 주석 스타일, 패턴을 추출하는 `analyze_coding_style` 구현
 - [x] `agents/analyst.py`: 추출된 스타일 가이드를 `EvolutionaryMemory`에 영구 규칙으로 등록하여 모든 코딩 작업에 자동 적용되도록 통합

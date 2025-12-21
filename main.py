@@ -30,6 +30,7 @@ from gortex.utils.docker_gen import DockerGenerator
 from gortex.utils.git_tool import GitTool
 from gortex.utils.notifier import Notifier
 from gortex.utils.resource_monitor import ResourceMonitor
+from gortex.utils.crypto import GortexCrypto
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -518,6 +519,7 @@ async def run_gortex():
     ui = DashboardUI(console)
     observer = GortexObserver()
     res_monitor = ResourceMonitor()
+    crypto = GortexCrypto() # 보안 엔진 초기화
     
     # [MONITOR] 리소스 모니터링 백그라운드 루프
     async def monitor_loop():
