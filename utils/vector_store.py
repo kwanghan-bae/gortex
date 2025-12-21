@@ -2,6 +2,8 @@ import json
 import os
 import logging
 import math
+import uuid
+from datetime import datetime
 from typing import List, Dict, Any
 from gortex.core.auth import GortexAuth
 
@@ -10,26 +12,40 @@ logger = logging.getLogger("GortexVectorStore")
 class LongTermMemory:
     """
     세션이 종료되어도 유지되는 의미 기반 지식 저장소 (장기 기억).
-    텍스트 임베딩을 통한 벡터 검색을 지원합니다.
+    프로젝트별 샤딩(Sharding)을 통해 대규모 지식을 효율적으로 관리합니다.
     """
-    def __init__(self, store_path: str = "logs/long_term_memory.json"):
-        self.store_path = store_path
-        self.memory = self._load_store()
+    def __init__(self, store_dir: str = "logs/memory"):
+        self.store_dir = store_dir
+        os.makedirs(self.store_dir, exist_ok=True)
         self.auth = GortexAuth()
+        self.shards: Dict[str, List[Dict[str, Any]]] = {} # 메모리 내 샤드 캐시
 
-    def _load_store(self) -> List[Dict[str, Any]]:
-        if os.path.exists(self.store_path):
+    def _get_shard_path(self, namespace: str) -> str:
+        # 안전한 파일명을 위해 정규화
+        safe_name = "".join([c if c.isalnum() else "_" for c in namespace])
+        return os.path.join(self.store_dir, f"shard_{safe_name}.json")
+
+    def _load_shard(self, namespace: str) -> List[Dict[str, Any]]:
+        if namespace in self.shards:
+            return self.shards[namespace]
+            
+        path = self._get_shard_path(namespace)
+        if os.path.exists(path):
             try:
-                with open(self.store_path, "r", encoding='utf-8') as f:
-                    return json.load(f)
+                with open(path, "r", encoding='utf-8') as f:
+                    data = json.load(f)
+                    self.shards[namespace] = data
+                    return data
             except:
                 return []
         return []
 
-    def _save_store(self):
-        os.makedirs(os.path.dirname(self.store_path), exist_ok=True)
-        with open(self.store_path, "w", encoding='utf-8') as f:
-            json.dump(self.memory, f, ensure_ascii=False, indent=2)
+    def _save_shard(self, namespace: str):
+        if namespace not in self.shards:
+            return
+        path = self._get_shard_path(namespace)
+        with open(path, "w", encoding='utf-8') as f:
+            json.dump(self.shards[namespace], f, ensure_ascii=False, indent=2)
 
     def _get_embedding(self, text: str) -> List[float]:
         """Gemini API를 사용하여 텍스트 임베딩 생성"""
@@ -47,67 +63,62 @@ class LongTermMemory:
             logger.warning(f"Embedding failed: {e}. Falling back to zero-vector.")
             return [0.0] * 768 # 기본 차원
 
-    def memorize(self, text: str, metadata: Dict[str, Any] = None):
-        """새로운 지식을 벡터와 함께 기억 (저장)"""
+    def memorize(self, text: str, metadata: Dict[str, Any] = None, namespace: str = "global"):
+        """특정 네임스페이스(샤드)에 지식을 저장"""
         vector = self._get_embedding(text)
+        shard = self._load_shard(namespace)
         
-        self.memory.append({
+        shard.append({
+            "id": str(uuid.uuid4())[:8],
             "content": text,
-            "vector": vector, # 벡터 데이터 저장
+            "vector": vector,
             "metadata": metadata or {},
             "timestamp": datetime.now().isoformat(),
             "usage_count": 0,
-            "links": [] # 지식 간 상관관계 링크 필드 추가
+            "links": []
         })
-        self._save_store()
-        logger.info(f"🧠 Knowledge vectorized and memorized.")
+        self.shards[namespace] = shard
+        self._save_shard(namespace)
+        logger.info(f"🧠 Knowledge memorized in shard: {namespace}")
 
-    def recall(self, query: str, limit: int = 3) -> List[Dict[str, Any]]:
-        """의미론적 유사도(Cosine Similarity) 기반 지식 소환 (메타데이터 포함)"""
-        if not self.memory:
+    def recall(self, query: str, limit: int = 3, namespace: str = "global") -> List[Dict[str, Any]]:
+        """특정 네임스페이스(샤드)에서 지식 소환"""
+        shard = self._load_shard(namespace)
+        if not shard:
             return []
             
         query_vector = self._get_embedding(query)
-        
         scored_results = []
-        for item in self.memory:
+        
+        for item in shard:
             if "vector" in item and len(item["vector"]) == len(query_vector):
-                # 코사인 유사도 계산
                 dot_product = sum(a * b for a, b in zip(query_vector, item["vector"]))
                 norm_a = math.sqrt(sum(a * a for a in query_vector))
                 norm_b = math.sqrt(sum(b * b for b in item["vector"]))
                 similarity = dot_product / (norm_a * norm_b) if norm_a > 0 and norm_b > 0 else 0
-                
                 scored_results.append((similarity, item))
             else:
-                # 벡터가 없는 경우 키워드 매칭으로 폴백
                 match_score = 0.1 if any(p in item["content"].lower() for p in query.lower().split()) else 0
                 scored_results.append((match_score, item))
         
         scored_results.sort(key=lambda x: x[0], reverse=True)
         
-        # 검색된 지식의 사용량 증가 및 결과 반환
         final_results = []
-        top_results = scored_results[:limit]
-        for score, item in top_results:
-            if score > 0.3: # 임계값 적용
-                if score > 0.5:
-                    item["usage_count"] = item.get("usage_count", 0) + 1
-                
+        for score, item in scored_results[:limit]:
+            if score > 0.3:
+                if score > 0.5: item["usage_count"] = item.get("usage_count", 0) + 1
                 final_results.append({
-                    "content": item["content"],
-                    "metadata": item.get("metadata", {}),
+                    "content": item["content"], 
+                    "metadata": item.get("metadata", {}), 
                     "score": round(score, 2)
                 })
             
         if final_results:
-            self._save_store()
-            
+            self._save_shard(namespace)
         return final_results
 
-from datetime import datetime
-
 if __name__ == "__main__":
+    # 독립 실행 테스트
     ltm = LongTermMemory()
-    ltm.memorize("Gortex의 마스터 키는 보안 폴더에 저장되어 있다.", {"topic": "security"})
-    print(ltm.recall("마스터 키"))
+    ltm.memorize("Gortex의 샤딩 엔진이 활성화되었다.", {"topic": "system"}, namespace="test_project")
+    print(ltm.recall("샤딩", namespace="test_project"))

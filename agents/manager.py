@@ -44,7 +44,14 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     persona_context = f"현재 요청의 성격에 따라 다음 페르소나 중 2개 이상을 선택하여 토론을 구성하라: {', '.join(recommended_personas)}"
 
     # 2. 장기 기억 소환 (Recall)
-    recalled_items = ltm.recall(internal_input)
+    # 현재 작업 디렉토리를 네임스페이스로 사용하여 샤딩된 지식 소환
+    namespace = os.path.basename(state.get("working_dir", "global"))
+    recalled_items = ltm.recall(internal_input, namespace=namespace)
+    
+    # 만약 프로젝트 전용 지식이 부족하면 글로벌 샤드에서도 추가 검색
+    if len(recalled_items) < 2:
+        recalled_items += ltm.recall(internal_input, namespace="global", limit=2)
+    
     ltm_context = ""
     knowledge_lineage = []
     

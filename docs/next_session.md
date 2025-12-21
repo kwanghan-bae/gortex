@@ -1,23 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 지식 저장소 파티셔닝 및 성능 최적화 (Memory Sharding v1)
+- 에이전트 프롬프트 외부 템플릿화 및 동적 관리 (Dynamic Prompting v1)
 
 ## Context
-- `LongTermMemory`가 단일 JSON 파일(`long_term_memory.json`)로 관리되고 있어, 지식이 수천 건 이상 쌓일 경우 로딩 및 검색 속도가 급격히 저하될 우려가 있음.
-- 프로젝트 단위(Namespace) 또는 주제별로 지식을 샤딩(Sharding)하여 저장하고, 필요한 샤드만 메모리에 로드하여 검색하는 지능형 파티셔닝이 필요함.
+- 현재 `Manager`, `Planner`, `Coder` 등의 시스템 지침(Instruction)이 파이썬 코드 내부에 f-string으로 내장되어 있어, 지시사항 하나를 고치기 위해 코드를 수정하고 세션을 재시작해야 함.
+- 프롬프트를 외부 파일(`docs/prompts/*.yaml`)로 분리하여 관리하고, 에이전트 실행 시 이를 동적으로 로드하여 주입하는 아키텍처가 필요함.
 
 ## Scope
 ### Do
-- `utils/vector_store.py`를 확장하여 `namespace` 기반의 샤딩 로직 구현.
-- `memorize` 시 현재 프로젝트나 맥락에 맞는 샤드 파일로 자동 분산 저장.
-- `recall` 시 관련성 높은 샤드를 우선 탐색하는 멀티 샤드 검색 루틴 추가.
+- `gortex/docs/prompts/` 디렉토리 생성 및 각 에이전트별 기본 프롬프트 템플릿 작성.
+- `utils/prompt_loader.py` 유틸리티를 추가하여 템플릿 로드 및 변수 치환 로직 구현.
+- 모든 에이전트 노드가 이 로더를 사용하여 시스템 지침을 획득하도록 수정.
 
 ### Do NOT
-- 복잡한 데이터베이스 엔진을 도입하지 말 것 (파일 기반 샤딩 유지).
+- 기존의 정교한 프롬프트 내용을 단순화하지 말 것 (내용은 유지하되 위치만 이동).
 
 ## Expected Outputs
-- `utils/vector_store.py`, `agents/manager.py` 수정.
+- `docs/prompts/*.yaml` 파일들, `utils/prompt_loader.py`, 에이전트 파일들 수정.
 
 ## Completion Criteria
-- 지식 저장 시 `logs/memory/shard_XXX.json` 형태로 분할 저장되고, 검색 시 정확한 샤드에서 지식이 소환되는 것이 확인되어야 함.
+- 코드 내의 하드코딩된 대규모 프롬프트 문자열이 사라지고, 외부 파일을 통한 동적 주입이 정상 작동하는 것이 확인되어야 함.

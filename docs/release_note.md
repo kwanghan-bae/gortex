@@ -14,19 +14,25 @@
 - [x] **Intelligence**: 사용자의 다음 행동을 예측하여 선제적으로 제안하는 'Predictive Next-Action' 엔진 구축
 - [x] **Intelligence**: 흩어진 지식들 간의 상관관계를 분석하여 지식 지도를 만드는 'Knowledge Relation Mapper' 도입
 - [x] **Intelligence**: 사용자의 의도를 실시간으로 투영하여 워크플로우를 가이드하는 'User Intent Projection' 구축
+- [x] **Infrastructure**: 지식 저장소를 프로젝트 단위로 분할 관리하는 'Memory Sharding' 도입
 - [x] **System**: 대규모 그래프 데이터 및 메시지의 효율적 관리를 위한 'Memory Pruning' 전략 도입
 - [x] **Interface**: 현재 작업 맥락에 따라 대시보드 구성을 최적화하는 'Context-Aware UI Layout' 구현
 - [x] **System**: 작업 완료 후 자동으로 결과물을 아카이빙하고 문서를 갱신하는 'Auto-Finalizer' 도입
 - [x] **Economy**: 에이전트 간 상호 평가를 통해 자원 할당 우선순위를 결정하는 'Peer Review Economy' 고도화
 - [x] **System**: 지식 검색 성능을 비약적으로 높이는 'Vector Embedding Search'로의 전환
 - [x] **Intelligence**: 에이전트의 모든 의미 있는 사고 과정을 스스로 요약하여 지식화하는 'Thought Memorization' 구현
-- [ ] **Infrastructure**: 지식 저장소를 프로젝트 단위로 분할 관리하는 'Memory Sharding' 도입
+- [ ] **Infrastructure**: 에이전트 프롬프트를 런타임에 수정 가능한 템플릿으로 분리하는 'Dynamic Prompting' 구축
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.5.7 (Memory Sharding & Performance)
+- [x] `utils/vector_store.py`: 프로젝트 단위로 지식을 격리 저장하는 멀티 샤드(Namespace) 아키텍처 구현
+- [x] `agents/manager.py`: 작업 디렉토리에 따라 전용 지식 샤드를 자동 탐색하는 지능형 컨텍스트 매칭 루틴 안착
+- [x] `Infrastructure`: 지식 로딩 시 필요한 파티션만 메모리에 적재하여 시스템 리소스 효율성 극대화
 
 ### v2.5.6 (User Intent Projection & Roadmap)
 - [x] `agents/manager.py`: 사용자의 자연어 입력 뒤에 숨겨진 장기 목표와 단계별 의도를 추출하는 '의도 투영' 지능 구현
