@@ -168,11 +168,34 @@ def apply_patch(path: str, start_line: int, end_line: int, new_content: str) -> 
             return f"Error: Invalid line range {start_line}-{end_line} (Total lines: {len(lines)})"
             
         # 패치 적용 (0-based 인덱스로 변환)
-        # lines[start-1:end] 를 교체
         new_lines = lines[:start_line-1] + [new_content + "\n"] + lines[end_line:]
         
-        # 원자적 쓰기 활용
         write_file(path, "".join(new_lines))
         return f"Successfully applied patch to {path} at lines {start_line}-{end_line}."
     except Exception as e:
         return f"Error applying patch: {str(e)}"
+
+def register_new_node(node_name: str, function_name: str, file_name: str) -> str:
+    """
+    core/graph.py를 정적으로 분석하여 새로운 에이전트 노드를 등록합니다.
+    """
+    graph_path = "core/graph.py"
+    try:
+        with open(graph_path, "r", encoding='utf-8') as f:
+            content = f.read()
+            
+        # 1. Import 추가
+        import_stmt = f"from gortex.agents.{file_name} import {function_name}\n"
+        if import_stmt not in content:
+            content = import_stmt + content
+            
+        # 2. workflow.add_node 추가
+        node_stmt = f'    workflow.add_node("{node_name}", {function_name})\n'
+        if node_stmt not in content:
+            # compile_gortex_graph 함수 내부 찾기
+            content = content.replace("# 노드 추가", f"# 노드 추가\n{node_stmt}")
+            
+        write_file(graph_path, content)
+        return f"✅ Successfully registered node '{node_name}' in core/graph.py. System reboot required."
+    except Exception as e:
+        return f"❌ Failed to register node: {e}"

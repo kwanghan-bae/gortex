@@ -49,9 +49,16 @@
 - [x] **System**: 에이전트가 도구 호출 실패 시 과거의 수정 이력을 참조하여 즉각적인 해결책을 제안하는 'Self-Healing Memory' 구축
 - [x] **Infrastructure**: 에이전트의 사고 과정을 음성으로 읽어주거나 사용자의 음성 명령을 이해하는 'Vocal Bridge' 엔진 구축
 - [x] **Interface**: 웹 대시보드에서 시스템의 모든 상태를 3D 공간으로 시각화하는 'Metaverse Dashboard' 기초 설계
-- [ ] **Infrastructure**: 에이전트의 내부 사고 데이터를 활용하여 새로운 에이전트 노드를 자동으로 생성하고 배치하는 'Agent Factory' 노드 구현
+- [x] **Infrastructure**: 에이전트의 내부 사고 데이터를 활용하여 새로운 에이전트 노드를 자동으로 생성하고 배치하는 'Agent Factory' 기능 구현
+- [ ] **Interface**: 에이전트들이 서로의 성과를 칭찬하거나 비판하며 포인트(Point)를 주고받는 'Agent Economy' 게임화 시스템 구축
 
 ## ✅ Completed
+### v2.1.3 (Agent Factory & Self-Modification)
+- [x] `agents/manager.py`: 전문화된 영역의 요청 발생 시 새로운 에이전트 노드 생성을 결정하는 Agent Factory 의사결정 로직 구현
+- [x] `utils/tools.py`: `core/graph.py`를 정적으로 분석하여 신규 노드 임포트 및 등록을 자동화하는 `register_new_node` 유틸리티 신설
+- [x] `agents/manager.py`: 에이전트의 역할 정의에 자가 생성(Spawning) 및 그래프 개조 권한을 부여하여 시스템 확장성 확보
+- [x] `utils/tools.py`: 원자적 파일 쓰기 로직과 결합하여 그래프 수정 시의 무결성 보장 및 재부팅 필요성 알림 기능 추가
+
 ### v2.1.2 (Metaverse Dashboard & 3D Spatial Mapping)
 - [x] `ui/three_js_bridge.py`: 2D 지식 그래프 및 사고 트리를 3D 공간 좌표계로 변환하는 시각화 브리지 엔진 신설
 - [x] `main.py`: 통합 지식 그래프(`/kg`) 요청 시 Three.js용 3D 노드 및 엣지 데이터를 동시 생성하여 웹으로 스트리밍하는 로직 강화
