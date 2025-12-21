@@ -29,16 +29,19 @@ class GortexObserver:
                 shutil.move(self.log_path, f"{self.log_path}.{ts}.bak")
                 logger.info(f"Logs rotated: {self.log_path}.{ts}.bak")
 
-    def log_event(self, agent: str, event_type: str, payload: Any, latency_ms: Optional[int] = None, tokens: Optional[Dict[str, int]] = None):
-        """이벤트를 JSONL 형식으로 기록 (정밀 프로파일링 지원)"""
+    def log_event(self, agent: str, event_type: str, payload: Any, latency_ms: Optional[int] = None, tokens: Optional[Dict[str, int]] = None, cause_id: Optional[str] = None):
+        """이벤트를 JSONL 형식으로 기록 (인과 관계 추적 지원)"""
+        event_id = str(uuid.uuid4())[:8]
         entry = {
+            "id": event_id,
             "timestamp": datetime.now().isoformat(),
             "trace_id": self.trace_id,
             "agent": agent,
             "event": event_type, # 'thought', 'tool_call', 'node_complete', 'error'
             "payload": payload,
             "latency_ms": latency_ms,
-            "tokens": tokens # {"input": 100, "output": 50} 형식
+            "tokens": tokens,
+            "cause_id": cause_id # 원인이 된 이전 이벤트 ID
         }
         
         try:
@@ -46,6 +49,7 @@ class GortexObserver:
                 f.write(json.dumps(entry, ensure_ascii=False) + "\n")
         except Exception as e:
             logger.error(f"Failed to write trace log: {e}")
+        return event_id
 
 # LangChain Callback 형식으로 확장 가능 (여기서는 단순화된 형태 제공)
 class FileLoggingCallbackHandler:

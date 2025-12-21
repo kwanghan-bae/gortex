@@ -53,9 +53,16 @@
 - [x] **Interface**: 에이전트들이 서로의 성과를 칭찬하거나 비판하며 포인트(Point)를 주고받는 'Agent Economy' 게임화 시스템 구축
 - [x] **Infrastructure**: 에이전트의 내부 데이터 처리 파이프라인을 분산 큐(Redis)로 확장하는 'Event-Driven Swarm' 구축
 - [x] **Intelligence**: 프로젝트 전체의 복잡한 비즈니스 로직을 자연어 문서로 자동 역설계하는 'Code Explainer' 기능 구축
-- [ ] **Infrastructure**: 에이전트 간의 협업 도중 발생한 모든 의사결정의 인과 관계를 추적하고 그래프로 저장하는 'Causal Tracking' 구축
+- [x] **Infrastructure**: 에이전트 간의 협업 도중 발생한 모든 의사결정의 인과 관계를 추적하고 그래프로 저장하는 'Causal Tracking' 구축
+- [ ] **Interface**: 인과 관계 데이터를 바탕으로 특정 결과의 근본 원인을 역추적하는 'Root Cause Tree' 웹 UI 구현
 
 ## ✅ Completed
+### v2.1.7 (Causal Tracking & Decision Lineage)
+- [x] `core/observer.py`: 각 이벤트에 고유 ID를 부여하고 원인이 된 이전 이벤트 ID(`cause_id`)를 연결하는 인과 관계 추적 스키마 구현
+- [x] `main.py`: 에이전트 노드 실행 시 이전 노드의 완료 이벤트를 자동으로 참조하여 의사결정 계보(Lineage)를 형성하는 로직 도입
+- [x] `core/observer.py`: `trace.jsonl`에 인과 관계 체인을 영구 기록하여 사후 분석 및 근본 원인 파악(RCA)을 위한 데이터 기반 마련
+- [x] `main.py`: 세션 전체의 이벤트 흐름을 선형 구조에서 인과 그래프 구조로 확장하여 추론의 투명성 강화
+
 ### v2.1.6 (Code Explainer & Logic Analysis)
 - [x] `agents/analyst.py`: 복잡한 파이썬 코드의 작동 원리와 비즈니스 가치를 자연어로 설명하는 `explain_logic` 엔진 구현
 - [x] `agents/analyst.py`: `Synaptic Index`와 연동하여 특정 심볼(함수/클래스)의 아키텍처적 맥락을 자동 분석하는 `/explain` 명령어 추가

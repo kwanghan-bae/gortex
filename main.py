@@ -587,6 +587,7 @@ async def run_gortex():
     # 세션별 파일 캐시 관리 (Isolation)
     cache_path = "logs/file_cache.json"
     all_sessions_cache = {} # {thread_id: {path: hash}}
+    last_event_id = None # 인과 관계 추적용
     if os.path.exists(cache_path):
         try:
             with open(cache_path, "r") as f: all_sessions_cache = json.load(f)
@@ -738,12 +739,13 @@ async def run_gortex():
                                             "data": agent_economy
                                         }, ensure_ascii=False)))
 
-                                # 정밀 프로파일링 기록
-                                observer.log_event(
+                                # 정밀 프로파일링 및 인과 관계 기록
+                                last_event_id = observer.log_event(
                                     node_name, "node_complete", 
                                     {"goal": output.get("goal")}, 
                                     latency_ms=node_latency_ms,
-                                    tokens={"output": node_tokens}
+                                    tokens={"output": node_tokens},
+                                    cause_id=last_event_id
                                 )
                                 
                                 # [PRE-FETCH] 예측 로딩 수행

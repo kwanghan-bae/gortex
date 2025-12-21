@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Code Explainer & Logic Analysis Complete (v2.1.6)
+**Status:** Causal Tracking & Decision Lineage Complete (v2.1.7)
 
 ## 🧠 Current Context
-비즈니스 로직 설명 엔진이 구축되었습니다. 이제 Gortex는 코드를 작성하는 기술적인 단계를 넘어, 작성된 코드의 의미와 파급 효과를 인간의 언어로 상세히 설명할 수 있습니다. 이는 특히 유지보수 과정에서 신규 투입 인력이나 비기술 이해관계자와의 소통을 획기적으로 돕습니다.
+의사결정 인과 관계 추적 시스템이 가동되었습니다. 이제 Gortex는 모든 결과물에 대해 그 근원이 되는 판단과 행동을 역추적할 수 있는 '족보'를 가집니다. 이는 시스템의 책임성을 높이고 복잡한 오류의 원인을 정밀하게 진단하는 데 핵심적인 자산이 됩니다.
 
 ## 🎯 Next Objective
-**Causal Tracking (Decision Lineage)**
-1. **`Decision Lineage`**: 시스템 내부에서 특정 결정(예: 모델 변경, 특정 파일 수정)이 내려진 근본적인 원인과 그 파생 효과를 추적하여 '인과 관계 그래프'로 기록합니다.
-2. **`Visual Causal Map`**: 웹 대시보드에서 특정 성과나 오류를 클릭하면, 해당 결과에 도달하기까지의 사고 체인(Decision Chain)을 역순으로 시각화하여 보여주는 'Root-Cause Analysis' 기능을 구현합니다.
+**Root Cause Tree Visualization**
+1. **`RCA Tree Logic`**: 특정 이벤트 ID를 기준으로 해당 지점까지 도달한 모든 인과 관계를 트리 구조로 재구성하는 로직을 구현합니다.
+2. **`Visual RCA`**: 웹 대시보드에서 특정 로그나 성과를 클릭하면, 그 원인이 된 사고 체인을 역순으로 화려한 애니메이션과 함께 시각화하여 보여주는 전용 뷰를 구축합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 코드 로직 설명 엔진 완료 (v2.1.6).
-- 다음 목표: 의사결정 인과 관계 추적 시스템(Causal Tracking).
+- 인과 관계 추적 데이터 시스템 완료 (v2.1.7).
+- 다음 목표: 근본 원인 분석 트리(Root Cause Tree) 시각화.
 
 작업 목표:
-1. `core/observer.py` 또는 `DashboardUI`를 확장하여 노드 간의 결정 인과 관계(parent_decision_id 등)를 저장하는 기능을 추가해줘.
-2. 특정 결과물의 '족보(Lineage)'를 추적하여 그래프 데이터로 반환하는 로직을 작성해줘.
+1. `core/observer.py` 또는 `DashboardUI`에 특정 `event_id`의 계보를 추적하여 트리 데이터를 생성하는 `get_causal_chain` 메서드를 작성해줘.
+2. 웹 대시보드로 이 체인 데이터를 스트리밍하고, 노드 간의 인과 관계를 시각적으로 표현하는 기능을 보강해줘.
 ```
