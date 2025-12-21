@@ -37,6 +37,7 @@ class DashboardUI:
         self.layout = create_layout()
         self.chat_history = []
         self.agent_thought = ""
+        self.thought_tree = [] # 사고 과정 트리 데이터
         self.thought_history = [] 
         self.current_agent = "Idle"
         self.last_agent = "Idle"
@@ -103,6 +104,7 @@ class DashboardUI:
             "provider": self.provider,
             "call_count": self.call_count,
             "thought": self.agent_thought,
+            "thought_tree": self.thought_tree,
             "chat_history": [
                 (r, c if isinstance(c, str) else "[Rich Object]") 
                 for r, c in self.chat_history[-10:]
@@ -178,13 +180,18 @@ class DashboardUI:
         if self.web_manager:
             asyncio.create_task(self._broadcast_to_web())
 
-    def update_thought(self, thought: str, agent_name: str = "agent"):
-        """에이전트의 사고 과정 실시간 업데이트 (시각 효과 추가)"""
+    def update_thought(self, thought: str, agent_name: str = "agent", tree: list = None):
+        """에이전트의 사고 과정 실시간 업데이트 (트리 데이터 지원)"""
         self.agent_thought = thought
+        if tree:
+            self.thought_tree = tree
         self.thought_history.append((agent_name, thought, datetime.now().isoformat()))
         style = self.agent_colors.get(agent_name.lower(), "agent.manager")
         title = f"💭 [{style}]AGENT REASONING ({agent_name.upper()})[/{style}]"
         self.layout["thought"].update(Panel(Text(thought, style="italic cyan"), title=title, border_style="cyan", padding=(1, 2)))
+        
+        if self.web_manager:
+            asyncio.create_task(self._broadcast_to_web())
 
     def update_logs(self, log_entry: dict):
         """최근 로그 업데이트 (최신 항목 하이라이트)"""

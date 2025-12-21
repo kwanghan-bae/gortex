@@ -468,7 +468,8 @@ async def run_gortex():
                                 ui.start_tool_progress("Executing tool...") if has_tool else ui.stop_tool_progress()
 
                                 thought = output.get("thought") or output.get("thought_process")
-                                if thought: ui.update_thought(thought, agent_name=node_name)
+                                tree = output.get("thought_tree")
+                                if thought: ui.update_thought(thought, agent_name=node_name, tree=tree)
 
                                 if "messages" in output:
                                     for msg in output["messages"]:

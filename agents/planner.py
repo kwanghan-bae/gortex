@@ -71,13 +71,26 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
         base_instruction += f"\n\n[USER-SPECIFIC EVOLVED RULES]\n{constraints_str}"
 
     config = types.GenerateContentConfig(
-        system_instruction=base_instruction,
+        system_instruction=base_instruction + "\n\n[Thought Tree Rules]\n사용자의 목표를 달성하기 위한 설계 과정을 논리적인 트리 구조(분석 -> 설계 -> 검증 계획)로 구성하라.",
         temperature=0.0,
         response_mime_type="application/json",
         response_schema={
             "type": "OBJECT",
             "properties": {
-                "thought_process": {"type": "STRING"},
+                "thought_process": {"type": "STRING", "description": "전체 설계 요약"},
+                "thought_tree": {
+                    "type": "ARRAY",
+                    "items": {
+                        "type": "OBJECT",
+                        "properties": {
+                            "id": {"type": "STRING"},
+                            "parent_id": {"type": "STRING", "nullable": True},
+                            "text": {"type": "STRING"},
+                            "type": {"type": "STRING", "enum": ["analysis", "design", "verification"]}
+                        },
+                        "required": ["id", "text", "type"]
+                    }
+                },
                 "goal": {"type": "STRING"},
                 "steps": {
                     "type": "ARRAY",
@@ -96,7 +109,7 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
                     }
                 }
             },
-            "required": ["thought_process", "goal", "steps"]
+            "required": ["thought_process", "thought_tree", "goal", "steps"]
         }
     )
 
@@ -109,24 +122,16 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
 
     try:
         # JSON 파싱
-        # google-genai 0.3.0+ 에서는 response.parsed가 지원될 수 있으나 안전하게 text 파싱도 고려
         plan_data = response.parsed if hasattr(response, 'parsed') else json.loads(response.text)
         
         logger.info(f"Planner Thought: {plan_data.get('thought_process')}")
-        logger.info(f"Plan Goal: {plan_data.get('goal')}")
         
         # Plan을 상태에 저장하고 Coder에게 넘김
-        # steps 리스트를 문자열 리스트로 변환하거나 구조체 그대로 넘길 수 있음.
-        # State 정의상 plan: List[str] 이므로, step을 문자열 표현으로 변환하거나 State 정의를 유연하게 써야 함.
-        # 여기서는 편의상 JSON dump된 문자열 리스트로 저장하거나, 그냥 객체로 넘기기 위해 State 수정을 고려할 수도 있지만,
-        # 일단 문자열로 변환하여 저장. (Coder가 이를 파싱해서 쓰도록)
-        
-        # 하지만 GortexState 정의를 보면 `plan: List[str]` 이다.
-        # Coder 구현 편의를 위해 각 step을 JSON 문자열로 저장하는 것이 좋겠다.
         plan_steps = [json.dumps(step, ensure_ascii=False) for step in plan_data["steps"]]
         
         return {
             "thought_process": plan_data.get("thought_process"),
+            "thought_tree": plan_data.get("thought_tree"),
             "plan": plan_steps,
             "current_step": 0,
             "next_node": "coder",

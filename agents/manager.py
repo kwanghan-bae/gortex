@@ -48,21 +48,33 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
 
 
     config = types.GenerateContentConfig(
-
-        system_instruction=base_instruction,
+        system_instruction=base_instruction + "\n\n[Thought Tree Rules]\n사고 과정을 논리적인 트리 구조로 세분화하라. 루트 노드에서 시작하여 분석, 판단, 결론으로 이어지는 노드 리스트를 생성하라.",
         temperature=0.0,
         response_mime_type="application/json",
         response_schema={
             "type": "OBJECT",
             "properties": {
-                "thought": {"type": "STRING"},
+                "thought": {"type": "STRING", "description": "전체 사고 요약"},
+                "thought_tree": {
+                    "type": "ARRAY",
+                    "items": {
+                        "type": "OBJECT",
+                        "properties": {
+                            "id": {"type": "STRING"},
+                            "parent_id": {"type": "STRING", "nullable": True},
+                            "text": {"type": "STRING"},
+                            "type": {"type": "STRING", "enum": ["analysis", "reasoning", "decision"]}
+                        },
+                        "required": ["id", "text", "type"]
+                    }
+                },
                 "next_node": {
                     "type": "STRING", 
                     "enum": ["planner", "researcher", "analyst", "__end__"]
                 },
-                "response_to_user": {"type": "STRING", "description": "사용자에게 직접 답할 내용 (질문이 필요하거나 작업 종료 시)"}
+                "response_to_user": {"type": "STRING", "description": "사용자에게 직접 답할 내용"}
             },
-            "required": ["thought", "next_node"]
+            "required": ["thought", "thought_tree", "next_node"]
         }
     )
 
@@ -84,15 +96,13 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
 
     # JSON 응답 파싱
     try:
-        # google-genai는 response.parsed (Pydantic 모델) 또는 response.text를 제공
-        # 여기서는 단순화를 위해 텍스트 파싱 가정 (실제 구현 시 라이브러리 규격 준수)
-        res_data = response.parsed if hasattr(response, 'parsed') else response.text
+        res_data = response.parsed if hasattr(response, 'parsed') else json.loads(response.text)
         
-        # UI 출력을 위해 매니저의 생각을 로그에 기록
         logger.info(f"Manager Thought: {res_data.get('thought')}")
         
         updates = {
             "thought": res_data.get("thought"),
+            "thought_tree": res_data.get("thought_tree"),
             "next_node": res_data.get("next_node", "__end__")
         }
 

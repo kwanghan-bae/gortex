@@ -21,9 +21,16 @@
 - [x] **Infrastructure**: GitHub API 연동을 통해 프로젝트를 원격 저장소에 자동으로 푸시하는 '/deploy' 명령어 구현
 - [x] **Infrastructure**: 외부 API 연동(예: Slack, Discord)을 통해 작업 완료 시 알림을 보내는 'Notification' 시스템 구축
 - [x] **Interface**: 터미널 UI를 넘어 브라우저에서 Gortex의 활동을 실시간 모니터링할 수 있는 'Web Dashboard' 프레임워크 구축
-- [ ] **Intelligence**: 에이전트의 사고 과정을 시각화하여 트리 구조로 보여주는 'Thought Tree' 웹 컴포넌트 구현
+- [x] **Intelligence**: 에이전트의 사고 과정을 시각화하여 트리 구조로 보여주는 'Thought Tree' 웹 컴포넌트 구현
+- [ ] **Infrastructure**: 에이전트 간의 메시지 교환을 최적화하기 위한 'Context Compression' 엔진 고도화
 
 ## ✅ Completed
+### v1.7.1 (Structured Thought Tree Extraction)
+- [x] `agents/manager.py`: 사고 과정을 분석, 추론, 결정 단계로 구조화하는 `thought_tree` 응답 스키마 도입
+- [x] `agents/planner.py`: 설계 과정을 분석, 설계, 검증 계획으로 세분화하는 트리 구조 사고 로직 구현
+- [x] `ui/dashboard.py`: 트리 구조의 사고 데이터를 수용하고 웹 대시보드로 스트리밍하는 인터페이스 확장
+- [x] `main.py`: 에이전트 스트리밍 루프에서 구조화된 트리 데이터를 추출하여 UI에 전달하도록 통합
+
 ### v1.7.0 (Gortex Web Dashboard Lite)
 - [x] `ui/web_server.py`: FastAPI 및 WebSockets를 활용한 실시간 데이터 스트리밍 서버 구축
 - [x] `ui/dashboard.py`: 터미널과 웹 서버 양쪽으로 UI 상태(Chat, Thought, Stats)를 동시 브로드캐스팅하는 로직 구현
