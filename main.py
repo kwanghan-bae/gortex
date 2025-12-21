@@ -906,6 +906,15 @@ async def run_gortex():
                         efficiency=last_efficiency
                     )
                     
+                    # [CAUSAL GRAPH] 전체 인과 관계 시각화 데이터 브로드캐스팅
+                    if ui.web_manager:
+                        causal_2d = observer.get_causal_graph()
+                        causal_3d = ThreeJsBridge().convert_causal_graph_to_3d(causal_2d)
+                        asyncio.create_task(ui.web_manager.broadcast(json.dumps({
+                            "type": "causal_graph_3d",
+                            "data": causal_3d
+                        }, ensure_ascii=False)))
+
                     # 매 턴 종료 후 세션 캐시 영속화
                     all_sessions_cache[thread_id] = session_cache
                     save_global_cache(all_sessions_cache)

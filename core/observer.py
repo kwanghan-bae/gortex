@@ -4,7 +4,7 @@ import uuid
 import os
 import shutil
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 logger = logging.getLogger("GortexObserver")
 
@@ -79,6 +79,36 @@ class GortexObserver:
         except Exception as e:
             logger.error(f"Failed to trace causal chain: {e}")
             return []
+
+    def get_causal_graph(self, limit: int = 200) -> Dict[str, Any]:
+        """전체 로그를 바탕으로 인과 관계 그래프(Nodes/Edges) 생성"""
+        if not os.path.exists(self.log_path):
+            return {"nodes": [], "edges": []}
+            
+        try:
+            with open(self.log_path, "r", encoding="utf-8") as f:
+                logs = [json.loads(line) for line in f][-limit:]
+            
+            nodes = []
+            edges = []
+            
+            for l in logs:
+                # 노드 정보 구성
+                nodes.append({
+                    "id": l["id"],
+                    "label": f"{l['agent']}: {l['event']}",
+                    "agent": l["agent"],
+                    "event": l["event"],
+                    "timestamp": l["timestamp"]
+                })
+                # 인과 관계 엣지 구성
+                if l.get("cause_id"):
+                    edges.append({"from": l["cause_id"], "to": l["id"]})
+                    
+            return {"nodes": nodes, "edges": edges}
+        except Exception as e:
+            logger.error(f"Failed to generate causal graph: {e}")
+            return {"nodes": [], "edges": []}
 
 # LangChain Callback 형식으로 확장 가능 (여기서는 단순화된 형태 제공)
 class FileLoggingCallbackHandler:

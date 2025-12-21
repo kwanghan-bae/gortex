@@ -3,23 +3,20 @@
 > 💡 **Versioning Policy**: 메이저 버전(v1.x, v2.x ...)이 변경될 때마다 이전 기록은 `docs/archive/`로 이동하며, 메인 릴리즈 노트는 항상 최신 상태를 유지합니다.
 
 ## 🚀 Backlog (Pending Tasks)
-- [x] **Intelligence**: 다중 에이전트 합의(토론) 프로토콜(Multi-Agent Consensus Protocol) 구현
-- [x] **Intelligence**: 에이전트 간의 관점 차이를 조율하는 합의 도출(Synthesis) 알고리즘 고도화
-- [x] **Interface**: 에이전트 간의 가상 토론 과정을 시각화하는 'Debate Monitor' 웹 UI 구축
-- [x] **Intelligence**: 합의 결과의 유효성을 사후 평가하여 페르소나별 가중치를 동적으로 조절하는 'Consensus Learner' 도입
-- [x] **Intelligence**: 외부 트렌드 및 기술 뉴스를 주기적으로 요약하여 'Synaptic Knowledge Base'로 통합하는 로직 구축
-- [x] **Infrastructure**: 축적된 지식 중 유효하지 않거나 중복된 정보를 정리하는 'Knowledge GC' 노드 추가
-- [x] **Intelligence**: 특정 라이브러리의 최신 API 문서를 실시간 학습하여 적용하는 'Live Documentation Learning' 구현
-- [x] **Intelligence**: 테스트 실패 로그를 분석하여 근본 원인을 추론하고 '실패 방지 규칙'을 자동 생성하는 'Reflective Debugging' 노드 추가
-- [x] **Interface**: 에이전트의 페르소나(Innovation, Stability 등)를 동적으로 관리하고 생성하는 'Persona Lab' 구현
-- [x] **Intelligence**: 기술 부채 상위 파일을 대상으로 자동 리팩토링 및 테스트 검증을 수행하는 'Auto-Refactor Loop' 가동
-- [ ] **Interface**: 에이전트의 사고 인과 관계를 3D 그래프로 탐색하는 'Causal Graph Explorer' 구현
+- [x] **Interface**: 에이전트의 사고 인과 관계를 3D 그래프로 탐색하는 'Causal Graph Explorer' 구현
+- [ ] **Interface**: 사용자가 정의한 복잡한 아키텍처 규칙을 실시간 검증하는 'Constraint Validator' 노드 추가
+- [ ] **System**: 대규모 그래프 데이터의 효율적 렌더링을 위한 'Rolling Window' 캐싱 전략 도입
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.4.0 (Causal Graph Explorer & Transparency)
+- [x] `core/observer.py`: 세션 전체를 관통하는 인과 관계(`cause_id`) 추적 및 그래프 데이터 생성 엔진 구축
+- [x] `ui/three_js_bridge.py`: 사고의 계보를 시간 순서대로 3D 공간에 배치하는 입체 시각화 로직 구현
+- [x] `main.py`: 추론의 모든 단계를 웹 대시보드 3D 토폴로지로 실시간 스트리밍하는 투명성 파이프라인 안착
 
 ### v2.3.9 (Auto-Refactor Loop & Self-Optimization)
 - [x] `agents/analyst.py`: 코드 복잡도를 분석하여 개선이 시급한 파일을 선별하는 리팩토링 추천 엔진 구축
