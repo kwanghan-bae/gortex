@@ -21,13 +21,25 @@ class TestGortexAnalyst(unittest.TestCase):
         if os.path.exists(self.memory_path):
             os.remove(self.memory_path)
 
-    def test_analyze_data_csv(self):
-        """CSV 파일 분석 기능 테스트"""
+    @patch('gortex.agents.analyst.GortexAuth')
+    def test_analyze_data_csv(self, mock_auth_cls):
+        """CSV 파일 분석 기능 테스트 (딕셔너리 반환 대응)"""
+        mock_auth = mock_auth_cls.return_value
+        mock_res = MagicMock()
+        mock_res.text = json.dumps({
+            "chart_type": "bar",
+            "title": "Test Chart",
+            "plotly_json": {"data": [], "layout": {}}
+        })
+        mock_auth.generate.return_value = mock_res
+
         agent = AnalystAgent()
-        result_json = agent.analyze_data(self.test_csv)
-        result = json.loads(result_json)
-        self.assertEqual(result["rows"], 2)
-        self.assertIn("A", result["columns"])
+        result = agent.analyze_data(self.test_csv)
+        
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result["summary"]["rows"], 2)
+        self.assertIn("A", result["summary"]["columns"])
+        self.assertEqual(result["visualization"]["chart_type"], "bar")
 
     @patch('gortex.agents.analyst.GortexAuth')
     def test_analyze_feedback(self, mock_auth_cls):

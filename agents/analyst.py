@@ -18,34 +18,44 @@ class AnalystAgent:
         self.auth = GortexAuth()
         self.memory = EvolutionaryMemory()
 
-    def analyze_data(self, file_path: str) -> str:
-        """Pandas를 사용하여 데이터 파일 분석"""
+    def analyze_data(self, file_path: str) -> Dict[str, Any]:
+        """Pandas를 사용하여 데이터 파일 분석 및 시각화 코드 생성"""
         try:
             if not os.path.exists(file_path):
-                return f"Error: File not found at {file_path}"
+                return {"error": f"File not found at {file_path}"}
 
             ext = os.path.splitext(file_path)[1].lower()
-            if ext == '.csv':
-                df = pd.read_csv(file_path)
-            elif ext in ['.xls', '.xlsx']:
-                df = pd.read_excel(file_path)
-            elif ext == '.json':
-                df = pd.read_json(file_path)
-            else:
-                return f"Error: Unsupported file format {ext}"
+            df = pd.read_csv(file_path) if ext == '.csv' else (pd.read_excel(file_path) if ext in ['.xls', '.xlsx'] else pd.read_json(file_path))
 
-            # 기초 통계 및 정보 추출
             summary = {
                 "rows": len(df),
                 "columns": list(df.columns),
-                "head": df.head(5).to_dict(),
-                "describe": df.describe(include='all').to_dict()
+                "head": df.head(3).to_dict(),
+                "describe": df.describe().to_dict()
             }
+
+            # 시각화 제안 및 코드 생성 (LLM)
+            prompt = f"""다음 데이터 요약 정보를 보고, 가장 적합한 시각화(Chart) 1개를 제안하고 Plotly JSON 데이터 형식으로 작성하라.
+            [Data Summary]
+            {json.dumps(summary, ensure_ascii=False)}
             
-            return json.dumps(summary, ensure_ascii=False, indent=2)
+            결과는 반드시 다음 JSON 형식을 따라라:
+            {{
+                "chart_type": "bar/line/pie/scatter",
+                "title": "차트 제목",
+                "plotly_json": {{ "data": [...], "layout": {{ ... }} }}
+            }}
+            """
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
+            viz_data = json.loads(response.text)
+            
+            return {
+                "summary": summary,
+                "visualization": viz_data
+            }
         except Exception as e:
             logger.error(f"Data analysis failed: {e}")
-            return f"Error analyzing data: {e}"
+            return {"error": str(e)}
 
     def analyze_feedback(self, history: List[Any]) -> Optional[Dict[str, Any]]:
         """사용자의 부정적 피드백을 분석하여 진화 규칙 추출"""
@@ -433,8 +443,28 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
     if data_files:
         # Data Mode
         result = agent.analyze_data(data_files[0])
+        if "error" in result:
+            return {"messages": [("ai", f"❌ 데이터 분석 실패: {result['error']}")], "next_node": "manager"}
+            
+        msg = f"📊 데이터 분석 결과 ({data_files[0]}):\n"
+        msg += f"- 행 수: {result['summary']['rows']}, 컬럼: {', '.join(result['summary']['columns'])}\n"
+        msg += f"- 시각화 제안: {result['visualization'].get('title')}"
+        
+        # 웹 대시보드로 차트 데이터 브로드캐스팅 시도
+        from gortex.ui.web_server import manager as web_manager
+        if web_manager:
+            try:
+                import asyncio
+                asyncio.create_task(web_manager.broadcast(json.dumps({
+                    "type": "chart_data",
+                    "data": result["visualization"]
+                }, ensure_ascii=False)))
+                msg += "\n📈 웹 대시보드에 차트가 생성되었습니다."
+            except:
+                pass
+
         return {
-            "messages": [("ai", f"데이터 분석 결과입니다:\n{result}")],
+            "messages": [("ai", msg)],
             "next_node": "manager"
         }
     elif "로그" in last_msg or "분석" in last_msg or "패턴" in last_msg:

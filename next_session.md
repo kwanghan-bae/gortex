@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Long-term Memory & Knowledge Retrieval Complete (v2.0.5)
+**Status:** Auto-Chart & Data Visualization Complete (v2.0.6)
 
 ## 🧠 Current Context
-장기 기억 시스템이 가동되었습니다. 이제 Gortex는 세션을 넘어 과거의 지식을 소환하고 이를 현재 작업에 반영할 수 있는 '지속적 지능'을 갖추게 되었습니다. 이는 반복되는 설명의 필요성을 줄이고 시스템의 컨텍스트 인식 능력을 극대화합니다.
+자동 데이터 시각화 시스템이 구축되었습니다. 이제 Gortex는 방대한 데이터를 텍스트로만 설명하는 대신, 사용자가 한눈에 이해할 수 있는 인터랙티브 차트로 변환하여 웹 대시보드에 제공합니다. 이는 복잡한 데이터 분석 작업에서의 의사결정 속도를 획기적으로 높여줍니다.
 
 ## 🎯 Next Objective
-**Auto-Chart & Data Visualization**
-1. **`Visual Data Analysis`**: `Analyst` 노드가 데이터(CSV 등)를 분석한 결과를 단순 텍스트로 내놓는 대신, Plotly 또는 Matplotlib 코드를 생성하여 시각적 차트로 변환합니다.
-2. **`Web Chart Rendering`**: 생성된 차트 데이터를 웹 대시보드로 전송하여 브라우저에서 인터랙티브한 그래프로 렌더링함으로써 데이터 통찰력을 직관적으로 제공합니다.
+**Visual Simulation (Dreaming Node)**
+1. **`State Visualization`**: 에이전트가 도구를 실행하기 전, 해당 도구로 인해 변화될 시스템의 '미래 모습'을 시각적으로 상상(Visualize)합니다. (예: 아키텍처 맵의 변화 예상도)
+2. **`Simulation Dashboard`**: 웹 대시보드에서 '실제 상태'와 에이전트가 꿈꾸는 '예상 상태'를 나란히 비교하여 보여줌으로써, 작업의 의도와 실제 결과 사이의 간극을 투명하게 공개합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 장기 기억 저장 및 인출 시스템 완료 (v2.0.5).
-- 다음 목표: 데이터 분석 결과 자동 시각화(Auto-Chart).
+- 데이터 분석 결과 자동 시각화 완료 (v2.0.6).
+- 다음 목표: 도구 실행 전 미래 상태 시각화(Visual Simulation).
 
 작업 목표:
-1. `agents/analyst.py`의 데이터 분석 로직을 확장하여 시각화 코드(Plotly JSON 등)를 생성하는 기능을 추가해줘.
-2. `ui/dashboard.py` 및 웹 대시보드 연동 로직을 수정하여 차트 데이터를 실시간 브로드캐스팅하도록 보강해줘.
+1. `agents/coder.py`의 `simulation` 결과를 확장하여, 텍스트가 아닌 구조화된 시각적 변화(예: modified_nodes, new_links)를 포함하도록 해줘.
+2. 웹 대시보드로 이 '미래 상태 시뮬레이션' 데이터를 전송하여 실제 아키텍처 맵과 대조할 수 있는 기능을 구상해줘.
 ```

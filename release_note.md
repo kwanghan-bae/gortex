@@ -42,10 +42,16 @@
 - [x] **Intelligence**: 여러 가상의 실행 시나리오를 병렬로 검토하여 최적의 경로를 선택하는 'Speculative Reasoning' 엔진 구축
 - [x] **Infrastructure**: 에이전트의 내부 지식 베이스를 그래프 DB 형식으로 시각화하고 관리하는 'Synaptic Knowledge Graph' 구축
 - [x] **Intelligence**: 에이전트가 도구 호출 결과의 정확성을 제3의 관점에서 검증하는 'Cross-Validation' 노드 추가
-- [x] **Infrastructure**: 에이전트의 단기 기억을 외부 벡터 저장소로 확장하여 지식 보존력을 높이는 'Long-term Memory' 구축
-- [ ] **Interface**: 사용자의 복잡한 데이터 분석 요청을 시각적 차트로 자동 변환하는 'Auto-Chart' 노드 추가
+- [x] **Interface**: 사용자의 복잡한 데이터 분석 요청을 시각적 차트로 자동 변환하는 'Auto-Chart' 기능 구현
+- [ ] **Intelligence**: 에이전트가 도구 호출 전후의 시스템 상태를 영상처럼 '상상'하여 시각적으로 시뮬레이션하는 'Visual Simulation' 엔진 추가
 
 ## ✅ Completed
+### v2.0.6 (Auto-Chart & Data Visualization)
+- [x] `agents/analyst.py`: Pandas 분석 결과로부터 데이터의 성격에 맞는 최적의 차트를 제안하고 Plotly JSON 코드를 자동 생성하는 로직 구현
+- [x] `agents/analyst.py`: 분석된 시각화 데이터를 웹 대시보드로 실시간 브로드캐스팅하여 인터랙티브한 그래프 렌더링 지원
+- [x] `tests/test_analyst.py`: 데이터 분석 결과 형식 변경(String -> Dict)에 따른 단위 테스트 고도화 및 LLM 모의 응답 검증 완료
+- [x] `agents/analyst.py`: 데이터 요약, 시각화 제안, 웹 전송이 하나로 결합된 통합 데이터 인텔리전스 워크플로우 안착
+
 ### v2.0.5 (Long-term Memory & Knowledge Retrieval)
 - [x] `utils/vector_store.py`: 세션 종료 후에도 지식을 보존하고 의미 기반으로 소환(Recall)할 수 있는 `LongTermMemory` 엔진 구축
 - [x] `agents/manager.py`: 사용자 요청 처리 전 장기 기억 저장소에서 관련 과거 지식을 검색하여 프롬프트 맥락으로 자동 주입
