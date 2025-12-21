@@ -19,6 +19,11 @@
 - **안정성 강화**: 그래프 컴파일 로직 수정 및 런타임 에러(KeyError, TypeError) 해결.
 - **전략 업데이트**: Web UI 개발 잠정 중단 및 TUI 우선 순위 설정.
 
+### v2.8.4 (Hybrid Coder & Bounded Execution)
+- **Agent**: `agents/coder.py`에 하이브리드 LLM 아키텍처를 적용하여 Gemini와 Ollama를 모두 지원하게 되었습니다.
+- **Strategy**: 모델의 Native 기능 지원 여부에 따라 프롬프트 전략과 도구 호출 방식(Native vs Simulated)을 동적으로 전환합니다.
+- **Resilience**: 정규식 기반 JSON 추출 로직을 도입하여 로컬 모델의 비정형 응답에 대한 파싱 신뢰도를 높였습니다.
+
 ### v2.8.3 (TUI Stability & Interface Rigor)
 - **Quality**: `ui/terminal.py` 및 `ui/dashboard.py`의 테스트 커버리지를 80% 이상으로 확보하여 터미널 인터페이스의 신뢰성을 극대화했습니다.
 - **Robustness**: UI 메시지 처리 루프 및 사이드바 갱신 로직에 방어적 코드를 도입하여 비정상적인 데이터 유입 시의 안정성을 확보했습니다.

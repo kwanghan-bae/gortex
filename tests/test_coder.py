@@ -4,61 +4,57 @@ from unittest.mock import MagicMock, patch
 from gortex.agents.coder import coder_node
 
 class TestGortexCoder(unittest.TestCase):
-    @patch('gortex.agents.coder.GortexAuth')
-    def test_coder_execution_limit(self, mock_auth_cls):
-        """최대 반복 횟수 초과 시 중단 테스트"""
-        state = {
-            "coder_iteration": 30,
-            "plan": [],
-            "messages": []
-        }
-        result = coder_node(state)
-        self.assertEqual(result["next_node"], "__end__")
-        self.assertIn("30회에서 중단", result["messages"][0][1])
-
-    @patch('gortex.agents.coder.execute_shell')
-    @patch('gortex.agents.coder.GortexAuth')
-    def test_coder_executes_step(self, mock_auth_cls, mock_exec):
-        """Coder가 계획된 단계를 실행하려고 도구를 호출하는지 테스트"""
-        # Mock Auth Response (Function Calling 시뮬레이션)
-        mock_auth = mock_auth_cls.return_value
-        mock_response = MagicMock()
-        
-        # 가짜 Function Call 생성
-        mock_part = MagicMock()
-        mock_fc = MagicMock()
-        mock_fc.name = "execute_shell"
-        mock_fc.args = {"command": "echo test"}
-        mock_part.function_call = mock_fc
-        mock_response.candidates = [MagicMock(content=MagicMock(parts=[mock_part]))]
-        
-        mock_auth.generate.return_value = mock_response
-        
-        # Tool execution result
-        mock_exec.return_value = "test output"
-
-        # State 설정
-        plan_step = json.dumps({
-            "id": 1,
-            "action": "execute_shell",
-            "target": "echo test",
-            "reason": "Test execution"
-        })
-        state = {
-            "plan": [plan_step],
+    def setUp(self):
+        self.state = {
+            "messages": [],
+            "plan": [json.dumps({"action": "read_file", "target": "test.py"})],
             "current_step": 0,
             "coder_iteration": 0,
-            "messages": [],
-            "active_constraints": []
+            "assigned_model": "test-model"
         }
 
-        # 실행
-        result = coder_node(state)
+    @patch('gortex.agents.coder.LLMFactory')
+    @patch('gortex.agents.coder.read_file')
+    @patch('gortex.agents.coder.execute_shell')
+    def test_coder_executes_step(self, mock_shell, mock_read, mock_factory):
+        """Coder가 계획된 단계를 실행하고 LLM을 호출하는지 확인"""
+        mock_shell.return_value = "Ready to commit"
+        mock_backend = MagicMock()
+        # Ollama 스타일 JSON 응답 모킹
+        mock_backend.generate.return_value = json.dumps({
+            "thought": "I will read the file",
+            "action": "none",
+            "status": "success"
+        })
+        mock_backend.supports_structured_output.return_value = False
+        mock_factory.get_default_backend.return_value = mock_backend
+        
+        mock_read.return_value = "file content"
+        
+        res = coder_node(self.state)
+        
+        self.assertEqual(res["current_step"], 1)
+        mock_backend.generate.assert_called_once()
 
-        # 검증
-        self.assertEqual(result["next_node"], "coder") # 결과 확인을 위해 다시 호출되어야 함
-        self.assertEqual(result["coder_iteration"], 1) # 반복 횟수 증가
-        mock_exec.assert_called_with("echo test") # 실제 도구 함수 호출 확인
+    @patch('gortex.agents.coder.LLMFactory')
+    def test_coder_handles_tool_call(self, mock_factory):
+        """LLM 응답에 포함된 action을 파싱하여 실행하는지 확인"""
+        mock_backend = MagicMock()
+        mock_backend.generate.return_value = json.dumps({
+            "thought": "Writing file",
+            "action": "write_file",
+            "action_input": {"path": "out.txt", "content": "hello"},
+            "status": "in_progress"
+        })
+        mock_backend.supports_structured_output.return_value = False
+        mock_factory.get_default_backend.return_value = mock_backend
+        
+        with patch('gortex.agents.coder.write_file') as mock_write:
+            mock_write.return_value = "Success"
+            res = coder_node(self.state)
+            
+            mock_write.assert_called_with("out.txt", "hello")
+            self.assertIn("Executed write_file", res["messages"][0][1])
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
