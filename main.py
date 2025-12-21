@@ -659,6 +659,7 @@ async def run_gortex():
     agent_economy = {} # 에이전트 평판 및 포인트 데이터
     agent_energy = 100 # 가상 에너지 (기본 100%)
     last_efficiency = 100.0 # 최근 효율성 점수
+    efficiency_history = [] # 효율성 이력
 
     # 세션별 파일 캐시 관리 (Isolation)
     cache_path = "logs/file_cache.json"
@@ -737,7 +738,9 @@ async def run_gortex():
                         "active_constraints": evo_mem.get_active_constraints(user_input),
                         "api_call_count": auth_engine.get_call_count(),
                         "agent_economy": agent_economy,
-                        "agent_energy": agent_energy
+                        "agent_energy": agent_energy,
+                        "last_efficiency": last_efficiency,
+                        "efficiency_history": efficiency_history
                     }
                     if cmd_status == "summarize": initial_state["messages"] = [("system", "Manual summary trigger")] * 12
                     elif cmd_status == "scout": initial_state["next_node"] = "trend_scout"
@@ -833,6 +836,9 @@ async def run_gortex():
                                 # [EFFICIENCY] 효율성 상태 업데이트
                                 if "last_efficiency" in output:
                                     last_efficiency = output["last_efficiency"]
+                                    efficiency_history.append(last_efficiency)
+                                    if len(efficiency_history) > 10:
+                                        efficiency_history.pop(0)
 
                                 # 정밀 프로파일링 및 인과 관계 기록
                                 last_event_id = observer.log_event(

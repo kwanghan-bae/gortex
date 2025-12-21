@@ -33,7 +33,7 @@ class OptimizerAgent:
             logger.error(f"Failed to read logs: {e}")
         return logs
 
-    def analyze_performance(self) -> Optional[Dict[str, Any]]:
+    def analyze_performance(self, context: str = "") -> Optional[Dict[str, Any]]:
         """로그 분석 및 개선 제안 도출"""
         logs = self._read_recent_logs()
         if not logs:
@@ -50,6 +50,9 @@ class OptimizerAgent:
 
         prompt = f"""너는 Gortex v1.0의 성능 최적화 전문가다.
 아래의 최근 시스템 로그(JSON)를 분석하여 개선안을 도출하라.
+[Context]
+{context}
+
 [Recent Logs]
 {json.dumps(compact_logs, ensure_ascii=False, indent=2)}
 
@@ -106,7 +109,13 @@ def optimizer_node(state: GortexState) -> Dict[str, Any]:
             "next_node": "summarizer"
         }
 
-    res = agent.analyze_performance()
+    # 저효율 상태 감지
+    context = ""
+    eff_history = state.get("efficiency_history", [])
+    if len(eff_history) >= 3 and all(e < 40.0 for e in eff_history[-3:]):
+        context = "Persistent low efficiency (<40) detected in last 3 turns. Focus on reducing token usage or optimizing agent path."
+
+    res = agent.analyze_performance(context=context)
     updates = {
         "thought": f"시스템 로그 분석 결과: {res.get('analysis')}",
         "messages": [("ai", f"🚀 [System Optimization Report]\n\n{res.get('analysis')}")],

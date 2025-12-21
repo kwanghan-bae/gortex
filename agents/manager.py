@@ -88,6 +88,12 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     if last_eff < 40.0:
         base_instruction += f"\n\n[Efficiency Alert] 최근 작업의 효율성 점수가 {last_eff:.1f}로 매우 낮다. 이는 비효율적인 접근 방식 때문일 수 있다. 이번 계획 수립 시에는 더 신중하고 상세한(Detailed) 단계를 구성하여 실패 비용을 줄여라."
 
+    # 지속적인 저효율 감지 및 Optimizer 강제 (Self-Healing)
+    eff_history = state.get("efficiency_history", [])
+    if len(eff_history) >= 3 and all(e < 40.0 for e in eff_history[-3:]):
+        logger.warning("📉 Persistent low efficiency detected. Forcing optimization.")
+        base_instruction += "\n\n[CRITICAL ALERT] 최근 3회 연속 작업 효율성이 매우 낮습니다 (< 40). 즉시 'optimizer' 에이전트로 라우팅하여 원인을 진단하고 해결책을 마련하십시오. 다른 작업은 중단하십시오."
+
     config = types.GenerateContentConfig(
         system_instruction=base_instruction + "\n\n[Thought Tree Rules]\n사고 과정을 논리적인 트리 구조로 세분화하라. 루트 노드에서 시작하여 분석, 판단, 결론으로 이어지는 노드 리스트를 생성하라.\n\n[Self-Consistency Rules]\n최종 결정을 내리기 전, 반드시 'internal_critique' 단계에서 자신의 논리적 모순이나 위험 요소를 비판적으로 재검토하라.",
         temperature=0.0,
@@ -114,7 +120,7 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
                 },
                 "next_node": {
                     "type": "STRING", 
-                    "enum": ["planner", "researcher", "analyst", "swarm", "__end__"]
+                    "enum": ["planner", "researcher", "analyst", "swarm", "optimizer", "__end__"]
                 },
                 "parallel_tasks": {
                     "type": "ARRAY",

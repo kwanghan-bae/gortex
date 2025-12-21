@@ -67,6 +67,11 @@
 - [x] **Intelligence**: 에이전트가 도구 호출 시 스스로의 '에너지 수준'을 관리하며 효율적으로 작업하는 'Energy-Aware Tasking' 구현
 
 ## ✅ Completed
+### v2.2.13 (Proactive Optimization Loop)
+- [x] `core/state.py`: 효율성 이력을 추적하는 `efficiency_history` 필드 추가
+- [x] `agents/manager.py`: 지속적인 저효율 발생 시 `optimizer`로 강제 라우팅하는 자가 치유(Self-Healing) 로직 구현
+- [x] `agents/optimizer.py`: 저효율 원인을 진단하고 개선 작업을 제안하는 `diagnose_efficiency` 컨텍스트 분석 로직 추가
+
 ### v2.2.12 (Real-time Efficiency Visualization)
 - [x] `ui/dashboard.py`: 사이드바에 현재 에너지(%)와 효율성 점수를 시각적으로 표시하는 위젯 추가 (Color-coded)
 - [x] `main.py`: 메인 루프에서 매 턴마다 갱신된 에너지/효율성 정보를 UI 및 웹 대시보드로 실시간 전송하도록 파이프라인 확장

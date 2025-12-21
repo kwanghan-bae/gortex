@@ -37,4 +37,6 @@ class GortexState(TypedDict):
     agent_energy: int 
     # 최근 작업의 효율성 점수 (0.0~100.0)
     last_efficiency: float
+    # 최근 효율성 점수 이력 (최대 10개 유지)
+    efficiency_history: List[float]
 

@@ -1,0 +1,248 @@
+commit 996089c131178ad6ab3ef43b2fbdefa0977c10d6
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 16:18:44 2025 +0900
+
+    feat: 터미널 및 웹 대시보드에 실시간 효율성/에너지 시각화 구현 (v2.2.12)
+
+ .idea/workspace.xml |  5 ++++-
+ main.py             | 15 ++++++++++++---
+ next_session.md     | 21 +++++++++++----------
+ release_note.md     |  4 ++++
+ ui/dashboard.py     | 17 +++++++++++++++--
+ 5 files changed, 46 insertions(+), 16 deletions(-)
+
+commit 82cad12a28b598833917ec26424039601ee2c2c3
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 16:15:48 2025 +0900
+
+    feat: Swarm 및 Manager에 효율성 지표 통합 (v2.2.11)
+
+ agents/manager.py |  5 ++++
+ agents/swarm.py   | 80 ++++++++++++++++++++++++++++++++++++++++++-------------
+ core/state.py     |  2 ++
+ next_session.md   | 20 +++++++-------
+ release_note.md   |  4 +++
+ 5 files changed, 83 insertions(+), 28 deletions(-)
+
+commit 7ac79d576e31750a47057c4c08324b9987d23407
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 16:13:59 2025 +0900
+
+    feat: 효율성 점수 계산 및 패턴 승격 로직 구현 (v2.2.10)
+
+ .idea/workspace.xml         |  6 +-----
+ agents/analyst.py           | 15 +++++++++++++++
+ core/evolutionary_memory.py | 30 ++++++++++++++++++++++++++++++
+ next_session.md             | 20 ++++++++++----------
+ release_note.md             |  4 ++++
+ 5 files changed, 60 insertions(+), 15 deletions(-)
+
+commit 18572bc500ca200301374123d6dcce49a073a336
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 15:58:02 2025 +0900
+
+    feat: 에너지 인지형 작업 관리(Energy-Aware Tasking) 기초 구현 (v2.2.9)
+
+ .idea/workspace.xml |  4 ++--
+ agents/manager.py   | 21 ++++++++++++++++-----
+ core/state.py       |  4 ++++
+ main.py             |  8 +++++++-
+ next_session.md     | 22 +++++++++++-----------
+ release_note.md     |  8 +++++++-
+ 6 files changed, 47 insertions(+), 20 deletions(-)
+
+commit 47f21935f1f54996502197ac898778d5c0f2e549
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 15:50:16 2025 +0900
+
+    feat: VR/AR 상호작용을 위한 공간 추론 SDK 기초 및 WebXR 스트리밍 구현 (v2.2.8)
+
+ next_session.md       | 20 ++++++++++----------
+ release_note.md       |  9 ++++++++-
+ ui/three_js_bridge.py |  7 ++++++-
+ ui/web_server.py      | 31 +++++++++++++++++--------------
+ 4 files changed, 41 insertions(+), 26 deletions(-)
+
+commit 7f42d950fcc74bde1313623aebbba6c640eff078
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 15:48:23 2025 +0900
+
+    feat: 함수 호출 관계 분석 및 3D 위상 맵(Call Graph 3D) 스트리밍 구현 (v2.2.7)
+
+ main.py          | 22 ++++++++++++++++++++++
+ next_session.md  | 20 ++++++++++----------
+ release_note.md  |  9 ++++++++-
+ utils/indexer.py | 39 +++++++++++++++++++++++++++------------
+ 4 files changed, 67 insertions(+), 23 deletions(-)
+
+commit 2ef13f37b0d3e7b1b0c16110b271e50eef3798ed
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 15:46:41 2025 +0900
+
+    feat: 코드 시간/공간 복잡도 분석을 위한 자원 프로파일러(Resource Profiler) 구현 (v2.2.6)
+
+ agents/analyst.py | 35 ++++++++++++++++++++++++++++++++++-
+ next_session.md   | 20 ++++++++++----------
+ release_note.md   |  9 ++++++++-
+ 3 files changed, 52 insertions(+), 12 deletions(-)
+
+commit 545e4373793eba89c81319b04bc9aa2707a46ef1
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 15:45:04 2025 +0900
+
+    feat: 사고 과정을 3D 신경망으로 시각화하는 Neural Mindmap 엔진 구현 (v2.2.5)
+
+ next_session.md       | 20 +++++++++----------
+ release_note.md       |  9 ++++++++-
+ ui/dashboard.py       |  4 ++++
+ ui/three_js_bridge.py | 54 +++++++++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 76 insertions(+), 11 deletions(-)
+
+commit 4ae3434cfd8204047fc96ff62b1146bacf62f6a7
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 15:43:22 2025 +0900
+
+    feat: 자연어 쿼리를 활용한 지능형 코드 의미 검색(Semantic Code Search) 고도화 (v2.2.4)
+
+ .idea/workspace.xml |  2 ++
+ main.py             | 21 ++++++++++++---------
+ next_session.md     | 20 ++++++++++----------
+ release_note.md     |  9 ++++++++-
+ utils/indexer.py    | 30 +++++++++++++++++++++++++-----
+ utils/tools.py      |  3 ++-
+ 6 files changed, 59 insertions(+), 26 deletions(-)
+
+commit 9e780b0def29b956b34fe78c623e16108d3a38e1
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 15:40:27 2025 +0900
+
+    feat: 파일 버전 관리(File Time Machine) 및 /rollback 명령어 구현 (v2.2.3)
+
+ main.py         | 25 +++++++++++++++++++++++++
+ next_session.md | 20 ++++++++++----------
+ release_note.md |  9 ++++++++-
+ utils/tools.py  | 10 +++++++++-
+ 4 files changed, 52 insertions(+), 12 deletions(-)
+
+commit 1ec3b4e193dceda9f3bf5b23fdda07d2789d9308
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 15:39:03 2025 +0900
+
+    feat: 중앙 에셋 매니저(SynapticAssetManager) 구축 및 UI 아이콘 리팩토링 (v2.2.2)
+
+ next_session.md        | 20 ++++++-------
+ release_note.md        |  9 +++++-
+ ui/dashboard.py        | 27 ++++++++++-------
+ utils/asset_manager.py | 78 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 112 insertions(+), 22 deletions(-)
+
+commit 40b34fa755708986a565806bbb31d86ef65e7acd
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 15:34:42 2025 +0900
+
+    feat: 다중 에이전트 승인 현황 관리 및 리뷰 보드(Reviewer Dashboard) 구현 (v2.2.1)
+
+ agents/analyst.py | 539 ++++++------------------------------------------------
+ next_session.md   |  20 +-
+ release_note.md   |   9 +-
+ ui/dashboard.py   |  15 ++
+ 4 files changed, 86 insertions(+), 497 deletions(-)
+
+commit 238898f93192241f253b8cbe06b5369f55a3fad4
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 15:29:08 2025 +0900
+
+    feat: 실시간 코드 보안 취약점 탐지 및 차단(Shielded Code Generation) 구현 (v2.2.0)
+
+ .idea/workspace.xml |  4 +++-
+ agents/coder.py     | 21 +++++++++++++++++++--
+ next_session.md     | 20 ++++++++++----------
+ release_note.md     |  9 ++++++++-
+ utils/tools.py      | 20 +++++++++++++++++++-
+ 5 files changed, 59 insertions(+), 15 deletions(-)
+
+commit 0e0fbf7cdc438d5b6a7d1f683702564e15dd53a8
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 15:23:35 2025 +0900
+
+    feat: 실시간 활동 저널링 시스템(Journalist Node) 및 자연어 스트림 구현 (v2.1.9)
+
+ agents/analyst.py | 20 ++++++++++++++++++++
+ main.py           |  8 ++++++++
+ next_session.md   | 20 ++++++++++----------
+ release_note.md   | 10 ++++++++--
+ ui/dashboard.py   | 13 +++++++++++++
+ 5 files changed, 59 insertions(+), 12 deletions(-)
+
+commit 9fcdac4e08bf545b78a151eea27ef25e58f698ac
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 15:21:36 2025 +0900
+
+    feat: 근본 원인 분석(RCA) 트리 및 인과 관계 역추적 시스템 구현 (v2.1.8)
+
+ .idea/workspace.xml |  4 +---
+ core/observer.py    | 29 +++++++++++++++++++++++++++++
+ main.py             | 24 ++++++++++++++++++++++++
+ next_session.md     | 20 ++++++++++----------
+ release_note.md     |  9 ++++++++-
+ 5 files changed, 72 insertions(+), 14 deletions(-)
+
+commit 43de0051418820b2be7630725260cf16720f0e96
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 15:20:04 2025 +0900
+
+    feat: 의사결정 인과 관계 추적(Causal Tracking) 및 이벤트 계보 시스템 구현 (v2.1.7)
+
+ core/observer.py | 10 +++++++---
+ main.py          |  8 +++++---
+ next_session.md  | 20 ++++++++++----------
+ release_note.md  |  9 ++++++++-
+ 4 files changed, 30 insertions(+), 17 deletions(-)
+
+commit 1f5a35de65231933ce03206c743b5241a98e11a3
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 15:18:50 2025 +0900
+
+    feat: 비즈니스 로직 자동 설명 엔진(Code Explainer) 및 /explain 명령어 구현 (v2.1.6)
+
+ agents/analyst.py | 83 +++++++++++++++++++++++++++++++++++--------------------
+ next_session.md   | 20 +++++++-------
+ release_note.md   |  9 +++++-
+ 3 files changed, 71 insertions(+), 41 deletions(-)
+
+commit 79023482129acfe941f48c2507cc5a8076d4d3ac
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 15:16:53 2025 +0900
+
+    feat: Redis 기반 메시지 큐(MQ) 연동 및 이벤트 기반 Swarm 아키텍처 구축 (v2.1.5)
+
+ agents/swarm.py        | 19 ++++++++++++---
+ next_session.md        | 20 ++++++++--------
+ release_note.md        |  9 +++++++-
+ utils/message_queue.py | 63 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 97 insertions(+), 14 deletions(-)
+
+commit 5865dac37bb057a230c4da92cf3998a4e8bb59f0
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 15:15:30 2025 +0900
+
+    feat: 에이전트 평판 및 포인트 시스템(Agent Economy) 구축 (v2.1.4)
+
+ agents/analyst.py | 13 ++++++++++++-
+ core/state.py     |  4 ++++
+ main.py           | 13 ++++++++++++-
+ next_session.md   | 20 ++++++++++----------
+ release_note.md   |  9 ++++++++-
+ 5 files changed, 46 insertions(+), 13 deletions(-)
+
+commit 1e3dca9506bb2c42696684b0d9d81e4876ecff70
+Author: kwanghan-bae <kwanghan.bae@gmail.com>
+Date:   Sun Dec 21 15:13:34 2025 +0900
+
+    feat: 에이전트 자가 생성(Agent Factory) 및 그래프 자동 개조 로직 구현 (v2.1.3)
+
+ agents/manager.py | 21 ++++++++-------------
+ next_session.md   | 20 ++++++++++----------
+ release_note.md   |  9 ++++++++-
+ utils/tools.py    | 29 ++++++++++++++++++++++++++---
+ 4 files changed, 52 insertions(+), 27 deletions(-)
