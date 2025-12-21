@@ -3,15 +3,20 @@
 > 💡 **Versioning Policy**: 메이저 버전(v1.x, v2.x ...)이 변경될 때마다 이전 기록은 `docs/archive/`로 이동하며, 메인 릴리즈 노트는 항상 최신 상태를 유지합니다.
 
 ## 🚀 Backlog (Pending Tasks)
-- [x] **Interface**: 에이전트에게 고유한 성격과 전문성을 부여하는 'Persona Profiles' 구축
-- [ ] **Infrastructure**: 작업 로그와 체크포인트를 자동 압축/백업하는 'Autonomous Backup' 노드 추가
+- [x] **Infrastructure**: 작업 로그와 체크포인트를 자동 압축/백업하는 'Autonomous Backup' 노드 추가
 - [ ] **Interface**: 3D 그래프에서 영향 받는 노드들을 묶어 보여주는 'Dependency Clustering' 시각화 (v2.6.7 기반 고도화)
+- [ ] **Infrastructure**: 에이전트 도구 메시지 i18n 전면 마이그레이션 완결
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.7.1 (Autonomous Session Backup & Recovery)
+- [x] `utils/tools.py`: 디렉토리 전체를 특정 패턴 제외하고 ZIP 패키징하는 고성능 압축 엔진 구축
+- [x] `agents/analyst.py`: 세션 종료 시 모든 지식, 로그, 문서를 하나의 아카이브로 자동 백업하는 복원력 강화
+- [x] **Integrity**: 파일 유실 사고에 대비한 코어 로직 재건 및 이스케이프 구문 오류 전면 수정을 통한 무결성 보장
 
 ### v2.7.0 (Dynamic Persona & Intellectual Diversity)
 - [x] `docs/i18n/personas.json`: Standard, Innovation, Stability, Security, UX 등 전문화된 5종의 에이전트 성격 사전 구축

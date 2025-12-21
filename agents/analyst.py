@@ -451,8 +451,10 @@ class AnalystAgent:
             try:
                 project_name = os.path.basename(os.getcwd())
                 self.organize_workspace(project_name, res_data.get('version', 'v2.x.x'))
+                # [FULL BACKUP] 전체 시스템 스냅샷 백업 수행
+                self.perform_full_backup(project_name, res_data.get('version', 'v2.x.x'))
             except Exception as org_e:
-                logger.warning(f"Workspace organization failed: {org_e}")
+                logger.warning(f"Workspace organization/backup failed: {org_e}")
 
             logger.info(f"✅ Auto-finalized session: {session_file}")
             return res_data
@@ -588,6 +590,27 @@ class AnalystAgent:
             except: pass
             
         return len(targets)
+
+    def perform_full_backup(self, project_name: str, version: str) -> str:
+        """세션 전체 데이터를 하나의 아카이브로 패키징하여 백업"""
+        logger.info(f"💾 Performing full backup for '{project_name}' ({version})...")
+        from gortex.utils.tools import compress_directory
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_path = f"logs/backups/full_session_{project_name}_{version}_{timestamp}.zip"
+        
+        # 현재 디렉토리(".")를 백업하되, 거대한 불필요 폴더 제외
+        ignore = [".git", "venv", "__pycache__", "site-packages", "node_modules", "logs/archives"]
+        res = compress_directory(".", backup_path, ignore_patterns=ignore)
+        
+        if "✅" in res:
+            logger.info(f"✨ Full backup created: {backup_path}")
+            # 백업 성공 시 지식 베이스에도 기록
+            self.memory.ltm.memorize(
+                f"Full session backup created: {backup_path}",
+                {"source": "System", "type": "backup", "version": version}
+            )
+        return res
 
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""

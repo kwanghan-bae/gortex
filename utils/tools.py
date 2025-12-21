@@ -4,6 +4,7 @@ import subprocess
 import logging
 import hashlib
 import re
+import zipfile
 from datetime import datetime
 from typing import Dict, Union, Tuple, Optional, List
 
@@ -57,7 +58,7 @@ def list_files(directory: str = ".") -> str:
     """현재 작업 디렉토리 파일 목록 반환."""
     try:
         files = []
-        ignore_dirs = {{'.git', 'venv', '__pycache__', '.DS_Store', 'logs', 'site-packages'}}
+        ignore_dirs = {'.git', 'venv', '__pycache__', '.DS_Store', 'logs', 'site-packages'}
         for root, dirs, filenames in os.walk(directory):
             dirs[:] = [d for d in dirs if d not in ignore_dirs]
             for f in filenames:
@@ -89,11 +90,9 @@ def execute_shell(command: str, timeout: int = 300) -> str:
         # [AUTO-DEPENDENCY] pip install 감지 시 requirements.txt 업데이트
         if "pip install" in command and result.returncode == 0:
             try:
-                # 패키지명 추출 (단순 로직: 마지막 인자)
                 parts = command.split()
                 if len(parts) >= 3:
                     package_name = parts[-1]
-                    # 이미 requirements.txt에 있는지 확인
                     req_path = "requirements.txt"
                     existing_reqs = []
                     if os.path.exists(req_path):
@@ -132,12 +131,9 @@ def read_file(path: str) -> str:
         return f"Error: {str(e)}"
 
 def deep_integrity_check(working_dir: str, current_cache: Dict[str, str]) -> Tuple[Dict[str, str], List[str]]:
-    """
-    프로젝트 전체 파일의 무결성을 검사하고 업데이트된 캐시와 변경된 파일 목록을 반환합니다.
-    """
+    """프로젝트 전체 파일의 무결성을 검사하고 업데이트된 캐시와 변경된 파일 목록을 반환합니다."""
     updated_cache = current_cache.copy()
     changed_files = []
-    
     ignore_dirs = {'.git', 'venv', '__pycache__', '.DS_Store', 'logs', 'site-packages'}
     
     for root, dirs, filenames in os.walk(working_dir):
@@ -145,86 +141,58 @@ def deep_integrity_check(working_dir: str, current_cache: Dict[str, str]) -> Tup
         for f in filenames:
             file_path = os.path.join(root, f)
             rel_path = os.path.relpath(file_path, working_dir)
-            
             actual_hash = get_file_hash(file_path)
             cached_hash = updated_cache.get(rel_path)
-            
             if actual_hash != cached_hash:
                 updated_cache[rel_path] = actual_hash
                 changed_files.append(rel_path)
                 
-    # 삭제된 파일 처리
     deleted_files = []
     for path in list(updated_cache.keys()):
         if not os.path.exists(os.path.join(working_dir, path)):
             del updated_cache[path]
             deleted_files.append(path)
-            
     return updated_cache, changed_files + [f"(deleted) {p}" for p in deleted_files]
 
 def get_changed_files(working_dir: str, current_cache: Dict[str, str]) -> List[str]:
     """현재 캐시와 대조하여 변경된 파일 목록만 추출"""
     changed = []
     ignore_dirs = {'.git', 'venv', '__pycache__', 'logs', 'site-packages'}
-    
     for root, dirs, filenames in os.walk(working_dir):
         dirs[:] = [d for d in dirs if d not in ignore_dirs]
         for f in filenames:
             file_path = os.path.join(root, f)
             rel_path = os.path.relpath(file_path, working_dir)
-            
             actual_hash = get_file_hash(file_path)
             if actual_hash != current_cache.get(rel_path):
                 changed.append(rel_path)
     return list(set(changed))
 
 def apply_patch(path: str, start_line: int, end_line: int, new_content: str) -> str:
-    """
-    파일의 특정 범위(start_line~end_line)를 새로운 내용으로 교체합니다. (1-based index)
-    """
+    """파일의 특정 범위를 새로운 내용으로 교체합니다."""
     try:
-        if not os.path.exists(path):
-            return f"Error: File not found at {path}"
-            
-        with open(path, 'r', encoding='utf-8') as f:
-            lines = f.readlines()
-            
-        # 범위 유효성 검사
+        if not os.path.exists(path): return f"Error: File not found at {path}"
+        with open(path, 'r', encoding='utf-8') as f: lines = f.readlines()
         if start_line < 1 or end_line > len(lines) or start_line > end_line:
-            return f"Error: Invalid line range {start_line}-{end_line} (Total lines: {len(lines)})"
-            
-        # 패치 적용 (0-based 인덱스로 변환)
+            return f"Error: Invalid line range {start_line}-{end_line}"
         new_lines = lines[:start_line-1] + [new_content + "\n"] + lines[end_line:]
-        
         write_file(path, "".join(new_lines))
-        return f"Successfully applied patch to {path} at lines {start_line}-{end_line}."
+        return f"Successfully applied patch to {path}."
     except Exception as e:
         return f"Error applying patch: {str(e)}"
 
 def register_new_node(node_name: str, function_name: str, file_name: str) -> str:
-    """
-    core/graph.py를 정적으로 분석하여 새로운 에이전트 노드를 등록합니다.
-    """
+    """core/graph.py를 정적으로 분석하여 새로운 에이전트 노드를 등록합니다."""
     graph_path = "core/graph.py"
     try:
-        with open(graph_path, "r", encoding='utf-8') as f:
-            content = f.read()
-            
-        # 1. Import 추가
+        with open(graph_path, "r", encoding='utf-8') as f: content = f.read()
         import_stmt = f"from gortex.agents.{file_name} import {function_name}\n"
-        if import_stmt not in content:
-            content = import_stmt + content
-            
-        # 2. workflow.add_node 추가
+        if import_stmt not in content: content = import_stmt + content
         node_stmt = f'    workflow.add_node("{node_name}", {function_name})\n'
-        if node_stmt not in content:
-            # compile_gortex_graph 함수 내부 찾기
-            content = content.replace("# 노드 추가", f"# 노드 추가\n{node_stmt}")
-            
+        if node_stmt not in content: content = content.replace("# 노드 추가", f"# 노드 추가\n{node_stmt}")
         write_file(graph_path, content)
-        return f"✅ Successfully registered node '{node_name}' in core/graph.py. System reboot required."
-    except Exception as e:
-        return f"❌ Failed to register node: {e}"
+        return f"✅ Registered node '{node_name}'. Reboot required."
+    except Exception as e: return f"❌ Failed: {e}"
 
 def scan_security_risks(code: str) -> List[Dict[str, str]]:
     """생성된 코드 내의 보안 취약점 패턴 스캔"""
@@ -237,11 +205,9 @@ def scan_security_risks(code: str) -> List[Dict[str, str]]:
         (r"subprocess\.Popen\(.*shell=True", "Subprocess with shell=True"),
         (r"cursor\.execute\(f?['\"].*\{.*\}", "Potential SQL Injection")
     ]
-    
     for pattern, risk_type in patterns:
         if re.search(pattern, code):
             risks.append({"type": risk_type, "pattern": pattern})
-            
     return risks
 
 def archive_project_artifacts(project_name: str, version: str, files: List[str]) -> str:
@@ -249,14 +215,28 @@ def archive_project_artifacts(project_name: str, version: str, files: List[str])
     try:
         archive_root = os.path.join("logs", "archives", project_name, version)
         os.makedirs(archive_root, exist_ok=True)
-        
         moved_count = 0
         for f_path in files:
             if os.path.exists(f_path):
                 dest = os.path.join(archive_root, os.path.basename(f_path))
                 shutil.move(f_path, dest)
                 moved_count += 1
-                
         return f"✅ Archived {moved_count} artifacts to {archive_root}"
-    except Exception as e:
-        return f"❌ Archive failed: {e}"
+    except Exception as e: return f"❌ Archive failed: {e}"
+
+def compress_directory(source_dir: str, output_path: str, ignore_patterns: List[str] = None) -> str:
+    """디렉토리 전체를 ZIP 아카이브로 압축 (특정 패턴 제외)"""
+    if ignore_patterns is None:
+        ignore_patterns = [".git", "venv", "__pycache__", ".DS_Store", "site-packages", "logs/archives"]
+    try:
+        os.makedirs(os.path.dirname(output_path) if os.path.dirname(output_path) else ".", exist_ok=True)
+        with zipfile.ZipFile(output_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for root, dirs, files in os.walk(source_dir):
+                dirs[:] = [d for d in dirs if d not in ignore_patterns]
+                for file in files:
+                    if any(p in file for p in ignore_patterns): continue
+                    full_path = os.path.join(root, file)
+                    rel_path = os.path.relpath(full_path, source_dir)
+                    zipf.write(full_path, rel_path)
+        return f"✅ Directory compressed to {output_path}"
+    except Exception as e: return f"❌ Compression failed: {e}"
