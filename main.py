@@ -26,6 +26,7 @@ from gortex.core.config import GortexConfig
 from gortex.agents.analyst import AnalystAgent
 from gortex.utils.tools import get_file_hash, deep_integrity_check
 from gortex.utils.indexer import SynapticIndexer
+from gortex.ui.three_js_bridge import ThreeJsBridge
 from gortex.utils.docker_gen import DockerGenerator
 from gortex.utils.git_tool import GitTool
 from gortex.utils.notifier import Notifier
@@ -199,12 +200,17 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         
         kg_data = indexer.generate_knowledge_graph()
         
+        # 3D 공간 데이터 변환
+        bridge_3d = ThreeJsBridge()
+        kg_3d = bridge_3d.convert_kg_to_3d(kg_data)
+        
         if ui.web_manager:
             asyncio.create_task(ui.web_manager.broadcast(json.dumps({
-                "type": "knowledge_graph",
-                "data": kg_data
+                "type": "knowledge_graph_3d",
+                "data": kg_3d,
+                "raw_kg": kg_data
             }, ensure_ascii=False)))
-            ui.chat_history.append(("system", f"✅ 지식 그래프 생성 완료 ({len(kg_data['nodes'])} 노드). 웹 대시보드에서 확인 가능합니다."))
+            ui.chat_history.append(("system", f"✅ 3D 지식 그래프 생성 완료 ({len(kg_3d['nodes'])} 노드). 웹 대시보드에서 3D 탐색이 가능합니다."))
         else:
             ui.chat_history.append(("system", "❌ 웹 대시보드가 활성화되지 않아 그래프를 전송할 수 없습니다."))
             

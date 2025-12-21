@@ -48,9 +48,16 @@
 - [x] **Intelligence**: 여러 시나리오의 성공 가능성을 사전에 예측하고 최적의 가중치를 부여하는 'Speculative Score' 엔진 구현
 - [x] **System**: 에이전트가 도구 호출 실패 시 과거의 수정 이력을 참조하여 즉각적인 해결책을 제안하는 'Self-Healing Memory' 구축
 - [x] **Infrastructure**: 에이전트의 사고 과정을 음성으로 읽어주거나 사용자의 음성 명령을 이해하는 'Vocal Bridge' 엔진 구축
-- [ ] **Interface**: 웹 대시보드에서 시스템의 모든 상태를 3D 공간으로 시각화하는 'Metaverse Dashboard' 기초 설계
+- [x] **Interface**: 웹 대시보드에서 시스템의 모든 상태를 3D 공간으로 시각화하는 'Metaverse Dashboard' 기초 설계
+- [ ] **Infrastructure**: 에이전트의 내부 사고 데이터를 활용하여 새로운 에이전트 노드를 자동으로 생성하고 배치하는 'Agent Factory' 노드 구현
 
 ## ✅ Completed
+### v2.1.2 (Metaverse Dashboard & 3D Spatial Mapping)
+- [x] `ui/three_js_bridge.py`: 2D 지식 그래프 및 사고 트리를 3D 공간 좌표계로 변환하는 시각화 브리지 엔진 신설
+- [x] `main.py`: 통합 지식 그래프(`/kg`) 요청 시 Three.js용 3D 노드 및 엣지 데이터를 동시 생성하여 웹으로 스트리밍하는 로직 강화
+- [x] `ui/three_js_bridge.py`: Spherical Layout 알고리즘을 적용하여 수많은 지식 노드들을 3D 공간에 균형 있게 배치하는 로직 구현
+- [x] `ui/three_js_bridge.py`: 심볼 타입(Class, Function, Rule 등)별 색상 매핑을 통해 3D 공간에서의 정보 가독성 최적화
+
 ### v2.1.1 (Vocal Bridge & Voice Interaction)
 - [x] `utils/vocal_bridge.py`: OpenAI TTS 및 Whisper(STT)를 활용한 음성 변환 및 재생 엔진 신설
 - [x] `main.py`: 에이전트의 답변을 실시간으로 음성 변환하여 재생하는 `/voice` 토글 명령어 및 자동 재생 로직 구현
