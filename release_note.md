@@ -33,9 +33,16 @@
 - [x] **Intelligence**: 에이전트의 복합적인 사고 과정을 구조화하여 보여주는 'Thought Mindmap' 시각화 로직 구현
 - [x] **Infrastructure**: 시스템 내부의 모든 전역 설정을 중앙에서 관리하는 'Dynamic Config Manager' 구축
 - [x] **Infrastructure**: 에이전트의 작업 부하를 분산하기 위해 여러 LLM을 동시에 호출하는 'Agent Swarm' 프레임워크 기초 설계
-- [ ] **Infrastructure**: 병렬 작업 간의 데이터 충돌을 방지하고 상태를 안전하게 병합하는 'State Merger' 로직 고도화
+- [x] **Infrastructure**: 병렬 작업 간의 데이터 충돌을 방지하고 상태를 안전하게 병합하는 'State Merger' 로직 고도화
+- [ ] **Interface**: 대시보드에 실시간으로 시스템 리소스(CPU, Memory) 및 에이전트 부하를 그래프로 보여주는 'Resource Monitor' 추가
 
 ## ✅ Completed
+### v1.9.1 (State Merger & Conflict Resolution)
+- [x] `agents/swarm.py`: 병렬로 실행된 하위 작업들의 결과(`file_cache` 델타)를 메인 상태에 안전하게 통합하는 병합 로직 구현
+- [x] `agents/swarm.py`: 동일 파일에 대한 서로 다른 변경 사항을 감지하고 사용자에게 경고하는 충돌 해결 전략 도입
+- [x] `agents/swarm.py`: 각 병렬 작업의 리포트를 취합하여 하나의 응답 메시지로 구성하는 데이터 취합 시스템 강화
+- [x] `agents/swarm.py`: JSON 형식의 하위 작업 결과 파싱 및 예외 처리를 통한 비동기 실행 안정성 확보
+
 ### v1.9.0 (Agent Swarm & Parallel Tasking Foundation)
 - [x] `agents/manager.py`: 복잡한 요청을 여러 하위 작업으로 분리하고 `swarm` 노드로 라우팅하는 병렬 작업 감지 로직 구현
 - [x] `agents/swarm.py`: `asyncio.gather`를 사용하여 여러 하위 작업을 동시에 실행하고 결과를 취합하는 오케스트레이션 노드 신설
