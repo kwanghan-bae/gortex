@@ -22,10 +22,16 @@
 - [x] **Infrastructure**: 외부 API 연동(예: Slack, Discord)을 통해 작업 완료 시 알림을 보내는 'Notification' 시스템 구축
 - [x] **Interface**: 터미널 UI를 넘어 브라우저에서 Gortex의 활동을 실시간 모니터링할 수 있는 'Web Dashboard' 프레임워크 구축
 - [x] **Infrastructure**: 에이전트의 도구 호출 로그를 분석하여 비용과 지연 시간을 최적화하는 'Performance Profiler' 노드 구현
-- [x] **Infrastructure**: 에이전트의 자기 개조(Self-Modification) 성공 확률을 높이기 위한 'Reflective Validation' 단계 추가
-- [ ] **Interface**: 사용자의 복잡한 요구사항을 시각적 다이어그램으로 변환하여 보여주는 'Architecture Sketcher' 기능 추가
+- [x] **Interface**: 사용자의 복잡한 요구사항을 시각적 다이어그램으로 변환하여 보여주는 'Architecture Sketcher' 기능 추가
+- [ ] **Intelligence**: 에이전트가 도구 호출 전 예상 결과를 미리 시뮬레이션하는 'Mental Sandbox' 로직 구현
 
 ## ✅ Completed
+### v1.7.7 (Architecture Sketcher & Mermaid Integration)
+- [x] `agents/planner.py`: 시스템 설계 시 Mermaid 형식의 다이어그램 코드를 생성하는 `diagram_code` 필드 및 지침 추가
+- [x] `ui/dashboard.py`: 생성된 아키텍처 다이어그램 데이터를 수용하고 웹 대시보드로 실시간 스트리밍하는 인터페이스 확장
+- [x] `main.py`: 에이전트 스트리밍 루프에서 다이어그램 코드를 추출하여 UI 및 웹 서버에 동기화하도록 통합
+- [x] `agents/planner.py`: 설계 과정을 구조화된 트리와 시각적 도식화로 동시에 제공하여 아키텍처 가시성 극대화
+
 ### v1.7.6 (Reflective Validation & Self-Correction Loop)
 - [x] `agents/coder.py`: 코드 수정(`write_file`) 직후 반드시 `execute_shell`로 자가 검증을 수행하도록 하는 Reflective Validation 로직 강화
 - [x] `agents/coder.py`: 동일 파일에 대한 3회 이상 수정 실패 시 `analyst` 노드로 자동 라우팅하여 정밀 진단 및 원인 분석 요청 워크플로우 통합

@@ -488,6 +488,8 @@ async def run_gortex():
 
                                 thought = output.get("thought") or output.get("thought_process")
                                 tree = output.get("thought_tree")
+                                if output.get("diagram_code"):
+                                    ui.current_diagram = output["diagram_code"]
                                 if thought: ui.update_thought(thought, agent_name=node_name, tree=tree)
 
                                 node_tokens = 0

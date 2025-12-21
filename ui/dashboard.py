@@ -38,6 +38,7 @@ class DashboardUI:
         self.chat_history = []
         self.agent_thought = ""
         self.thought_tree = [] # 사고 과정 트리 데이터
+        self.current_diagram = "" # 아키텍처 다이어그램 코드
         self.thought_history = [] 
         self.current_agent = "Idle"
         self.last_agent = "Idle"
@@ -105,6 +106,7 @@ class DashboardUI:
             "call_count": self.call_count,
             "thought": self.agent_thought,
             "thought_tree": self.thought_tree,
+            "diagram": self.current_diagram,
             "chat_history": [
                 (r, c if isinstance(c, str) else "[Rich Object]") 
                 for r, c in self.chat_history[-10:]

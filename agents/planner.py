@@ -71,7 +71,7 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
         base_instruction += f"\n\n[USER-SPECIFIC EVOLVED RULES]\n{constraints_str}"
 
     config = types.GenerateContentConfig(
-        system_instruction=base_instruction + "\n\n[Thought Tree Rules]\n사용자의 목표를 달성하기 위한 설계 과정을 논리적인 트리 구조(분석 -> 설계 -> 검증 계획)로 구성하라.",
+        system_instruction=base_instruction + "\n\n[Thought Tree Rules]\n사용자의 목표를 달성하기 위한 설계 과정을 논리적인 트리 구조(분석 -> 설계 -> 검증 계획)로 구성하라.\n\n[Architecture Sketcher]\n복잡한 로직이나 모듈 간 상호작용이 필요한 경우, 반드시 'diagram_code' 필드에 Mermaid 형식의 다이어그램 코드를 작성하라.",
         temperature=0.0,
         response_mime_type="application/json",
         response_schema={
@@ -91,6 +91,7 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
                         "required": ["id", "text", "type"]
                     }
                 },
+                "diagram_code": {"type": "STRING", "description": "Mermaid 형식의 아키텍처 다이어그램 코드 (선택사항)"},
                 "goal": {"type": "STRING"},
                 "steps": {
                     "type": "ARRAY",
@@ -129,7 +130,7 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
         # Plan을 상태에 저장하고 Coder에게 넘김
         plan_steps = [json.dumps(step, ensure_ascii=False) for step in plan_data["steps"]]
         
-        return {
+        updates = {
             "thought_process": plan_data.get("thought_process"),
             "thought_tree": plan_data.get("thought_tree"),
             "plan": plan_steps,
@@ -137,6 +138,12 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
             "next_node": "coder",
             "messages": [("ai", f"계획을 수립했습니다: {plan_data.get('goal')} ({len(plan_steps)} steps)")]
         }
+        
+        if plan_data.get("diagram_code"):
+            updates["diagram_code"] = plan_data["diagram_code"]
+            updates["messages"].append(("system", "📊 아키텍처 다이어그램이 생성되었습니다. 웹 대시보드에서 확인 가능합니다."))
+            
+        return updates
 
 
     except Exception as e:
