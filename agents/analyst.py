@@ -518,6 +518,10 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
     agent.garbage_collect_knowledge()
     agent.map_knowledge_relations()
     
+    # [Dynamic Prompting] 외부 템플릿 로드
+    from gortex.utils.prompt_loader import loader
+    base_instruction = loader.get_prompt("analyst")
+    
     last_msg_obj = state["messages"][-1]
     last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
     last_msg_lower = last_msg.lower()

@@ -22,7 +22,7 @@
 - [x] **Economy**: 에이전트 간 상호 평가를 통해 자원 할당 우선순위를 결정하는 'Peer Review Economy' 고도화
 - [x] **System**: 지식 검색 성능을 비약적으로 높이는 'Vector Embedding Search'로의 전환
 - [x] **Intelligence**: 에이전트의 모든 의미 있는 사고 과정을 스스로 요약하여 지식화하는 'Thought Memorization' 구현
-- [ ] **Infrastructure**: 모든 에이전트 노드에 'Dynamic Prompting' 일괄 적용 및 런타임 최적화
+- [x] **Infrastructure**: 모든 에이전트 노드에 'Dynamic Prompting' 일괄 적용 및 런타임 최적화
 
 ---
 
@@ -30,10 +30,10 @@
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
 
-### v2.5.8 (Dynamic Prompting & External Instructions)
-- [x] `docs/prompts/`: 에이전트의 사고 원칙을 코드에서 분리하여 YAML 형식의 외부 템플릿으로 관리하는 인프라 구축
-- [x] `utils/prompt_loader.py`: 런타임에 프롬프트를 로드하고 동적 변수를 안전하게 치환하는 전용 엔진 구현
-- [x] `agents/manager.py`: 대규모 시스템 지침을 외부로 이전하여 코드의 순수성을 높이고 지능 튜닝의 유연성 확보
+### v2.5.9 (Global Dynamic Prompting)
+- [x] `docs/prompts/core_agents.yaml`: 모든 에이전트의 지침을 통합 관리하는 외부 지능 저장소 완성
+- [x] `agents/`: 모든 노드에서 하드코딩된 대규모 문자열을 제거하고 `PromptLoader`를 통한 동적 주입 체계 전면 도입
+- [x] `utils/prompt_loader.py`: 변수 치환 및 템플릿 로딩 안정성을 강화하여 시스템 유연성 확보
 
 ### v2.5.7 (Memory Sharding & Performance)
 - [x] `utils/vector_store.py`: 프로젝트 단위로 지식을 격리 저장하는 멀티 샤드(Namespace) 아키텍처 구현

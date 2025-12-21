@@ -34,39 +34,13 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
     current_files = list_files(state.get("working_dir", "."))
     file_cache = state.get("file_cache", {})
     
-    # 3. 시스템 프롬프트 구성
-    base_instruction = f"""너는 Gortex v1.0 시스템의 수석 아키텍트(Planner)다.
-현재 작업 디렉토리의 파일 구조를 분석하고, 사용자의 목표를 달성하기 위한 구체적이고 검증 가능한 단계(Step)들을 계획하라.
-
-[Current File Structure]
-{current_files}
-{context_info}
-
-[File Cache Status]
-현재 너는 {len(file_cache)}개 파일의 최신 내용을 기억하고 있다. 
-이미 읽은 파일(Cache에 존재)은 다시 'read_file'을 할 필요가 없으나, 
-중요한 변경이 예상되거나 확실하지 않다면 다시 읽는 계획을 세워라.
-
-[Planning Rules]
-1. 작업을 '원자적 단위(Atomic Unit)'로 쪼개라.
-2. 각 단계는 `coder` 에이전트가 수행할 수 있는 구체적인 행동이어야 한다.
-3. 심볼명(클래스/함수명)을 언급했으나 파일 경로를 모를 경우, 제공된 [Synaptic Index Search Results]를 참조하여 정확한 경로를 target으로 설정하라.
-4. 시스템 최적화 제안(System Optimization Request)이 포함된 경우, 그 타당성을 반드시 검토하라.
-5. 코드를 작성(`write_file`, `apply_patch`)하는 작업이 포함된다면, 반드시 그 직후에 해당 기능에 대한 단위 테스트(`tests/test_X.py`)를 작성하거나 업데이트하는 단계를 포함해야 한다.
-6. 사용자가 특정 라이브러리(예: requests, pandas 등)의 사용법이나 최신 기능을 요청하는 경우, 코드를 작성하기 전 반드시 `researcher` 에이전트를 통해 최신 API 문서를 학습하는 단계를 우선적으로 배치하라.
-7. 파일 수정 계획이 포함된 경우, 반드시 해당 수정이 다른 모듈에 미치는 영향(Impact Radius)을 분석하고, 영향받는 주요 파일 리스트를 `impact_analysis` 필드에 명시하라.
-
-[Output Schema (Strict JSON)]
-반드시 다음 JSON 구조를 준수하라:
-{{
-  "thought_process": "현재 상황 분석 및 계획 수립 이유",
-  "impact_analysis": "수정 시 영향을 받는 파일 및 모듈 분석 결과",
-  "goal": "최종 달성 목표 요약",
-  "steps": [
-    {{"id": 1, "action": "tool_name", "target": "file_path_or_command", "reason": "구체적인 이유"}}
-  ]
-}}
-"""
+    # 3. 시스템 프롬프트 구성 (외부 템플릿 로드)
+    from gortex.utils.prompt_loader import loader
+    base_instruction = loader.get_prompt(
+        "planner", 
+        current_files=current_files, 
+        context_info=context_info
+    )
 
     # 진화된 제약 조건 주입
     if state.get("active_constraints"):

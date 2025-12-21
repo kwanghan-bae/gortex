@@ -64,28 +64,24 @@ def researcher_node(state: GortexState) -> Dict[str, Any]:
     """Researcher 노드 엔트리 포인트"""
     agent = ResearcherAgent()
     auth = GortexAuth()
+    from gortex.utils.prompt_loader import loader
     
     # 최근 API 호출 빈도에 따라 모델 선택
     call_count = state.get("api_call_count", 0)
     gemini_model = "gemini-2.5-flash-lite" if call_count > 10 else "gemini-1.5-flash"
     
-    # 1. 의도 및 쿼리 추출
+    # 1. 의도 및 쿼리 추출 (외부 템플릿 사용)
     last_msg_obj = state["messages"][-1]
     last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
     
-    prompt = f"""다음 사용자 요청을 분석하여:
-    1. 라이브러리나 API 문서 검색이 필요한지 판단하라. (is_docs_needed: true/false)
-    2. 검색이 필요하다면 최적의 검색어(영어 권장)를 생성하라. (query: string)
+    # 지침 로드 (필요한 경우 템플릿 추가 정의 가능하나 여기선 기본 id 사용)
+    base_instruction = loader.get_prompt("researcher")
     
-    [User Request]
-    {last_msg}
-    
-    결과는 반드시 JSON 형식을 따라라:
-    {{ "is_docs_needed": true, "query": "..." }}
-    """
+    # 의도 분석 프롬프트 (구조 유지를 위해 우선 내장 유지 혹은 추가 키로 분리 고려)
+    intent_prompt = f"{base_instruction}\n\n사용자 요청: {last_msg}\n\n위 요청을 분석하여 검색 필요 여부와 쿼리를 JSON으로 반환하라."
     
     try:
-        response = auth.generate(gemini_model, [("user", prompt)], None)
+        response = auth.generate(gemini_model, [("user", intent_prompt)], {"response_mime_type": "application/json"})
         import json
         req_info = json.loads(response.text)
         query = req_info.get("query", last_msg)
@@ -114,14 +110,10 @@ def researcher_node(state: GortexState) -> Dict[str, Any]:
         else:
             research_result = loop.run_until_complete(agent.search_and_summarize(query))
 
-    # 3. 결과 요약
-    summary_prompt = f"""다음은 '{query}'에 대한 웹 조사 결과다. 
-    사용자의 원래 요청({last_msg})에 답하기 위해 가장 중요한 핵심 정보를 요약하라.
-    특히 API 문서라면 클래스/함수명과 사용법 예시를 반드시 포함하라.
+    # 3. 결과 요약 (외부 템플릿 사용)
+    summary_instruction = loader.get_prompt("researcher_summary")
+    summary_prompt = f"{summary_instruction}\n\n사용자 요청: {last_msg}\n검색 결과: {research_result}"
     
-    [Research Findings]
-    {research_result}
-    """
     summary_res = auth.generate("gemini-3-flash-preview", [("user", summary_prompt)], None)
 
     return {

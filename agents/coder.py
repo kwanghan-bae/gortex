@@ -65,61 +65,13 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
     elif action == "list_files":
         tool_output = list_files(target)
     
-    # 3. Gemini 호출
-    # f-string 내의 중괄호 이스케이프 주의 ({{, }})
-    base_instruction = f"""너는 Gortex v1.0의 수석 개발자(Coder)다.
-현재 Planner가 수립한 계획 중 다음 단계를 실행해야 한다.
-
-[Self-Healing]
-- 시스템 힌트(HINT)로 과거 해결책이 제공되면, 이를 최우선으로 적용하라.
-
-[Testing Guidelines]
-- 테스트 코드는 반드시 Python 표준 `unittest` 프레임워크를 사용하라.
-- 테스트 파일명은 `tests/test_<module>.py` 형식을 따르라.
-- 가능한 한 외부 의존성을 배제하고 `unittest.mock`을 활용하라.
-
-[Precision Editing Rules]
-- 파일 전체를 바꾸기보다 특정 부분만 수정하는 것이 효율적이라면 `apply_patch` 도구를 사용하라.
-
-[Mental Sandbox Rules]
-도구를 호출하기 전, 반드시 다음 사항을 미리 '시뮬레이션'하라:
-1. 예상 결과 및 위험 분석
-2. 안전 가드: 위험 시 'failed' 상태와 함께 대안 제시
-
-[Standard Error Response Manual]
-- ModuleNotFoundError: 즉시 `execute_shell`로 `pip install <module>`을 실행하라.
-- IndentationError/SyntaxError: `read_file`로 다시 읽어 들여쓰기를 점검하라.
-
-[Current Step]
-{json.dumps(current_step, ensure_ascii=False, indent=2)}
-
-[Tool Output / Context]
-{tool_output if tool_output else "(Not executed yet)"}
-
-[Your Mission]
-1. 위 단계가 'write_file' 또는 'apply_patch'라면, 필요한 코드를 작성하여 도구를 호출하라. **[Reflective Validation]**: 수정 직후에는 반드시 `execute_shell`로 관련 테스트를 실행하여 자가 검증하라.
-2. 실행 결과에 오류가 있다면 정밀 분석하여 수정하라. 반복 실패 시 'failed'를 반환하라.
-3. 성공 시 'status': 'success'를 반환하라.
-
-[Available Tools]
-- read_file(path)
-- write_file(path, content)
-- apply_patch(path, start_line, end_line, new_content)
-- execute_shell(command)
-- list_files(path)
-
-[Output Schema (Strict JSON)]
-{{{{
-  "thought": "생각의 과정",
-  "thought_tree": [ {{{{ "id": "1", "text": "...", "type": "analysis", "priority": 3, "certainty": 0.9 }}}} ],
-  "simulation": {{{{ 
-      "expected_outcome": "...", 
-      "risk_level": "Low/Medium/High", 
-      "safeguard_action": "...",
-      "visual_delta": []
-  }}}},
-  "status": "success" | "in_progress" | "failed"
-}}}} """
+    # 3. Gemini 호출 (외부 템플릿 로드)
+    from gortex.utils.prompt_loader import loader
+    base_instruction = loader.get_prompt(
+        "coder", 
+        current_step_json=json.dumps(current_step, ensure_ascii=False, indent=2),
+        tool_output=(tool_output if tool_output else "(Not executed yet)")
+    )
     
     if state.get("active_constraints"):
         constraints_str = "\n".join([f"- {c}" for c in state["active_constraints"]])

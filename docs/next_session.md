@@ -1,23 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 모든 에이전트 지침의 외부 템플릿 통합 (Global Dynamic Prompting v1)
+- 에이전트 주도형 자동 검증 및 자가 수정 (Autonomous Pre-Commit v1)
 
 ## Context
-- v2.5.8에서 `Manager`와 `PromptLoader`가 완성됨.
-- 이제 `Planner`, `Coder`, `Analyst`, `Researcher` 등 나머지 모든 노드에 대해서도 하드코딩된 프롬프트를 제거하고 `docs/prompts/*.yaml` 기반으로 전환해야 함.
+- 현재 `pre_commit.sh`는 `main.py` 외부에서 별도로 실행되거나, 에이전트가 그 결과를 비판적으로 수용해야 함.
+- 에이전트가 코드를 작성한 즉시 스스로 `pre_commit.sh`를 실행하고, 실패 로그를 분석하여 즉각적인 '수정 루프'를 도는 자동화된 노드 또는 로직이 필요함.
 
 ## Scope
 ### Do
-- `docs/prompts/core_agents.yaml`에 Planner, Coder, Analyst, Researcher의 상세 지침 추가.
-- `agents/planner.py`, `agents/coder.py`, `agents/analyst.py`, `agents/researcher.py`를 수정하여 `PromptLoader` 연동.
-- 템플릿 변수(예: `{current_files}`, `{tool_output}` 등)를 각 노드 맥락에 맞게 매핑.
+- `agents/coder.py` (또는 신규 노드)에서 작업 완료 직전 `scripts/pre_commit.sh`를 직접 실행하는 단계 추가.
+- 실행 실패 시 오류 로그를 `Analyst`에게 전달하여 RCA 및 교정 지침을 획득.
+- 통과할 때까지 최대 3회 자가 수정을 시도하는 지능형 루프 구축.
 
 ### Do NOT
-- 각 에이전트의 고유한 로직(Python Code)은 건드리지 말고, 지침(Instruction) 문자열만 이전할 것.
+- 실제 커밋(`git commit`)은 수행하지 말 것 (오직 검증과 수정만 자동화).
 
 ## Expected Outputs
-- `docs/prompts/core_agents.yaml` 업데이트, 모든 에이전트 파일 수정.
+- `agents/coder.py` 또는 신규 노드 수정, `utils/tools.py` 보강.
 
 ## Completion Criteria
-- 모든 에이전트 노드에서 하드코딩된 대규모 지침 문자열이 완전히 제거되고, 외부 파일로부터 지능을 로드하는 것이 확인되어야 함.
+- 오류가 있는 코드를 작성했을 때, 에이전트가 스스로 `pre_commit` 실패를 인지하고 수정한 뒤 통과시키는 전 과정이 확인되어야 함.
