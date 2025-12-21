@@ -1,23 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 실시간 API 문서 학습 및 기술 활용 (Live Documentation Learning v1)
+- 성찰적 디버깅 및 실패 방지 규칙 자동 생성 (Reflective Debugging v1)
 
 ## Context
-- 에이전트가 새로운 라이브러리를 사용하거나 기존 로직을 최신 버전으로 업데이트할 때, 내부 지식만으로는 한계가 있음.
-- `Researcher`를 통해 특정 라이브러리의 공식 문서(또는 API Reference)를 실시간으로 검색하여 핵심 시그니처를 지식화하고, 이를 작업에 즉시 반영해야 함.
+- `Coder`가 버그를 수정할 때 단순히 동작하게만 만드는 경향이 있어, 나중에 같은 실수가 반복될 수 있음.
+- 테스트 실패 시 `Analyst`를 호출하여 오류의 근본 원인(RCA)을 분석하고, 이를 `EvolutionaryMemory`에 새로운 '제약 조건'으로 자동 등록해야 함.
 
 ## Scope
 ### Do
-- `agents/researcher.py`에 공식 문서를 타겟팅하여 스캔하는 `fetch_live_docs` 메서드 추가.
-- `agents/planner.py`에서 계획 수립 시 '문서 학습' 단계를 전략적으로 제안하도록 지침 보강.
-- 학습된 문서를 `LongTermMemory`에 임시 저장하여 `Coder`가 참조할 수 있게 함.
+- `agents/coder.py`에서 테스트 실패 시 `Analyst`에게 RCA를 요청하는 로직 강화.
+- `agents/analyst.py`에 오류 로그를 분석하여 '다시는 이런 실수를 하지 않기 위한 규칙'을 제안하는 `generate_anti_failure_rule` 메서드 추가.
+- 생성된 규칙을 `experience.json`에 자동으로 반영하여 시스템의 면역력을 높임.
 
 ### Do NOT
-- 대규모 사이트 전체 크롤링 금지 (특정 API 페이지 한정).
+- 단순 오타 수정까지 규칙으로 만들지 말 것 (논리적 모순이나 아키텍처 위반 중심).
 
 ## Expected Outputs
-- `agents/researcher.py`, `agents/planner.py` 수정.
+- `agents/coder.py`, `agents/analyst.py`, `core/evolutionary_memory.py` 수정.
 
 ## Completion Criteria
-- 새로운 라이브러리 사용 요청 시, Researcher가 문서를 검색하여 요약하고 Coder가 해당 요약을 바탕으로 정확한 코드를 작성하는 것이 확인되어야 함.
+- 의도적으로 오류가 포함된 코드를 작성했을 때, 테스트 실패 -> 분석 -> 신규 규칙 생성 및 반영 과정이 확인되어야 함.

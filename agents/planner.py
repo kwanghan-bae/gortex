@@ -53,6 +53,7 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
 3. 심볼명(클래스/함수명)을 언급했으나 파일 경로를 모를 경우, 제공된 [Synaptic Index Search Results]를 참조하여 정확한 경로를 target으로 설정하라.
 4. 시스템 최적화 제안(System Optimization Request)이 포함된 경우, 그 타당성을 반드시 검토하라.
 5. 코드를 작성(`write_file`, `apply_patch`)하는 작업이 포함된다면, 반드시 그 직후에 해당 기능에 대한 단위 테스트(`tests/test_X.py`)를 작성하거나 업데이트하는 단계를 포함해야 한다.
+6. 사용자가 특정 라이브러리(예: requests, pandas 등)의 사용법이나 최신 기능을 요청하는 경우, 코드를 작성하기 전 반드시 `researcher` 에이전트를 통해 최신 API 문서를 학습하는 단계를 우선적으로 배치하라.
 
 [Output Schema (Strict JSON)]
 반드시 다음 JSON 구조를 준수하라:

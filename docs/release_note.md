@@ -9,13 +9,19 @@
 - [x] **Intelligence**: 합의 결과의 유효성을 사후 평가하여 페르소나별 가중치를 동적으로 조절하는 'Consensus Learner' 도입
 - [x] **Intelligence**: 외부 트렌드 및 기술 뉴스를 주기적으로 요약하여 'Synaptic Knowledge Base'로 통합하는 로직 구축
 - [x] **Infrastructure**: 축적된 지식 중 유효하지 않거나 중복된 정보를 정리하는 'Knowledge GC' 노드 추가
-- [ ] **Intelligence**: 특정 라이브러리의 최신 API 문서를 실시간 학습하여 적용하는 'Live Documentation Learning' 구현
+- [x] **Intelligence**: 특정 라이브러리의 최신 API 문서를 실시간 학습하여 적용하는 'Live Documentation Learning' 구현
+- [ ] **Intelligence**: 테스트 실패 로그를 분석하여 근본 원인을 추론하고 '실패 방지 규칙'을 자동 생성하는 'Reflective Debugging' 노드 추가
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.3.6 (Live Documentation Learning)
+- [x] `agents/researcher.py`: 특정 라이브러리의 공식 문서를 타겟팅하여 핵심 API 시그니처를 지식화하는 `fetch_live_docs` 고도화
+- [x] `agents/planner.py`: 신규 기술 도입 시 사전 문서 학습 단계를 의무화하는 'Docs-First Planning' 지침 보강
+- [x] `utils/vector_store.py`: "LiveDocs" 출처의 실시간 지식을 장기 기억 저장소에 통합하여 에이전트 간 공유
 
 ### v2.3.5 (Knowledge Base Optimization)
 - [x] `utils/vector_store.py`: 지식 활용도 측정을 위한 `usage_count` 기반 가치 평가 시스템 구축

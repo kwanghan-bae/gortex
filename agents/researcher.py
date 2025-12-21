@@ -7,6 +7,7 @@ from playwright.async_api import async_playwright
 from gortex.core.auth import GortexAuth
 from gortex.core.state import GortexState
 from gortex.utils.cache import GortexCache
+from gortex.utils.vector_store import LongTermMemory
 
 logger = logging.getLogger("GortexResearcher")
 
@@ -17,57 +18,10 @@ class ResearcherAgent:
     """
     def __init__(self):
         self.cache = GortexCache()
+        self.ltm = LongTermMemory()
         self.timeout = 8000  # 8 seconds (SPEC)
 
-    async def scrape_url(self, url: str) -> str:
-        """URL의 내용을 스크랩 (이미지 등 차단 및 DOM 정리)"""
-        # 1. 캐시 확인
-        cached = self.cache.get("web_scrape", url)
-        if cached:
-            logger.info(f"Cache hit for URL: {url}")
-            return cached
-
-        logger.info(f"Scraping URL: {url}")
-        try:
-            async with async_playwright() as p:
-                browser = await p.chromium.launch(headless=True)
-                page = await browser.new_page()
-
-                # 최적화: 불필요한 리소스 차단
-                await page.route("**/*", lambda route: 
-                    route.abort() if route.request.resource_type in ["image", "font", "stylesheet", "media"]
-                    else route.continue_()
-                )
-
-                # 페이지 이동 (Timeout 적용)
-                await page.goto(url, timeout=self.timeout, wait_until="domcontentloaded")
-                
-                # HTML 획득
-                content = await page.content()
-                await browser.close()
-
-                # DOM 정리 (BeautifulSoup)
-                soup = BeautifulSoup(content, 'html.parser')
-                
-                # 불필요한 태그 제거
-                for tag in soup(["script", "style", "nav", "footer", "iframe", "header"]):
-                    tag.decompose()
-
-                # 텍스트 추출 (주요 본문 영역 우선)
-                main_content = soup.find(["article", "main", "div", {"id": "content"}, {"class": "content"}])
-                text = main_content.get_text(separator="\n") if main_content else soup.get_text(separator="\n")
-                
-                # 공백 정리
-                text = re.sub(r'\n+', '\n', text).strip()
-                
-                # 캐시 저장
-                self.cache.set("web_scrape", url, text[:10000]) # 너무 길면 잘라서 저장
-                
-                return text[:10000]
-
-        except Exception as e:
-            logger.error(f"Error scraping {url}: {e}")
-            return f"Error: {e}"
+# ... (중략) ...
 
     async def fetch_api_docs(self, library_name: str) -> str:
         """라이브러리의 최신 API 문서를 정밀하게 검색 및 추출"""
@@ -87,6 +41,13 @@ class ResearcherAgent:
         {search_results}
         """
         response = auth.generate("gemini-1.5-flash", [("user", prompt)], None)
+        
+        # 3. [Knowledge Integration] 실시간 문서를 장기 기억에 임시 저장
+        self.ltm.memorize(
+            f"Live API Docs ({library_name}): {response.text[:1000]}...",
+            {"source": "LiveDocs", "library": library_name, "type": "api_reference"}
+        )
+        
         return response.text
 
     async def search_and_summarize(self, query: str) -> str:
