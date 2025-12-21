@@ -10,6 +10,7 @@ from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn, Sp
 from gortex.utils.table_detector import try_render_as_table
 from datetime import datetime
 import json
+import asyncio
 
 def create_layout() -> Layout:
     """대시보드 레이아웃 생성: 채팅(Main), 사고(Thought), 사이드바(Sidebar)"""
@@ -36,7 +37,7 @@ class DashboardUI:
         self.layout = create_layout()
         self.chat_history = []
         self.agent_thought = ""
-        self.thought_history = [] # 세션 전체 사고 과정 기록
+        self.thought_history = [] 
         self.current_agent = "Idle"
         self.last_agent = "Idle"
         self.current_step = "N/A"
@@ -44,9 +45,10 @@ class DashboardUI:
         self.total_cost = 0.0
         self.active_rules_count = 0
         self.recent_logs = []
+        self.provider = "GEMINI"
+        self.call_count = 0
         
         # Progress bar for tools
-
         self.progress = Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -55,7 +57,6 @@ class DashboardUI:
             transient=True
         )
         self.tool_task = None
-
 
         # 에이전트별 색상 매핑
         self.agent_colors = {
@@ -81,24 +82,49 @@ class DashboardUI:
             "optimizer": "runner"
         }
 
+        # Web Streaming support
+        self.web_manager = None
+        try:
+            from gortex.ui.web_server import manager
+            self.web_manager = manager
+        except ImportError:
+            pass
+
+    async def _broadcast_to_web(self):
+        """현재 UI 상태를 웹 대시보드로 전송"""
+        if not self.web_manager:
+            return
+            
+        state = {
+            "agent": self.current_agent,
+            "step": self.current_step,
+            "tokens": self.tokens_used,
+            "cost": self.total_cost,
+            "provider": self.provider,
+            "call_count": self.call_count,
+            "thought": self.agent_thought,
+            "chat_history": [
+                (r, c if isinstance(c, str) else "[Rich Object]") 
+                for r, c in self.chat_history[-10:]
+            ]
+        }
+        try:
+            await self.web_manager.broadcast(json.dumps(state, ensure_ascii=False))
+        except:
+            pass
+
     def update_main(self, messages: list):
         """메인 채팅 패널 업데이트 (역할별 구분 및 자동 요약 표시)"""
-        # 성능 및 메모리 관리를 위해 전체 메시지 리스트도 50개로 제한
         if len(messages) > 50:
-            # 보존할 개수만큼만 남기고 앞쪽 제거
             del messages[:-50]
 
-        # 화면 표시용 15개 슬라이싱
         display_msgs = messages[-15:]
         msg_group = []
         
-        # 만약 메시지가 너무 많아 잘렸다면 알림 표시
         if len(messages) > 15:
             msg_group.append(Text(f"⬆️ (이전 대화 기록은 /logs 또는 /history로 확인 가능)", style="dim white italic", justify="center"))
 
-
         for role, content in display_msgs:
-
             if role == "user":
                 msg_group.append(Panel(content, title="👤 [bold green]USER[/bold green]", border_style="green", padding=(0, 1)))
             elif role == "ai":
@@ -148,6 +174,9 @@ class DashboardUI:
                     msg_group.append(content)
         
         self.layout["main"].update(Panel(Group(*msg_group), title="[bold cyan]🧠 GORTEX TERMINAL[/bold cyan]", border_style="cyan"))
+        
+        if self.web_manager:
+            asyncio.create_task(self._broadcast_to_web())
 
     def update_thought(self, thought: str, agent_name: str = "agent"):
         """에이전트의 사고 과정 실시간 업데이트 (시각 효과 추가)"""
@@ -169,7 +198,6 @@ class DashboardUI:
             event = entry.get("event", "event")
             style = self.agent_colors.get(agent.lower(), "dim white")
             
-            # 마지막 항목(가장 최근) 하이라이트 효과
             if i == len(self.recent_logs) - 1:
                 log_table.add_row(f"[bold reverse {style}]{agent.upper()}[/]", f"[bold reverse white]{event}[/]")
             else:
@@ -211,6 +239,11 @@ class DashboardUI:
         self.tokens_used = tokens
         self.total_cost = cost
         self.active_rules_count = rules
+        self.provider = provider
+        self.call_count = call_count
+        
+        if self.web_manager:
+            asyncio.create_task(self._broadcast_to_web())
 
         agent_style_name = self.agent_colors.get(agent.lower(), "dim white")
         try:
@@ -227,7 +260,6 @@ class DashboardUI:
         provider_style = "bold blue" if provider == "GEMINI" else "bold green"
         status_text.append(f"{provider}\n", style=provider_style)
         
-        # 호출 빈도 시각화 (0~20 호출/분 기준)
         status_text.append(f"Load : ", style="bold")
         bars = min(10, (call_count + 1) // 2)
         load_color = "green" if bars < 4 else ("yellow" if bars < 8 else "red")
@@ -263,8 +295,6 @@ class DashboardUI:
         if rules > 0:
             evo_text.append("[LEARNED MODE]", style="blink magenta")
         self.layout["evolution"].update(Panel(evo_text, title=f"🧬 [bold {border_color}]EVOLUTION[/]", border_style="magenta" if rules > 0 else border_color))
-
-
 
     def render(self):
         return self.layout

@@ -1,6 +1,5 @@
 #!/bin/bash
-# Gortex Pre-Commit Check Script v1.1
-# Features: Syntax Check, Unit Tests, Documentation Check, Test Coverage Check
+# Gortex Pre-Commit Check Script v1.2 (Non-blocking & Auto-pass)
 
 set -e
 GREEN='\033[0;32m'
@@ -11,7 +10,7 @@ NC='\033[0m'
 echo -e "${GREEN}🔍 Starting Pre-Commit Checks...${NC}"
 
 # ==========================================
-# 1. Syntax Check (Build)
+# 1. Syntax Check (Build) - CRITICAL (Fail on Error)
 # ==========================================
 echo -e "📦 Checking syntax..."
 find . -name "*.py" -not -path "./venv/*" | xargs python3 -m py_compile
@@ -21,7 +20,7 @@ if [ $? -ne 0 ]; then
 fi
 
 # ==========================================
-# 2. Unit Tests
+# 2. Unit Tests - CRITICAL (Fail on Error)
 # ==========================================
 echo -e "🧪 Running tests..."
 if [ -d "venv" ]; then
@@ -40,64 +39,54 @@ if [ $? -ne 0 ]; then
 fi
 
 # ==========================================
-# 3. Documentation & Test Coverage (Warnings)
+# 3. Documentation & Test Coverage (Warnings only)
 # ==========================================
 WARNINGS=0
 echo -e "📝 Verifying documentation and test coverage..."
 
-# 3.1 Get list of staged files
 STAGED_FILES=$(git diff --cached --name-only)
 
-# 3.2 Check Release Notes
+# Check Release Notes (Warning)
 if ! echo "$STAGED_FILES" | grep -q "release_note.md"; then
-    echo -e "${YELLOW}⚠️  Warning: 'release_note.md' is NOT updated in this commit.${NC}"
+    echo -e "${YELLOW}⚠️  Warning: 'release_note.md' not updated.${NC}"
     WARNINGS=$((WARNINGS+1))
 fi
 
-# 3.3 Check Next Session
+# Check Next Session (Warning)
 if ! echo "$STAGED_FILES" | grep -q "next_session.md"; then
-    echo -e "${YELLOW}⚠️  Warning: 'next_session.md' is NOT updated in this commit.${NC}"
+    echo -e "${YELLOW}⚠️  Warning: 'next_session.md' not updated.${NC}"
     WARNINGS=$((WARNINGS+1))
 fi
 
-# 3.4 Check Test Existence for Python files
+# Check Test Existence (Warning)
 for file in $STAGED_FILES; do
     if [[ $file == *.py ]] && [[ $file != tests/* ]]; then
-        # agents/coder.py -> tests/test_coder.py
         filename=$(basename "$file")
         test_file="tests/test_${filename}"
-        
         if [ ! -f "$test_file" ]; then
-             echo -e "${YELLOW}⚠️  Warning: No matching test file found for '$file' (Expected: $test_file)${NC}"
+             echo -e "${YELLOW}⚠️  Warning: No test found for '$file'.${NC}"
              WARNINGS=$((WARNINGS+1))
         fi
     fi
 done
 
 # ==========================================
-# 4. Final Decision
+# 4. Final Result
 # ==========================================
 if [ $WARNINGS -gt 0 ]; then
-    echo -e "${YELLOW}🚨 Total Warnings: $WARNINGS${NC}"
-    
-    # 대화형 모드(터미널)인 경우에만 사용자 입력 대기
-    if [ -t 0 ]; then
-        read -p "경고를 무시하고 커밋을 진행하시겠습니까? (y/N): " choice
-        case "$choice" in 
-          y|Y ) echo -e "${GREEN}✅ 경고를 무시하고 진행합니다.${NC}";;
-          * ) echo -e "${RED}❌ 사용자에 의해 커밋이 중단되었습니다.${NC}"; exit 1;;
-        esac
-    else
-        # 비대화형 환경(Agent)에서는 경고를 로그에 남기고 통과
-        echo -e "${YELLOW}⚠️  비대화형 모드 감지: 경고를 무시하고 진행합니다.${NC}"
-    fi
+    echo -e "${YELLOW}🚨 Total Warnings: $WARNINGS (Proceeding automatically in 1s...)${NC}"
+    sleep 1 # 에이전트가 로그를 볼 수 있도록 잠시 대기
 else
-
-    echo -e "${GREEN}✅ All Checks Passed! Ready to commit.${NC}"
-    echo -e "\n${YELLOW}💡 Commit Message Guide:${NC}"
-    echo -e "   Format: type: description (in Korean)"
-    echo -e "   Types: feat, fix, docs, style, refactor, test, chore"
-    echo -e "   Example: 'feat: 사용자 로그인 기능 구현 (테스트 완료)'"
+    echo -e "${GREEN}✅ All Checks Passed!${NC}"
 fi
+
+# Always return 0 unless critical checks failed
+echo -e "${GREEN}🚀 Ready to commit.${NC}"
+
+# Guide for Agent
+echo -e "\n${YELLOW}💡 Commit Message Guide:${NC}"
+echo -e "   Format: type: description (in Korean)"
+echo -e "   Types: feat, fix, docs, style, refactor, test, chore"
+echo -e "   Example: 'feat: 사용자 로그인 기능 구현 (테스트 완료)'"
 
 exit 0

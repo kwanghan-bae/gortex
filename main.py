@@ -379,6 +379,13 @@ def save_global_cache(cache):
         logger.error(f"Failed to save global cache: {e}")
 
 async def run_gortex():
+    # 웹 대시보드 서버 시작 (백그라운드)
+    from gortex.ui.web_server import run_server
+    import threading
+    web_thread = threading.Thread(target=run_server, kwargs={"port": 8000}, daemon=True)
+    web_thread.start()
+    logger.info("📡 Gortex Web Dashboard server started at http://localhost:8000")
+
     console = Console(theme=GORTEX_THEME)
     ui = DashboardUI(console)
     observer = GortexObserver()

@@ -20,9 +20,16 @@
 - [x] **Infrastructure**: `TrendScout` 에이전트를 확장하여 새로운 파이썬 라이브러리나 기술 스택의 취약점을 점검하는 'Security Scout' 기능 추가
 - [x] **Infrastructure**: GitHub API 연동을 통해 프로젝트를 원격 저장소에 자동으로 푸시하는 '/deploy' 명령어 구현
 - [x] **Infrastructure**: 외부 API 연동(예: Slack, Discord)을 통해 작업 완료 시 알림을 보내는 'Notification' 시스템 구축
-- [ ] **Interface**: 터미널 UI를 넘어 브라우저에서 Gortex의 활동을 실시간 모니터링할 수 있는 'Web Dashboard' 프레임워크 구축
+- [x] **Interface**: 터미널 UI를 넘어 브라우저에서 Gortex의 활동을 실시간 모니터링할 수 있는 'Web Dashboard' 프레임워크 구축
+- [ ] **Intelligence**: 에이전트의 사고 과정을 시각화하여 트리 구조로 보여주는 'Thought Tree' 웹 컴포넌트 구현
 
 ## ✅ Completed
+### v1.7.0 (Gortex Web Dashboard Lite)
+- [x] `ui/web_server.py`: FastAPI 및 WebSockets를 활용한 실시간 데이터 스트리밍 서버 구축
+- [x] `ui/dashboard.py`: 터미널과 웹 서버 양쪽으로 UI 상태(Chat, Thought, Stats)를 동시 브로드캐스팅하는 로직 구현
+- [x] `main.py`: 메인 루프 실행 시 웹 서버를 백그라운드 스레드로 자동 시작하도록 통합
+- [x] `ui/dashboard.py`: 중복 코드 제거 및 들여쓰기 오류 수정을 통한 UI 시스템 안정화
+
 ### v1.6.9 (Multi-Channel Notifications)
 - [x] `utils/notifier.py`: Webhook을 통해 Slack 및 Discord로 실시간 메시지를 전송하는 알림 시스템 구축
 - [x] `main.py`: 사용자가 수동으로 상태 보고를 전송할 수 있는 `/notify [message]` 명령어 구현
