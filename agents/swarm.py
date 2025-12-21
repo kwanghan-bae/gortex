@@ -44,18 +44,30 @@ async def execute_parallel_task(task_desc: str, state: GortexState, persona: str
     
     start_time = time.time()
     
-    # 1. 과거 유사 성공 사례 확인
+    # 1. 과거 유사 성공 사례 및 모델 성과 확인
     past_cases = log_search.search_similar_cases(task_desc, limit=1)
     experience_weight = 0.2 if past_cases else 0.0
+    
+    from gortex.utils.efficiency_monitor import EfficiencyMonitor
+    monitor = EfficiencyMonitor()
+    model_id = state.get("assigned_model", "gemini-1.5-flash")
+    scores = monitor.calculate_model_scores()
+    model_performance = scores.get(model_id, 50.0)
     
     # 2. 페르소나 지침 동적 획득
     persona_instruction = get_persona_instruction(persona) if persona else ""
 
     prompt = f"""{persona_instruction}
     다음 시나리오 또는 작업을 수행하라: {task_desc}
+    
+    [데이터 기반 맥락]
+    - 현재 모델({model_id})의 종합 신뢰도 점수: {model_performance}/100
+    - 과거 유사 사례 매칭 여부: {"Yes" if past_cases else "No"}
+    
+    위 데이터를 참고하여, 자신의 제안이 왜 타당한지 기술적 근거를 바탕으로 상세히 보고하라.
     결과는 반드시 JSON 형식을 따르며, 추론의 확신도와 위험도를 자체 평가하라.
     {{ 
-        "report": "작업 결과", 
+        "report": "작업 결과 및 타당성 근거", 
         "certainty": 0.0~1.0, 
         "risk": 0.0~1.0,
         "new_files": {{ "path": "hash" }} 

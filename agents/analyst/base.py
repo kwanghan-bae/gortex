@@ -144,7 +144,60 @@ class AnalystAgent:
                 new_content = f"{original_rules}\n\n{section_start}\n\n{summary}"
                 
             with open(rules_md_path, 'w', encoding='utf-8') as f: f.write(new_content)
+            
             return "✅ 전역 규칙 종합 완료."
+            
         except Exception as e:
+        
             logger.error(f"Global rule synthesis failed: {e}")
+        
+            return f"❌ 실패: {e}"
+        
+    
+    def generate_release_note(self, model_id: str = "gemini-1.5-pro") -> str:
+    
+        """최근 변경 사항을 요약하여 release_note.md 자동 업데이트"""
+    
+        try:
+    
+            # 1. 최근 Git 로그 획득
+    
+            import subprocess
+    
+            git_log = subprocess.run(["git", "log", "-n", "10", "--pretty=format:%s"], capture_output=True, text=True).stdout
+    
+            
+    
+            # 2. 자가 진화 이력 획득
+    
+            from gortex.utils.efficiency_monitor import EfficiencyMonitor
+    
+            evo_history = EfficiencyMonitor().get_evolution_history(limit=5)
+    
+            evo_text = "\n".join([f"- {h['metadata'].get('tech')} applied to {h['metadata'].get('file')}" for h in evo_history])
+    
+            
+    
+            prompt = f"다음 변경 이력을 바탕으로 새로운 시스템 릴리즈 노트를 작성하라.\n\n[Git]\n\n{git_log}\n\n[Self-Evolution History]\n\n{evo_text}\n\n사용자가 읽기 좋은 한글 마크다운 형식으로 요약하고, '주요 변경 사항', '시스템 진화 내역', '기술적 개선' 섹션을 포함하라."
+    
+            
+    
+            summary = self.backend.generate(model_id, [{"role": "user", "content": prompt}])
+    
+            
+    
+            note_path = "docs/release_note.md"
+    
+            with open(note_path, 'w', encoding='utf-8') as f:
+    
+                f.write(f"# 🚀 Gortex Release Note\n\n> Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n{summary}")
+    
+                
+    
+            return "✅ release_note.md 갱신 완료."
+    
+        except Exception as e:
+    
+            logger.error(f"Release note generation failed: {e}")
+    
             return f"❌ 실패: {e}"

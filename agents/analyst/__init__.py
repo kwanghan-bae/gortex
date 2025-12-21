@@ -98,11 +98,16 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
     energy = state.get("agent_energy", 100)
     if energy > 70 and not debate_data and not data_files:
         # 1. 전역 규칙 종합 (지식의 문서화)
-        if len(agent.memory.memory) > 30: # 규칙이 30개 이상일 때 종합 시도
+        if len(agent.memory.memory) > 30:
             res = agent.synthesize_global_rules()
             logger.info(res)
             
-        # 2. 기억 정제 (주기적 수행)
+        # 2. 릴리즈 노트 자동 생성 (기록의 자동화)
+        if datetime.now().minute % 30 == 0: # 30분마다 자동 갱신 시도 (가칭)
+            res = agent.generate_release_note()
+            logger.info(res)
+
+        # 3. 기억 정제 (주기적 수행)
         if len(agent.memory.memory) > 20:
             agent.memory.prune_memory()
             
