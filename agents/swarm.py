@@ -115,7 +115,6 @@ async def swarm_node_async(state: GortexState) -> Dict[str, Any]:
 
     task_results = await asyncio.gather(*parallel_calls)
     
-    # ... (이후 랭킹 로직)
     scored_results = []
     energy_cost_per_task = 5 
     

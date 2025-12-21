@@ -46,6 +46,11 @@ Commit messages MUST be written in **Korean** and follow this format:
 *   단순 통과를 넘어, **Edge Case(예외 상황, 경계값)**에 대한 테스트가 포함되어야 한다.
 *   `coverage report`를 통해 주요 로직의 실행 여부를 확인하며, 가급적 80% 이상의 커버리지를 유지한다.
 
+### 2.4 No Placeholders (CRITICAL)
+*   **어떠한 상황에서도 소스 코드 내에 `# ...`, `(중략)`, `(생략)` 등의 플레이스홀더를 삽입할 수 없다.**
+*   코드를 수정할 때는 반드시 해당 블록의 **전체 로직을 그대로 유지**하거나, 불필요한 부분만 명확히 삭제해야 한다.
+*   설명용 텍스트와 실제 코드를 엄격히 구분하라.
+
 ---
 
 ## 3. Documentation & State Rules

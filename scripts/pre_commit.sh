@@ -41,6 +41,15 @@ export PYTHONPATH=$PARENT_DIR:$PYTHONPATH
 echo -e "📦 Checking syntax and linting (Ruff)..."
 cd "$PROJECT_ROOT"
 
+# [AI-LAZINESS GUARD] 생략 기호 및 플레이스홀더 검사 (Strict Pattern Matching)
+echo -e "🤖 Scanning for AI placeholders (# ..., (중략), etc.)..."
+# 줄 전체가 공백/주석과 함께 점 3개 이상 또는 중략/생략 단어로만 구성된 경우 검색
+if grep -rE "^\s*#\s*\.\.\.\s*$|^\s*#\s*…\s*$|^\s*#\s*\(중략\)\s*$|^\s*#\s*\(생략\)\s*$" . --include="*.py" --exclude-dir="venv" --exclude-dir="logs" --exclude-dir="docs" --exclude="test_integrity.py"; then
+    echo -e "${RED}❌ CRITICAL: AI-generated placeholder detected!${NC}"
+    echo -e "${RED}   Found an empty ellipsis or placeholder line. Never omit code using placeholders.${NC}"
+    exit 1
+fi
+
 if command -v ruff &> /dev/null; then
     ruff check . --fix || { echo -e "${RED}❌ Lint errors found! Fix them before committing.${NC}"; exit 1; }
 else

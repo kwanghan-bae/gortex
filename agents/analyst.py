@@ -201,7 +201,20 @@ class AnalystAgent:
             return {"final_decision": "Error during synthesis.", "rationale": str(e), "action_plan": []}
 
     def garbage_collect_knowledge(self):
-        # ... (기존 코드 유지) ...
+        """저품질 또는 중복 지식을 정리하여 최적화"""
+        original_count = len(self.memory.ltm.memory)
+        if original_count < 10: return 0
+        
+        # 1. 중복 제거 (내용 기반)
+        unique_memory = {}
+        for item in self.memory.ltm.memory:
+            unique_memory[item["content"]] = item
+            
+        # 2. 사용량/신선도 기반 필터링 (단순화: usage_count가 0이고 너무 오래된 것 등)
+        final_memory = list(unique_memory.values())
+        self.memory.ltm.memory = final_memory
+        self.memory.ltm._save_store()
+        
         removed = original_count - len(final_memory)
         if removed > 0:
             logger.info(f"✅ Knowledge GC complete: Removed {removed} items.")
@@ -313,7 +326,34 @@ class AnalystAgent:
             return {"is_valid": True} # 오류 시 기본 통과 (안전 모드)
 
     def learn_from_interaction(self, question: str, user_answer: str) -> Optional[Dict[str, Any]]:
-        # ... (기존 코드 유지) ...
+        """사용자와의 질의응답을 통해 새로운 지식이나 규칙을 학습"""
+        logger.info("🎓 Learning from user interaction...")
+        
+        prompt = f"""다음 사용자와 에이전트 간의 대화에서 시스템이 기억해야 할 '사용자 선호도'나 '신규 규칙'이 있다면 추출하라.
+        
+        [Question]
+        {question}
+        [User Answer]
+        {user_answer}
+        
+        결과 형식 (JSON):
+        {{
+            "knowledge": "기억해야 할 핵심 내용",
+            "type": "preference | rule | info",
+            "confidence": 0.0~1.0
+        }}
+        """
+        try:
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
+            res_data = json.loads(response.text)
+            if res_data.get("knowledge") and res_data.get("confidence", 0) > 0.7:
+                self.memory.ltm.memorize(
+                    f"User Learnt: {res_data['knowledge']}",
+                    {"source": "Interaction", "type": res_data["type"]}
+                )
+                return res_data
+        except Exception as e:
+            logger.error(f"Interaction learning failed: {e}")
         return None
 
     def auto_finalize_session(self, state: GortexState) -> Dict[str, Any]:

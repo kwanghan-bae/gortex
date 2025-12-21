@@ -13,6 +13,12 @@
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
 
+### v2.6.10 (AI-Laziness Guard & Integrity Assurance)
+- [x] **Defense**: `pre_commit.sh` 내에 AI 생략 기호(# ..., (중략) 등)를 자동 감지하여 커밋을 차단하는 고성능 스캐너 구축
+- [x] **Testing**: 핵심 파일과 필수 메서드의 유실 여부를 실시간 검사하는 `test_integrity.py` 신설
+- [x] **Policy**: `RULES.md`에 플레이스홀더 삽입 금지 조항을 명문화하여 에이전트의 무결성 책임 강화
+- [x] **Recovery**: `swarm.py`, `analyst.py` 등 코드베이스 전체의 잔여 오염 지점 전수 복구 및 검증 완료
+
 ### v2.6.9 (Integrity Recovery & Message Migration)
 - [x] **Critical Fix**: 코드 수정 도구 오용으로 발생한 소스 오염(중략 기호 삽입)을 전면 스캔하여 복구 및 무결성 재검증
 - [x] `docs/i18n/`: Planner, Coder, Analyst 등 모든 핵심 에이전트의 응답 메시지를 다국어 사전 체계로 전면 마이그레이션 완료
