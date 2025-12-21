@@ -79,3 +79,32 @@ class EfficiencyMonitor:
         except Exception as e:
             logger.error(f"Failed to analyze efficiency stats: {e}")
             return {}
+
+    def calculate_model_scores(self) -> Dict[str, float]:
+        """
+        각 모델의 종합 점수를 계산합니다 (0~100).
+        성공률(60%) + 응답 속도(20%) + 비용 효율(20%)
+        """
+        summary = self.get_summary(days=30)
+        scores = {}
+        
+        for model, stats in summary.items():
+            # 1. 성공률 점수 (60점 만점)
+            success_score = stats["success_rate"] * 0.6
+            
+            # 2. 레이턴시 점수 (20점 만점, 낮을수록 좋음)
+            # 기준: 2초 이내면 만점, 10초 이상이면 0점
+            latency = stats["avg_latency"]
+            latency_score = max(0, 20 * (1 - (latency - 2000) / 8000)) if latency > 2000 else 20
+            
+            # 3. 가성비 점수 (20점 만점, 토큰당 성공 여부)
+            # 클라우드 모델(Gemini)은 토큰 가중치를 더 높게 줌
+            is_local = "ollama" in model.lower()
+            token_weight = 1.0 if is_local else 5.0
+            efficiency = (stats["successes"] * 1000) / (stats["total_tokens"] * token_weight + 1)
+            # 정규화 (대략적인 수치)
+            cost_score = min(20, efficiency * 2)
+            
+            scores[model] = round(success_score + latency_score + cost_score, 2)
+            
+        return scores

@@ -200,11 +200,30 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
 
     # 모델 결정 (Routing Intelligence)
     call_count = state.get("api_call_count", 0)
-    if call_count > 10 or energy < 30:
+    scores = monitor.calculate_model_scores()
+    logger.info(f"Model Scores: {scores}")
+    
+    # 기본 모델 후보군
+    from gortex.core.config import GortexConfig
+    config_obj = GortexConfig()
+    cloud_model = config_obj.get("default_model", "gemini-1.5-flash")
+    local_model = "ollama/llama3" # 가칭 (추후 설정화)
+
+    # 지능형 선택 로직
+    if energy < 30 or scores.get(local_model, 0) > 70:
+        # 에너지가 부족하거나 로컬 모델 성능이 충분히 검증된 경우
+        model_id = local_model
+        logger.info(f"🤖 Intelligent Routing: Selecting Local Model ({model_id}) for efficiency.")
+    elif call_count > 10:
         model_id = "gemini-2.5-flash-lite"
+        logger.warning(f"⚠️ High API usage ({call_count}). Throttling to lite model.")
     else:
-        from gortex.core.config import GortexConfig
-        model_id = GortexConfig().get("default_model", "gemini-1.5-flash")
+        model_id = cloud_model
+
+    # [Exception] 진화나 복잡한 분석은 가급적 강력한 모델 강제
+    if any(k in internal_input.lower() for k in ["진화", "evolve", "architecture", "refactor"]):
+        model_id = "gemini-1.5-pro"
+        logger.info(f"💎 Critical task detected. Forcing PRO model.")
 
     # 메시지 구성
     formatted_messages = [{"role": "system", "content": base_instruction}]
