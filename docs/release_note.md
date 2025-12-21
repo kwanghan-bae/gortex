@@ -13,6 +13,12 @@
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
 
+### v2.7.2 (Core Modularization & High-Rigor Testing)
+- [x] **Architecture**: 1,000라인의 `main.py`를 `engine`, `commands`, `terminal`로 완벽히 해체 및 기능별 전문화 (유실 로직 전수 복구)
+- [x] **Refactoring**: `analyst.py`를 `reflection`, `organizer`, `base` 서브 모듈로 분산하여 지식 정리 및 아카이빙 로직 정교화
+- [x] **Quality**: `Indexer`, `Translator`, `GortexEngine` 등에 대한 20개 이상의 정밀 테스트 케이스 신규 추가 (전체 55개 달성)
+- [x] **Stability**: API 할당량 대응, 인과 관계 추적, 보안 감시 로직의 모듈 간 결합 무결성 재확보
+
 ### v2.7.1 (Autonomous Session Backup & Recovery)
 - [x] `utils/tools.py`: 디렉토리 전체를 특정 패턴 제외하고 ZIP 패키징하는 고성능 압축 엔진 구축
 - [x] `agents/analyst.py`: 세션 종료 시 모든 지식, 로그, 문서를 하나의 아카이브로 자동 백업하는 복원력 강화

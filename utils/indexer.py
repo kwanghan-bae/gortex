@@ -165,8 +165,9 @@ class SynapticIndexer:
         results = []
         for file_path, defs in self.index.items():
             for d in defs:
+                symbol_name = d.get("name", "").lower()
                 # 1. 심볼명 매칭 (가중치 100)
-                name_match = search_query in d["name"].lower()
+                name_match = search_query in symbol_name
                 # 2. 독스트링 매칭 (가중치 50)
                 doc_match = d.get("docstring") and search_query in d["docstring"].lower()
                 

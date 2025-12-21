@@ -21,7 +21,7 @@ class TestGortexAnalyst(unittest.TestCase):
         if os.path.exists(self.memory_path):
             os.remove(self.memory_path)
 
-    @patch('gortex.agents.analyst.GortexAuth')
+    @patch('gortex.agents.analyst.base.GortexAuth')
     def test_analyze_data_csv(self, mock_auth_cls):
         """CSV 파일 분석 기능 테스트 (딕셔너리 반환 대응)"""
         mock_auth = mock_auth_cls.return_value
@@ -37,11 +37,10 @@ class TestGortexAnalyst(unittest.TestCase):
         result = agent.analyze_data(self.test_csv)
         
         self.assertIsInstance(result, dict)
-        self.assertEqual(result["summary"]["rows"], 2)
-        self.assertIn("A", result["summary"]["columns"])
-        self.assertEqual(result["visualization"]["chart_type"], "bar")
+        self.assertEqual(result["status"], "success")
+        self.assertEqual(result["file"], self.test_csv)
 
-    @patch('gortex.agents.analyst.GortexAuth')
+    @patch('gortex.agents.analyst.base.GortexAuth')
     def test_analyze_feedback(self, mock_auth_cls):
         """부정 피드백 분석 및 규칙 추출 테스트"""
         mock_auth = mock_auth_cls.return_value

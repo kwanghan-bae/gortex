@@ -121,7 +121,10 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         from gortex.agents.analyst import AnalystAgent
         refactor_target = AnalystAgent().suggest_refactor_target()
         if refactor_target:
-            base_instruction += f"\n\n[AUTO-REFACTOR OPPORTUNITY]\n현재 시스템 에너지가 충분하여 기술 부채 해소를 제안한다.\n대상 파일: {refactor_target['file']}\n문제: {refactor_target['issue']}\n전략: {refactor_target['refactor_strategy']}\n이 작업을 최우선으로 수행할 수 있는 계획을 수립하라."
+            file = refactor_target.get('file', 'Unknown')
+            issue = refactor_target.get('issue', 'Technical debt detected')
+            strategy = refactor_target.get('refactor_strategy', 'Modularization required')
+            base_instruction += f"\n\n[AUTO-REFACTOR OPPORTUNITY]\n현재 시스템 에너지가 충분하여 기술 부채 해소를 제안한다.\n대상 파일: {file}\n문제: {issue}\n전략: {strategy}\n이 작업을 최우선으로 수행할 수 있는 계획을 수립하라."
 
     for msg in reversed(state["messages"]):
         content = msg.content if hasattr(msg, 'content') else str(msg)
