@@ -19,6 +19,11 @@
 - **안정성 강화**: 그래프 컴파일 로직 수정 및 런타임 에러(KeyError, TypeError) 해결.
 - **전략 업데이트**: Web UI 개발 잠정 중단 및 TUI 우선 순위 설정.
 
+### v2.8.1 (Hybrid Memory Architecture)
+- **Refactoring**: `utils/memory.py`의 Gemini 직접 의존성을 제거하고 `LLMFactory` 기반으로 전환하여, 로컬 모델(Ollama)로도 장기 기억 압축이 가능해졌습니다.
+- **Compatibility**: 메시지 포맷(Tuple/Dict) 자동 변환 로직을 추가하여 기존 LangGraph 상태와의 호환성을 유지하면서 멀티 백엔드를 지원합니다.
+- **Verification**: `tests/test_memory.py`를 리팩토링된 구조에 맞춰 갱신하고 100% 커버리지를 유지했습니다.
+
 ### v2.8.0 (Ollama Foundation & LLM Abstraction)
 - **Architecture**: `core/llm/` 패키지를 신설하고 `LLMBackend` 추상 계층을 도입하여 멀티 모델(Gemini/Ollama) 하이브리드 운영의 기반을 닦았습니다.
 - **Feature**: 로컬 Ollama 서버와 통신하는 `OllamaBackend` 및 기존 인증 모듈을 래핑한 `GeminiBackend`를 구현했습니다.

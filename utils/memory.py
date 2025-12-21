@@ -1,24 +1,36 @@
 import gc
 import logging
+import os
 from gortex.core.state import GortexState
-from gortex.core.auth import GortexAuth
+from gortex.core.llm.factory import LLMFactory
 
 logger = logging.getLogger("GortexMemory")
 
 def compress_synapse(state: GortexState) -> GortexState:
     """
-    대화가 길어질 때 Gemini 2.5 Flash-Lite를 사용하여 맥락을 압축함.
-    지능형 작업 상태(Task State) 보존 로직 추가.
+    대화가 길어질 때 LLM을 사용하여 맥락을 압축함.
+    지능형 작업 상태(Task State) 보존 로직 포함.
     """
     messages = state.get("messages", [])
-    # 메시지 개수가 12개 미만이고, 전체 요약이 이미 있다면 스킵 (단, 토큰이 많으면 압축 필요)
+    # 메시지 개수가 12개 미만이고, 전체 요약이 이미 있다면 스킵
     if len(messages) < 12 and not state.get("history_summary"):
         return state
 
     logger.info("🧠 Synaptic Compression active: Structuring project state...")
-    auth = GortexAuth()
-    summary_model = "gemini-2.5-flash-lite"
     
+    # LLM 백엔드 획득
+    backend = LLMFactory.get_default_backend()
+    
+    # 모델명 결정 (환경변수 우선, 없으면 기본값)
+        # Gemini: gemini-2.5-flash-lite, Ollama: qwen2.5-coder:7b (예시)
+        
+        # LLM_BACKEND가 ollama면 OLLAMA_DEFAULT_MODEL 사용
+    
+    if os.getenv("LLM_BACKEND", "gemini").lower() == "ollama":
+        summary_model = os.getenv("OLLAMA_DEFAULT_MODEL", "qwen2.5-coder:7b")
+    else:
+        summary_model = "gemini-2.5-flash-lite"
+
     prompt = """지금까지의 모든 대화 내용을 정밀 분석하여 다음 [Project State Schema]에 맞춰 현재 상황을 '구조화된 텍스트'로 요약하라. 
 이 요약은 다음 에이전트가 너의 정체성과 작업 상태를 완벽히 계승하는 데 사용된다.
 
@@ -32,27 +44,41 @@ def compress_synapse(state: GortexState) -> GortexState:
 
 [Constraint]
 - 가장 중요한 규칙과 정체성은 요약본 최상단에 배치하라.
-- 군더더기 없는 명확한 명령조로 작성하라."""
+- 군더더기 없는 명확한 명령조로 작성하라.
+- 답변은 오직 요약 텍스트만 출력하라."""
 
     # active_constraints가 있다면 프롬프트에 추가 주입
     if state.get("active_constraints"):
         constraints = "\n".join([f"- {c}" for c in state["active_constraints"]])
         prompt += f"\n\n[Active System Constraints (MUST PERSIST)]\n{constraints}"
+        
+    # 시스템 프롬프트를 메시지 구조에 반영
+    # LLMBackend.generate는 List[Dict]를 받음
+    # messages 리스트 앞에 시스템 프롬프트를 추가하거나, generate 내부에서 처리하도록 유도
+    # 여기서는 messages 리스트를 복사하여 맨 앞에 system 메시지로 추가
+    
+    context_messages = [{"role": "system", "content": prompt}]
+    
+    # 기존 messages 변환 (Tuple -> Dict)
+    # state["messages"]는 보통 [(role, content), ...] 튜플 리스트임
+    for msg in messages:
+        if isinstance(msg, tuple) or isinstance(msg, list):
+            context_messages.append({"role": msg[0], "content": msg[1]})
+        elif isinstance(msg, dict):
+            context_messages.append(msg)
 
     try:
-        # 요약 생성 시 온도를 낮게 설정하여 정확도 확보
-        from google.genai import types
-        config = types.GenerateContentConfig(temperature=0.0)
+        # 설정 딕셔너리 사용 (types.GenerateContentConfig 제거)
+        config = {"temperature": 0.0}
         
-        response = auth.generate(summary_model, messages, config)
-        summary_text = response.text
+        summary_text = backend.generate(summary_model, context_messages, config)
         
         gc.collect()
         
         # 첫 번째 메시지는 시스템의 정체성을 담은 요약으로 대체
         new_messages = [("system", f"[SYNAPTIC SUMMARY - PROJECT STATE]\n{summary_text}")]
         
-        # 최근 메시지 3개는 컨텍스트 유지를 위해 보존 (사용자 마지막 입력 등)
+        # 최근 메시지 3개는 컨텍스트 유지를 위해 보존
         if len(messages) > 3:
             new_messages.extend(messages[-3:])
         
@@ -77,11 +103,11 @@ def prune_synapse(state: GortexState, limit: int = 50) -> GortexState:
     # 1. 고정된 메시지(Pinned)를 최상단에 배치
     pruned = list(pinned)
     
-    # 2. 요약본이 포함된 첫 번째 시스템 메시지 보존 (Pinned와 중복 방지 체크 필요 시 추가)
+    # 2. 요약본이 포함된 첫 번째 시스템 메시지 보존
     if messages[0] not in pruned:
         pruned.append(messages[0])
     
-    # 3. 중간 메시지 절삭 후 최근 메시지들로 채움 (고정 메시지 제외한 나머지 공간 활용)
+    # 3. 중간 메시지 절삭 후 최근 메시지들로 채움
     remaining_slots = limit - len(pruned)
     if remaining_slots > 0:
         pruned.extend(messages[-remaining_slots:])

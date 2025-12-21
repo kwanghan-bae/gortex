@@ -1,28 +1,27 @@
 # Next Session
 
 ## 세션 목표
-- `core/llm` 추상화 계층을 실제 유틸리티(`utils/memory.py` 등)에 적용하여 Phase 1(Read-Only Tasks)을 완성한다.
+- `OLLAMA_PLAN.md` Phase 2(Bounded Execution) 진입: `utils/token_counter.py` 추상화 및 `agents/coder.py`의 부분적 로컬 모델 도입을 준비한다.
 
 ## 컨텍스트
-- 지난 세션에서 `core/llm/` 인프라를 구축하여 Gemini와 Ollama를 선택적으로 사용할 수 있게 되었습니다.
-- 이제 실제 에이전트나 유틸리티가 이 추상화 계층을 사용하도록 리팩토링하여 로컬 모델의 효용성을 증명해야 합니다.
+- Phase 1(Memory 압축) 구현이 완료되어 로컬 모델 활용의 첫 단추를 끼웠습니다.
+- 이제 토큰 계산 로직(`token_counter.py`)이 특정 모델(Gemini)에 종속되지 않도록 개선하고, 실제 작업자 에이전트(`Coder`)가 로컬 모델을 활용할 수 있는 구조를 검토해야 합니다.
 
 ## 범위 (Scope)
 ### 수행할 작업 (Do)
-- `utils/memory.py`: 직접적인 `GortexAuth` 의존성을 제거하고 `LLMFactory.get_backend()`를 사용하도록 리팩토링.
-- `utils/token_counter.py`: 토큰 계산 로직이 로컬 모델의 토크나이저(또는 근사치)를 고려하도록 개선 검토.
-- `core/llm/ollama_client.py`: 실제 Ollama 서버가 없을 때의 Graceful Fallback(자동 Gemini 전환) 로직 보강.
-- `tests/test_memory.py`: 리팩토링된 코드가 기존 테스트를 통과하는지 확인 및 Ollama 백엔드에서의 동작 검증.
+- `utils/token_counter.py`: `tiktoken` 등을 활용하거나 근사치 계산 로직을 도입하여 벤더 중립적인 인터페이스로 개선.
+- `agents/coder.py`: 현재 `LLMBackend`를 사용하고 있지 않다면, 이를 사용하도록 리팩토링할 지점을 식별하고 구조 설계. (실제 적용은 위험도가 높으므로 설계 우선)
+- `tests/test_token_counter.py`: 변경된 로직 검증.
 
 ### 수행하지 않을 작업 (Do NOT)
-- 핵심 에이전트(Manager, Coder)는 여전히 Gemini를 사용하도록 유지한다 (Phase 2 전까지).
-- 무거운 모델(`qwen2.5-coder` 등)을 강제로 다운로드하거나 실행하는 자동화 스크립트는 포함하지 않는다 (사용자 환경 존중).
+- `Coder`가 당장 로컬 모델로 코드를 짜게 만들지 않는다. (검증되지 않은 모델 성능으로 인한 코드 오염 방지)
+- `Manager`의 판단 로직은 건드리지 않는다.
 
 ## 기대 결과
-- 메모리 압축(`compress_synapse`) 작업이 로컬 Ollama 모델을 통해 수행될 수 있다.
-- 외부 API 장애 시에도 로컬 모델이 백업으로 동작하는 초기적 회복 탄력성을 확보한다.
+- 토큰 카운터가 모델에 상관없이 동작하는 일반적인 유틸리티로 진화한다.
+- `Coder`의 LLM 전환을 위한 청사진이 마련된다.
 
 ## 완료 기준
-- `utils/memory.py`의 `GortexAuth` import 제거.
-- `tests/test_memory.py` 통과 및 커버리지 유지.
-- `docs/sessions/session_0059.md` 기록.
+- `utils/token_counter.py` 리팩토링 완료.
+- `tests/test_token_counter.py` 통과.
+- `docs/sessions/session_0060.md` 기록.
