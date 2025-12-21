@@ -130,34 +130,7 @@ class ThreeJsBridge:
         return {"nodes": converted_nodes, "edges": converted_edges}
 
     def convert_causal_graph_to_3d(self, graph_data: Dict[str, Any]) -> Dict[str, Any]:
-        """인과 관계 그래프를 3D 타임라인 구조로 변환"""
-        nodes = graph_data.get("nodes", [])
-        edges = graph_data.get("edges", [])
-        
-        converted_nodes = []
-        node_map = {}
-        
-        # 시간순 배치를 위해 노드 순회
-        for i, node in enumerate(nodes):
-            # 시간축(X)을 따라 배치하고 Y, Z는 무작위성을 부여하여 겹침 방지
-            pos = {
-                "x": i * 15,
-                "y": math.sin(i) * 10,
-                "z": math.cos(i) * 10
-            }
-            
-            converted_node = {
-                "id": node["id"],
-                "position": pos,
-                "label": node["label"],
-                "agent": node["agent"],
-                "event": node["event"],
-                "color": self._get_color_by_agent(node["agent"])
-            }
-            converted_nodes.append(converted_node)
-            node_map[node["id"]] = pos
-
-        converted_edges = []
+        # ... (중략) ...
         for edge in edges:
             if edge["from"] in node_map and edge["to"] in node_map:
                 converted_edges.append({
@@ -167,7 +140,55 @@ class ThreeJsBridge:
                     "end": node_map[edge["to"]]
                 })
                 
-        return {"nodes": converted_nodes, "edges": converted_edges}
+        return self.apply_clustering({"nodes": converted_nodes, "edges": converted_edges})
+
+    def convert_kg_to_3d(self, nodes: Dict[str, Any], edges: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Synaptic Index 기반 지식 그래프를 3D 공간 데이터로 변환"""
+        converted_nodes = []
+        node_map = {}
+        import math
+        
+        # 임의의 3D 공간 배치
+        for i, (node_id, info) in enumerate(nodes.items()):
+            pos = {
+                "x": math.cos(i) * 50,
+                "y": math.sin(i) * 50,
+                "z": (i % 10) * 10
+            }
+            converted_nodes.append({
+                "id": node_id,
+                "label": info.get("name"),
+                "type": info.get("type"),
+                "position": pos,
+                "color": self._get_color_by_type(info.get("type"))
+            })
+            node_map[node_id] = pos
+
+        converted_edges = []
+        for edge in edges:
+            if edge["from"] in node_map and edge["to"] in node_map:
+                converted_edges.append({
+                    "from": edge["from"],
+                    "to": edge["to"],
+                    "start": node_map[edge["from"]],
+                    "end": node_map[edge["to"]],
+                    "type": edge.get("type", "relation")
+                })
+        
+        # [Knowledge Mapping] 지식 노드 간 상관관계 엣지 추가
+        for node_id, info in nodes.items():
+            if info.get("links") and node_id in node_map:
+                for target_id in info["links"]:
+                    if target_id in node_map:
+                        converted_edges.append({
+                            "from": node_id,
+                            "to": target_id,
+                            "start": node_map[node_id],
+                            "end": node_map[target_id],
+                            "type": "correlation"
+                        })
+                
+        return self.apply_clustering({"nodes": converted_nodes, "edges": converted_edges})
 
     def apply_impact_highlight(self, graph_3d: Dict[str, Any], impact_data: Dict[str, List[str]]) -> Dict[str, Any]:
         """특정 노드 및 연결된 영향 범위 노드들에 하이라이트(Glow) 적용"""
@@ -188,6 +209,37 @@ class ThreeJsBridge:
                 node["color"] = "#ff8888" # 연한 빨강 (간접 영향)
                 node["spatial_metadata"] = {"glow": 0.4, "scale": 1.2}
                 
+        return graph_3d
+
+    def apply_clustering(self, graph_3d: Dict[str, Any]) -> Dict[str, Any]:
+        """노드 간의 이름 유사도 및 파일 경로를 기반으로 군집화(Clustering) 수행"""
+        nodes = graph_3d.get("nodes", [])
+        if not nodes: return graph_3d
+        
+        clusters = {} # {cluster_id: color}
+        import hashlib
+        
+        for node in nodes:
+            label = node.get("label", "")
+            # 단순 클러스터링 전략: 파일 경로나 이름의 첫 단어 활용
+            # 예: "core/auth.py" -> "core", "test_manager" -> "test"
+            if "/" in label:
+                cluster_id = label.split("/")[0]
+            elif "_" in label:
+                cluster_id = label.split("_")[0]
+            else:
+                cluster_id = "general"
+                
+            # 클러스터별 고유 색상 생성 (해시 활용)
+            if cluster_id not in clusters:
+                color_hash = hashlib.md5(cluster_id.encode()).hexdigest()[:6]
+                clusters[cluster_id] = f"#{color_hash}"
+                
+            node["cluster_id"] = cluster_id
+            node["cluster_color"] = clusters[cluster_id]
+            # 클러스터 강조를 위해 기본 색상도 조정 가능
+            # node["color"] = clusters[cluster_id] 
+            
         return graph_3d
 
     def _get_color_by_agent(self, agent_name: str) -> str:

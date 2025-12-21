@@ -3,15 +3,20 @@
 > 💡 **Versioning Policy**: 메이저 버전(v1.x, v2.x ...)이 변경될 때마다 이전 기록은 `docs/archive/`로 이동하며, 메인 릴리즈 노트는 항상 최신 상태를 유지합니다.
 
 ## 🚀 Backlog (Pending Tasks)
-- [x] **Infrastructure**: 에이전트 생성물들을 자동 구조화하고 아카이빙하는 'Workspace Organizer' 구축
-- [ ] **Interface**: 3D 그래프에서 영향 받는 노드들을 묶어 보여주는 'Dependency Clustering' 시각화
-- [ ] **Intelligence**: 에이전트의 사고 트리에 멀티모달 데이터를 포함하는 'Visual Reasoning' 도입
+- [x] **Interface**: 3D 그래프에서 영향 받는 노드들을 묶어 보여주는 'Dependency Clustering' 시각화
+- [ ] **Infrastructure**: 시스템 내부의 모든 텍스트를 타겟 언어로 자동 로컬라이징하는 'System Localization' 구축
+- [ ] **Intelligence**: 에이전트의 사고 트리에 멀티모달 데이터를 포함하는 'Visual Reasoning' 도입 (v2.6.5에서 기반 마련)
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.6.7 (Dependency Clustering & Structural Insight)
+- [x] `ui/three_js_bridge.py`: 파일 경로 및 심볼 명명 규칙을 분석하여 복잡한 노드들을 논리적 그룹(Cluster)으로 자동 묶는 엔진 구현
+- [x] `Infrastructure`: 각 클러스터에 고유한 시각적 속성(Color, ID)을 부여하여 거시적인 시스템 아키텍처 조망 기능 강화
+- [x] `UI Integration`: 인과 그래프와 지식 지도를 통합하여 입체적인 군집 기반 시각화 데이터 파이프라인 완성
 
 ### v2.6.6 (Autonomous Workspace Organizer & Archiving)
 - [x] `utils/tools.py`: 프로젝트 부산물들을 명명 규칙에 따라 안전하게 격리 보관하는 아카이빙 엔진 구축
