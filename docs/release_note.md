@@ -22,7 +22,8 @@
 ### v2.7.4 (Test Coverage Enforcement)
 - **Quality**: `utils/tools.py` `list_files`가 `.git*` 아티팩트를 완전히 숨겨 단위 테스트와 커버리지 집계가 일관된 스냅샷을 확보합니다.
 - **Quality**: `read_file`이 제한 내에서 줄을 축약할 때 `(truncated)` 표시를 명시적으로 추가하여 테스트 어서션을 만족합니다.
-- **Verification**: `python -m pytest` (80 tests) 통과로 새로운 유틸리티가 준수됨을 확인했습니다.
+- **Quality**: `tests/test_commands.py`에 `/help`, `/status`, `/rca`, `/search`, `/map` 같은 CLI 경로를 검증하는 새로운 테스트를 추가하여 `core/commands.py` 커버리지를 강화했습니다.
+- **Verification**: `PYTHONPATH=/Users/joel/Desktop/git coverage run -m pytest` + `coverage report`(전체 66%)를 실행하여 다음 목표(70% 이상)를 위한 취약 영역을 파악했습니다.
 
 ### v2.7.2 (Core Modularization & High-Rigor Testing)
 - [x] **Architecture**: 1,000라인의 `main.py`를 `engine`, `commands`, `terminal`로 완벽히 해체 및 기능별 전문화 (유실 로직 전수 복구)
