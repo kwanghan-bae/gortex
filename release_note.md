@@ -43,9 +43,16 @@
 - [x] **Infrastructure**: 에이전트의 내부 지식 베이스를 그래프 DB 형식으로 시각화하고 관리하는 'Synaptic Knowledge Graph' 구축
 - [x] **Intelligence**: 에이전트가 도구 호출 결과의 정확성을 제3의 관점에서 검증하는 'Cross-Validation' 노드 추가
 - [x] **Interface**: 사용자의 복잡한 데이터 분석 요청을 시각적 차트로 자동 변환하는 'Auto-Chart' 기능 구현
-- [ ] **Intelligence**: 에이전트가 도구 호출 전후의 시스템 상태를 영상처럼 '상상'하여 시각적으로 시뮬레이션하는 'Visual Simulation' 엔진 추가
+- [x] **Intelligence**: 에이전트가 도구 호출 전후의 시스템 상태를 영상처럼 '상상'하여 시각적으로 시뮬레이션하는 'Visual Simulation' 엔진 추가
+- [ ] **Interface**: 에이전트의 사고 과정과 시뮬레이션 결과를 결합하여 보여주는 'Immersive Reasoning' 웹 UI 구축
 
 ## ✅ Completed
+### v2.0.7 (Visual Simulation & Dreaming Node)
+- [x] `agents/coder.py`: 도구 실행 전 변경 예정인 파일, 클래스, 함수 등 아키텍처의 변화를 구조화된 데이터(`visual_delta`)로 상상하는 기능 구현
+- [x] `agents/coder.py`: `simulation` 스키마를 확장하여 예상 결과, 위험 수준, 시각적 차분 정보를 통합적으로 생성하도록 고도화
+- [x] `agents/coder.py`: Mental Sandbox 지침을 보강하여 에이전트가 도구 호출 전후의 시스템 상태 전이를 시각적으로 모델링하도록 유도
+- [x] `agents/coder.py`: 시뮬레이션 결과를 웹 대시보드로 실시간 스트리밍하여 실제 상태와의 대조 분석 기반 마련
+
 ### v2.0.6 (Auto-Chart & Data Visualization)
 - [x] `agents/analyst.py`: Pandas 분석 결과로부터 데이터의 성격에 맞는 최적의 차트를 제안하고 Plotly JSON 코드를 자동 생성하는 로직 구현
 - [x] `agents/analyst.py`: 분석된 시각화 데이터를 웹 대시보드로 실시간 브로드캐스팅하여 인터랙티브한 그래프 렌더링 지원

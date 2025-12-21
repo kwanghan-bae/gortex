@@ -98,7 +98,12 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
 {{{{
   "thought": "생각의 과정",
   "thought_tree": [ {{{{ "id": "1", "text": "...", "type": "analysis", "priority": 3, "certainty": 0.9 }}}} ],
-  "simulation": {{{{ "expected_outcome": "...", "risk_level": "Low/Medium/High", "safeguard_action": "..." }}}}
+  "simulation": {{{{ 
+      "expected_outcome": "...", 
+      "risk_level": "Low/Medium/High", 
+      "safeguard_action": "...",
+      "visual_delta": [ {{{{ "target": "파일명/심볼", "change": "added/modified/deleted" }}}} ]
+  }}}},
   "status": "success" | "in_progress" | "failed"
 }}}} """
     
@@ -135,9 +140,20 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
                     "properties": {
                         "expected_outcome": {"type": "STRING"},
                         "risk_level": {"type": "STRING", "enum": ["Low", "Medium", "High"]},
-                        "safeguard_action": {"type": "STRING"}
+                        "safeguard_action": {"type": "STRING"},
+                        "visual_delta": {
+                            "type": "ARRAY",
+                            "items": {
+                                "type": "OBJECT",
+                                "properties": {
+                                    "target": {"type": "STRING"},
+                                    "change": {"type": "STRING", "enum": ["added", "modified", "deleted"]}
+                                },
+                                "required": ["target", "change"]
+                            }
+                        }
                     },
-                    "required": ["expected_outcome", "risk_level", "safeguard_action"]
+                    "required": ["expected_outcome", "risk_level", "safeguard_action", "visual_delta"]
                 },
                 "status": {"type": "STRING", "enum": ["success", "in_progress", "failed"]}
             },
