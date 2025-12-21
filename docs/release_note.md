@@ -24,7 +24,8 @@
 - **Quality**: `tests/test_message_queue.py`에서 Redis가 없는 더미 세션과 `publish`/`push_task`/`pop_task` 경로를 Mock 기반으로 보호합니다.
 - **Quality**: `tests/test_log_vectorizer.py`가 로그 인덱싱과 유사도 기반 검색을 테스트하여 trace 검색 근거를 뒷받침합니다.
 - **Quality**: `tests/test_three_js_bridge.py`가 사고 트리를 3D 객체로 변환하면서 노드/엣지 계층과 채색 기준을 확인합니다.
-- **Verification**: `PYTHONPATH=/Users/joel/Desktop/git coverage run -m pytest` → `coverage report`로 전체 70% 커버리지를 달성하여 다음 타깃(`ui/dashboard.py`, `utils/asset_manager.py`, `utils/table_detector.py`)을 명확히 했습니다.
+- **Quality**: `tests/test_ui.py`, `tests/test_asset_manager.py`, `tests/test_table_detector.py`가 Dashboard 갱신, 에셋 로딩, 테이블 감지 로직을 단위/통합 수준에서 검증해 UI/유틸 핵심을 튼튼히 했습니다.
+- **Verification**: `PYTHONPATH=/Users/joel/Desktop/git coverage run -m pytest` → `coverage report`로 전체 70% 커버리지를 달성하여 다음 타깃(`utils/translator.py`, `core/engine.py`)을 명확히 했습니다.
 
 ### v2.7.2 (Core Modularization & High-Rigor Testing)
 - [x] **Architecture**: 1,000라인의 `main.py`를 `engine`, `commands`, `terminal`로 완벽히 해체 및 기능별 전문화 (유실 로직 전수 복구)

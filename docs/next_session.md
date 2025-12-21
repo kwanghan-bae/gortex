@@ -1,27 +1,26 @@
 # Next Session
 
 ## 세션 목표
-- 70% 커버리지를 유지하면서 `ui/dashboard.py`, `utils/asset_manager.py`, `utils/table_detector.py`의 주요 흐름을 테스트로 확보한다.
+- 70% 커버리지를 유지하면서 `utils/translator.py`와 `core/engine.py`의 핵심 흐름 및 에러 조건을 테스트로 검증한다.
 
 ## 컨텍스트
-- 최근 메시지 큐, 로그 벡터화, Three.js 브리지를 포함한 테스트 확장으로 전체 커버리지가 70%를 기록했고 릴리즈 노트에 주요 건들을 정리했습니다.
-- 자동 반복 사이클(`coverage run -m pytest` → `coverage report`)이 계속되며, 문서(릴리즈 노트/세션 로그/next_session)로 각 세션의 작업 상태를 추적하고 있습니다.
+- `tests/test_ui.py`, `tests/test_asset_manager.py`, `tests/test_table_detector.py`의 추가로 UI/유틸 흐름이 강화되었고 커버리지 70%를 달성했습니다.
+- 자동화 사이클(`coverage run -m pytest` → `coverage report`)은 계속되며, 문서(릴리즈 노트/세션 로그/next_session)는 즉각 반영하고 있습니다.
 
 ## 범위 (Scope)
 ### 수행할 작업 (Do)
-- `ui/dashboard.py`의 레이아웃, 사이드바, 젠 애니메이션을 MagicMock한 Rich 객체로 렌더링하여 다양한 업데이트 흐름을 검증한다.
-- `utils/asset_manager.py`의 아이콘/리소스 로딩, 캐싱, 실패 시 폴백 경로를 Mock 파일 기반으로 테스트한다.
-- `utils/table_detector.py`의 텍스트/Markdown/CSV 입력을 조합해 테이블 판별과 행/열 추출이 일관되게 작동하는지 검증한다.
-- `coverage run -m pytest` → `coverage report` 사이클을 반복해 통계를 기록하고 `docs/release_note.md`, `docs/sessions/session_XXXX.md`를 갱신한다.
+- `utils/translator.py`의 `SynapticTranslator` 또는 i18n 포함 기능을 Mock된 파일/데이터로 검증하여 언어 전환, 기본값, 에러 처리 커버리지를 확보한다.
+- `core/engine.py`의 주요 루프, 단계별 `handle_step`/`execute_step` 흐름을 테스트하여 plan/result 이벤트를 명시적으로 확인한다.
+- `coverage run -m pytest` → `coverage report` 사이클을 반복하며 통계를 기록하고 `docs/release_note.md`, `docs/sessions/session_XXXX.md`를 갱신한다.
 
 ### 수행하지 않을 작업 (Do NOT)
-- Web UI(React/Three.js) 본체나 `ui/three_js_bridge.py` 내 그래픽 컴포넌트를 직접 변경하지 않는다.
-- 대규모 아키텍처 리팩토링이나 새로운 에이전트 프로토콜 설계는 후속 세션으로 유보한다.
+- Web UI(React/Three.js)나 `ui/` 모듈에 새로운 그래픽 컴포넌트를 추가하지 않는다.
+- 커다란 아키텍처 리팩토링이나 새로운 외부 통합은 다음 주기로 미룬다.
 
 ## 기대 결과
-- 새 테스트들은 `ui/dashboard.py`, `utils/asset_manager.py`, `utils/table_detector.py`의 핵심 분기를 커버하여 70% 이상을 유지하고, 리포트에 개선 추세를 보여준다.
-- 문서(작업 로그/릴리즈 노트/next_session)가 자동 반복 작업에 맞춰 최신 상태로 유지된다.
+- 새 테스트들은 `utils/translator.py`, `core/engine.py`의 분기/에러 처리를 커버하여 70% 이상을 유지하며 안정성을 높인다.
+- 문서(작업 로그/릴리즈 노트/next_session)가 자동 흐름에 맞춰 계속 최신 상태로 유지된다.
 
 ## 완료 기준
-- `coverage run -m pytest` 및 `coverage report`로 70% 이상을 다시 기록하고, 테스트가 모두 통과.
-- `docs/sessions/session_XXXX.md`에 해당 작업 세션 로그를 남겨 자동화 흐름을 문서화.
+- `coverage run -m pytest` 및 `coverage report`에서 70% 이상의 결과를 확보하고 관련 테스트가 모두 통과.
+- `docs/sessions/session_XXXX.md`에 이번 세션 로그를 남겨 자동화 흐름을 기록.
