@@ -247,6 +247,35 @@ class SynapticIndexer:
             "indirect": list(set(indirect_impact))
         }
 
+    def calculate_intelligence_index(self) -> Dict[str, float]:
+        """모듈별 지능 지수(Intelligence Index) 산출"""
+        if not self.index:
+            self.scan_project()
+            
+        from gortex.core.evolutionary_memory import EvolutionaryMemory
+        evo_mem = EvolutionaryMemory()
+        rules = evo_mem.memory
+        
+        intel_index = {}
+        for file_path, defs in self.index.items():
+            # 1. 기본 구조 점수 (클래스/함수 밀도)
+            symbol_count = len([d for d in defs if d["type"] in ["class", "function"]])
+            
+            # 2. 지식 밀도 점수 (해당 모듈과 관련된 규칙 수)
+            matched_rules = 0
+            for r in rules:
+                patterns = r.get("trigger_patterns", [])
+                if any(p.lower() in file_path.lower() for p in patterns):
+                    matched_rules += 1
+            
+            # 3. 종합 지수 계산
+            # (심볼 수 * 0.4) + (관련 규칙 수 * 2.0) -> 지능 밀도
+            # 규칙이 많을수록 해당 모듈에 대한 시스템의 '이해'와 '제약'이 깊음을 의미
+            score = (symbol_count * 0.4) + (matched_rules * 2.0)
+            intel_index[file_path] = round(score, 2)
+            
+        return dict(sorted(intel_index.items(), key=lambda x: x[1], reverse=True))
+
 if __name__ == "__main__":
     # 독립 실행 테스트
     logging.basicConfig(level=logging.INFO)

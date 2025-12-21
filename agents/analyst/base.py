@@ -17,23 +17,17 @@ class AnalystAgent:
     def __init__(self):
         self.backend = LLMFactory.get_default_backend()
         self.memory = EvolutionaryMemory()
-        self.ltm = LongTermMemory() # LTM 직접 소유 (복구)
+        self.ltm = LongTermMemory()
 
     def calculate_efficiency_score(self, success: bool, tokens: int, latency_ms: int, energy_cost: int) -> float:
-        """작업의 효율성을 수치화 (0~100) - 원본 정교한 공식 복구"""
         if not success: return 0.0
-        
-        # 비용 함수: 토큰 1개 = 0.01, 레이턴시 1ms = 0.01, 에너지 1 = 1.0 (가중치 적용)
         cost = (tokens * 0.01) + (latency_ms * 0.005) + (energy_cost * 2.0)
-        # 효율성 = 기본 보상(100) / (비용 + 1)
         score = 100.0 / (1.0 + math.log1p(cost / 5.0))
         return round(min(100.0, score), 1)
 
     def scan_project_complexity(self, directory: str = ".") -> List[Dict[str, Any]]:
-        """코드의 복잡도와 기술 부채 정밀 스캔 (원본 로직 복구)"""
         debt_list = []
         ignore_dirs = {'.git', 'venv', '__pycache__', 'logs', 'site-packages'}
-        
         for root, dirs, files in os.walk(directory):
             dirs[:] = [d for d in dirs if d not in ignore_dirs]
             for f in files:
@@ -43,15 +37,11 @@ class AnalystAgent:
                         with open(path, 'r', encoding='utf-8') as file:
                             content = file.read()
                             lines = content.splitlines()
-                            
-                            # 정밀 복잡도 추정
                             score = len(re.findall(r"\b(if|elif|for|while|except|def|class|with|async)\b", content))
                             score += len(lines) // 20
-                            
                             if score > 10:
                                 debt_list.append({
-                                    "file": path, 
-                                    "score": score, 
+                                    "file": path, "score": score, 
                                     "reason": "High logical density" if score > 30 else "Moderate complexity",
                                     "issue": "파일의 논리적 밀도가 너무 높아 가독성이 저하됨",
                                     "refactor_strategy": "긴 메서드를 분리하고 관심사를 모듈로 격리하라"
@@ -60,144 +50,86 @@ class AnalystAgent:
         return sorted(debt_list, key=lambda x: x["score"], reverse=True)
 
     def analyze_data(self, file_path: str) -> Dict[str, Any]:
-        """데이터 파일(CSV, JSON 등) 정밀 분석 수행 (원본 로직 복구)"""
         try:
             import pandas as pd
             if file_path.endswith('.csv'):
                 df = pd.read_csv(file_path)
-                summary = {
-                    "rows": len(df), "columns": list(df.columns),
-                    "stats": df.describe().to_dict()
-                }
-                return {"status": "success", "summary": summary, "file": file_path}
+                return {"status": "success", "summary": df.describe().to_dict(), "file": file_path}
         except: pass
         return {"status": "failed", "reason": "Data analysis failed"}
 
     def identify_missing_tests(self) -> List[Dict[str, Any]]:
-        """커버리지 리포트를 분석하여 테스트가 시급한 파일을 식별합니다."""
         try:
-            # 실시간 커버리지 데이터 획득 시도 (명령어 실행)
             import subprocess
             subprocess.run(["python3", "-m", "coverage", "json", "-o", "logs/coverage.json"], capture_output=True)
-            
             if os.path.exists("logs/coverage.json"):
                 with open("logs/coverage.json", "r") as f:
                     data = json.load(f)
-                
                 results = []
                 for file_path, info in data.get("files", {}).items():
-                    summary = info.get("summary", {})
-                    percent = summary.get("percent_covered", 100)
-                    if percent < 80: # 80% 미만인 파일 대상
-                        results.append({
-                            "file": file_path,
-                            "coverage": round(percent, 1),
-                            "missing_lines": info.get("missing_lines", []),
-                            "priority": "High" if percent < 50 else "Medium"
-                        })
+                    p = info.get("summary", {}).get("percent_covered", 100)
+                    if p < 80:
+                        results.append({"file": file_path, "coverage": round(p, 1), "missing_lines": info.get("missing_lines", [])})
                 return sorted(results, key=lambda x: x["coverage"])
-        except Exception as e:
-            logger.error(f"Failed to identify missing tests: {e}")
+        except: pass
         return []
 
     def audit_architecture(self) -> List[Dict[str, Any]]:
-        """프로젝트의 의존성 구조가 아키텍처 원칙을 준수하는지 감사"""
         from gortex.utils.indexer import SynapticIndexer
-        indexer = SynapticIndexer()
-        deps = indexer.generate_dependency_graph()
-        
+        deps = SynapticIndexer().generate_dependency_graph()
         violations = []
         layers = {"utils": 0, "core": 1, "ui": 2, "agents": 3, "tests": 4}
-        
         for dep in deps:
-            source, target = dep["source"], dep["target"]
-            src_layer = next((l for l in layers if f"gortex.{l}" in source or source.startswith(l)), None)
-            tgt_layer = next((l for l in layers if f"gortex.{l}" in target or target.startswith(l)), None)
-            
-            if src_layer and tgt_layer and layers[src_layer] < layers[tgt_layer]:
-                violations.append({
-                    "type": "Layer Violation", "source": source, "target": target,
-                    "reason": f"하위 레이어 '{src_layer}'가 상위 레이어 '{tgt_layer}'를 참조하고 있습니다."
-                })
+            s, t = dep["source"], dep["target"]
+            sl = next((l for l in layers if f"gortex.{l}" in s or s.startswith(l)), None)
+            tl = next((l for l in layers if f"gortex.{l}" in t or t.startswith(l)), None)
+            if sl and tl and layers[sl] < layers[tl]:
+                violations.append({"type": "Layer Violation", "source": s, "target": t, "reason": f"하위 레이어 '{sl}'가 상위 레이어 '{tl}'를 참조함"})
         return violations
 
     def synthesize_global_rules(self, model_id: str = "gemini-1.5-pro") -> str:
-        """분산된 학습 규칙들을 종합하여 시스템 대원칙(docs/RULES.md) 자동 갱신"""
         rules = self.memory.memory
         if not rules: return "정리할 규칙이 없습니다."
-        
-        rules_context = "".join([f"- [{r['severity']}] {r['learned_instruction']}\n" for r in rules])
-        prompt = f"다음 학습 규칙들을 5가지 이내의 핵심 원칙으로 요약하라.\n\n[규칙 리스트]\n{rules_context}\n\n결과는 마크다운 형식을 따르라."
-        
+        ctx = "".join([f"- [{r['severity']}] {r['learned_instruction']}\n" for r in rules])
         try:
-            summary = self.backend.generate(model_id, [{"role": "user", "content": prompt}])
+            summary = self.backend.generate(model_id, [{"role": "user", "content": f"다음 규칙을 5가지 원칙으로 요약하라:\n{ctx}"}])
             rules_md_path = "docs/RULES.md"
-            original_rules = ""
+            original = ""
             if os.path.exists(rules_md_path):
-                with open(rules_md_path, 'r', encoding='utf-8') as f: original_rules = f.read()
-            
-            section_start = "## 🤖 Auto-Evolved Coding Standards"
-            if section_start in original_rules:
-                header = original_rules.split(section_start)[0]
-                new_content = f"{header}{section_start}\n\n> 마지막 갱신: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n{summary}"
-            else:
-                new_content = f"{original_rules}\n\n{section_start}\n\n{summary}"
-                
-            with open(rules_md_path, 'w', encoding='utf-8') as f: f.write(new_content)
-            
+                with open(rules_md_path, 'r', encoding='utf-8') as f: original = f.read()
+            section = "## 🤖 Auto-Evolved Coding Standards"
+            new_c = f"{original.split(section)[0]}{section}\n\n> 갱신: {datetime.now()}\n\n{summary}" if section in original else f"{original}\n\n{section}\n\n{summary}"
+            with open(rules_md_path, 'w', encoding='utf-8') as f: f.write(new_c)
             return "✅ 전역 규칙 종합 완료."
-            
-        except Exception as e:
-        
-            logger.error(f"Global rule synthesis failed: {e}")
-        
-            return f"❌ 실패: {e}"
-        
-    
+        except: return "❌ 실패"
+
     def generate_release_note(self, model_id: str = "gemini-1.5-pro") -> str:
-    
-        """최근 변경 사항을 요약하여 release_note.md 자동 업데이트"""
-    
         try:
-    
-            # 1. 최근 Git 로그 획득
-    
             import subprocess
-    
             git_log = subprocess.run(["git", "log", "-n", "10", "--pretty=format:%s"], capture_output=True, text=True).stdout
-    
-            
-    
-            # 2. 자가 진화 이력 획득
-    
             from gortex.utils.efficiency_monitor import EfficiencyMonitor
-    
-            evo_history = EfficiencyMonitor().get_evolution_history(limit=5)
-    
-            evo_text = "\n".join([f"- {h['metadata'].get('tech')} applied to {h['metadata'].get('file')}" for h in evo_history])
-    
-            
-    
-            prompt = f"다음 변경 이력을 바탕으로 새로운 시스템 릴리즈 노트를 작성하라.\n\n[Git]\n\n{git_log}\n\n[Self-Evolution History]\n\n{evo_text}\n\n사용자가 읽기 좋은 한글 마크다운 형식으로 요약하고, '주요 변경 사항', '시스템 진화 내역', '기술적 개선' 섹션을 포함하라."
-    
-            
-    
+            evo = "\n".join([f"- {h['metadata'].get('tech')} applied to {h['metadata'].get('file')}" for h in EfficiencyMonitor().get_evolution_history(limit=5)])
+            prompt = f"다음 로그로 릴리즈 노트를 작성하라:\n\n[Git]\n{git_log}\n\n[Evo]\n{evo}"
             summary = self.backend.generate(model_id, [{"role": "user", "content": prompt}])
-    
-            
-    
-            note_path = "docs/release_note.md"
-    
-            with open(note_path, 'w', encoding='utf-8') as f:
-    
-                f.write(f"# 🚀 Gortex Release Note\n\n> Generated at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n{summary}")
-    
-                
-    
+            with open("docs/release_note.md", "w", encoding="utf-8") as f:
+                f.write(f"# 🚀 Gortex Release Note\n\n> Generated at: {datetime.now()}\n\n{summary}")
             return "✅ release_note.md 갱신 완료."
-    
-        except Exception as e:
-    
-            logger.error(f"Release note generation failed: {e}")
-    
-            return f"❌ 실패: {e}"
+        except: return "❌ 실패"
+
+    def bump_version(self) -> str:
+        v_path = "VERSION"
+        try:
+            cur_v = "1.0.0"
+            if os.path.exists(v_path):
+                with open(v_path, "r") as f: cur_v = f.read().strip()
+            parts = [int(p) for p in cur_v.split(".")] if "." in cur_v else [1, 0, 0]
+            from gortex.utils.efficiency_monitor import EfficiencyMonitor
+            if len(EfficiencyMonitor().get_evolution_history(limit=5)) >= 5:
+                parts[1] += 1
+                parts[2] = 0
+            else:
+                parts[2] += 1
+            new_v = ".".join(map(str, parts))
+            with open(v_path, "w") as f: f.write(new_v)
+            return new_v
+        except: return "Error"
