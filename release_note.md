@@ -58,9 +58,16 @@
 - [x] **System**: 에이전트가 코드를 작성할 때 보안 위협(Injection, XSS 등)을 실시간으로 스캔하고 차단하는 'Shielded Code Generation' 엔진 구축
 - [x] **Infrastructure**: 다중 에이전트의 작업 결과를 시각적으로 요약하고 최종 승인을 관리하는 'Reviewer Dashboard' 구축
 - [x] **Infrastructure**: 시스템 내부의 모든 정적 에셋(아이콘, 이미지 등)을 중앙에서 관리하는 'Synaptic Asset Manager' 구축
-- [ ] **Infrastructure**: 에이전트의 작업 중 발생하는 모든 파일을 시간순으로 아카이빙하고 복구할 수 있는 'File Time Machine' 구축
+- [x] **Infrastructure**: 에이전트의 작업 중 발생하는 모든 파일을 시간순으로 아카이빙하고 복구할 수 있는 'File Time Machine' 구축
+- [ ] **Interface**: 인덱싱된 코드베이스 내에서 특정 비즈니스 기능의 구현 지점을 자연어로 검색하는 'Semantic Code Search' 고도화
 
 ## ✅ Completed
+### v2.2.3 (File Time Machine & Versioning)
+- [x] `utils/tools.py`: 파일 수정 도구(`write_file`) 호출 시 원본 상태를 `logs/versions`에 타임스탬프와 함께 자동 보관하는 로직 구현
+- [x] `main.py`: 과거 파일 버전 목록을 조회하고 특정 시점으로 즉시 복구(Rollback)하는 `/rollback` 명령어 추가
+- [x] `utils/tools.py`: 파일 경로 기반의 디렉토리 구조화 아카이빙 방식을 도입하여 수천 개의 버전 스냅샷을 효율적으로 관리
+- [x] `main.py`: 롤백 전후의 파일 상태를 안전하게 관리하기 위한 원자적 파일 복사 로직 통합
+
 ### v2.2.2 (Synaptic Asset Manager & UI Refactoring)
 - [x] `utils/asset_manager.py`: 아이콘, 에이전트 레이블, 메시지 템플릿 등을 중앙 관리하는 싱글톤 엔진 신설
 - [x] `ui/dashboard.py`: 하드코딩된 아이콘과 문자열을 `AssetManager` 참조 구조로 리팩토링하여 스타일 일관성 및 관리 효율성 강화

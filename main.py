@@ -248,6 +248,31 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         ui.update_main(ui.chat_history)
         return "skip"
 
+    elif cmd == "/rollback":
+        if len(cmd_parts) < 2:
+            ui.chat_history.append(("system", "사용법: /rollback [file_path] [version_id]"))
+        else:
+            path = cmd_parts[1]
+            version_dir = os.path.join("logs/versions", path.replace("/", "_"))
+            if not os.path.exists(version_dir):
+                ui.chat_history.append(("system", f"❌ '{path}'에 대한 과거 버전 기록이 없습니다."))
+            elif len(cmd_parts) == 2:
+                # 버전 목록 출력
+                versions = sorted(os.listdir(version_dir), reverse=True)
+                ver_list = "\n".join([f"- {v}" for v in versions[:10]])
+                ui.chat_history.append(("system", f"🕰️ '{path}'의 최근 버전 목록:\n{ver_list}\n\n사용법: /rollback [path] [version_id]"))
+            else:
+                # 실제 롤백 수행
+                ver_id = cmd_parts[2]
+                ver_path = os.path.join(version_dir, ver_id if ver_id.endswith(".py") else f"{ver_id}.py")
+                if os.path.exists(ver_path):
+                    shutil.copy2(ver_path, path)
+                    ui.chat_history.append(("system", f"✅ '{path}' 파일이 {ver_id} 버전으로 복구되었습니다."))
+                else:
+                    ui.chat_history.append(("system", f"❌ 버전을 찾을 수 없습니다: {ver_id}"))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
     elif cmd == "/deploy":
         gt = GitTool()
         if not gt.is_repo():

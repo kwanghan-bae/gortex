@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Synaptic Asset Manager & UI Refactoring Complete (v2.2.2)
+**Status:** File Time Machine & Versioning Complete (v2.2.3)
 
 ## 🧠 Current Context
-중앙 에셋 관리 시스템이 도입되어 UI의 일관성과 확장성이 크게 향상되었습니다. 이제 모든 시각적 요소와 메시지 템플릿은 중앙에서 통제되며, 이는 테마 변경이나 다국어 대응 시 핵심적인 역할을 합니다.
+파일 버전 관리 시스템(File Time Machine)이 안착되었습니다. 이제 Gortex가 수행한 모든 코드 변경 사항은 기록으로 남으며, 실수로 인한 유실이나 예기치 못한 부작용 발생 시 `/rollback`을 통해 즉시 안전한 상태로 되돌릴 수 있습니다.
 
 ## 🎯 Next Objective
-**File Time Machine (Automatic File Versioning)**
-1. **`File Versioning`**: `write_file`이나 `apply_patch`가 호출될 때마다, 원본 파일의 스냅샷을 `logs/backups/versions/` 디렉토리에 시간순으로 자동 아카이빙합니다.
-2. **`Visual Restore`**: 웹 대시보드에서 파일의 과거 버전을 시각적으로 비교(Diff)하고, 클릭 한 번으로 특정 시점의 파일 상태로 복구(Rollback)하는 기능을 구현합니다.
+**Semantic Code Search (Natural Language Queries)**
+1. **`Code Semantics`**: 단순 키워드 검색을 넘어, 코드의 의도와 기능을 자연어로 검색합니다. (예: "결제 관련 로직이 어디 있지?", "데이터베이스 연결 설정 찾아줘")
+2. **`Embedding Search`**: 인덱싱된 모든 코드 심볼(함수, 클래스)의 독스트링과 본문을 임베딩하여 벡터 검색을 수행함으로써, 명확한 파일명을 모를 때도 최적의 구현 위치를 찾아냅니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 중앙 에셋 관리 시스템 완료 (v2.2.2).
-- 다음 목표: 파일 버전 관리 및 타임머신(File Time Machine) 구축.
+- 파일 타임머신 및 버전 관리 완료 (v2.2.3).
+- 다음 목표: 자연어 기반 코드 의미 검색(Semantic Code Search) 고도화.
 
 작업 목표:
-1. `utils/tools.py`의 `write_file`을 확장하여 수정 전 원본의 전체 계보(Version History)를 저장하는 기능을 추가해줘.
-2. `main.py`에 `/rollback [path] [version_id]` 명령어를 추가하여 과거 버전으로 파일을 즉시 복구하는 로직을 구현해줘.
+1. `utils/indexer.py`에 임베딩 벡터 기반의 유사도 검색 기능을 추가하거나, 기존 `SynapticSearch`의 랭킹 로직을 강화해줘.
+2. `main.py`의 `/search` 명령어가 더 지능적인 결과를 내도록 프롬프트 기반의 쿼리 정규화 기능을 보강해줘.
 ```

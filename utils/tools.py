@@ -25,15 +25,23 @@ def write_file_with_hash(path: str, content: str) -> Tuple[str, str]:
     return write_result, new_hash
 
 def write_file(path: str, content: str) -> str:
-    """안전한 원자적 파일 쓰기."""
+    """안전한 원자적 파일 쓰기 및 자동 버전 아카이빙."""
     try:
         os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
         if os.path.exists(path):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            # 1. 일반 백업
             backup_dir = "logs/backups"
             os.makedirs(backup_dir, exist_ok=True)
             backup_path = os.path.join(backup_dir, f"{os.path.basename(path)}.{timestamp}.bak")
             shutil.copy2(path, backup_path)
+            
+            # 2. 타임머신 버전 아카이빙
+            version_dir = os.path.join("logs/versions", path.replace("/", "_"))
+            os.makedirs(version_dir, exist_ok=True)
+            version_path = os.path.join(version_dir, f"v_{timestamp}.py")
+            shutil.copy2(path, version_path)
+            logger.info(f"🕰️ File version archived: {version_path}")
         
         tmp_path = path + ".tmp"
         with open(tmp_path, 'w', encoding='utf-8') as f:
