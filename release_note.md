@@ -39,10 +39,16 @@
 - [x] **Infrastructure**: 시스템 내부의 모든 노드 간 통신 및 상태 보호를 위한 'Secure Node Transport' 구축
 - [x] **Intelligence**: 에이전트가 작업 중 스스로의 논리적 모순을 검증하는 'Self-Consistency' 체크 엔진 도입
 - [x] **System**: 에이전트가 도구 호출 시 '가상 커서(Virtual Cursor)'를 사용하여 코드의 특정 위치를 정확히 수정하는 정밀 편집 모드 도입
-- [x] **Infrastructure**: 에이전트의 작업 실행 속도를 최적화하는 'Predictive Pre-fetching' 인프라 구축
-- [ ] **Intelligence**: 여러 가상의 실행 시나리오를 병렬로 검토하여 최적의 경로를 선택하는 'Speculative Reasoning' 엔진 추가
+- [x] **Intelligence**: 여러 가상의 실행 시나리오를 병렬로 검토하여 최적의 경로를 선택하는 'Speculative Reasoning' 엔진 구축
+- [ ] **Infrastructure**: 에이전트의 내부 지식 베이스를 그래프 DB 형식으로 시각화하고 관리하는 'Synaptic Knowledge Graph' 구축
 
 ## ✅ Completed
+### v2.0.2 (Speculative Reasoning & Scenario Swarm)
+- [x] `agents/manager.py`: 복잡한 요청에 대해 안전, 효율, 혁신 등 다각도의 해결 시나리오를 생성하는 분기 로직 구현
+- [x] `agents/swarm.py`: 병렬로 실행된 시나리오들의 확신도(Certainty)와 위험도(Risk)를 정량 평가하여 최적의 안을 선별하는 평가기(Evaluator) 도입
+- [x] `agents/swarm.py`: 가장 높은 점수를 받은 'Winner' 시나리오의 결과만을 메인 상태에 병합하여 추론의 일관성 및 품질 확보
+- [x] `agents/swarm.py`: 검토된 모든 가설과 선택 근거를 사용자에게 투명하게 보고하는 시각화 메시지 포맷 고도화
+
 ### v2.0.1 (Predictive Pre-fetching & Latency Optimization)
 - [x] `agents/planner.py`: 현재 계획 수립 시 다음 단계에서 필요할 파일을 예측하여 제안하는 `pre_fetch` 필드 및 지침 추가
 - [x] `main.py`: 에이전트 스트리밍 루프 내에서 `pre_fetch` 리소스를 감지하여 백그라운드에서 캐시를 미리 채우는 최적화 로직 구현

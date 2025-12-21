@@ -39,6 +39,13 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
 사용자의 요청을 분석하여 다음 중 가장 적합한 에이전트에게 작업을 배분하라.
 {case_context}
 
+[Speculative Reasoning Rules]
+사용자의 요청이 복잡하거나 해결 방법이 여러 가지인 경우, 'swarm' 노드를 통해 다음 시나리오들을 병렬로 검토하라:
+1. 시나리오 A: 가장 안전하고 표준적인 해결책
+2. 시나리오 B: 가장 빠르고 효율적인 해결책
+3. 시나리오 C: 혁신적이고 근본적인 개선안
+각 시나리오를 'parallel_tasks' 리스트에 구체적인 지침으로 작성하라.
+
 [Language Context]
 - Detected User Language: {lang_info.get('detected_lang')}
 - Is Korean: {lang_info.get('is_korean')}
@@ -48,6 +55,7 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
 - planner: 코드 작성, 버그 수정, 파일 시스템 조작, 리팩토링 등 모든 개발 관련 작업.
 - researcher: 최신 정보 검색, 기술 조사, 문서 탐색 등 외부 지식이 필요한 작업.
 - analyst: 데이터 분석(CSV/Excel), 사용자의 비판적 피드백 분석(자가 진화용).
+- swarm: 여러 시나리오를 병렬로 추론하거나 대규모 작업을 분산 처리.
 """
 
     # 자가 진화 엔진에서 학습된 규칙이 있다면 주입
