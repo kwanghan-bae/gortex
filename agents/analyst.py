@@ -398,8 +398,19 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
                     "next_node": "planner" # 재수정 지시
                 }
             else:
+                # [ECONOMY] 검증 성공 시 보상 지급
+                economy = state.get("agent_economy", {}).copy()
+                target_agent = "coder" # 주로 coder의 성과물을 검증
+                if target_agent not in economy:
+                    economy[target_agent] = {"points": 0, "level": "Novice"}
+                
+                economy[target_agent]["points"] += 10 # 10포인트 지급
+                if economy[target_agent]["points"] > 50:
+                    economy[target_agent]["level"] = "Expert"
+                
                 return {
-                    "messages": [("ai", f"🛡️ [Cross-Validation Passed] 무결성 검증 완료. (신뢰도: {val_res['confidence_score']*100:.0f}%)")],
+                    "messages": [("ai", f"🛡️ [Cross-Validation Passed] 무결성 검증 완료. {target_agent}가 10 포인트를 획득했습니다!")],
+                    "agent_economy": economy,
                     "next_node": "manager"
                 }
 

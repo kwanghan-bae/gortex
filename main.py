@@ -582,6 +582,7 @@ async def run_gortex():
 
     total_tokens, total_cost = 0, 0.0
     total_latency_ms, node_count = 0, 0
+    agent_economy = {} # 에이전트 평판 및 포인트 데이터
     
     # 세션별 파일 캐시 관리 (Isolation)
     cache_path = "logs/file_cache.json"
@@ -657,7 +658,8 @@ async def run_gortex():
                         "coder_iteration": 0,
                         "file_cache": session_cache,
                         "active_constraints": evo_mem.get_active_constraints(user_input),
-                        "api_call_count": auth_engine.get_call_count()
+                        "api_call_count": auth_engine.get_call_count(),
+                        "agent_economy": agent_economy
                     }
                     if cmd_status == "summarize": initial_state["messages"] = [("system", "Manual summary trigger")] * 12
                     elif cmd_status == "scout": initial_state["next_node"] = "trend_scout"
@@ -727,6 +729,15 @@ async def run_gortex():
                                     avg_latency
                                 )
                                 ui.update_logs({"agent": node_name, "event": "node_complete"})
+                                # 에이전트 경제 상태 업데이트
+                                if "agent_economy" in output:
+                                    agent_economy.update(output["agent_economy"])
+                                    if ui.web_manager:
+                                        asyncio.create_task(ui.web_manager.broadcast(json.dumps({
+                                            "type": "agent_economy",
+                                            "data": agent_economy
+                                        }, ensure_ascii=False)))
+
                                 # 정밀 프로파일링 기록
                                 observer.log_event(
                                     node_name, "node_complete", 

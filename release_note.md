@@ -50,9 +50,16 @@
 - [x] **Infrastructure**: 에이전트의 사고 과정을 음성으로 읽어주거나 사용자의 음성 명령을 이해하는 'Vocal Bridge' 엔진 구축
 - [x] **Interface**: 웹 대시보드에서 시스템의 모든 상태를 3D 공간으로 시각화하는 'Metaverse Dashboard' 기초 설계
 - [x] **Infrastructure**: 에이전트의 내부 사고 데이터를 활용하여 새로운 에이전트 노드를 자동으로 생성하고 배치하는 'Agent Factory' 기능 구현
-- [ ] **Interface**: 에이전트들이 서로의 성과를 칭찬하거나 비판하며 포인트(Point)를 주고받는 'Agent Economy' 게임화 시스템 구축
+- [x] **Interface**: 에이전트들이 서로의 성과를 칭찬하거나 비판하며 포인트(Point)를 주고받는 'Agent Economy' 게임화 시스템 구축
+- [ ] **Infrastructure**: 에이전트의 내부 데이터 처리 파이프라인을 분산 큐(RabbitMQ/Redis)로 확장하는 'Event-Driven Swarm' 구축
 
 ## ✅ Completed
+### v2.1.4 (Agent Economy & Gamified Collaboration)
+- [x] `core/state.py`: 에이전트별 평판 점수와 레벨을 관리하기 위한 `agent_economy` 상태 필드 추가
+- [x] `agents/analyst.py`: 상호 검증(Cross-Validation) 성공 시 해당 작업을 수행한 에이전트에게 포인트를 지급하는 보상 로직 구현
+- [x] `main.py`: 에이전트 노드로부터 반환된 경제 데이터를 전역 상태에 반영하고 웹 대시보드로 실시간 스트리밍하는 파이프라인 구축
+- [x] `agents/analyst.py`: 획득 포인트에 따른 에이전트 레벨업(Novice -> Expert) 자동 전이 시스템 도입
+
 ### v2.1.3 (Agent Factory & Self-Modification)
 - [x] `agents/manager.py`: 전문화된 영역의 요청 발생 시 새로운 에이전트 노드 생성을 결정하는 Agent Factory 의사결정 로직 구현
 - [x] `utils/tools.py`: `core/graph.py`를 정적으로 분석하여 신규 노드 임포트 및 등록을 자동화하는 `register_new_node` 유틸리티 신설
