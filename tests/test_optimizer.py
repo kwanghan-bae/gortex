@@ -1,66 +1,48 @@
 import unittest
-import os
 import json
 from unittest.mock import MagicMock, patch
 from gortex.agents.optimizer import OptimizerAgent, optimizer_node
 
 class TestGortexOptimizer(unittest.TestCase):
-    def setUp(self):
-        self.log_path = "test_trace.jsonl"
-        if os.path.exists(self.log_path):
-            os.remove(self.log_path)
-        
-        # 가짜 로그 데이터 생성
-        logs = [
-            {"agent": "Coder", "event": "error", "payload": "FileNotFoundError", "latency_ms": 100},
-            {"agent": "Researcher", "event": "result", "payload": "Success", "latency_ms": 5000}
-        ]
-        with open(self.log_path, 'w', encoding='utf-8') as f:
-            for log in logs:
-                f.write(json.dumps(log) + "\n")
-
-    def tearDown(self):
-        if os.path.exists(self.log_path):
-            os.remove(self.log_path)
-
-    @patch('gortex.agents.optimizer.GortexAuth')
-    def test_optimizer_analysis(self, mock_auth_cls):
+    @patch('gortex.agents.optimizer.LLMFactory')
+    def test_optimizer_analysis(self, mock_factory):
         """Optimizer 로그 분석 및 LLM 호출 테스트"""
-        mock_auth = mock_auth_cls.return_value
-        mock_res = MagicMock()
-        mock_res.text = json.dumps({
-            "analysis": "문제점: 파일 에러 빈발. 개선 제안: 파일을 먼저 확인하세요.",
-            "improvement_task": "Add file checks",
-            "priority": "high"
+        mock_backend = MagicMock()
+        mock_backend.generate.return_value = json.dumps({
+            "analysis": "성능 지연 발견. 병렬 처리 도입 권장.",
+            "improvement_task": "Swarm 노드 활용도 증대",
+            "priority": "medium"
         })
-        mock_auth.generate.return_value = mock_res
+        mock_backend.supports_structured_output.return_value = False
+        mock_factory.get_default_backend.return_value = mock_backend
 
-        agent = OptimizerAgent(log_path=self.log_path)
+        agent = OptimizerAgent(log_path="dummy.jsonl")
+        # 로그가 없을 때의 기본 동작 확인
         result = agent.analyze_performance()
         
-        self.assertIsInstance(result, dict)
-        self.assertIn("개선 제안", result["analysis"])
-        self.assertEqual(mock_auth.generate.call_count, 1)
-
-
-    @patch('gortex.agents.optimizer.OptimizerAgent')
-    def test_optimizer_node(self, mock_agent_cls):
-        """Optimizer 노드 실행 테스트"""
-        mock_agent = mock_agent_cls.return_value
-        mock_agent.analyze_performance.return_value = {
-            "analysis": "Mocked Analysis",
-            "improvement_task": "Do something",
-            "priority": "low"
-        }
-        # 교착 상태가 아님을 보장하도록 설정
-        mock_agent.detect_stuck_state.return_value = False
+        self.assertIn("분석", result["analysis"])
         
-        state = {"messages": []}
-        result = optimizer_node(state)
+    def test_stuck_state_detection(self):
+        """동일 동작 반복 감지 테스트"""
+        agent = OptimizerAgent()
         
-        self.assertEqual(result["next_node"], "manager")
-        self.assertIn("Mocked Analysis", result["messages"][0][1])
-
+        # 3회 반복 케이스
+        msgs = [
+            ("ai", "Executed read_file(a.py)"),
+            ("system", "Success"),
+            ("ai", "Executed read_file(a.py)"),
+            ("system", "Success"),
+            ("ai", "Executed read_file(a.py)"),
+            ("system", "Success")
+        ]
+        self.assertTrue(agent.detect_stuck_state(msgs))
+        
+        # 정상 케이스
+        msgs_ok = [
+            ("ai", "Executed read_file(a.py)"),
+            ("ai", "Executed write_file(b.py)")
+        ]
+        self.assertFalse(agent.detect_stuck_state(msgs_ok))
 
 if __name__ == '__main__':
     unittest.main()

@@ -3,7 +3,7 @@ import os
 import logging
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
-from gortex.core.auth import GortexAuth
+from gortex.core.llm.factory import LLMFactory
 from gortex.core.state import GortexState
 from gortex.agents.researcher import ResearcherAgent
 from gortex.utils.vector_store import LongTermMemory
@@ -16,7 +16,7 @@ class TrendScoutAgent:
     """
     def __init__(self, radar_path: str = "tech_radar.json"):
         self.radar_path = radar_path
-        self.auth = GortexAuth()
+        self.backend = LLMFactory.get_default_backend()
         self.researcher = ResearcherAgent()
         self.ltm = LongTermMemory()
         self.radar_data = self._load_radar()
@@ -38,7 +38,7 @@ class TrendScoutAgent:
         except Exception as e:
             logger.error(f"Failed to save tech radar: {e}")
 
-    async def check_vulnerabilities(self) -> List[str]:
+    async def check_vulnerabilities(self, model_id: str = "gemini-1.5-flash") -> List[str]:
         """requirements.txt를 분석하여 알려진 보안 취약점 점검"""
         req_path = "requirements.txt"
         if not os.path.exists(req_path):
@@ -63,7 +63,7 @@ class TrendScoutAgent:
             심각한 취약점(Critical/High)이 발견되었는지 분석하고, 업데이트가 필요한 패키지 목록을 제안하라.
             
             [Search Results]
-            {""}
+            {"".join(findings)}
             
             결과는 반드시 다음 JSON 형식을 따라라:
             {{
@@ -72,8 +72,15 @@ class TrendScoutAgent:
             }}
             """
             
-            response = self.auth.generate("gemini-1.5-flash", [("user", analysis_prompt)], None)
-            res_data = json.loads(response.text)
+            config = {"temperature": 0.0}
+            if self.backend.supports_structured_output():
+                from google.genai import types
+                config = types.GenerateContentConfig(response_mime_type="application/json")
+
+            response_text = self.backend.generate(model_id, [{"role": "user", "content": analysis_prompt}], config)
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            res_data = json.loads(json_match.group(0)) if json_match else json.loads(response_text)
             
             notifications = []
             if res_data.get("vulnerabilities_found"):
@@ -108,7 +115,7 @@ class TrendScoutAgent:
         except ValueError:
             return True
 
-    async def scan_trends(self) -> List[str]:
+    async def scan_trends(self, model_id: str = "gemini-1.5-flash") -> List[str]:
         """웹 검색을 통해 트렌드 정보를 수집하고 분석"""
         logger.info("🚀 Scouting for new tech trends and LLM models...")
         
@@ -139,11 +146,16 @@ class TrendScoutAgent:
         }}
         """
         
-        response = self.auth.generate("gemini-1.5-flash", [("user", analysis_prompt)], None)
-        
+        config = {"temperature": 0.0}
+        if self.backend.supports_structured_output():
+            from google.genai import types
+            config = types.GenerateContentConfig(response_mime_type="application/json")
+
         try:
-            # 응답 텍스트에서 JSON 추출 (정규식 또는 간단한 파싱)
-            json_match = re.search(r'\{.*\}', response.text, re.DOTALL)
+            response_text = self.backend.generate(model_id, [{"role": "user", "content": analysis_prompt}], config)
+            
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
             if json_match:
                 extracted = json.loads(json_match.group())
                 
@@ -185,11 +197,11 @@ class TrendScoutAgent:
         except Exception as e:
             logger.error(f"Trend analysis parsing failed: {e}")
             # 파싱 실패 시 원문을 요약하여 반환 (가짜 데이터 생성 금지)
-            return [f"트렌드 스캔 완료 (구조화 실패): {response.text[:200]}..."]
+            return [f"트렌드 스캔 완료 (구조화 실패): {response_text[:200]}..."]
             
         return ["트렌드 분석 스캔은 완료되었으나 새로운 항목이 발견되지 않았습니다."]
 
-    async def analyze_adoption_opportunity(self, file_list: List[str]) -> List[str]:
+    async def analyze_adoption_opportunity(self, file_list: List[str], model_id: str = "gemini-1.5-flash") -> List[str]:
         """신기술 도입 기회 분석"""
         if not self.radar_data.get("models") and not self.radar_data.get("patterns"):
             return []
@@ -221,9 +233,16 @@ class TrendScoutAgent:
             ]
         }}
         """
+        config = {"temperature": 0.0}
+        if self.backend.supports_structured_output():
+            from google.genai import types
+            config = types.GenerateContentConfig(response_mime_type="application/json")
+
         try:
-            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
-            res_data = json.loads(response.text)
+            response_text = self.backend.generate(model_id, [{"role": "user", "content": prompt}], config)
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            res_data = json.loads(json_match.group(0)) if json_match else json.loads(response_text)
             candidates = res_data.get("candidates", [])
             
             if candidates:
@@ -243,6 +262,7 @@ def trend_scout_node(state: GortexState) -> Dict[str, Any]:
     scout = TrendScoutAgent()
     
     interval = int(os.getenv("TREND_SCAN_INTERVAL_HOURS", "24"))
+    assigned_model = state.get("assigned_model", "gemini-1.5-flash")
     
     if scout.should_scan(interval):
         # 비동기 실행 (Researcher와 동일한 패턴)
@@ -258,17 +278,17 @@ def trend_scout_node(state: GortexState) -> Dict[str, Any]:
             import concurrent.futures
             with concurrent.futures.ThreadPoolExecutor() as executor:
                 # 트렌드 스캔과 보안 점검 병렬 실행
-                f1 = executor.submit(lambda: asyncio.run(scout.scan_trends()))
-                f2 = executor.submit(lambda: asyncio.run(scout.check_vulnerabilities()))
+                f1 = executor.submit(lambda: asyncio.run(scout.scan_trends(assigned_model)))
+                f2 = executor.submit(lambda: asyncio.run(scout.check_vulnerabilities(assigned_model)))
                 notifications = f1.result() + f2.result()
                 
                 # 도입 기회 분석은 위 결과 반영 후 순차 실행
-                f3 = executor.submit(lambda: asyncio.run(scout.analyze_adoption_opportunity(file_list)))
+                f3 = executor.submit(lambda: asyncio.run(scout.analyze_adoption_opportunity(file_list, assigned_model)))
                 notifications += f3.result()
         else:
-            n1 = loop.run_until_complete(scout.scan_trends())
-            n2 = loop.run_until_complete(scout.check_vulnerabilities())
-            n3 = loop.run_until_complete(scout.analyze_adoption_opportunity(file_list))
+            n1 = loop.run_until_complete(scout.scan_trends(assigned_model))
+            n2 = loop.run_until_complete(scout.check_vulnerabilities(assigned_model))
+            n3 = loop.run_until_complete(scout.analyze_adoption_opportunity(file_list, assigned_model))
             notifications = n1 + n2 + n3
             
         return {

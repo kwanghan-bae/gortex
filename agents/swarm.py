@@ -5,7 +5,6 @@ import os
 import re
 from typing import Dict, Any, List
 from gortex.core.state import GortexState
-from gortex.core.auth import GortexAuth
 from gortex.agents.analyst import AnalystAgent
 
 from gortex.utils.log_vectorizer import SemanticLogSearch
@@ -39,7 +38,8 @@ def get_persona_instruction(persona_name: str) -> str:
 
 async def execute_parallel_task(task_desc: str, state: GortexState, persona: str = None) -> Dict[str, Any]:
     """단일 하위 작업 또는 시나리오를 수행하고 상태 델타 및 점수 반환"""
-    auth = GortexAuth()
+    from gortex.core.llm.factory import LLMFactory
+    backend = LLMFactory.get_default_backend()
     log_search = SemanticLogSearch()
     
     start_time = time.time()
@@ -61,22 +61,29 @@ async def execute_parallel_task(task_desc: str, state: GortexState, persona: str
         "new_files": {{ "path": "hash" }} 
     }}
     """
+    
+    config = {"temperature": 0.0}
+    if backend.supports_structured_output():
+        from google.genai import types
+        config = types.GenerateContentConfig(response_mime_type="application/json")
+
     try:
         # 할당된 모델 사용 (state 기반)
         model_id = state.get("assigned_model", "gemini-1.5-flash")
-        response = auth.generate(model_id, [("user", prompt)], {
-            "response_mime_type": "application/json"
-        })
+        response_text = backend.generate(model_id, [{"role": "user", "content": prompt}], config)
         latency_ms = int((time.time() - start_time) * 1000)
         
-        tokens = response.usage_metadata.total_token_count if hasattr(response, 'usage_metadata') and response.usage_metadata else (len(prompt) // 4 + len(response.text) // 4)
+        # 토큰 계산 간소화 (표준화된 응답에서는 usage_metadata 접근이 다르거나 텍스트 기반 추정)
+        tokens = len(prompt) // 4 + len(response_text) // 4
             
         import json
-        res_data = json.loads(response.text)
+        json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+        res_data = json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+        
         return {
             "task": task_desc,
             "persona": persona,
-            "report": res_data.get("report", response.text),
+            "report": res_data.get("report", response_text),
             "certainty": res_data.get("certainty", 0.5),
             "risk": res_data.get("risk", 0.5),
             "experience_score": experience_weight,

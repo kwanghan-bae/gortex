@@ -3,8 +3,7 @@ import os
 import logging
 import re
 from typing import List, Dict, Any, Optional
-from google.genai import types
-from gortex.core.auth import GortexAuth
+from gortex.core.llm.factory import LLMFactory
 from gortex.core.state import GortexState
 
 logger = logging.getLogger("GortexOptimizer")
@@ -16,7 +15,7 @@ class OptimizerAgent:
     """
     def __init__(self, log_path: str = "logs/trace.jsonl"):
         self.log_path = log_path
-        self.auth = GortexAuth()
+        self.backend = LLMFactory.get_default_backend()
 
     def _read_recent_logs(self, limit: int = 100) -> List[Dict[str, Any]]:
         """최근 로그를 읽어옴"""
@@ -33,7 +32,7 @@ class OptimizerAgent:
             logger.error(f"Failed to read logs: {e}")
         return logs
 
-    def analyze_performance(self, context: str = "") -> Optional[Dict[str, Any]]:
+    def analyze_performance(self, context: str = "", model_id: str = "gemini-1.5-flash") -> Optional[Dict[str, Any]]:
         """로그 분석 및 개선 제안 도출"""
         logs = self._read_recent_logs()
         if not logs:
@@ -63,15 +62,15 @@ class OptimizerAgent:
     "priority": "high/medium/low"
 }}
 """
+        config = {"temperature": 0.0}
+        if self.backend.supports_structured_output():
+            from google.genai import types
+            config = types.GenerateContentConfig(response_mime_type="application/json")
+
         try:
-            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {
-                "response_mime_type": "application/json"
-            })
-            json_text = response.text
-            json_match = re.search(r'{{.*}}', json_text, re.DOTALL)
-            if json_match:
-                return json.loads(json_match.group())
-            return {"analysis": f"분석: {json_text}. 개선 제안: 모니터링 강화", "improvement_task": None, "priority": "medium"}
+            response_text = self.backend.generate(model_id, [{"role": "user", "content": prompt}], config)
+            json_match = re.search(r'\{{.*\}}', response_text, re.DOTALL)
+            return json.loads(json_match.group()) if json_match else json.loads(response_text)
         except Exception as e:
             logger.error(f"Optimizer analysis failed: {e}")
             return {"analysis": f"오류 발생: {e}. 개선 제안: API 키 점검", "improvement_task": None, "priority": "low"}
@@ -115,7 +114,8 @@ def optimizer_node(state: GortexState) -> Dict[str, Any]:
     if len(eff_history) >= 3 and all(e < 40.0 for e in eff_history[-3:]):
         context = "Persistent low efficiency (<40) detected in last 3 turns. Focus on reducing token usage or optimizing agent path."
 
-    res = agent.analyze_performance(context=context)
+    assigned_model = state.get("assigned_model", "gemini-1.5-flash")
+    res = agent.analyze_performance(context=context, model_id=assigned_model)
     updates = {
         "thought": f"시스템 로그 분석 결과: {res.get('analysis')}",
         "messages": [("ai", f"🚀 [System Optimization Report]\n\n{res.get('analysis')}")],

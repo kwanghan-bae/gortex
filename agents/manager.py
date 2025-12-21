@@ -1,6 +1,7 @@
 import logging
 import json
 import os
+import time
 from typing import Dict, List, Any
 from google.genai import types
 from gortex.core.auth import GortexAuth
@@ -10,6 +11,7 @@ from gortex.core.evolutionary_memory import EvolutionaryMemory
 from gortex.utils.log_vectorizer import SemanticLogSearch
 from gortex.utils.translator import SynapticTranslator
 from gortex.utils.vector_store import LongTermMemory
+from gortex.utils.efficiency_monitor import EfficiencyMonitor
 
 logger = logging.getLogger("GortexManager")
 
@@ -24,6 +26,8 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     translator = SynapticTranslator()
     ltm = LongTermMemory()
     evo_mem = EvolutionaryMemory()
+    monitor = EfficiencyMonitor()
+    start_time = time.time()
     
     # 1. 언어 감지 및 번역 (다국어 지원)
     last_msg_obj = state["messages"][-1]
@@ -59,8 +63,6 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     
     if recalled_items:
         texts = [item["content"] for item in recalled_items]
-        ltm_context = "\n[RECALLED LONG-TERM KNOWLEDGE]\n" + "\n".join([f"- {t}" for f in texts for t in texts]) # fix: nested loop accidentally?
-        # Fixed loop in later steps if needed, but keeping logic consistent with original
         ltm_context = "\n[RECALLED LONG-TERM KNOWLEDGE]\n" + "\n".join([f"- {t}" for t in texts])
 
         if any("최신" in k or "신규" in k for k in texts):
@@ -212,8 +214,12 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         formatted_messages.append({"role": role, "content": content})
 
     # LLM 호출
+    success = False
+    tokens = 0
     try:
         response_text = backend.generate(model=model_id, messages=formatted_messages, config=config)
+        success = True
+        tokens = len(base_instruction) // 4 + len(response_text) // 4
         
         # JSON 파싱
         import re
@@ -224,6 +230,9 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         new_energy = max(0, energy - 5)
         target_node = res_data.get("next_node", "__end__")
         
+        latency_ms = int((time.time() - start_time) * 1000)
+        monitor.record_interaction("manager", model_id, success, tokens, latency_ms, metadata={"next_node": target_node})
+
         updates = {
             "thought": res_data.get("thought"),
             "internal_critique": res_data.get("internal_critique"),
@@ -241,4 +250,6 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Error in manager node: {e}")
+        latency_ms = int((time.time() - start_time) * 1000)
+        monitor.record_interaction("manager", model_id, False, 0, latency_ms, metadata={"error": str(e)})
         return {"next_node": "__end__", "messages": [("ai", f"❌ 요청 분석 실패: {e}")]}

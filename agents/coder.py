@@ -7,6 +7,7 @@ from gortex.core.state import GortexState
 from gortex.core.llm.factory import LLMFactory
 from gortex.utils.tools import read_file, write_file, execute_shell, list_files, get_file_hash, apply_patch, scan_security_risks
 from gortex.utils.healing_memory import SelfHealingMemory
+from gortex.utils.efficiency_monitor import EfficiencyMonitor
 
 logger = logging.getLogger("GortexCoder")
 
@@ -18,6 +19,8 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
     """
     backend = LLMFactory.get_default_backend()
     healing_mem = SelfHealingMemory()
+    monitor = EfficiencyMonitor()
+    start_time = time.time()
     
     # 0. 반복 횟수 체크
     current_iteration = state.get("coder_iteration", 0)
