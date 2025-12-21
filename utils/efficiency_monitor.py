@@ -109,6 +109,30 @@ class EfficiencyMonitor:
             
         return scores
 
+    def get_best_model_for_task(self, agent_name: str) -> Optional[str]:
+        """특정 에이전트/태스크에 대해 역사적으로 가장 성과가 좋았던 모델 추천"""
+        if not os.path.exists(self.stats_path):
+            return None
+
+        task_stats = {} # model -> {successes, calls}
+        try:
+            with open(self.stats_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    data = json.loads(line)
+                    if data.get("agent") == agent_name:
+                        m = data["model"]
+                        if m not in task_stats: task_stats[m] = {"s": 0, "c": 0}
+                        task_stats[m]["c"] += 1
+                        if data["success"]: task_stats[m]["s"] += 1
+            
+            if not task_stats: return None
+            
+            # 성공률 높은 순으로 정렬
+            ranked = sorted(task_stats.items(), key=lambda x: (x[1]["s"] / x[1]["c"]), reverse=True)
+            return ranked[0][0] # 최상위 모델 ID 반환
+        except:
+            return None
+
     def get_evolution_history(self, limit: int = 10) -> List[Dict[str, Any]]:
         """시스템 진화(코드 수정) 이력을 반환합니다."""
         if not os.path.exists(self.stats_path):

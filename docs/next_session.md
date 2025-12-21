@@ -1,27 +1,27 @@
 # Next Session
 
 ## 세션 목표
-- **Architecture Self-Healing**: `Analyst`가 발견한 아키텍처 드리프트(계층 위반) 사항을 `EvolutionNode`가 분석하여, 임포트 경로 변경이나 모듈 위치 재조정을 통해 자동으로 아키텍처 무결성을 회복하는 루프를 가동한다.
-- **Dynamic Policy Generation**: 프로젝트의 성공적인 코드 변경 이력과 현재 구조를 바탕으로, 모든 에이전트가 즉시 반영해야 할 '최신 코딩 정책'을 LLM이 요약하여 프롬프트에 동적으로 주입하는 체계를 구축한다.
+- **Global Constraint Synthesis**: 분산되어 저장된 수많은 미시적 규칙(experience.json)을 `Analyst`가 정기적으로 고차원적인 '시스템 가이드라인'으로 승격시키고, 이를 `docs/RULES.md`에 자동으로 반영하는 전역 지식 통합 루프를 가동한다.
+- **Model-Persona Affinity Mapping**: `EfficiencyMonitor` 데이터를 활용하여, 페르소나별(Innovation vs Stability) 및 작업별(Arch vs Code)로 가장 성과가 좋았던 모델을 매핑하고, `Manager`가 이를 바탕으로 '전문가 모델'을 강제 할당하는 로직을 고도화한다.
 
 ## 컨텍스트
-- 시스템이 자신의 결함을 감지할 수 있게 되었으므로, 이제는 이를 수정할 수 있는 실행력이 필요합니다.
-- 고정된 프롬프트가 아닌, 현재 상황에 맞는 가변 정책(Policy)이 주입될 때 진화 속도가 극대화됩니다.
+- 시스템이 개별적인 실수는 잘 교정하고 있으나, 이를 거시적인 원칙으로 승격시키는 과정은 아직 수동적입니다.
+- 데이터가 충분히 쌓였으므로, 이제는 모델의 '이름'이 아닌 '실제 성과'를 바탕으로 한 전문가 할당 체계로 넘어가야 합니다.
 
 ## 범위 (Scope)
 ### 수행할 작업 (Do)
-- `agents/evolution_node.py`: 아키텍처 위반 사항을 입력받아 리팩토링을 수행하는 `heal_architecture` 메서드 추가.
-- `utils/prompt_loader.py`: `EvolutionaryMemory`의 정제된 규칙들을 기반으로 시스템 프롬프트를 동적으로 보강하는 로직 구현.
-- `agents/manager.py`: `Analyst`의 아키텍처 진단 결과가 심각할 경우 `evolution` 노드로 강제 라우팅하는 로직 보강.
+- `agents/analyst/base.py`: 미시적 규칙들을 요약하여 거시적 원칙을 추출하는 `synthesize_global_rules` 메서드 추가.
+- `utils/efficiency_monitor.py`: '모델별 페르소나 적합도' 점수를 산출하는 분석 메서드 구현.
+- `docs/RULES.md`: 에이전트에 의해 자동 업데이트되는 'Auto-Evolved Rules' 섹션 추가.
 
 ### 수행하지 않을 작업 (Do NOT)
-- 외부 라이브러리 의존성을 사용자 승인 없이 대규모로 추가하지 않는다.
+- 사용자가 명시적으로 정한 핵심 보안 원칙을 LLM이 임의로 삭제하게 두지 않는다.
 
 ## 기대 결과
-- 기술 부채가 쌓이기 전에 시스템이 스스로 아키텍처를 교정하는 '면역 체계' 완성.
-- 상황에 최적화된 지침이 에이전트들에게 실시간 전파되는 '동적 정책 엔진' 가동.
+- 파편화된 지식이 체계적인 원칙으로 진화하는 '지능의 구조화' 달성.
+- 각 작업에 가장 특화된 모델이 즉시 투입되는 '최적의 전문가 함대' 가동.
 
 ## 완료 기준
-- 특정 아키텍처 위반 사례가 자가 진화 후 해소되는지 확인.
-- 모든 에이전트 호출 시 `Dynamic Policy`가 시스템 프롬프트에 포함되는지 확인.
-- `docs/sessions/session_0070.md` 기록.
+- `experience.json`의 내용이 요약되어 `docs/RULES.md`에 자동 반영되는지 확인.
+- 작업 성격에 따라 모델 할당이 통계적으로 유의미하게 변하는지 검증.
+- `docs/sessions/session_0071.md` 기록.

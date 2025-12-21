@@ -93,11 +93,16 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
         res = agent.analyze_data(data_files[0])
         return {"messages": [("ai", i18n.t("analyst.data_analyzed", file=data_files[0]))], "next_node": "manager"}
 
-    # [Self-Evolution: Auto-Test Proliferation & Memory Pruning]
+    # [Self-Evolution: Auto-Test Proliferation, Memory Pruning & Global Synthesis]
     # 에너지가 충분하고 다른 명시적 작업이 없을 때 수행
     energy = state.get("agent_energy", 100)
     if energy > 70 and not debate_data and not data_files:
-        # 기억 정제 (주기적 수행)
+        # 1. 전역 규칙 종합 (지식의 문서화)
+        if len(agent.memory.memory) > 30: # 규칙이 30개 이상일 때 종합 시도
+            res = agent.synthesize_global_rules()
+            logger.info(res)
+            
+        # 2. 기억 정제 (주기적 수행)
         if len(agent.memory.memory) > 20:
             agent.memory.prune_memory()
             

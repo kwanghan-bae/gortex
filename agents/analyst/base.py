@@ -107,27 +107,44 @@ class AnalystAgent:
         deps = indexer.generate_dependency_graph()
         
         violations = []
-        layers = {
-            "utils": 0,
-            "core": 1,
-            "ui": 2,
-            "agents": 3,
-            "tests": 4
-        }
+        layers = {"utils": 0, "core": 1, "ui": 2, "agents": 3, "tests": 4}
         
         for dep in deps:
-            source = dep["source"]
-            target = dep["target"]
-            
+            source, target = dep["source"], dep["target"]
             src_layer = next((l for l in layers if f"gortex.{l}" in source or source.startswith(l)), None)
             tgt_layer = next((l for l in layers if f"gortex.{l}" in target or target.startswith(l)), None)
             
-            if src_layer and tgt_layer:
-                if layers[src_layer] < layers[tgt_layer]:
-                    violations.append({
-                        "type": "Layer Violation",
-                        "source": source,
-                        "target": target,
-                        "reason": f"하위 레이어 '{src_layer}'가 상위 레이어 '{tgt_layer}'를 참조하고 있습니다."
-                    })
+            if src_layer and tgt_layer and layers[src_layer] < layers[tgt_layer]:
+                violations.append({
+                    "type": "Layer Violation", "source": source, "target": target,
+                    "reason": f"하위 레이어 '{src_layer}'가 상위 레이어 '{tgt_layer}'를 참조하고 있습니다."
+                })
         return violations
+
+    def synthesize_global_rules(self, model_id: str = "gemini-1.5-pro") -> str:
+        """분산된 학습 규칙들을 종합하여 시스템 대원칙(docs/RULES.md) 자동 갱신"""
+        rules = self.memory.memory
+        if not rules: return "정리할 규칙이 없습니다."
+        
+        rules_context = "".join([f"- [{r['severity']}] {r['learned_instruction']}\n" for r in rules])
+        prompt = f"다음 학습 규칙들을 5가지 이내의 핵심 원칙으로 요약하라.\n\n[규칙 리스트]\n{rules_context}\n\n결과는 마크다운 형식을 따르라."
+        
+        try:
+            summary = self.backend.generate(model_id, [{"role": "user", "content": prompt}])
+            rules_md_path = "docs/RULES.md"
+            original_rules = ""
+            if os.path.exists(rules_md_path):
+                with open(rules_md_path, 'r', encoding='utf-8') as f: original_rules = f.read()
+            
+            section_start = "## 🤖 Auto-Evolved Coding Standards"
+            if section_start in original_rules:
+                header = original_rules.split(section_start)[0]
+                new_content = f"{header}{section_start}\n\n> 마지막 갱신: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n{summary}"
+            else:
+                new_content = f"{original_rules}\n\n{section_start}\n\n{summary}"
+                
+            with open(rules_md_path, 'w', encoding='utf-8') as f: f.write(new_content)
+            return "✅ 전역 규칙 종합 완료."
+        except Exception as e:
+            logger.error(f"Global rule synthesis failed: {e}")
+            return f"❌ 실패: {e}"
