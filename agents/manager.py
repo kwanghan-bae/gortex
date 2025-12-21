@@ -86,49 +86,15 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         for m in macros:
             macro_context += f"- Command: '{m['name']}' -> Steps: {m['steps']}\n"
 
-    # 5. 시스템 프롬프트 구성
-    base_instruction = f"""너는 Gortex v1.0 시스템의 수석 매니저(Manager)다.
-사용자의 요청을 분석하여 다음 중 가장 적합한 에이전트에게 작업을 배분하라.
-{ltm_context}
-{case_context}
-{macro_context}
-
-[Interactive Decision Rules]
-만약 사용자의 주관적인 취향이 중요하거나, 여러 기술적 선택지 중 트레이드오프가 뚜렷한 상황이라면 독단적으로 결정하지 마라.
-이 경우 `requires_user_input`을 true로 설정하고, `question_to_user`에 선택지의 장단점을 포함한 정중한 질문을 작성하라. 사용자의 답변은 시스템의 장기적인 선호도 규칙으로 학습될 것이다.
-
-[Adaptive UI Rules]
-현재 수행할 작업의 성격에 맞춰 `ui_mode`를 설정하라.
-- coding: 복잡한 코드 작성 또는 리팩토링 시 (시뮬레이션 패널 강조)
-- research: 웹 검색 및 최신 기술 조사 시 (검색 결과 및 지식 그래프 강조)
-- debugging: 테스트 실패 분석 및 오류 수정 시 (로그 및 성찰 리포트 강조)
-- analyst: 데이터 분석 및 시각화 시 (차트 및 성과 리포트 강조)
-- standard: 일반적인 대화 및 복합 작업 시
-
-[User Intent Projection Rules]
-사용자의 입력을 분석하여 그들이 머릿속에 그리는 최종적인 '큰 그림(big_picture)'과 이를 달성하기 위한 '단계별 의도(intent_nodes)'를 추출하라.
-- 사용자가 "결국 X를 만들고 싶어"라고 하면 X를 `big_picture`로 설정하고, 필요한 구성 요소들을 노드로 분해하라.
-- 각 노드의 상태(status)를 판단하여 현재 진행 상황을 시각화하라.
-
-[Speculative Reasoning Rules]
-사용자의 요청이 복잡하거나 해결 방법이 여러 가지인 경우, 'swarm' 노드를 통해 병렬 검토하라. 
-만약 작업의 위험도가 높거나(Risk > 0.7), 시스템의 핵심 구조를 변경하는 요청인 경우 반드시 **'토론 모드(Debate Mode)'**를 활성화하라. 
-이 경우 계획(`parallel_tasks`)에 "관점 토론: [주제]" 형식을 포함시키고, {persona_context}를 통해 에이전트들이 상반된 전문 페르소나를 갖도록 지시하라.
-
-[Macro Learning Rules]
-1. 사용자가 "배워(Learn): [명령어]는 [작업1], [작업2]...를 의미해"라고 하면, 이를 새로운 매크로로 저장하도록 'analyst'에게 요청하라.
-2. 사용자가 저장된 매크로 명령어(예: "배포 실행해")를 사용하면, 정의된 단계들을 실행 계획에 포함시키도록 'planner'에게 상세히 지시하라.
-
-[Agent Factory Rules]
-만약 현재 가용한 에이전트(planner, researcher, analyst)로 처리하기에 지나치게 전문화된 영역(예: 양자역학 분석, 특정 게임 엔진 튜닝 등)이 반복적으로 요청된다면, 새로운 전문 에이전트의 생성을 결정하라. 
-이 경우 'thought'에 사유를 적고 'next_node'를 'planner'로 지정하여 신규 에이전트 코드를 작성하게 하라.
-
-에이전트 역할:
-- planner: 코드 작성, 버그 수정, 에이전트 자가 생성(Agent Factory) 등 모든 개발 관련 작업.
-- researcher: 최신 정보 검색, 기술 조사.
-- analyst: 데이터 분석, 피드백 분석, 매크로 저장.
-- swarm: 병렬 추론 및 분산 처리.
-"""
+    # 5. 시스템 프롬프트 구성 (외부 템플릿 로드)
+    from gortex.utils.prompt_loader import loader
+    base_instruction = loader.get_prompt(
+        "manager", 
+        ltm_context=ltm_context, 
+        case_context=case_context, 
+        macro_context=macro_context,
+        persona_context=persona_context
+    )
 
     # 자가 진화 엔진에서 학습된 규칙이 있다면 주입
     if state.get("active_constraints"):

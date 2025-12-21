@@ -1,23 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 에이전트 프롬프트 외부 템플릿화 및 동적 관리 (Dynamic Prompting v1)
+- 모든 에이전트 지침의 외부 템플릿 통합 (Global Dynamic Prompting v1)
 
 ## Context
-- 현재 `Manager`, `Planner`, `Coder` 등의 시스템 지침(Instruction)이 파이썬 코드 내부에 f-string으로 내장되어 있어, 지시사항 하나를 고치기 위해 코드를 수정하고 세션을 재시작해야 함.
-- 프롬프트를 외부 파일(`docs/prompts/*.yaml`)로 분리하여 관리하고, 에이전트 실행 시 이를 동적으로 로드하여 주입하는 아키텍처가 필요함.
+- v2.5.8에서 `Manager`와 `PromptLoader`가 완성됨.
+- 이제 `Planner`, `Coder`, `Analyst`, `Researcher` 등 나머지 모든 노드에 대해서도 하드코딩된 프롬프트를 제거하고 `docs/prompts/*.yaml` 기반으로 전환해야 함.
 
 ## Scope
 ### Do
-- `gortex/docs/prompts/` 디렉토리 생성 및 각 에이전트별 기본 프롬프트 템플릿 작성.
-- `utils/prompt_loader.py` 유틸리티를 추가하여 템플릿 로드 및 변수 치환 로직 구현.
-- 모든 에이전트 노드가 이 로더를 사용하여 시스템 지침을 획득하도록 수정.
+- `docs/prompts/core_agents.yaml`에 Planner, Coder, Analyst, Researcher의 상세 지침 추가.
+- `agents/planner.py`, `agents/coder.py`, `agents/analyst.py`, `agents/researcher.py`를 수정하여 `PromptLoader` 연동.
+- 템플릿 변수(예: `{current_files}`, `{tool_output}` 등)를 각 노드 맥락에 맞게 매핑.
 
 ### Do NOT
-- 기존의 정교한 프롬프트 내용을 단순화하지 말 것 (내용은 유지하되 위치만 이동).
+- 각 에이전트의 고유한 로직(Python Code)은 건드리지 말고, 지침(Instruction) 문자열만 이전할 것.
 
 ## Expected Outputs
-- `docs/prompts/*.yaml` 파일들, `utils/prompt_loader.py`, 에이전트 파일들 수정.
+- `docs/prompts/core_agents.yaml` 업데이트, 모든 에이전트 파일 수정.
 
 ## Completion Criteria
-- 코드 내의 하드코딩된 대규모 프롬프트 문자열이 사라지고, 외부 파일을 통한 동적 주입이 정상 작동하는 것이 확인되어야 함.
+- 모든 에이전트 노드에서 하드코딩된 대규모 지침 문자열이 완전히 제거되고, 외부 파일로부터 지능을 로드하는 것이 확인되어야 함.
