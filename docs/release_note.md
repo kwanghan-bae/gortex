@@ -12,13 +12,19 @@
 - [x] **Intelligence**: 특정 라이브러리의 최신 API 문서를 실시간 학습하여 적용하는 'Live Documentation Learning' 구현
 - [x] **Intelligence**: 테스트 실패 로그를 분석하여 근본 원인을 추론하고 '실패 방지 규칙'을 자동 생성하는 'Reflective Debugging' 노드 추가
 - [x] **Interface**: 에이전트의 페르소나(Innovation, Stability 등)를 동적으로 관리하고 생성하는 'Persona Lab' 구현
-- [ ] **Intelligence**: 기술 부채 상위 파일을 대상으로 자동 리팩토링 및 테스트 검증을 수행하는 'Auto-Refactor Loop' 가동
+- [x] **Intelligence**: 기술 부채 상위 파일을 대상으로 자동 리팩토링 및 테스트 검증을 수행하는 'Auto-Refactor Loop' 가동
+- [ ] **Interface**: 에이전트의 사고 인과 관계를 3D 그래프로 탐색하는 'Causal Graph Explorer' 구현
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.3.9 (Auto-Refactor Loop & Self-Optimization)
+- [x] `agents/analyst.py`: 코드 복잡도를 분석하여 개선이 시급한 파일을 선별하는 리팩토링 추천 엔진 구축
+- [x] `agents/manager.py`: 시스템 여유 자원(Energy) 발생 시 능동적으로 기술 부채 해소를 지시하는 지능형 스케줄러 구현
+- [x] `main.py`: 리팩토링 과정에서 발생한 모든 변경 사항을 테스트로 검증하는 자가 최적화 순환 구조 안착
 
 ### v2.3.8 (Persona Lab & Dynamic Personality)
 - [x] `docs/PERSONAS.md`: 에이전트 성격과 행동 지침을 정의하는 중앙 집중형 페르소나 카탈로그 구축

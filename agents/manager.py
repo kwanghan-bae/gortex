@@ -31,6 +31,9 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     # 내부 처리는 한국어 맥락을 포함한 원문 활용
     internal_input = lang_info.get("translated_text", raw_input) if not lang_info.get("is_korean") else raw_input
 
+    # 에너지 상태 조기 획득 (전역 참조용)
+    energy = state.get("agent_energy", 100)
+
     # [Persona Lab] 상황별 페르소나 선택 전략
     recommended_personas = ["Innovation", "Stability"]
     if any(k in internal_input.lower() for k in ["보안", "security", "취약점", "auth"]):
@@ -111,6 +114,14 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
 
     # 시스템 최적화 제안(Improvement Task)이 있는지 확인
     system_improvement_msg = ""
+    
+    # [Auto-Refactor Loop] 에너지가 충분할 때 능동적 기술 부채 해소 시도
+    if energy > 80 and not any("refactor" in msg.content.lower() for msg in reversed(state["messages"]) if hasattr(msg, 'content')):
+        from gortex.agents.analyst import AnalystAgent
+        refactor_target = AnalystAgent().suggest_refactor_target()
+        if refactor_target:
+            base_instruction += f"\n\n[AUTO-REFACTOR OPPORTUNITY]\n현재 시스템 에너지가 충분하여 기술 부채 해소를 제안한다.\n대상 파일: {refactor_target['file']}\n문제: {refactor_target['issue']}\n전략: {refactor_target['refactor_strategy']}\n이 작업을 최우선으로 수행할 수 있는 계획을 수립하라."
+
     for msg in reversed(state["messages"]):
         content = msg.content if hasattr(msg, 'content') else str(msg)
         if "최적화 전문가의 제안:" in content:

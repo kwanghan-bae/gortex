@@ -201,41 +201,44 @@ class AnalystAgent:
             return {"final_decision": "Error during synthesis.", "rationale": str(e), "action_plan": []}
 
     def garbage_collect_knowledge(self):
-        """장기 기억 저장소(Knowledge Base)의 불필요한 정보 정리"""
-        logger.info("🧹 Starting Knowledge Base Garbage Collection...")
-        
-        from gortex.utils.vector_store import LongTermMemory
-        ltm_store = LongTermMemory()
-        
-        original_count = len(ltm_store.memory)
-        now = datetime.now()
-        
-        # 1. 중복 제거 (Content 기반)
-        unique_memory = {}
-        for item in ltm_store.memory:
-            content = item["content"]
-            if content not in unique_memory or item.get("usage_count", 0) > unique_memory[content].get("usage_count", 0):
-                unique_memory[content] = item
-        
-        # 2. 오래되고 안 쓰이는 지식 제거 (예: 30일 이상 경과 & 사용 0회)
-        final_memory = []
-        for item in unique_memory.values():
-            try:
-                # 타임스탬프 파싱 (형식에 따라 예외 처리)
-                ts = datetime.fromisoformat(item.get("timestamp", now.isoformat()))
-                age_days = (now - ts).days
-                if age_days > 30 and item.get("usage_count", 0) == 0:
-                    continue # 삭제
-            except: pass
-            final_memory.append(item)
-            
-        ltm_store.memory = final_memory
-        ltm_store._save_store()
-        
+        # ... (기존 코드 유지) ...
         removed = original_count - len(final_memory)
         if removed > 0:
             logger.info(f"✅ Knowledge GC complete: Removed {removed} items.")
         return removed
+
+    def suggest_refactor_target(self) -> Optional[Dict[str, Any]]:
+        """기술 부채가 가장 심각한 파일을 리팩토링 대상으로 제안"""
+        logger.info("🧐 Analyzing technical debt for refactoring target...")
+        debt_list = self.scan_project_complexity()
+        
+        if not debt_list:
+            return None
+            
+        # 최상위 타겟 선정
+        target = debt_list[0]
+        
+        prompt = f"""다음 파일은 코드 복잡도 점수가 {target['score']}점으로 프로젝트 내에서 가장 높다. 
+        이 파일을 리팩토링하여 복잡도를 낮추고 가독성을 높이기 위한 전략을 수립하라.
+        
+        [File Path]
+        {target['file']}
+        
+        결과 형식 (JSON):
+        {{
+            "file": "{target['file']}",
+            "current_score": {target['score']},
+            "issue": "복잡도의 주요 원인 설명",
+            "refactor_strategy": "개선 방향 및 방법",
+            "priority": "Critical/High"
+        }}
+        """
+        try:
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
+            return json.loads(response.text)
+        except Exception as e:
+            logger.error(f"Failed to suggest refactor target: {e}")
+            return None
 
     def generate_anti_failure_rule(self, error_log: str, attempt_context: str) -> Optional[Dict[str, Any]]:
         """오류 근본 원인 분석 후 재발 방지 규칙 생성 및 저장"""

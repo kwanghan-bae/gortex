@@ -1,24 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 기술 부채 자동 해소를 위한 Auto-Refactor Loop 가동
+- 에이전트 추론 인과 관계 시각화 (Causal Graph Explorer v1)
 
 ## Context
-- v2.2.19에서 도입된 'Code Complexity Heatmap'을 통해 프로젝트의 취약 지점이 가시화됨.
-- 이제 `Analyst`가 식별한 고복잡도 파일을 대상으로, `Manager`와 `Planner`가 리팩토링 계획을 세우고 `Coder`가 실행하는 자동 개선 순환 구조를 완성해야 함.
+- 다중 에이전트 협업과 토론이 복잡해지면서, 최종 결과의 근본 원인을 파악하기가 점점 어려워지고 있음.
+- `logs/trace.jsonl`에 기록된 `cause_id`를 활용하여, 특정 결정이 어떤 사고 과정과 도구 호출로부터 비롯되었는지 보여주는 인과 관계 그래프 데이터 파이프라인이 필요함.
 
 ## Scope
 ### Do
-- `agents/analyst.py`에서 가장 복잡한 파일을 우선적으로 리팩토링 후보로 추천하는 `suggest_refactor_target` 로직 추가.
-- `agents/manager.py`에서 시스템 부하가 적을 때(Energy > 80) 자동 리팩토링 작업을 승인하고 `planner`로 라우팅하는 지능형 스케줄링 구현.
-- 리팩토링 후 반드시 기존 단위 테스트와 신규 테스트를 모두 통과해야 함을 명시.
+- `core/observer.py` (또는 관련 로직)를 확장하여 전체 세션의 인과 관계 체인을 그래프 데이터(Nodes/Edges)로 변환하는 기능 구현.
+- `ui/three_js_bridge.py`에 인과 관계 그래프를 3D 토폴로지로 변환하는 로직 추가.
+- 웹 대시보드로 실시간 인과 관계 데이터를 전송하여 시각화.
 
 ### Do NOT
-- 한 번에 여러 파일을 수정하지 말 것 (파일 단위로 순차적 진행).
-- 프로젝트의 핵심 설정 파일 수정 금지.
+- 기존의 단순 사고 트리 시각화 로직과 혼동하지 말 것 (인과 관계는 세션 전체를 관통함).
 
 ## Expected Outputs
-- `agents/analyst.py`, `agents/manager.py` 수정.
+- `core/observer.py`, `ui/three_js_bridge.py`, `main.py` 수정.
 
 ## Completion Criteria
-- `/scan_debt` 결과 상위 파일 중 하나를 대상으로 리팩토링 계획이 수립되고, 수정 후 테스트가 통과하는 과정이 확인되어야 함.
+- 웹 대시보드에서 특정 노드를 선택했을 때, 그 노드의 원인이 된 이전 이벤트들이 강조되어 표시되는 것이 확인되어야 함.
