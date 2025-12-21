@@ -45,9 +45,16 @@
 - [x] **Interface**: 사용자의 복잡한 데이터 분석 요청을 시각적 차트로 자동 변환하는 'Auto-Chart' 기능 구현
 - [x] **Intelligence**: 에이전트가 도구 호출 전후의 시스템 상태를 영상처럼 '상상'하여 시각적으로 시뮬레이션하는 'Visual Simulation' 엔진 추가
 - [x] **Interface**: 에이전트의 사고 과정과 시뮬레이션 결과를 결합하여 보여주는 'Immersive Reasoning' 웹 UI 구축
-- [ ] **Intelligence**: 여러 시나리오의 성공 가능성을 사전에 예측하고 최적의 가중치를 부여하는 'Speculative Score' 엔진 고도화
+- [x] **Intelligence**: 여러 시나리오의 성공 가능성을 사전에 예측하고 최적의 가중치를 부여하는 'Speculative Score' 엔진 구현
+- [ ] **System**: 에이전트가 도구 호출 실패 시 과거의 수정 이력을 참조하여 즉각적인 해결책을 제안하는 'Self-Healing Memory' 구축
 
 ## ✅ Completed
+### v2.0.9 (Speculative Score & Probability Weighting)
+- [x] `agents/swarm.py`: 병렬 가설 추론 시 과거 성공 사례(`SemanticLogSearch`)를 연동하여 시나리오별 경험 가중치 부여 로직 구현
+- [x] `agents/swarm.py`: 확신도, 위험도, 경험 점수를 결합한 통합 `Speculative Score` 산출 알고리즘 도입
+- [x] `agents/swarm.py`: 시나리오 평가 결과를 점수와 함께 상세 보고하고, 최적의 안(Winner)을 지능적으로 선별하는 워크플로우 안착
+- [x] `agents/swarm.py`: 복수 시나리오 검토 과정을 시각화하여 사용자의 의사결정 지원 및 시스템 신뢰성 향상
+
 ### v2.0.8 (Immersive Reasoning & Timeline Scrubbing)
 - [x] `ui/dashboard.py`: 세션 중 발생하는 모든 사고 과정과 시뮬레이션 결과를 스냅샷으로 기록하는 `thought_timeline` 시스템 구현
 - [x] `main.py`: 웹 대시보드에서 과거의 추론 시점을 탐색할 수 있도록 전체 타임라인 데이터를 전송하는 `/timeline` 명령어 추가
