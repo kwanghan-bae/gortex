@@ -130,5 +130,24 @@ class TestGortexCommands(unittest.TestCase):
             self.assertIn("복원", self.ui.chat_history[-1][1])
             self.assertEqual(self.cache[self.thread_id], {"thread_id": "test_thread"})
 
+    def test_rca_command_missing_chain(self):
+        """/rca 명령어가 체인을 찾지 못했을 때 메시지"""
+        self.observer.get_causal_chain.return_value = []
+        res = self.run_async(handle_command("/rca missing", self.ui, self.observer, self.cache, self.thread_id, self.theme))
+        self.assertIn("계보", self.ui.chat_history[-1][1])
+
+    @patch("gortex.core.commands.SynapticIndexer")
+    def test_search_command_no_results(self, mock_indexer_cls):
+        """/search 명령어가 결과 없음 상태를 처리"""
+        mock_indexer = mock_indexer_cls.return_value
+        mock_indexer.search.return_value = []
+        res = self.run_async(handle_command("/search nothing", self.ui, self.observer, self.cache, self.thread_id, self.theme))
+        self.assertIn("검색 결과가 없습니다", self.ui.chat_history[-1][1])
+
+    def test_unknown_command(self):
+        """알 수 없는 명령어에 대해 에러 안내"""
+        res = self.run_async(handle_command("/unknown", self.ui, self.observer, self.cache, self.thread_id, self.theme))
+        self.assertIn("알 수 없는 명령어", self.ui.chat_history[-1][1])
+
 if __name__ == '__main__':
     unittest.main()
