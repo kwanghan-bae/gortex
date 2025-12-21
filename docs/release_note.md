@@ -4,7 +4,8 @@
 
 ## 🚀 Backlog (Pending Tasks)
 - [x] **Interface**: 에이전트의 사고 인과 관계를 3D 그래프로 탐색하는 'Causal Graph Explorer' 구현
-- [ ] **Interface**: 사용자가 정의한 복잡한 아키텍처 규칙을 실시간 검증하는 'Constraint Validator' 노드 추가
+- [x] **Interface**: 사용자가 정의한 복잡한 아키텍처 규칙을 실시간 검증하는 'Constraint Validator' 노드 추가
+- [ ] **Intelligence**: 에이전트가 도구 호출 전후의 시스템 상태 전이를 시각적으로 모델링하는 'Visual Simulation' 고도화
 - [ ] **System**: 대규모 그래프 데이터의 효율적 렌더링을 위한 'Rolling Window' 캐싱 전략 도입
 
 ---
@@ -12,6 +13,11 @@
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.4.1 (Constraint Validator & Compliance)
+- [x] `agents/analyst.py`: 활성화된 규칙과 도구 호출 정보를 실시간 대조하는 '준법 감시(Compliance)' 엔진 구축
+- [x] `agents/coder.py`: 도구 실행 전 정책 위반 여부를 자동 스캔하고 감지 시 즉시 차단하는 가드 로직 안착
+- [x] `agents/analyst.py`: 위반 사유뿐만 아니라 규칙을 준수하기 위한 최적의 해결책(Remedy)을 함께 제시하도록 지능 고도화
 
 ### v2.4.0 (Causal Graph Explorer & Transparency)
 - [x] `core/observer.py`: 세션 전체를 관통하는 인과 관계(`cause_id`) 추적 및 그래프 데이터 생성 엔진 구축

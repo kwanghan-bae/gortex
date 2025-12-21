@@ -1,23 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 아키텍처 및 정책 준수 실시간 검증 (Constraint Validator v1)
+- 에이전트 도구 호출 전후의 시스템 상태 전이 시각화 (Visual Simulation v2)
 
 ## Context
-- `EvolutionaryMemory`를 통해 시스템 규칙이 늘어나고 있으나, 실행 시점에 이 규칙들이 정말 지켜졌는지 체크하는 프로세스가 `Analyst`의 사후 검증에만 의존하고 있음.
-- `Coder`가 도구를 호출하기 직전, 현재 활성화된 제약 조건(`active_constraints`)을 위반하는지 실시간으로 스캔하고 경고하는 전용 노드 또는 가드 로직이 필요함.
+- v2.0.7에서 도입된 `visual_delta` 시뮬레이션이 현재는 텍스트 기반의 예상 결과에 머물러 있음.
+- 도구 호출 전 `Analyst` 또는 `Coder`가 변경될 것으로 예상되는 파일과 아키텍처 구조를 3D 그래프의 '미리보기(Preview)' 형태로 생성하고, 실제 결과와 비교하는 기능이 필요함.
 
 ## Scope
 ### Do
-- `agents/analyst.py`에 제약 조건 위반 여부를 정밀 판정하는 `validate_constraints` 메서드 추가.
-- `agents/coder.py`에서 도구 호출 전 이 검증 로직을 거치도록 워크플로우 통합.
-- 위반 시 즉시 중단하고 사용자에게 '정책 위반' 사유를 보고함.
+- `agents/coder.py`의 `simulation` 필드를 확장하여 예상되는 그래프 변화(`expected_graph_delta`)를 JSON 구조로 생성.
+- `ui/three_js_bridge.py`에 시뮬레이션 데이터를 위한 고스트 노드(Ghost Nodes) 생성 로직 추가.
+- 웹 대시보드에서 도구 실행 전 예상 시나리오를 점선 등으로 시각화.
 
 ### Do NOT
-- 단순 스타일(PEP8) 검사와 혼동하지 말 것 (비즈니스/아키텍처 규칙 중심).
+- 실제 파일 시스템을 건드리지 말 것 (철저히 가상 공간의 시뮬레이션).
 
 ## Expected Outputs
-- `agents/analyst.py`, `agents/coder.py` 수정.
+- `agents/coder.py`, `ui/three_js_bridge.py`, `main.py` 수정.
 
 ## Completion Criteria
-- 활성화된 규칙(예: "특정 모듈은 수정 금지")을 위반하는 코드를 작성하려 할 때, 시스템이 이를 즉시 감지하고 실행을 차단하는 것이 확인되어야 함.
+- 도구 실행 전, 웹 대시보드에 변경 예정인 파일이나 노드가 '예상 상태'로 시각화되는 것이 확인되어야 함.

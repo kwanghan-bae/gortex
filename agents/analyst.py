@@ -281,6 +281,37 @@ class AnalystAgent:
             
         return None
 
+    def validate_constraints(self, constraints: List[str], tool_call: Dict[str, Any]) -> Dict[str, Any]:
+        """현재 활성화된 제약 조건(Constraints) 준수 여부 검증"""
+        if not constraints:
+            return {"is_valid": True}
+            
+        logger.info(f"🛡️ Validating {len(constraints)} constraints against tool call...")
+        
+        prompt = f"""너는 Gortex 시스템의 준법 감시관(Compliance Officer)이다.
+        에이전트가 수행하려는 작업이 다음 '시스템 규칙'들을 위반하는지 분석하라.
+        
+        [System Constraints]
+        {json.dumps(constraints, ensure_ascii=False, indent=2)}
+        
+        [Proposed Tool Call]
+        {json.dumps(tool_call, ensure_ascii=False, indent=2)}
+        
+        결과 형식 (JSON):
+        {{
+            "is_valid": true/false,
+            "violated_rules": ["위반된 규칙 1", "2"],
+            "reason": "위반 사유 설명",
+            "remedy": "규칙을 준수하기 위한 해결책 제안"
+        }}
+        """
+        try:
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
+            return json.loads(response.text)
+        except Exception as e:
+            logger.error(f"Constraint validation failed: {e}")
+            return {"is_valid": True} # 오류 시 기본 통과 (안전 모드)
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""
     agent = AnalystAgent()

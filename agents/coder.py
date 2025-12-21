@@ -204,7 +204,27 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
         result_msg = ""
         new_file_cache = state.get("file_cache", {}).copy()
 
-        # [SECURITY SCAN] 도구 호출 전 실시간 보안 검사
+        # [Compliance Check] 도구 실행 전 실시간 제약 조건 검증
+        from gortex.agents.analyst import AnalystAgent
+        compliance_res = AnalystAgent().validate_constraints(
+            state.get("active_constraints", []),
+            {"action": fname, "target": fargs.get("path") or fargs.get("command") or fargs.get("directory"), "args": fargs}
+        )
+        
+        if not compliance_res.get("is_valid", True):
+            logger.warning(f"🛡️ Policy violation detected: {compliance_res.get('reason')}")
+            return {
+                "thought": f"정책 위반 감지: {compliance_res.get('reason')}",
+                "thought_tree": coder_tree,
+                "coder_iteration": current_iteration + 1,
+                "messages": [
+                    ("ai", f"❌ 시스템 정책 위반으로 실행이 차단되었습니다."),
+                    ("system", f"위반 규칙: {', '.join(compliance_res.get('violated_rules', []))}\n사유: {compliance_res.get('reason')}\n권고: {compliance_res.get('remedy')}")
+                ],
+                "next_node": "coder"
+            }
+
+        # [SECURITY SCAN] 도구 호출 전 실시간 보안 검사 (기존 로직)
         if fname in ["write_file", "apply_patch"]:
             code_to_check = fargs.get("content") or fargs.get("new_content", "")
             risks = scan_security_risks(code_to_check)
