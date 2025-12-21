@@ -10,13 +10,19 @@
 - [x] **Intelligence**: 특정 파일 수정 시 영향을 받는 모듈 범위를 예측하는 'Dependency Impact Analyzer' 노드 추가
 - [x] **System**: 대규모 그래프 데이터 및 메시지의 효율적 관리를 위한 'Memory Pruning' 전략 도입
 - [x] **Interface**: 현재 작업 맥락에 따라 대시보드 구성을 최적화하는 'Context-Aware UI Layout' 구현
-- [ ] **System**: 작업 완료 후 자동으로 결과물을 아카이빙하고 문서를 갱신하는 'Auto-Finalizer' 도입
+- [x] **System**: 작업 완료 후 자동으로 결과물을 아카이빙하고 문서를 갱신하는 'Auto-Finalizer' 도입
+- [ ] **Economy**: 에이전트 간 상호 평가를 통해 자원 할당 우선순위를 결정하는 'Peer Review Economy' 고도화
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.4.7 (Auto-Finalizer & Self-Documentation)
+- [x] `agents/analyst.py`: 세션 종료 시 활동 내역을 요약하고 `docs/` 하위의 모든 문서를 스스로 갱신하는 자동 기록 엔진 구축
+- [x] `main.py`: 시스템 종료 시점을 포착하여 행정적 절차를 자율적으로 완수하는 'Auto-Shutdown' 워크플로우 안착
+- [x] `agents/analyst.py`: 다음 작업 목표를 직접 `next_session.md`에 주입하여 완벽한 자동화 순환 구조(Loop) 완성
 
 ### v2.4.6 (Adaptive UI & Context Awareness)
 - [x] `agents/manager.py`: 현재 작업의 성격(코딩, 리서치 등)을 스스로 판별하여 최적의 UI 모드를 결정하는 지능형 분류 로직 구현

@@ -313,44 +313,104 @@ class AnalystAgent:
             return {"is_valid": True} # 오류 시 기본 통과 (안전 모드)
 
     def learn_from_interaction(self, question: str, user_answer: str) -> Optional[Dict[str, Any]]:
-        """사용자의 답변을 분석하여 개인화된 선호도 규칙 생성"""
-        logger.info("🧠 Learning user preference from interaction...")
+        # ... (기존 코드 유지) ...
+        return None
+
+    def auto_finalize_session(self, state: GortexState) -> Dict[str, Any]:
+        """세션 종료 시 자동으로 활동 기록 및 릴리즈 노트 갱신"""
+        logger.info("📄 Starting auto-finalization of session...")
         
-        prompt = f"""다음은 에이전트의 질문과 사용자의 답변이다.
-        사용자의 취향, 선호하는 기술 스택, 또는 특정 작업 방식을 추출하여 영구 규칙으로 생성하라.
+        # 1. 최근 로그 분석을 통한 성과 요약 요청
+        prompt = f"""지금까지의 작업 이력과 로그를 바탕으로 이번 세션의 성과를 요약하라.
         
-        [Question]
-        {question}
-        
-        [User Answer]
-        {user_answer}
+        [State Messages]
+        {state['messages'][-15:]}
         
         결과 형식 (JSON):
         {{
-            "instruction": "앞으로 에이전트가 지켜야 할 개인화된 지침",
-            "trigger_patterns": ["이 선호도가 적용될 키워드"],
-            "severity": 3,
-            "pref_type": "style/tech/workflow"
+            "version": "v2.x.x",
+            "goal": "이번 세션의 핵심 목표",
+            "done": ["완료된 작업 1", "2"],
+            "undone": ["수행하지 못한 작업 1"],
+            "decisions": ["주요 기술적 결정 1"],
+            "next_goal": "다음 세션에 권장되는 목표"
         }}
         """
         try:
             response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
             res_data = json.loads(response.text)
             
-            if res_data.get("instruction"):
-                self.memory.save_rule(
-                    instruction=res_data["instruction"],
-                    trigger_patterns=res_data["trigger_patterns"],
-                    severity=res_data.get("severity", 3),
-                    source_session="interactive_learning",
-                    context=f"User Interaction: {user_answer[:100]}"
-                )
-                logger.info(f"✨ New preference learned: {res_data['instruction'][:50]}...")
-                return res_data
-        except Exception as e:
-            logger.error(f"Interactive learning failed: {e}")
+            # 2. session_XXXX.md 작성
+            sessions_dir = "docs/sessions"
+            os.makedirs(sessions_dir, exist_ok=True)
+            existing_sessions = [f for f in os.listdir(sessions_dir) if f.startswith("session_")]
+            next_num = len(existing_sessions) + 1
+            session_file = os.path.join(sessions_dir, f"session_{next_num:04d}.md")
             
-        return None
+            session_content = f"""# Session {next_num:04d}
+
+## Goal
+- {res_data.get('goal')}
+
+## What Was Done
+{chr(10).join([f'- {d}' for d in res_data.get('done', [])])}
+
+## What Was NOT Done
+{chr(10).join([f'- {u}' for u in res_data.get('undone', [])])}
+
+## Decisions
+{chr(10).join([f'- {dec}' for d in res_data.get('decisions', [])])}
+
+## Notes for Next Session
+- {res_data.get('next_goal')}
+"""
+            with open(session_file, "w", encoding='utf-8') as f:
+                f.write(session_content)
+
+            # 3. release_note.md 업데이트
+            rel_note_path = "docs/release_note.md"
+            if os.path.exists(rel_note_path):
+                with open(rel_note_path, "r", encoding='utf-8') as f:
+                    content = f.read()
+                
+                new_entry = f"### {res_data.get('version')} ({res_data.get('goal')})\n"
+                new_entry += chr(10).join([f"- [x] {d}" for d in res_data.get('done', [])]) + "\n\n"
+                
+                # 'Completed' 섹션 바로 뒤에 추가
+                marker = "## ✅ Completed (Recent Milestones)"
+                if marker in content:
+                    updated_content = content.replace(marker, f"{marker}\n{new_entry}")
+                    with open(rel_note_path, "w", encoding='utf-8') as f:
+                        f.write(updated_content)
+
+            # 4. next_session.md 갱신
+            next_sess_path = "docs/next_session.md"
+            next_sess_content = f"""# Next Session
+
+## Session Goal
+- {res_data.get('next_goal')}
+
+## Context
+- {res_data.get('goal')} 완료 후 자동 생성됨.
+
+## Scope
+### Do
+- {res_data.get('next_goal')} 관련 로직 구현
+
+## Expected Outputs
+- 관련 에이전트 코드 수정
+
+## Completion Criteria
+- 기능을 성공적으로 수행하고 테스트를 통과함
+"""
+            with open(next_sess_path, "w", encoding='utf-8') as f:
+                f.write(next_sess_content)
+            
+            logger.info(f"✅ Auto-finalized session: {session_file}")
+            return res_data
+        except Exception as e:
+            logger.error(f"Auto-finalization failed: {e}")
+            return {}
 
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""

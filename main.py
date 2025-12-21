@@ -973,6 +973,12 @@ async def run_gortex():
         all_sessions_cache[thread_id] = session_cache
         with open("logs/file_cache.json", "w") as f: json.dump(all_sessions_cache, f, ensure_ascii=False, indent=2)
         
+        # [AUTO-FINALIZER] 세션 종료 시 자동 문서화 수행
+        try:
+            # 마지막 상태(initial_state)를 바탕으로 요약 진행
+            AnalystAgent().auto_finalize_session(initial_state)
+        except: pass
+
         # [DATASET] 세션 종료 시 고품질 데이터 큐레이션 및 아카이빙
         AnalystAgent().curate_session_data()
     except Exception as e:
