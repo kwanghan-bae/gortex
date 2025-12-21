@@ -91,4 +91,25 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
         res = agent.analyze_data(data_files[0])
         return {"messages": [("ai", i18n.t("analyst.data_analyzed", file=data_files[0]))], "next_node": "manager"}
 
+    # [Self-Evolution: Auto-Test Proliferation]
+    # 에너지가 충분하고 다른 작업이 없을 때 누락된 테스트 생성 시도
+    energy = state.get("agent_energy", 100)
+    if energy > 70 and not debate_data and state.get("next_node") != "analyst":
+        proposals = agent.propose_test_generation()
+        if proposals:
+            updates = {"messages": [], "agent_energy": energy - 10}
+            for p in proposals:
+                from gortex.utils.tools import write_file, execute_shell
+                write_file(p["target_file"], p["content"])
+                check_res = execute_shell(f"./scripts/pre_commit.sh --selective {p['target_file']}")
+                
+                if "Ready to commit" in check_res:
+                    updates["messages"].append(("ai", f"🧪 **테스트 자가 증식**: {p['target_file']} 생성 완료 ({p['reason']})"))
+                else:
+                    os.remove(p["target_file"]) # 실패 시 삭제
+            
+            if updates["messages"]:
+                updates["next_node"] = "manager"
+                return updates
+
     return {"messages": [("ai", "분석을 마쳤습니다.")], "next_node": "manager"}

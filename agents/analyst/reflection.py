@@ -67,7 +67,72 @@ class ReflectionAnalyst(AnalystAgent):
             LongTermMemory().memorize(f"User Knowledge: {response_text}", {"source": "Interaction"})
         except: pass
 
-    def predict_next_actions(self, state: Any) -> List[Dict[str, str]]:
-        """다음 사용자 행동 예측"""
-        # 단순화된 예측 로직
-        return [{"label": "테스트 실행", "command": "/test"}]
+        def predict_next_actions(self, state: Any) -> List[Dict[str, str]]:
+
+            """다음 사용자 행동 예측"""
+
+            # 단순화된 예측 로직
+
+            return [{"label": "테스트 실행", "command": "/test"}]
+
+    
+
+        def propose_test_generation(self) -> List[Dict[str, Any]]:
+
+            """누락된 테스트에 대한 구체적인 시나리오 제안"""
+
+            missing = self.identify_missing_tests()
+
+            proposals = []
+
+            
+
+            for item in missing[:2]: # 한 번에 최대 2개씩만 진행
+
+                file = item["file"]
+
+                lines = item["missing_lines"]
+
+                code_context = read_file(file)
+
+                
+
+                prompt = f"""다음 파이썬 파일의 누락된 라인({lines})을 테스트하는 unittest 코드를 작성하라.
+
+                
+
+                [File] {file}
+
+                [Code]
+
+                {code_context}
+
+                
+
+                기존 테스트 관례를 따르며, MagicMock을 적극 활용하여 독립적인 테스트를 구성하라. 
+
+                오직 코드만 반환하라.
+
+                """
+
+                try:
+
+                    test_code = self.backend.generate("gemini-1.5-pro", [{"role": "user", "content": prompt}])
+
+                    test_code = re.sub(r'```python\n|```', '', test_code).strip()
+
+                    proposals.append({
+
+                        "target_file": f"tests/test_auto_{os.path.basename(file)}",
+
+                        "content": test_code,
+
+                        "reason": f"Low coverage ({item['coverage']}%)"
+
+                    })
+
+                except: pass
+
+            return proposals
+
+    

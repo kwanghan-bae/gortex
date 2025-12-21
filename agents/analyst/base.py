@@ -46,12 +46,10 @@ class AnalystAgent:
                             lines = content.splitlines()
                             
                             # 정밀 복잡도 추정 (Proxy for Cyclomatic Complexity)
-                            # 분기문, 반복문, 예외처리, 함수/클래스 정의 등을 포인트로 계산
                             score = len(re.findall(r"\b(if|elif|for|while|except|def|class|with|async)\b", content))
-                            # 라인 수 가중치 (긴 파일은 복잡할 가능성 높음)
                             score += len(lines) // 20
                             
-                            if score > 10: # 의미 있는 복잡도만 기록
+                            if score > 10:
                                 debt_list.append({
                                     "file": path, 
                                     "score": score, 
@@ -75,3 +73,30 @@ class AnalystAgent:
                 return {"status": "success", "summary": summary, "file": file_path}
         except: pass
         return {"status": "failed", "reason": "Data analysis failed"}
+
+    def identify_missing_tests(self) -> List[Dict[str, Any]]:
+        """커버리지 리포트를 분석하여 테스트가 시급한 파일을 식별합니다."""
+        try:
+            # 실시간 커버리지 데이터 획득 시도 (명령어 실행)
+            import subprocess
+            subprocess.run(["python3", "-m", "coverage", "json", "-o", "logs/coverage.json"], capture_output=True)
+            
+            if os.path.exists("logs/coverage.json"):
+                with open("logs/coverage.json", "r") as f:
+                    data = json.load(f)
+                
+                results = []
+                for file_path, info in data.get("files", {}).items():
+                    summary = info.get("summary", {})
+                    percent = summary.get("percent_covered", 100)
+                    if percent < 80: # 80% 미만인 파일 대상
+                        results.append({
+                            "file": file_path,
+                            "coverage": round(percent, 1),
+                            "missing_lines": info.get("missing_lines", []),
+                            "priority": "High" if percent < 50 else "Medium"
+                        })
+                return sorted(results, key=lambda x: x["coverage"])
+        except Exception as e:
+            logger.error(f"Failed to identify missing tests: {e}")
+        return []
