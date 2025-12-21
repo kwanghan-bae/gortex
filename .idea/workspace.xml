@@ -4,11 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="0f2393e3-f1fa-41e6-97ee-85e449dfd816" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/agents/manager.py" beforeDir="false" afterPath="$PROJECT_DIR$/agents/manager.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/core/state.py" beforeDir="false" afterPath="$PROJECT_DIR$/core/state.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-    </list>
+    <list default="true" id="0f2393e3-f1fa-41e6-97ee-85e449dfd816" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

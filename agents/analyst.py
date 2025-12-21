@@ -3,6 +3,7 @@ import json
 import pandas as pd
 import os
 import re
+import math
 from typing import Dict, Any, List, Optional
 from google.genai import types
 from gortex.core.auth import GortexAuth
@@ -87,6 +88,20 @@ class AnalystAgent:
     def journalize_activity(self, agent: str, event: str, payload: Any) -> str:
         """활동 저널링"""
         return f"{agent}가 {event} 작업을 성공적으로 마쳤습니다."
+
+    def calculate_efficiency_score(self, success: bool, tokens: int, latency_ms: int, energy_cost: int) -> float:
+        """작업 효율성 점수 계산 (0.0 ~ 100.0)"""
+        if not success: return 0.0
+        
+        # 비용 함수: 토큰 1개 = 0.01, 레이턴시 1ms = 0.01, 에너지 1 = 1.0 (가중치 조정 가능)
+        cost = (tokens * 0.01) + (latency_ms * 0.01) + (energy_cost * 1.0)
+        
+        # 효율성 = 기본 보상 / (비용 + 1)
+        # 로그 스케일을 적용하여 비용 증가에 따른 점수 감소폭을 완화
+        base_reward = 500.0
+        efficiency = base_reward / (math.log(max(cost, 1.0) + 1) + 1)
+        
+        return min(100.0, max(0.0, efficiency))
 
     def profile_resource_usage(self, code: str) -> Dict[str, Any]:
         """코드의 시간/공간 복잡도 정적 분석"""

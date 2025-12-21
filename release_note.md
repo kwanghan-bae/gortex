@@ -67,6 +67,10 @@
 - [x] **Intelligence**: 에이전트가 도구 호출 시 스스로의 '에너지 수준'을 관리하며 효율적으로 작업하는 'Energy-Aware Tasking' 구현
 
 ## ✅ Completed
+### v2.2.10 (Efficiency Scoring & Self-Optimization)
+- [x] `agents/analyst.py`: 비용(토큰, 레이턴시, 에너지) 대비 성과를 측정하는 `calculate_efficiency_score` 메서드 구현
+- [x] `core/evolutionary_memory.py`: 높은 효율성 점수를 기록한 작업 패턴을 영구 규칙으로 승격시키는 `promote_efficient_pattern` 로직 추가
+
 ### v2.2.9 (Energy-Aware Tasking & Work-Life Balance)
 - [x] `core/state.py`: 에이전트의 가상 에너지 상태를 나타내는 `agent_energy` 필드 추가 (0~100)
 - [x] `agents/manager.py`: 에너지 수준이 낮거나 API 호출이 빈번할 경우 자동으로 경량 모델(`flash-lite`)로 전환하는 지능형 스케줄링 구현

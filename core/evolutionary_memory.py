@@ -78,6 +78,36 @@ class EvolutionaryMemory:
 
 
 
+    def promote_efficient_pattern(self, pattern_desc: str, score: float, context: str = ""):
+        """
+        높은 효율성(80점 이상)을 보인 작업 패턴을 영구 규칙으로 승격(Promote).
+        """
+        if score < 80.0:
+            return
+
+        # 효율성 점수에 따른 중요도(severity) 동적 부여
+        # 80~89: 1 (참고), 90~95: 3 (권장), 96~100: 5 (강력 권장)
+        severity = 1
+        if score >= 96: severity = 5
+        elif score >= 90: severity = 3
+        
+        logger.info(f"🏆 Promoting efficient pattern (Score: {score:.1f}): {pattern_desc[:50]}...")
+        
+        instruction = f"High-Efficiency Strategy: {pattern_desc}"
+        trigger_keywords = ["optimize", "efficiency", "high performance"]
+        
+        # 문맥에서 키워드 추출 시도 (단순화: 3단어 이상이면 포함)
+        if len(context.split()) > 3:
+            trigger_keywords.append(context.split()[0]) 
+
+        self.save_rule(
+            instruction=instruction,
+            trigger_patterns=trigger_keywords,
+            severity=severity,
+            source_session="efficiency_promotion_engine",
+            context=f"Score: {score} | Context: {context}"
+        )
+
     def _persist(self):
         try:
             with open(self.file_path, 'w', encoding='utf-8') as f:

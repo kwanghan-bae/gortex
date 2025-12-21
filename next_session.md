@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-21
-**Status:** Energy-Aware Tasking Foundation Complete (v2.2.9)
+**Status:** Efficiency Scoring & Self-Optimization Complete (v2.2.10)
 
 ## 🧠 Current Context
-에이전트에게 '에너지(Energy)' 개념이 도입되었습니다. `agent_energy` 상태에 따라 Manager는 자동으로 더 가벼운 모델을 선택하거나 작업 강도를 조절합니다. 이제 이 시스템을 바탕으로 에너지 효율성을 극대화하는 학습 루프가 필요합니다.
+효율성 점수 계산(`calculate_efficiency_score`)과 우수 패턴 승격(`promote_efficient_pattern`) 로직이 구현되었습니다. 이제 이 도구들을 실제 에이전트의 의사결정 과정(Swarm, Manager)에 통합하여 실질적인 성능 향상을 이끌어내야 합니다.
 
 ## 🎯 Next Objective
-**Efficiency Scoring & Self-Optimization**
-1. **`Efficiency Metric`**: (성공한 작업의 가치) / (소모된 토큰 + 시간 + 에너지) 공식을 정의하여 에이전트의 효율성을 정량화합니다.
-2. **`Reward Logic`**: 높은 효율성을 보인 작업 패턴(Thought Tree)을 `EvolutionaryMemory`에 우선적으로 저장하여, 시스템이 스스로 "최소 노력, 최대 성과"를 지향하도록 진화시킵니다.
+**Advanced Efficiency Integration (Swarm & Manager)**
+1. **`Swarm Efficiency`**: `agents/swarm.py`에서 병렬 작업 결과 취합 시, 단순 확신도(Certainty)뿐만 아니라 효율성 점수를 반영하여 최적의 안(Winner)을 선정하도록 로직을 개선합니다.
+2. **`Manager Insight`**: `agents/manager.py`의 사고 과정에 현재 세션의 평균 효율성 점수를 참고하여 모델 선택이나 전략 수정에 반영하도록 합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 에너지 인지형 작업 관리 기초 구현 완료 (v2.2.9).
-- 다음 목표: 효율성 점수(Efficiency Scoring) 및 자가 최적화 보상 로직.
+- 효율성 점수 및 패턴 승격 로직 구현 완료 (v2.2.10).
+- 다음 목표: Swarm 및 Manager에 효율성 지표 통합.
 
 작업 목표:
-1. `agents/analyst.py`에 작업 완료 후 효율성 점수를 계산하는 `calculate_efficiency_score` 메서드를 구현해줘.
-2. `core/evolutionary_memory.py`와 연동하여 높은 효율성을 보인 패턴을 강화 학습(규칙 승격)하는 로직을 추가해줘.
+1. `agents/swarm.py`에서 `AnalystAgent.calculate_efficiency_score`를 호출하여 병렬 작업의 순위를 매기는 로직을 추가해줘.
+2. `agents/manager.py`에서 최근 작업의 효율성이 낮을 경우(예: < 40), 더 신중한 계획(Detailed Planning)을 수립하도록 프롬프트를 동적 조정해줘.
 ```
