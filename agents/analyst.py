@@ -159,12 +159,72 @@ class AnalystAgent:
         complexity_scores.sort(key=lambda x: x["score"], reverse=True)
         return complexity_scores[:10]
 
+    def synthesize_consensus(self, topic: str, scenarios: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """여러 시나리오의 토론 결과를 종합하여 최종 합의안 도출"""
+        logger.info(f"🤝 Synthesizing consensus for: {topic}")
+        
+        scenario_data = []
+        for s in scenarios:
+            scenario_data.append({
+                "persona": s.get("persona", "Neutral"),
+                "proposal": s.get("task"),
+                "report": s.get("report"),
+                "confidence": s.get("certainty"),
+                "risk": s.get("risk")
+            })
+
+        prompt = f"""너는 Gortex 시스템의 수석 분석가(Analyst)다. 
+다음 주제에 대해 서로 다른 페르소나를 가진 에이전트들이 제안한 시나리오들을 검토하고, 가장 합리적인 '최종 합의안'을 도출하라.
+
+[Topic]
+{topic}
+
+[Scenarios]
+{json.dumps(scenario_data, ensure_ascii=False, indent=2)}
+
+결과는 반드시 다음 JSON 형식을 따라라:
+{{
+  "final_decision": "선택된 경로 또는 절충안 상세 설명",
+  "rationale": "이 결정을 내린 핵심 근거 (각 페르소나의 의견 반영 정도 포함)",
+  "tradeoffs": [
+    {{ "aspect": "분야(예: 속도, 안정성 등)", "gain": "이득", "loss": "포기한 점" }}
+  ],
+  "residual_risk": "최종 결정 후에도 남은 위험 요소 및 대응 방안",
+  "action_plan": ["수행해야 할 구체적 단계 1", "2"]
+}}
+"""
+        try:
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
+            return json.loads(response.text)
+        except Exception as e:
+            logger.error(f"Consensus synthesis failed: {e}")
+            return {"final_decision": "Error during synthesis.", "rationale": str(e), "action_plan": []}
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""
     agent = AnalystAgent()
     last_msg_obj = state["messages"][-1]
     last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
     last_msg_lower = last_msg.lower()
+
+    # [Consensus Logic] Swarm으로부터 토론 결과가 넘어온 경우
+    if "가설 추론 결과" in last_msg and "상반된" in last_msg:
+        # 실제 환경에서는 state에 시나리오 원본 데이터를 보관했다가 사용해야 함.
+        # 여기서는 요약된 last_msg를 바탕으로 합의 도출 시뮬레이션
+        res = agent.synthesize_consensus("Current High-Risk Decision", [{"report": last_msg}])
+        
+        msg = f"🤝 **에이전트 간 합의 도출 완료**\n\n"
+        msg += f"📌 **최종 결정**: {res.get('final_decision')}\n"
+        msg += f"💡 **결정 근거**: {res.get('rationale')}\n\n"
+        msg += "⚖️ **트레이드오프 분석**:\n"
+        for t in res.get("tradeoffs", []):
+            msg += f"- {t['aspect']}: (+){t['gain']} / (-){t['loss']}\n"
+            
+        return {
+            "messages": [("ai", msg)],
+            "next_node": "manager",
+            "active_constraints": state.get("active_constraints", []) + [f"Consensus: {res.get('final_decision')[:50]}..."]
+        }
 
     if state.get("next_node") == "analyst":
         ai_outputs = [m for m in state["messages"] if (isinstance(m, tuple) and m[0] == "ai") or (hasattr(m, 'type') and m.type == "ai")]

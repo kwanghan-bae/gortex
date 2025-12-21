@@ -87,3 +87,28 @@ class GortexState(TypedDict):
     *   `OllamaBackend`: 로컬 서버(`:11434`)와 통신하며, 지정된 경량 모델을 사용한다.
 *   **Policy**: 고수준 판단(Manager)은 Gemini를, 단순 반복 작업(Worker)은 Ollama를 우선 할당하는 하이브리드 전략을 취한다.
 
+---
+
+## 7. Multi-Agent Consensus Protocol
+
+복잡도가 높거나 위험한 결정(Risk > 0.7)이 필요한 경우, 시스템은 단일 판단 대신 에이전트 간 토론 과정을 거친다.
+
+### 7.1 Scenario Personas
+`swarm` 노드는 다음의 상반된 관점을 가진 시나리오를 병렬 생성해야 한다.
+*   **Innovation (The Pioneer)**: 최신 기술 도입, 효율성 극대화, 과감한 구조 개선 중심.
+*   **Stability (The Guardian)**: 하위 호환성, 보안 무결성, 운영 안정성, 리스크 최소화 중심.
+
+### 7.2 Consensus Synthesis Schema (`analyst`)
+토론 결과는 반드시 다음 JSON 형식을 따라 종합되어야 한다.
+```json
+{
+  "final_decision": "선택된 경로 또는 절충안",
+  "rationale": "합의에 도달한 핵심 근거",
+  "tradeoffs": [
+    { "aspect": "분야", "gain": "이득", "loss": "포기한 점" }
+  ],
+  "residual_risk": "최종 결정 후에도 남은 위험 요소",
+  "action_plan": ["수행해야 할 구체적 단계"]
+}
+```
+

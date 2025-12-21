@@ -62,7 +62,9 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
 {macro_context}
 
 [Speculative Reasoning Rules]
-사용자의 요청이 복잡하거나 해결 방법이 여러 가지인 경우, 'swarm' 노드를 통해 병렬 검토하라.
+사용자의 요청이 복잡하거나 해결 방법이 여러 가지인 경우, 'swarm' 노드를 통해 병렬 검토하라. 
+만약 작업의 위험도가 높거나(Risk > 0.7), 시스템의 핵심 구조를 변경하는 요청인 경우 반드시 **'토론 모드(Debate Mode)'**를 활성화하라. 
+이 경우 계획(`parallel_tasks`)에 "관점 토론: [주제]" 형식을 포함시키고, 에이전트들이 상반된 페르소나(Innovation vs Stability)를 갖도록 지시하라.
 
 [Macro Learning Rules]
 1. 사용자가 "배워(Learn): [명령어]는 [작업1], [작업2]...를 의미해"라고 하면, 이를 새로운 매크로로 저장하도록 'analyst'에게 요청하라.

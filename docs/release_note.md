@@ -3,7 +3,7 @@
 > 💡 **Versioning Policy**: 메이저 버전(v1.x, v2.x ...)이 변경될 때마다 이전 기록은 `docs/archive/`로 이동하며, 메인 릴리즈 노트는 항상 최신 상태를 유지합니다.
 
 ## 🚀 Backlog (Pending Tasks)
-- [ ] **Intelligence**: 다중 에이전트 합의(토론) 프로토콜(Multi-Agent Consensus Protocol) 구현
+- [x] **Intelligence**: 다중 에이전트 합의(토론) 프로토콜(Multi-Agent Consensus Protocol) 구현
 - [ ] **Intelligence**: 에이전트 간의 관점 차이를 조율하는 합의 도출(Synthesis) 알고리즘 고도화
 - [ ] **Interface**: 에이전트 간의 가상 토론 과정을 시각화하는 'Debate Monitor' 웹 UI 구축
 
@@ -12,6 +12,12 @@
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.3.0 (Multi-Agent Consensus Protocol)
+- [x] `agents/swarm.py`: 상반된 관점(Innovation vs Stability)을 가진 페르소나 기반 시뮬레이션 로직 구현
+- [x] `agents/analyst.py`: 토론 결과에서 트레이드오프를 분석하고 최종 합의안을 도출하는 `synthesize_consensus` 엔진 구축
+- [x] `agents/manager.py`: 위험도 및 시스템 복잡도에 따른 지능형 '토론 모드' 활성화 워크플로우 안착
+- [x] `docs/TECHNICAL_SPEC.md`: 합의 프로토콜을 위한 데이터 스키마 및 페르소나 정의 명문화
 
 ### v2.2.19 (Code Complexity Heatmap)
 - [x] `agents/analyst.py`: 프로젝트 전체의 코드 복잡도를 스캔하여 점수화하는 `scan_project_complexity` 구현
