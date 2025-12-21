@@ -22,10 +22,16 @@
 - [x] **Infrastructure**: 외부 API 연동(예: Slack, Discord)을 통해 작업 완료 시 알림을 보내는 'Notification' 시스템 구축
 - [x] **Interface**: 터미널 UI를 넘어 브라우저에서 Gortex의 활동을 실시간 모니터링할 수 있는 'Web Dashboard' 프레임워크 구축
 - [x] **Infrastructure**: 에이전트의 도구 호출 로그를 분석하여 비용과 지연 시간을 최적화하는 'Performance Profiler' 노드 구현
-- [x] **Interface**: 대시보드 사이드바에 현재 세션의 '평균 응답 지연 시간' 및 '토큰 당 비용' 추이 시각화 보강
-- [ ] **Infrastructure**: 에이전트의 자기 개조(Self-Modification) 성공 확률을 높이기 위한 'Reflective Validation' 단계 추가
+- [x] **Infrastructure**: 에이전트의 자기 개조(Self-Modification) 성공 확률을 높이기 위한 'Reflective Validation' 단계 추가
+- [ ] **Interface**: 사용자의 복잡한 요구사항을 시각적 다이어그램으로 변환하여 보여주는 'Architecture Sketcher' 기능 추가
 
 ## ✅ Completed
+### v1.7.6 (Reflective Validation & Self-Correction Loop)
+- [x] `agents/coder.py`: 코드 수정(`write_file`) 직후 반드시 `execute_shell`로 자가 검증을 수행하도록 하는 Reflective Validation 로직 강화
+- [x] `agents/coder.py`: 동일 파일에 대한 3회 이상 수정 실패 시 `analyst` 노드로 자동 라우팅하여 정밀 진단 및 원인 분석 요청 워크플로우 통합
+- [x] `agents/coder.py`: 사고 과정 트리(`thought_tree`) 및 상태 스키마를 최신 규격으로 업데이트하여 시스템 일관성 확보
+- [x] `agents/coder.py`: f-string 중괄호 이스케이핑 오류 수정 및 응답 스키마 안정성 강화
+
 ### v1.7.5 (Visual Latency & Cost Tracking UI)
 - [x] `ui/dashboard.py`: 사이드바 `USAGE STATS` 패널에 실시간 '평균 지연 시간(Avg Latency)' 표시 항목 추가
 - [x] `main.py`: 각 노드별 실행 시간을 누적하여 평균값을 계산하고 UI에 전달하는 실시간 프로파일링 연동

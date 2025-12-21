@@ -90,11 +90,11 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
 {tool_output if tool_output else "(Not executed yet)"}
 
 [Your Mission]
-1. 위 단계가 'write_file'이라면, 파일에 들어갈 코드를 작성하여 도구를 호출하라.
+1. 위 단계가 'write_file'이라면, 파일에 들어갈 코드를 작성하여 도구를 호출하라. **[Reflective Validation]**: 수정 직후에는 반드시 `execute_shell`로 관련 테스트나 문법 검사를 실행하여 자가 검증을 수행하라.
 2. 위 단계가 'execute_shell'이고 실행 결과(Tool Output)에 오류(Exit Code != 0)가 있다면, **STDOUT과 STDERR를 정밀 분석하라.** 
    - 문법 에러라면 오타나 누락된 괄호를 찾아 수정하라.
    - 라이브러리 누락 에러라면 `pip install` 단계를 스스로 계획하여 실행하라.
-   - 권한 문제라면 `chmod` 등을 시도하라.
+   - **[Self-Correction Loop]**: 만약 같은 파일에 대해 3회 이상 수정을 시도했음에도 실패한다면, 'status': 'failed'를 반환하여 `analyst`에게 분석을 요청하라.
 3. 성공적으로 수행되었다면 'status': 'success'를 반환하여 다음 단계로 넘어가라.
 
 
@@ -107,6 +107,7 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
 [Output Schema (Strict JSON)]
 {{
   "thought": "생각의 과정",
+  "thought_tree": [ {{"id": "1", "text": "...", "type": "analysis"}} ],
   "tool_call": {{ "name": "tool_name", "args": {{ ... }} }} OR null,
   "status": "success" | "in_progress" | "failed"
 }}
@@ -121,7 +122,28 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
         system_instruction=base_instruction,
         temperature=0.0,
         response_mime_type="application/json",
-        tools=[read_file, write_file, execute_shell, list_files] # Function Calling 활성화
+        tools=[read_file, write_file, execute_shell, list_files], # Function Calling 활성화
+        response_schema={
+            "type": "OBJECT",
+            "properties": {
+                "thought": {"type": "STRING"},
+                "thought_tree": {
+                    "type": "ARRAY",
+                    "items": {
+                        "type": "OBJECT",
+                        "properties": {
+                            "id": {"type": "STRING"},
+                            "parent_id": {"type": "STRING", "nullable": True},
+                            "text": {"type": "STRING"},
+                            "type": {"type": "STRING", "enum": ["analysis", "action", "verification"]}
+                        },
+                        "required": ["id", "text", "type"]
+                    }
+                },
+                "status": {"type": "STRING", "enum": ["success", "in_progress", "failed"]}
+            },
+            "required": ["thought", "thought_tree", "status"]
+        }
     )
     
     response = auth.generate(
@@ -131,49 +153,43 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
     )
     
     # Function Calling 처리 로직
-    # google-genai 라이브러리는 function_calls 속성을 제공함
     function_calls = []
     if response.candidates and response.candidates[0].content.parts:
         for part in response.candidates[0].content.parts:
             if part.function_call:
                 function_calls.append(part.function_call)
 
+    # 응답 데이터 파싱
+    try:
+        res_data = response.parsed if hasattr(response, 'parsed') else json.loads(response.text)
+        coder_thought = res_data.get("thought", "")
+        coder_tree = res_data.get("thought_tree", [])
+        status = res_data.get("status", "in_progress")
+    except:
+        coder_thought = "Thinking..."
+        coder_tree = []
+        status = "in_progress"
+
     # 도구 호출이 있다면 실행
     if function_calls:
-        # 실제 도구 실행은 LangGraph나 별도 로직에서 처리해야 하나, 
-        # 여기서는 Coder 노드 안에서 직접 실행하고 결과를 반영하는 방식으로 구현 (단순화)
-        # 하지만 원래 LangGraph 패턴은 ToolNode를 별도로 두는 것임.
-        # 현재 구조상 Coder가 직접 도구를 실행하고 결과를 확인하는 루프를 돔.
-        
-        fc = function_calls[0] # 하나만 처리
+        fc = function_calls[0]
         fname = fc.name
         fargs = fc.args
         
         logger.info(f"Coder invoking tool: {fname}")
         
-        # 텍스트 응답에서 생각 추출 시도 (JSON 파싱)
-        coder_thought = ""
-        try:
-            res_data = json.loads(response.text)
-            coder_thought = res_data.get("thought", "")
-        except:
-            pass
-
         result_msg = ""
         new_file_cache = state.get("file_cache", {}).copy()
 
         if fname == "write_file":
             result_msg = write_file(fargs["path"], fargs["content"])
-            # 쓰기 후 해시 업데이트
             new_file_cache[fargs["path"]] = get_file_hash(fargs["path"])
         elif fname == "read_file":
             path = fargs["path"]
             current_hash = get_file_hash(path)
             cached_hash = new_file_cache.get(path)
-            
             if cached_hash == current_hash and current_hash != "":
-                result_msg = f"(Cache Hit) File content is unchanged. Use your memory."
-                logger.info(f"Cache hit for {path}")
+                result_msg = f"(Cache Hit) File content is unchanged."
             else:
                 result_msg = read_file(path)
                 new_file_cache[path] = current_hash
@@ -184,47 +200,38 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
             
         return {
             "thought": coder_thought,
+            "thought_tree": coder_tree,
             "coder_iteration": current_iteration + 1,
             "file_cache": new_file_cache,
-            # 도구 실행 결과를 메시지에 추가하여 다음 턴에 문맥으로 사용
             "messages": [
                 ("ai", f"Executed {fname}"),
                 ("tool", result_msg) 
             ],
-            "next_node": "coder" # 자신을 다시 호출하여 결과 검증
+            "next_node": "coder"
         }
 
-    
-    # 도구 호출 없이 텍스트 응답만 온 경우 (JSON 파싱 시도)
-    try:
-        res_text = response.text
-        res_data = json.loads(res_text)
-        coder_thought = res_data.get("thought", "")
-        
-        if res_data.get("status") == "success":
-            # 현재 단계 완료 -> 다음 단계로 이동
-            return {
-                "thought": coder_thought,
-                "current_step": current_step_idx + 1,
-                "coder_iteration": 0, # 단계가 바뀌면 반복 횟수 초기화
-                "next_node": "coder", # 다음 단계 실행을 위해 다시 Coder 호출
-                "file_cache": state.get("file_cache", {}),
-                "messages": [("ai", f"Step {current_step_idx+1} 완료. 다음 단계로 이동.")]
-            }
-        else:
-            # 아직 진행 중이거나 실패
-            return {
-                "thought": coder_thought,
-                "coder_iteration": current_iteration + 1,
-                "file_cache": state.get("file_cache", {}),
-                "next_node": "coder"
-            }
-            
-    except Exception:
-        # JSON 파싱 실패 시 그냥 진행
+    if status == "success":
         return {
+            "thought": coder_thought,
+            "thought_tree": coder_tree,
+            "current_step": current_step_idx + 1,
+            "coder_iteration": 0,
+            "next_node": "coder",
+            "messages": [("ai", f"Step {current_step_idx+1} 완료.")]
+        }
+    elif status == "failed":
+        # 반복 실패 시 analyst에게 도움 요청
+        return {
+            "thought": f"수정 시도 중 반복적 실패 발생: {coder_thought}",
+            "thought_tree": coder_tree,
+            "next_node": "analyst",
+            "messages": [("ai", "⚠️ 반복적인 수정 실패로 인해 분석 에이전트에게 정밀 진단을 요청합니다.")]
+        }
+    else:
+        return {
+            "thought": coder_thought,
+            "thought_tree": coder_tree,
             "coder_iteration": current_iteration + 1,
-            "file_cache": state.get("file_cache", {}),
             "next_node": "coder"
         }
 
