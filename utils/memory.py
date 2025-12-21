@@ -67,6 +67,26 @@ def compress_synapse(state: GortexState) -> GortexState:
         logger.error(f"Synaptic compression failed: {e}")
         return state
 
+def prune_synapse(state: GortexState, limit: int = 50) -> GortexState:
+    """메시지가 임계값을 넘을 경우 중간 메시지를 삭제하여 토큰 및 메모리 최적화"""
+    messages = state.get("messages", [])
+    if len(messages) <= limit:
+        return state
+        
+    logger.info(f"✂️ Pruning synapse: {len(messages)} -> {limit} messages.")
+    
+    # 1. 요약본이 포함된 첫 번째 메시지 보존
+    pruned = [messages[0]]
+    
+    # 2. 중간 메시지 절삭 후 최근 10개 메시지만 보존 (컨텍스트 연속성 확보)
+    pruned.extend(messages[-10:])
+    
+    return {"messages": pruned}
+
 def summarizer_node(state: GortexState):
-    """LangGraph node for compression"""
-    return compress_synapse(state)
+    """LangGraph node for compression & pruning"""
+    # 1. 압축 수행
+    state = compress_synapse(state)
+    # 2. 강제 가지치기(Pruning) 수행
+    state = prune_synapse(state)
+    return state

@@ -677,6 +677,7 @@ async def run_gortex():
     last_efficiency = 100.0 # 최근 효율성 점수
     efficiency_history = [] # 효율성 이력
     last_question = None # 직전 에이전트의 질문 저장
+    cache_last_used = {} # 파일별 마지막 접근 노드 카운트 저장
 
     # 세션별 파일 캐시 관리 (Isolation)
     cache_path = "logs/file_cache.json"
@@ -904,8 +905,12 @@ async def run_gortex():
                                             read_file(pf_path)
                                             session_cache[pf_path] = get_file_hash(pf_path)
                                             logger.info(f"🚀 Pre-fetched: {pf_path}")
+                                        cache_last_used[pf_path] = node_count
 
-                                if "file_cache" in output: session_cache.update(output["file_cache"])
+                                if "file_cache" in output: 
+                                    session_cache.update(output["file_cache"])
+                                    for p in output["file_cache"]: cache_last_used[p] = node_count
+
                                 await asyncio.sleep(0.01)
                                 ui.reset_thought_style()
                                 
@@ -939,6 +944,10 @@ async def run_gortex():
                             "type": "causal_graph_3d",
                             "data": causal_3d
                         }, ensure_ascii=False)))
+
+                    # [CACHE PRUNING] 최근 사용되지 않은 캐시 정리
+                    current_node_total = node_count
+                    session_cache = {p: h for p, h in session_cache.items() if (current_node_total - cache_last_used.get(p, 0)) < 10}
 
                     # 매 턴 종료 후 세션 캐시 영속화
                     all_sessions_cache[thread_id] = session_cache

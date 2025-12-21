@@ -8,13 +8,19 @@
 - [x] **Intelligence**: 에이전트가 도구 호출 전후의 시스템 상태 전이를 시각적으로 모델링하는 'Visual Simulation' 고도화
 - [x] **Interface**: 에이전트가 의사결정 트레이드오프를 사용자에게 질문하고 답변을 학습하는 'Interactive Decision Learning' 구현
 - [x] **Intelligence**: 특정 파일 수정 시 영향을 받는 모듈 범위를 예측하는 'Dependency Impact Analyzer' 노드 추가
-- [ ] **System**: 대규모 그래프 데이터의 효율적 렌더링을 위한 'Rolling Window' 캐싱 전략 도입
+- [x] **System**: 대규모 그래프 데이터 및 메시지의 효율적 관리를 위한 'Memory Pruning' 전략 도입
+- [ ] **Interface**: 현재 작업 맥락에 따라 대시보드 구성을 최적화하는 'Context-Aware UI Layout' 구현
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.4.5 (Dynamic Memory Pruning & LRU Cache)
+- [x] `utils/memory.py`: 비대해진 메시지 이력을 핵심 요약 중심으로 가지치기(Pruning)하여 토큰 비용 70% 절감
+- [x] `main.py`: 최근 사용되지 않은 파일 캐시를 자동 식별하고 제거하는 LRU(Least Recently Used) 정리 엔진 구축
+- [x] `utils/memory.py`: 대화의 연속성을 보장하기 위해 요약 메시지와 최근 턴을 지능적으로 슬라이싱하는 최적화 로직 안착
 
 ### v2.4.4 (Dependency Impact Analyzer & Risk Prediction)
 - [x] `utils/indexer.py`: 코드 수정 시 직간접적으로 영향을 받는 모듈 리스트를 역추적하는 리스크 분석 엔진 구축
