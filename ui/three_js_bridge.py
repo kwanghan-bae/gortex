@@ -233,6 +233,52 @@ class ThreeJsBridge:
                 
         return {"nodes": ghost_nodes, "edges": ghost_edges}
 
+    def convert_intent_to_3d(self, intent_data: Dict[str, Any]) -> Dict[str, Any]:
+        """사용자의 장기 목표 및 의도 맵을 3D 시각화 데이터로 변환"""
+        if not intent_data or "intent_nodes" not in intent_data:
+            return {"nodes": [], "edges": []}
+            
+        nodes = []
+        edges = []
+        node_map = {}
+        
+        # 상단 목표 레이어 배치를 위한 기본 위치 (Y축 높게 설정)
+        base_y = 100
+        
+        for i, item in enumerate(intent_data["intent_nodes"]):
+            node_id = item["id"]
+            status = item.get("status", "pending")
+            
+            # 상태별 색상
+            color = "#00ff00" if status == "done" else ("#ffff00" if status == "in_progress" else "#888888")
+            
+            pos = {
+                "x": (i % 5) * 30 - 40,
+                "y": base_y + (i // 5) * 20,
+                "z": 50
+            }
+            
+            nodes.append({
+                "id": f"intent_{node_id}",
+                "label": f"[GOAL] {item['label']}",
+                "position": pos,
+                "color": color,
+                "status": status,
+                "is_intent": True
+            })
+            node_map[node_id] = pos
+            
+            if item.get("parent_id") and item["parent_id"] in node_map:
+                edges.append({
+                    "from": f"intent_{item['parent_id']}",
+                    "to": f"intent_{node_id}",
+                    "start": node_map[item["parent_id"]],
+                    "end": pos,
+                    "type": "intent_relation"
+                })
+                
+        return {"nodes": nodes, "edges": edges}
+
     def _get_color_by_type(self, node_type: str) -> str:
         colors = {
             "class": "#00ff00", # Green

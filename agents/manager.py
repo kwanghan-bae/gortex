@@ -98,6 +98,11 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
 - analyst: 데이터 분석 및 시각화 시 (차트 및 성과 리포트 강조)
 - standard: 일반적인 대화 및 복합 작업 시
 
+[User Intent Projection Rules]
+사용자의 입력을 분석하여 그들이 머릿속에 그리는 최종적인 '큰 그림(big_picture)'과 이를 달성하기 위한 '단계별 의도(intent_nodes)'를 추출하라.
+- 사용자가 "결국 X를 만들고 싶어"라고 하면 X를 `big_picture`로 설정하고, 필요한 구성 요소들을 노드로 분해하라.
+- 각 노드의 상태(status)를 판단하여 현재 진행 상황을 시각화하라.
+
 [Speculative Reasoning Rules]
 사용자의 요청이 복잡하거나 해결 방법이 여러 가지인 경우, 'swarm' 노드를 통해 병렬 검토하라. 
 만약 작업의 위험도가 높거나(Risk > 0.7), 시스템의 핵심 구조를 변경하는 요청인 경우 반드시 **'토론 모드(Debate Mode)'**를 활성화하라. 
@@ -211,6 +216,25 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
                     "enum": ["coding", "research", "analyst", "debugging", "standard"],
                     "description": "현재 작업 맥락에 가장 적합한 UI 레이아웃 모드"
                 },
+                "user_intent_projection": {
+                    "type": "OBJECT",
+                    "properties": {
+                        "big_picture": {"type": "STRING", "description": "사용자가 달성하려는 최종적인 목표"},
+                        "intent_nodes": {
+                            "type": "ARRAY",
+                            "items": {
+                                "type": "OBJECT",
+                                "properties": {
+                                    "id": {"type": "STRING"},
+                                    "label": {"type": "STRING"},
+                                    "status": {"type": "STRING", "enum": ["pending", "in_progress", "done"]},
+                                    "parent_id": {"type": "STRING", "nullable": True}
+                                },
+                                "required": ["id", "label", "status"]
+                            }
+                        }
+                    }
+                },
                 "parallel_tasks": {
                     "type": "ARRAY",
                     "items": {"type": "STRING"},
@@ -281,7 +305,8 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
             "agent_energy": new_energy,
             "ui_mode": res_data.get("ui_mode", "standard"),
             "token_credits": credits,
-            "knowledge_lineage": knowledge_lineage
+            "knowledge_lineage": knowledge_lineage,
+            "user_intent_projection": res_data.get("user_intent_projection")
         }
         
         if res_data.get("parallel_tasks"):

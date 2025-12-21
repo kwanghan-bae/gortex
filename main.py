@@ -816,6 +816,14 @@ async def run_gortex():
                                             "data": sim_3d
                                         }, ensure_ascii=False)))
 
+                                # [USER INTENT] 사용자 의도 투영 맵 스트리밍
+                                if output.get("user_intent_projection") and ui.web_manager:
+                                    intent_3d = ThreeJsBridge().convert_intent_to_3d(output["user_intent_projection"])
+                                    asyncio.create_task(ui.web_manager.broadcast(json.dumps({
+                                        "type": "user_intent_3d",
+                                        "data": intent_3d
+                                    }, ensure_ascii=False)))
+
                                 if thought: ui.update_thought(thought, agent_name=node_name, tree=tree)
 
                                 node_tokens = 0

@@ -1,23 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 사용자 의도 투영 및 목표 그래프 시각화 (User Intent Projection v1)
+- 지식 저장소 파티셔닝 및 성능 최적화 (Memory Sharding v1)
 
 ## Context
-- 현재 에이전트는 사용자의 단발성 명령을 처리하고 있으나, 사용자가 머릿속에 그리는 장기적인 '큰 그림'은 알지 못함.
-- 사용자의 자연어 입력으로부터 '최종 목표'와 이를 이루기 위한 '세부 의도'들을 추출하여 웹 대시보드에 목표 그래프(Goal Graph)로 띄우고, 작업 진행에 따라 노드가 완성되는 시각적 동기화가 필요함.
+- `LongTermMemory`가 단일 JSON 파일(`long_term_memory.json`)로 관리되고 있어, 지식이 수천 건 이상 쌓일 경우 로딩 및 검색 속도가 급격히 저하될 우려가 있음.
+- 프로젝트 단위(Namespace) 또는 주제별로 지식을 샤딩(Sharding)하여 저장하고, 필요한 샤드만 메모리에 로드하여 검색하는 지능형 파티셔닝이 필요함.
 
 ## Scope
 ### Do
-- `agents/manager.py`에서 사용자의 입력을 분석하여 '장기 목표'와 '단기 의도'를 구조화된 JSON으로 추출하는 로직 추가.
-- `ui/three_js_bridge.py`에 목표 그래프(Goal Nodes) 생성 및 상태(Pending/In-Progress/Done) 업데이트 로직 추가.
-- 사용자가 "내가 원하는 건 결국 X야"라고 말하면, 전체 목표 그래프가 즉시 재구성되는 인터랙티브 정렬 구현.
+- `utils/vector_store.py`를 확장하여 `namespace` 기반의 샤딩 로직 구현.
+- `memorize` 시 현재 프로젝트나 맥락에 맞는 샤드 파일로 자동 분산 저장.
+- `recall` 시 관련성 높은 샤드를 우선 탐색하는 멀티 샤드 검색 루틴 추가.
 
 ### Do NOT
-- 기존의 인과 관계 그래프와 섞지 말 것 (사용자의 '의도'와 시스템의 '수행'은 별개 층위로 표현).
+- 복잡한 데이터베이스 엔진을 도입하지 말 것 (파일 기반 샤딩 유지).
 
 ## Expected Outputs
-- `agents/manager.py`, `ui/three_js_bridge.py`, `main.py` 수정.
+- `utils/vector_store.py`, `agents/manager.py` 수정.
 
 ## Completion Criteria
-- 사용자 입력 시, 웹 대시보드 상단에 사용자의 의도를 구조화한 '의도 맵'이 나타나고, 에이전트의 활동이 해당 의도 노드에 수렴되는 과정이 확인되어야 함.
+- 지식 저장 시 `logs/memory/shard_XXX.json` 형태로 분할 저장되고, 검색 시 정확한 샤드에서 지식이 소환되는 것이 확인되어야 함.
