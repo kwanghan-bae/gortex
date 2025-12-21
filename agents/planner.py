@@ -86,9 +86,11 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
                             "id": {"type": "STRING"},
                             "parent_id": {"type": "STRING", "nullable": True},
                             "text": {"type": "STRING"},
-                            "type": {"type": "STRING", "enum": ["analysis", "design", "verification"]}
+                            "type": {"type": "STRING", "enum": ["analysis", "design", "verification"]},
+                            "priority": {"type": "INTEGER", "description": "1~5"},
+                            "certainty": {"type": "NUMBER", "description": "0.0~1.0"}
                         },
-                        "required": ["id", "text", "type"]
+                        "required": ["id", "text", "type", "priority", "certainty"]
                     }
                 },
                 "diagram_code": {"type": "STRING", "description": "Mermaid 형식의 아키텍처 다이어그램 코드 (선택사항)"},

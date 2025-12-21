@@ -30,9 +30,16 @@
 - [x] **Infrastructure**: 외부 깃허브 이슈(Issues)나 PR을 분석하여 작업을 자동 할당하는 'GitHub Agent' 기능 구축
 - [x] **System**: 에이전트가 코드를 작성하기 전 최신 오픈소스 라이브러리 및 API 문서를 검색하여 참조하는 'Live Documentation' 노드 추가
 - [x] **Infrastructure**: 대시보드 UI 테마를 사용자의 취향에 맞게 동적으로 변경할 수 있는 'Theming Engine' 구축
-- [ ] **Intelligence**: 에이전트의 복합적인 사고 과정을 구조화하여 보여주는 'Thought Mindmap' 기능 추가
+- [x] **Intelligence**: 에이전트의 복합적인 사고 과정을 구조화하여 보여주는 'Thought Mindmap' 시각화 로직 구현
+- [ ] **Infrastructure**: 시스템 내부의 모든 전역 설정을 중앙에서 관리하는 'Dynamic Config Manager' 구축
 
 ## ✅ Completed
+### v1.8.8 (Thought Mindmap & Graph Visualization)
+- [x] `ui/dashboard.py`: 선형적인 사고 트리를 노드와 엣지로 구성된 그래프 구조로 자동 변환하는 `_generate_thought_graph` 구현
+- [x] `agents/manager.py` & `agents/planner.py`: 사고 노드에 우선순위(`priority`)와 확신도(`certainty`) 메타데이터를 포함하도록 스키마 확장
+- [x] `ui/dashboard.py`: 변환된 마인드맵용 그래프 데이터를 웹 대시보드로 실시간 스트리밍하는 파이프라인 안착
+- [x] `ui/dashboard.py`: 사고 과정의 논리적 연결 고리를 명시적으로 표현하여 에이전트의 판단 근거 가시성 극대화
+
 ### v1.8.7 (Dynamic Theming Engine & Visual Customization)
 - [x] `ui/dashboard_theme.py`: Classic, Matrix, Cyberpunk, Monochrome 등 다양한 프리셋 테마를 지원하는 `ThemeManager` 클래스 신설
 - [x] `main.py`: 실시간으로 UI 테마를 조회하고 변경할 수 있는 `/theme [name]` 명령어 구현

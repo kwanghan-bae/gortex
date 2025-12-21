@@ -82,9 +82,11 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
                             "id": {"type": "STRING"},
                             "parent_id": {"type": "STRING", "nullable": True},
                             "text": {"type": "STRING"},
-                            "type": {"type": "STRING", "enum": ["analysis", "reasoning", "decision"]}
+                            "type": {"type": "STRING", "enum": ["analysis", "reasoning", "decision"]},
+                            "priority": {"type": "INTEGER", "description": "1~5 (낮음~높음)"},
+                            "certainty": {"type": "NUMBER", "description": "0.0~1.0 (확신도)"}
                         },
-                        "required": ["id", "text", "type"]
+                        "required": ["id", "text", "type", "priority", "certainty"]
                     }
                 },
                 "next_node": {

@@ -93,6 +93,22 @@ class DashboardUI:
         except ImportError:
             pass
 
+    def _generate_thought_graph(self) -> Dict[str, Any]:
+        """사고 트리를 그래프(Nodes/Edges) 구조로 변환"""
+        nodes = []
+        edges = []
+        for item in self.thought_tree:
+            node_id = item.get("id")
+            nodes.append({
+                "id": node_id,
+                "label": item.get("text")[:30] + "..." if len(item.get("text", "")) > 30 else item.get("text"),
+                "full_text": item.get("text"),
+                "type": item.get("type", "analysis")
+            })
+            if item.get("parent_id"):
+                edges.append({"from": item["parent_id"], "to": node_id})
+        return {"nodes": nodes, "edges": edges}
+
     async def _broadcast_to_web(self):
         """현재 UI 상태를 웹 대시보드로 전송"""
         if not self.web_manager:
@@ -107,6 +123,7 @@ class DashboardUI:
             "call_count": self.call_count,
             "thought": self.agent_thought,
             "thought_tree": self.thought_tree,
+            "thought_graph": self._generate_thought_graph(), # 마인드맵용 그래프 데이터 추가
             "diagram": self.current_diagram,
             "achievements": self.achievements,
             "chat_history": [
