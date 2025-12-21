@@ -71,13 +71,14 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
         base_instruction += f"\n\n[USER-SPECIFIC EVOLVED RULES]\n{constraints_str}"
 
     config = types.GenerateContentConfig(
-        system_instruction=base_instruction + "\n\n[Thought Tree Rules]\n사용자의 목표를 달성하기 위한 설계 과정을 논리적인 트리 구조(분석 -> 설계 -> 검증 계획)로 구성하라.\n\n[Architecture Sketcher]\n복잡한 로직이나 모듈 간 상호작용이 필요한 경우, 반드시 'diagram_code' 필드에 Mermaid 형식의 다이어그램 코드를 작성하라.",
+        system_instruction=base_instruction + "\n\n[Thought Tree Rules]\n사용자의 목표를 달성하기 위한 설계 과정을 논리적인 트리 구조(분석 -> 설계 -> 검증 계획)로 구성하라.\n\n[Architecture Sketcher]\n복잡한 로직이나 모듈 간 상호작용이 필요한 경우, 반드시 'diagram_code' 필드에 Mermaid 형식의 다이어그램 코드를 작성하라.\n\n[Self-Consistency Rules]\n계획을 확정하기 전, 반드시 'internal_critique' 단계에서 설계의 누락 사항이나 모순을 재검토하라.",
         temperature=0.0,
         response_mime_type="application/json",
         response_schema={
             "type": "OBJECT",
             "properties": {
                 "thought_process": {"type": "STRING", "description": "전체 설계 요약"},
+                "internal_critique": {"type": "STRING", "description": "설계 계획에 대한 비판적 재검토"},
                 "thought_tree": {
                     "type": "ARRAY",
                     "items": {
@@ -112,7 +113,7 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
                     }
                 }
             },
-            "required": ["thought_process", "thought_tree", "goal", "steps"]
+            "required": ["thought_process", "internal_critique", "thought_tree", "goal", "steps"]
         }
     )
 
@@ -128,12 +129,14 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
         plan_data = response.parsed if hasattr(response, 'parsed') else json.loads(response.text)
         
         logger.info(f"Planner Thought: {plan_data.get('thought_process')}")
+        logger.info(f"Critique: {plan_data.get('internal_critique')}")
         
         # Plan을 상태에 저장하고 Coder에게 넘김
         plan_steps = [json.dumps(step, ensure_ascii=False) for step in plan_data["steps"]]
         
         updates = {
             "thought_process": plan_data.get("thought_process"),
+            "internal_critique": plan_data.get("internal_critique"),
             "thought_tree": plan_data.get("thought_tree"),
             "plan": plan_steps,
             "current_step": 0,

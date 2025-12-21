@@ -67,13 +67,14 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
 
 
     config = types.GenerateContentConfig(
-        system_instruction=base_instruction + "\n\n[Thought Tree Rules]\n사고 과정을 논리적인 트리 구조로 세분화하라. 루트 노드에서 시작하여 분석, 판단, 결론으로 이어지는 노드 리스트를 생성하라.",
+        system_instruction=base_instruction + "\n\n[Thought Tree Rules]\n사고 과정을 논리적인 트리 구조로 세분화하라. 루트 노드에서 시작하여 분석, 판단, 결론으로 이어지는 노드 리스트를 생성하라.\n\n[Self-Consistency Rules]\n최종 결정을 내리기 전, 반드시 'internal_critique' 단계에서 자신의 논리적 모순이나 위험 요소를 비판적으로 재검토하라.",
         temperature=0.0,
         response_mime_type="application/json",
         response_schema={
             "type": "OBJECT",
             "properties": {
                 "thought": {"type": "STRING", "description": "전체 사고 요약"},
+                "internal_critique": {"type": "STRING", "description": "자신의 추론 과정에 대한 비판적 재검토"},
                 "thought_tree": {
                     "type": "ARRAY",
                     "items": {
@@ -100,7 +101,7 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
                 },
                 "response_to_user": {"type": "STRING", "description": "사용자에게 직접 답할 내용"}
             },
-            "required": ["thought", "thought_tree", "next_node"]
+            "required": ["thought", "internal_critique", "thought_tree", "next_node"]
         }
     )
 
@@ -127,9 +128,11 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         res_data = response.parsed if hasattr(response, 'parsed') else json.loads(response.text)
         
         logger.info(f"Manager Thought: {res_data.get('thought')}")
+        logger.info(f"Critique: {res_data.get('internal_critique')}")
         
         updates = {
             "thought": res_data.get("thought"),
+            "internal_critique": res_data.get("internal_critique"),
             "thought_tree": res_data.get("thought_tree"),
             "next_node": res_data.get("next_node", "__end__")
         }

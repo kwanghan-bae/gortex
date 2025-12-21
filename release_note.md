@@ -37,10 +37,16 @@
 - [x] **Intelligence**: 에이전트가 작업 중 발생한 감정적/논리적 교착 상태를 감지하여 스스로 재설정(Reset)하는 'Mental Reboot' 기능 구현
 - [x] **System**: 에이전트가 코드를 작성할 때 사용자의 스타일을 학습하여 반영하는 'Style Mimicry' 엔진 추가
 - [x] **Infrastructure**: 시스템 내부의 모든 노드 간 통신 및 상태 보호를 위한 'Secure Node Transport' 구축
-- [x] **Interface**: 웹 대시보드에서 시스템의 보안 상태를 실시간 모니터링하는 'Security Shield' 기능 구축
-- [ ] **Intelligence**: 에이전트가 작업 중 스스로의 논리적 모순을 검증하는 'Self-Consistency' 체크 엔진 도입
+- [x] **Intelligence**: 에이전트가 작업 중 스스로의 논리적 모순을 검증하는 'Self-Consistency' 체크 엔진 도입
+- [ ] **Infrastructure**: 에이전트의 사고 과정을 주기적으로 아카이빙하여 성능 개선 데이터셋으로 변환하는 'Dataset Generator' 추가
 
 ## ✅ Completed
+### v1.9.8 (Self-Consistency & Internal Critique)
+- [x] `agents/manager.py` & `agents/planner.py`: 최종 결정 전 자신의 논리를 스스로 비판하고 재검토하는 'Internal Critique' 프로세스 의무화
+- [x] `agents/manager.py`: 응답 스키마에 `internal_critique` 필드를 추가하여 에이전트의 성찰적 사고 과정을 투명하게 기록
+- [x] `agents/planner.py`: 설계 단계에서의 누락 사항이나 모순을 자가 감지하여 계획의 정밀도를 높이는 자가 일관성 검증 로직 강화
+- [x] `agents/manager.py`: 동적 설정 매니저(GortexConfig)를 연동하여 모델 선택의 유연성 및 지능형 라우팅 안정성 확보
+
 ### v1.9.7 (Security Shield Dashboard & Audit)
 - [x] `ui/dashboard.py`: 보안 위반 및 차단 이력을 기록하고 관리하는 `security_events` 시스템 구현
 - [x] `main.py`: 셸 실행 중 발생하는 보안 경고를 실시간 감지하여 UI 및 외부 알림 채널로 즉시 전송하는 연동 로직 추가
