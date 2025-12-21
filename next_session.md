@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-21
-**Status:** Tech Radar Auto-Adoption Analysis Complete (v2.2.15)
+**Status:** Active Refactoring Proposal Complete (v2.2.16)
 
 ## 🧠 Current Context
-Tech Radar가 신기술 도입 기회(`adoption_candidates`)를 식별하여 저장하고 있습니다. 이제 이 후보들을 실제 행동(Refactoring)으로 연결해야 합니다. Manager는 이 정보를 인지하고 사용자에게 제안하거나 스스로 계획을 수립해야 합니다.
+시스템은 신기술을 감지하고 리팩토링을 제안하며, 효율성을 스스로 관리합니다. 이제 코드 품질의 핵심인 '테스트 자동화'를 강화해야 합니다. Coder가 기능을 구현할 때, 이에 상응하는 단위 테스트를 자동으로 생성하도록 강제하는 메커니즘이 필요합니다.
 
 ## 🎯 Next Objective
-**Active Refactoring Proposal (Evolution v4)**
-1. **`Radar Awareness`**: `agents/manager.py`가 `tech_radar.json`의 `adoption_candidates`를 주기적으로 확인하도록 로직을 추가합니다.
-2. **`Proposal Generation`**: 도입 후보가 있다면, Manager는 사용자에게 "XX 기술 도입을 위한 리팩토링을 진행하시겠습니까?"라고 제안하거나, `planner`에게 관련 작업을 지시합니다.
+**Automated Test Generation (Quality Assurance v1)**
+1. **`Test Mandate`**: `agents/planner.py`가 계획을 수립할 때, 신규 기능 구현 단계 직후에 반드시 '단위 테스트 작성(Write Unit Test)' 단계를 포함하도록 로직을 강화합니다.
+2. **`Test-Driven Coder`**: `agents/coder.py`가 테스트 코드를 작성할 때, `unittest` 표준을 준수하고 기존 테스트 스위트와 호환되도록 프롬프트를 보강합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 기술 도입 분석 완료 (v2.2.15).
-- 다음 목표: 도입 후보를 기반으로 한 리팩토링 제안 및 실행.
+- 리팩토링 제안 시스템 완료 (v2.2.16).
+- 다음 목표: 단위 테스트 자동 생성 강제화.
 
 작업 목표:
-1. `agents/manager.py`에서 `tech_radar.json`을 로드하여 `adoption_candidates`가 있는지 확인하는 로직을 추가해줘.
-2. 후보가 존재하면 시스템 프롬프트에 "기술 부채 해소를 위한 리팩토링 제안"을 포함시켜 에이전트가 이를 우선순위로 고려하도록 해줘.
+1. `agents/planner.py`에서 계획 생성 시, 코드를 수정하는 작업이 있다면 반드시 그에 따른 '테스트 코드 작성' 단계를 추가하도록 로직을 수정해줘.
+2. `agents/coder.py`의 시스템 프롬프트에 `unittest` 기반의 테스트 코드 작성 가이드라인을 추가해줘.
 ```

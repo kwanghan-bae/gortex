@@ -1,4 +1,6 @@
 import logging
+import json
+import os
 from typing import Dict, List, Any
 from google.genai import types
 from gortex.core.auth import GortexAuth
@@ -66,6 +68,18 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     if state.get("active_constraints"):
         constraints_str = "\n".join([f"- {c}" for c in state["active_constraints"]])
         base_instruction += f"\n\n[USER-SPECIFIC EVOLVED RULES (MUST FOLLOW)]\n{constraints_str}"
+
+    # [Tech Radar Adoption] 신기술 도입 후보 확인
+    if os.path.exists("tech_radar.json"):
+        try:
+            with open("tech_radar.json", "r") as f:
+                radar_data = json.load(f)
+                candidates = radar_data.get("adoption_candidates", [])
+                if candidates:
+                    candidates_str = "\n".join([f"- {c['tech']} -> {c['target_file']}: {c['reason']}" for c in candidates[:3]])
+                    base_instruction += f"\n\n[OPPORTUNITY: Tech Radar Adoption]\n새로운 기술 도입 기회가 발견되었습니다. 현재 작업이 바쁘지 않다면, 이를 반영한 리팩토링을 제안하십시오.\n{candidates_str}"
+        except Exception as e:
+            logger.warning(f"Failed to read tech radar: {e}")
 
     # 시스템 최적화 제안(Improvement Task)이 있는지 확인
     system_improvement_msg = ""

@@ -67,6 +67,10 @@
 - [x] **Intelligence**: 에이전트가 도구 호출 시 스스로의 '에너지 수준'을 관리하며 효율적으로 작업하는 'Energy-Aware Tasking' 구현
 
 ## ✅ Completed
+### v2.2.16 (Active Refactoring Proposal)
+- [x] `agents/manager.py`: Tech Radar의 `adoption_candidates`를 확인하고 리팩토링 제안을 시스템 프롬프트에 자동 주입하는 로직 구현
+- [x] `agents/manager.py`: `tech_radar.json` 파일 읽기 및 예외 처리를 위한 `json`, `os` 임포트 추가
+
 ### v2.2.15 (Tech Radar Auto-Adoption)
 - [x] `agents/trend_scout.py`: 발견된 신기술이 프로젝트에 적용 가능한지 분석하는 `analyze_adoption_opportunity` 구현
 - [x] `tech_radar.json`: 기술 도입 후보(`adoption_candidates`)를 영구 기록하도록 데이터 구조 확장
