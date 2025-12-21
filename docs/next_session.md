@@ -1,23 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 에이전트 간 합의 도출(Synthesis) 알고리즘 고도화 및 데이터 정규화
+- 에이전트 간 가상 토론 과정 시각화 (Debate Monitor v1)
 
 ## Context
-- v2.3.0에서 합의 프로토콜의 기초가 마련되었으나, `analyst`가 `swarm`의 개별 시나리오 원본 데이터를 직접 참조하지 못하고 요약본에 의존하는 한계가 있음.
-- `GortexState`에 토론 데이터를 위한 전용 필드를 추가하여 정보 손실 없는 합의가 이루어지도록 개선해야 함.
+- 합의 프로토콜이 데이터 레벨에서 완성되었으나, 사용자 입장에서는 블랙박스 내에서 결과만 통보받는 느낌을 줄 수 있음.
+- `Swarm`에서의 관점 충돌과 `Analyst`의 종합 과정을 시각적 데이터로 변환하여 대시보드에 노출해야 함.
 
 ## Scope
 ### Do
-- `core/state.py`에 `debate_context` 필드(List[Dict]) 추가.
-- `agents/swarm.py`에서 각 시나리오의 전체 리포트를 `debate_context`에 보존하도록 수정.
-- `agents/analyst.py`가 이 컨텍스트를 직접 읽어 정밀한 트레이드오프 분석을 수행하도록 로직 개선.
+- `ui/dashboard.py`에 토론 현황을 표시할 수 있는 `update_debate_monitor` 메서드 추가.
+- `main.py`에서 `debate_context` 데이터를 UI 및 웹 서버로 실시간 스트리밍하도록 연동.
+- 웹 대시보드에서 상반된 페르소나의 의견을 대조하여 보여주는 데이터 스키마 확장.
 
 ### Do NOT
-- 기존의 단순 작업 로직에 불필요한 오버헤드 주입 금지.
+- 대시보드 레이아웃을 지나치게 복잡하게 만들지 말 것 (기존 패널 재활용 고려).
 
 ## Expected Outputs
-- `core/state.py`, `agents/swarm.py`, `agents/analyst.py` 수정.
+- `ui/dashboard.py`, `main.py` 수정.
 
 ## Completion Criteria
-- Analyst가 이전 단계의 모든 시나리오 원본 데이터를 바탕으로 합의안을 작성하는 프로세스가 로그로 확인되어야 함.
+- 터미널 또는 웹 대시보드에서 'Innovation'과 'Stability'의 상반된 리포트가 대조되어 표시되는 것이 확인되어야 함.

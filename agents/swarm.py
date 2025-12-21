@@ -134,7 +134,8 @@ async def swarm_node_async(state: GortexState) -> Dict[str, Any]:
         "file_cache": merged_file_cache,
         "next_node": next_node,
         "last_efficiency": winner["efficiency_score"],
-        "agent_energy": max(0, state.get("agent_energy", 100) - (len(tasks) * 2))
+        "agent_energy": max(0, state.get("agent_energy", 100) - (len(tasks) * 2)),
+        "debate_context": task_results # 토론 원본 데이터 보존
     }
 def swarm_node(state: GortexState) -> Dict[str, Any]:
     """Swarm 노드 엔트리 포인트 (Sync wrapper)"""

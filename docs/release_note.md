@@ -4,7 +4,7 @@
 
 ## 🚀 Backlog (Pending Tasks)
 - [x] **Intelligence**: 다중 에이전트 합의(토론) 프로토콜(Multi-Agent Consensus Protocol) 구현
-- [ ] **Intelligence**: 에이전트 간의 관점 차이를 조율하는 합의 도출(Synthesis) 알고리즘 고도화
+- [x] **Intelligence**: 에이전트 간의 관점 차이를 조율하는 합의 도출(Synthesis) 알고리즘 고도화
 - [ ] **Interface**: 에이전트 간의 가상 토론 과정을 시각화하는 'Debate Monitor' 웹 UI 구축
 
 ---
@@ -12,6 +12,11 @@
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.3.1 (Enhanced Consensus Synthesis)
+- [x] `core/state.py`: 토론 데이터 전용 보관을 위한 `debate_context` 필드 도입
+- [x] `agents/swarm.py`: 시나리오 원본 리포트와 메타데이터를 Analyst에게 무손실 전달하도록 개선
+- [x] `agents/analyst.py`: 구조화된 시나리오 데이터를 바탕으로 정밀 트레이드오프 분석 및 실행 계획 수립 로직 고도화
 
 ### v2.3.0 (Multi-Agent Consensus Protocol)
 - [x] `agents/swarm.py`: 상반된 관점(Innovation vs Stability)을 가진 페르소나 기반 시뮬레이션 로직 구현

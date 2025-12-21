@@ -208,22 +208,27 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
     last_msg_lower = last_msg.lower()
 
     # [Consensus Logic] Swarm으로부터 토론 결과가 넘어온 경우
-    if "가설 추론 결과" in last_msg and "상반된" in last_msg:
-        # 실제 환경에서는 state에 시나리오 원본 데이터를 보관했다가 사용해야 함.
-        # 여기서는 요약된 last_msg를 바탕으로 합의 도출 시뮬레이션
-        res = agent.synthesize_consensus("Current High-Risk Decision", [{"report": last_msg}])
+    debate_data = state.get("debate_context", [])
+    if debate_data and any(s.get("persona") for s in debate_data):
+        # 원본 시나리오 데이터를 바탕으로 정밀 합의 도출
+        res = agent.synthesize_consensus("High-Risk System Decision", debate_data)
         
-        msg = f"🤝 **에이전트 간 합의 도출 완료**\n\n"
+        msg = f"🤝 **에이전트 간 정밀 합의 도출 완료**\n\n"
         msg += f"📌 **최종 결정**: {res.get('final_decision')}\n"
         msg += f"💡 **결정 근거**: {res.get('rationale')}\n\n"
+        
         msg += "⚖️ **트레이드오프 분석**:\n"
         for t in res.get("tradeoffs", []):
             msg += f"- {t['aspect']}: (+){t['gain']} / (-){t['loss']}\n"
             
+        msg += f"\n🛡️ **남은 위험**: {res.get('residual_risk')}\n"
+        msg += f"🚀 **실행 계획**: {', '.join(res.get('action_plan', []))}"
+            
         return {
             "messages": [("ai", msg)],
             "next_node": "manager",
-            "active_constraints": state.get("active_constraints", []) + [f"Consensus: {res.get('final_decision')[:50]}..."]
+            "active_constraints": state.get("active_constraints", []) + [f"Consensus: {res.get('final_decision')[:50]}..."],
+            "debate_context": [] # 처리 완료 후 초기화
         }
 
     if state.get("next_node") == "analyst":
