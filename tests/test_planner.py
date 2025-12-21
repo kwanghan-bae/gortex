@@ -19,10 +19,18 @@ class TestGortexPlanner(unittest.TestCase):
         plan_data = {
             "thought_process": "테스트 계획 수립",
             "goal": "Test Goal",
+            "impact_analysis": {
+                "target": "main.py",
+                "direct": ["utils.py"],
+                "indirect": ["ui.py"],
+                "risk_level": "Medium"
+            },
             "steps": [
                 {"id": 1, "action": "read_file", "target": "main.py", "reason": "Check content"},
                 {"id": 2, "action": "write_file", "target": "test.py", "reason": "Create test"}
-            ]
+            ],
+            "internal_critique": "완벽함",
+            "thought_tree": []
         }
         
         # google-genai response mocking
@@ -44,6 +52,11 @@ class TestGortexPlanner(unittest.TestCase):
         self.assertEqual(result["next_node"], "coder")
         self.assertEqual(result["current_step"], 0)
         self.assertEqual(len(result["plan"]), 2)
+        self.assertEqual(result["impact_analysis"]["target"], "main.py")
+        
+        # 영향 분석 메시지 포함 확인
+        has_impact_msg = any("수정 영향 범위 분석" in m[1] for m in result["messages"])
+        self.assertTrue(has_impact_msg)
         
         # Plan 내용 검증 (JSON 문자열로 변환되었는지)
         first_step = json.loads(result["plan"][0])

@@ -1,24 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 핵심 에이전트(Manager, Planner) 로직의 엣지 케이스 테스트 보강
+- 핵심 설계 의사결정 및 컨텍스트 자동 고정 (Context Pinning v1)
 
 ## Context
-- v2.6.1을 통해 엄격한 테스트 체계가 마련됨.
-- 하지만 현재 기존 테스트들은 기본 경로(Happy Path) 위주로 구성되어 있어, 복잡한 사용자 요청이나 예외 상황에서의 복원력을 충분히 보장하지 못함.
-- `manager_node`와 `planner_node`를 대상으로 비정상 입력, Quota 초과, 빈 컨텍스트 등 엣지 케이스에 대한 단위 테스트를 집중 보강해야 함.
+- `Memory Pruning`을 통해 메시지가 요약되고 삭제되면서, 이전 세션에서 합의된 미세한 설계 결정이나 임시 규칙이 유실될 위험이 있음.
+- 사용자가 "이 결정은 중요해"라고 하거나 `Analyst`가 'Critical Decision'으로 분류한 내용은 `messages` 리스트의 삭제 대상에서 제외하고 항상 최상단에 배치(Pinning)해야 함.
 
 ## Scope
 ### Do
-- `tests/test_manager.py` 및 `tests/test_planner.py` 확장.
-- 에러 상황(API Failure, JSON Parsing Error 등)에서의 에이전트 반응성 테스트 추가.
-- `Analyst`의 성찰적 디버깅(`generate_anti_failure_rule`)에 대한 단위 테스트 신설.
+- `core/state.py`에 `pinned_messages` 필드 추가.
+- `utils/memory.py`의 `prune_synapse` 로직을 수정하여 `pinned_messages`를 항상 보존하고 프롬프트 최상단에 주입하도록 개선.
+- 에이전트 응답 스키마에 `pin_this` (boolean) 필드를 추가하여 자율적인 정보 중요도 판정 유도.
 
 ### Do NOT
-- 실제 API 호출을 수행하지 말 것 (반드시 Mock 사용).
+- 모든 메시지를 고정하지 말 것 (토큰 낭비 방지를 위해 진짜 핵심만 선별).
 
 ## Expected Outputs
-- `tests/test_manager.py`, `tests/test_planner.py` 업데이트, `tests/test_analyst_reflection.py` 신설.
+- `core/state.py`, `utils/memory.py`, `agents/manager.py` 수정.
 
 ## Completion Criteria
-- 모든 신규 엣지 케이스 테스트가 `pre_commit.sh` v1.3을 통과하고, 커버리지 리포트에서 해당 로직의 검증이 확인되어야 함.
+- 메시지 가지치기(Pruning)가 발생한 후에도, '고정된 메시지'들이 프롬프트 내에 온전히 남아있는 것이 확인되어야 함.

@@ -232,15 +232,15 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         from gortex.core.config import GortexConfig
         model_id = GortexConfig().get("default_model", "gemini-1.5-flash")
 
-    response = auth.generate(
-        model_id=model_id,
-        contents=state["messages"],
-        config=config 
-    )
-
-
-    # JSON 응답 파싱
+    # 2. Gemini 호출을 통한 의도 분석 및 라우팅 결정 (에러 핸들링 포함)
     try:
+        response = auth.generate(
+            model_id=model_id,
+            contents=state["messages"],
+            config=config 
+        )
+
+        # JSON 응답 파싱
         res_data = response.parsed if hasattr(response, 'parsed') else json.loads(response.text)
         
         logger.info(f"Manager Thought: {res_data.get('thought')}")
@@ -294,5 +294,5 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         return updates
 
     except Exception as e:
-        logger.error(f"Error parsing manager response: {e}")
-        return {"next_node": "__end__", "messages": [("ai", "죄송합니다. 요청을 분석하는 중에 오류가 발생했습니다.")]}
+        logger.error(f"Error in manager node: {e}")
+        return {"next_node": "__end__", "messages": [("ai", f"죄송합니다. 요청을 분석하는 중에 오류가 발생했습니다: {e}")]}

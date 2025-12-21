@@ -52,5 +52,22 @@ class TestGortexManager(unittest.TestCase):
         self.assertEqual(result["next_node"], "__end__")
         self.assertEqual(result["messages"][0][1], "무엇을 분석해 드릴까요? 대상 파일을 알려주세요.")
 
+    @patch('gortex.agents.manager.GortexAuth')
+    def test_manager_error_fallback(self, mock_auth_cls):
+        """API 에러 발생 시 안전하게 종료되는지 테스트"""
+        mock_auth = mock_auth_cls.return_value
+        mock_auth.generate.side_effect = Exception("API connection error")
+
+        state = {
+            "messages": [("user", "Hello")],
+            "active_constraints": []
+        }
+
+        result = manager_node(state)
+
+        # 검증: 에러 상황에서도 결과가 반환되어야 함
+        self.assertEqual(result["next_node"], "__end__")
+        self.assertIn("오류가 발생했습니다", result["messages"][0][1])
+
 if __name__ == '__main__':
     unittest.main()
