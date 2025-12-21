@@ -12,25 +12,19 @@ from gortex.agents.researcher import researcher_node
 from gortex.agents.analyst import analyst_node
 from gortex.agents.trend_scout import trend_scout_node
 from gortex.agents.optimizer import optimizer_node
+from gortex.agents.swarm import swarm_node
 from gortex.utils.memory import summarizer_node
-from gortex.utils.token_counter import count_tokens
 
-def route_manager(state: GortexState) -> Literal["summarizer", "planner", "researcher", "analyst", "optimizer", "__end__"]:
-    """Manager의 결정에 따라 다음 노드로 라우팅. 대화가 길거나 토큰이 많으면 요약 노드 거침."""
+def route_manager(state: GortexState) -> Literal["summarizer", "planner", "researcher", "analyst", "optimizer", "swarm", "__end__"]:
+    """Manager의 결정에 따라 다음 노드로 라우팅."""
     next_node = state.get("next_node", "__end__")
     if next_node == "__end__":
         return "__end__"
 
     messages = state.get("messages", [])
-    
-    # 요약 트리거 조건 1: 메시지 개수 (12개 이상)
-    msg_count_trigger = len(messages) >= 12
-    
-    # 요약 트리거 조건 2: 총 토큰 수 추정 (5000 토큰 이상)
     total_tokens = sum(count_tokens(m.content if hasattr(m, 'content') else str(m)) for m in messages)
-    token_trigger = total_tokens >= 5000
     
-    if msg_count_trigger or token_trigger:
+    if len(messages) >= 12 or total_tokens >= 5000:
         return "summarizer"
         
     return next_node
@@ -43,28 +37,25 @@ def route_coder(state: GortexState) -> Literal["coder", "manager", "__end__"]:
     """Coder의 작업 완료 여부에 따라 라우팅"""
     next_node = state.get("next_node", "manager")
     if next_node == "__end__":
-        # 모든 step이 끝났다면 매니저에게 최종 확인을 받거나 종료
         return "manager"
     return "coder"
 
 def compile_gortex_graph():
     """Gortex 시스템의 모든 에이전트를 연결하여 그래프 컴파일"""
-    
-    # 1. 그래프 생성
     workflow = StateGraph(GortexState)
 
-    # 2. 노드 추가
+    # 노드 추가
     workflow.add_node("manager", manager_node)
     workflow.add_node("planner", planner_node)
     workflow.add_node("coder", coder_node)
     workflow.add_node("researcher", researcher_node)
     workflow.add_node("analyst", analyst_node)
+    workflow.add_node("swarm", swarm_node)
     workflow.add_node("trend_scout", trend_scout_node)
     workflow.add_node("summarizer", summarizer_node)
     workflow.add_node("optimizer", optimizer_node)
 
-    # 3. 엣지 연결
-    # 시스템 시작 시 먼저 트렌드 스캔 수행
+    # 엣지 연결
     workflow.add_edge(START, "trend_scout")
     workflow.add_edge("trend_scout", "manager")
 
@@ -78,6 +69,7 @@ def compile_gortex_graph():
             "researcher": "researcher",
             "analyst": "analyst",
             "optimizer": "optimizer",
+            "swarm": "swarm",
             "__end__": END
         }
     )
@@ -91,9 +83,13 @@ def compile_gortex_graph():
             "researcher": "researcher",
             "analyst": "analyst",
             "optimizer": "optimizer",
+            "swarm": "swarm",
             "manager": "manager"
         }
     )
+
+    # Swarm 완료 후 Manager 복귀
+    workflow.add_edge("swarm", "manager")
 
     # Planner -> Coder
     workflow.add_edge("planner", "coder")

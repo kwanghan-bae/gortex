@@ -32,9 +32,16 @@
 - [x] **Infrastructure**: 대시보드 UI 테마를 사용자의 취향에 맞게 동적으로 변경할 수 있는 'Theming Engine' 구축
 - [x] **Intelligence**: 에이전트의 복합적인 사고 과정을 구조화하여 보여주는 'Thought Mindmap' 시각화 로직 구현
 - [x] **Infrastructure**: 시스템 내부의 모든 전역 설정을 중앙에서 관리하는 'Dynamic Config Manager' 구축
-- [ ] **Infrastructure**: 에이전트의 작업 부하를 분산하기 위해 여러 LLM을 동시에 호출하는 'Agent Swarm' 프레임워크 기초 설계
+- [x] **Infrastructure**: 에이전트의 작업 부하를 분산하기 위해 여러 LLM을 동시에 호출하는 'Agent Swarm' 프레임워크 기초 설계
+- [ ] **Infrastructure**: 병렬 작업 간의 데이터 충돌을 방지하고 상태를 안전하게 병합하는 'State Merger' 로직 고도화
 
 ## ✅ Completed
+### v1.9.0 (Agent Swarm & Parallel Tasking Foundation)
+- [x] `agents/manager.py`: 복잡한 요청을 여러 하위 작업으로 분리하고 `swarm` 노드로 라우팅하는 병렬 작업 감지 로직 구현
+- [x] `agents/swarm.py`: `asyncio.gather`를 사용하여 여러 하위 작업을 동시에 실행하고 결과를 취합하는 오케스트레이션 노드 신설
+- [x] `core/graph.py`: 시스템 워크플로우에 `swarm` 노드를 정식 등록하고 유연한 조건부 라우팅 구조 구축
+- [x] `agents/manager.py`: 병렬 작업용 응답 스키마(`parallel_tasks`) 확장 및 동적 모델 선택 로직 연동
+
 ### v1.8.9 (Dynamic Config Manager & Global Settings)
 - [x] `core/config.py`: 로그 레벨, 모델 선택, 임계치 등 전역 설정을 싱글톤으로 관리하는 `GortexConfig` 클래스 신설
 - [x] `main.py`: 현재 시스템 설정을 실시간으로 조회하고 수정할 수 있는 `/config [key] [value]` 명령어 구현

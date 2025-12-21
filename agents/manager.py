@@ -91,7 +91,12 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
                 },
                 "next_node": {
                     "type": "STRING", 
-                    "enum": ["planner", "researcher", "analyst", "__end__"]
+                    "enum": ["planner", "researcher", "analyst", "swarm", "__end__"]
+                },
+                "parallel_tasks": {
+                    "type": "ARRAY",
+                    "items": {"type": "STRING"},
+                    "description": "next_node가 'swarm'일 때 병렬로 처리할 하위 작업 리스트"
                 },
                 "response_to_user": {"type": "STRING", "description": "사용자에게 직접 답할 내용"}
             },
@@ -106,7 +111,9 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         model_id = "gemini-2.5-flash-lite"
         logger.warning(f"⚠️ High API usage ({call_count}). Throttling to {model_id}")
     else:
-        model_id = "gemini-1.5-flash"
+        # 설정된 기본 모델 사용
+        from gortex.core.config import GortexConfig
+        model_id = GortexConfig().get("default_model", "gemini-1.5-flash")
 
     response = auth.generate(
         model_id=model_id,
@@ -126,6 +133,10 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
             "thought_tree": res_data.get("thought_tree"),
             "next_node": res_data.get("next_node", "__end__")
         }
+        
+        if res_data.get("parallel_tasks"):
+            updates["plan"] = res_data["parallel_tasks"] # Swarm을 위한 임시 계획 주입
+            logger.info(f"📦 Parallel tasks detected: {len(res_data['parallel_tasks'])} items.")
 
         
         # 사용자에게 전달할 메시지가 있다면 추가
