@@ -67,6 +67,11 @@
 - [x] **Intelligence**: 에이전트가 도구 호출 시 스스로의 '에너지 수준'을 관리하며 효율적으로 작업하는 'Energy-Aware Tasking' 구현
 
 ## ✅ Completed
+### v2.2.14 (Reputation-Based Model Allocation)
+- [x] `core/state.py`: 에이전트에게 할당된 모델 ID를 저장하는 `assigned_model` 필드 추가
+- [x] `agents/manager.py`: 에이전트 평판(Level)과 에너지 상태를 기반으로 모델(Flash vs Pro)을 차등 지급하는 로직 구현
+- [x] `agents/coder.py`: Manager로부터 할당받은 `assigned_model`을 사용하여 작업을 수행하도록 업데이트
+
 ### v2.2.13 (Proactive Optimization Loop)
 - [x] `core/state.py`: 효율성 이력을 추적하는 `efficiency_history` 필드 추가
 - [x] `agents/manager.py`: 지속적인 저효율 발생 시 `optimizer`로 강제 라우팅하는 자가 치유(Self-Healing) 로직 구현

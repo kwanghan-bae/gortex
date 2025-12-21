@@ -163,11 +163,24 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         # 에너지 소모 기록 (단순화: 매 턴 5% 감소)
         new_energy = max(0, energy - 5)
         
+        target_node = res_data.get("next_node", "__end__")
+        
+        # [Dynamic Model Tiering] 에이전트 레벨 및 에너지에 따른 모델 할당
+        assigned_model = "gemini-1.5-flash"
+        if target_node in ["planner", "coder", "analyst"]:
+            level = state.get("agent_economy", {}).get(target_node, {}).get("level", "Novice")
+            if level == "Master" and energy >= 30:
+                assigned_model = "gemini-1.5-pro"
+                logger.info(f"💎 Master agent '{target_node}' granted access to PRO model.")
+            elif energy < 30:
+                logger.info(f"🔋 Low energy. Forcing FLASH model for '{target_node}'.")
+        
         updates = {
             "thought": res_data.get("thought"),
             "internal_critique": res_data.get("internal_critique"),
             "thought_tree": res_data.get("thought_tree"),
-            "next_node": res_data.get("next_node", "__end__"),
+            "next_node": target_node,
+            "assigned_model": assigned_model,
             "agent_energy": new_energy
         }
         

@@ -170,7 +170,11 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
         }
     )
     
-    response = auth.generate(model_id="gemini-3-flash-preview", contents=state["messages"], config=config)
+    # [Dynamic Model] Manager가 할당한 모델 사용
+    assigned_model = state.get("assigned_model", "gemini-1.5-flash")
+    logger.info(f"Coder using model: {assigned_model}")
+    
+    response = auth.generate(model_id=assigned_model, contents=state["messages"], config=config)
     
     function_calls = []
     if response.candidates and response.candidates[0].content.parts:
