@@ -27,7 +27,8 @@
 - **Quality**: `tests/test_ui.py`, `tests/test_asset_manager.py`, `tests/test_table_detector.py`가 Dashboard 갱신, 에셋 로딩, 테이블 감지 로직을 단위/통합 수준에서 검증해 UI/유틸 핵심을 튼튼히 했습니다.
 - **Quality**: `tests/test_translator.py`, `tests/test_engine.py`가 번역기(단일/배치)와 실행 루프(process_node_output, 힌트, 상태 업데이트) 경로를 감시해 언어/엔진 레이어를 강건하게 만들었습니다.
 - **Quality**: `tests/test_auth.py`, `tests/test_observer.py`가 인증 계정 전환/콜 추적과 로그 인과 그래프/콜백 기록을 검증해 보안·감시 층을 강화했습니다.
-- **Verification**: `PYTHONPATH=/Users/joel/Desktop/git coverage run -m pytest` → `coverage report`로 전체 75% 커버리지를 달성하고 다음 타깃(`core/auth.py`, `core/observer.py`)을 설정했습니다.
+- **Quality**: `tests/test_tools.py`, `tests/test_message_queue.py`가 파일/압축 작업, 해시 기반 무결성 검사와 Redis 메시징 흐름(게시/구독/작업 큐/더미 모드)을 검증해 시스템 툴킷의 안정성을 확보했습니다.
+- **Verification**: `PYTHONPATH=/Users/joel/Desktop/git coverage run -m pytest` → `coverage report`로 전체 78% 커버리지를 달성하고 다음 타깃(`utils/notifier.py`, `core/graph.py`)을 설정했습니다.
 
 ### v2.7.2 (Core Modularization & High-Rigor Testing)
 - [x] **Architecture**: 1,000라인의 `main.py`를 `engine`, `commands`, `terminal`로 완벽히 해체 및 기능별 전문화 (유실 로직 전수 복구)

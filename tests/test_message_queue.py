@@ -29,5 +29,26 @@ class TestGortexMessageQueue(unittest.TestCase):
         result = mq.pop_task("queue")
         self.assertEqual(result, task)
 
+    @patch("gortex.utils.message_queue.redis")
+    def test_subscribe_with_messages(self, mock_redis):
+        mock_client = MagicMock()
+        mock_pubsub = MagicMock()
+        message_payload = {"id": "1", "data": "hello"}
+        mock_pubsub.listen.return_value = iter([
+            {"type": "message", "data": json.dumps(message_payload)}
+        ])
+        mock_client.pubsub.return_value = mock_pubsub
+        mock_redis.from_url.return_value = mock_client
+        mq = GortexMessageQueue()
+        callback = MagicMock()
+        mq.subscribe("channel", callback)
+        callback.assert_called_once_with(message_payload)
+
+    def test_subscribe_dummy_mode(self):
+        mq = GortexMessageQueue()
+        mq.client = None
+        callback = MagicMock()
+        self.assertIsNone(mq.subscribe("channel", callback))
+
 if __name__ == '__main__':
     unittest.main()

@@ -7,11 +7,16 @@ from types import SimpleNamespace
 from unittest.mock import patch, MagicMock
 from gortex.utils.tools import (
     archive_project_artifacts,
+    apply_patch,
     compress_directory,
+    deep_integrity_check,
     execute_shell,
+    get_changed_files,
+    get_file_hash,
     list_files,
     read_file,
     write_file,
+    write_file_with_hash,
 )
 
 class TestGortexTools(unittest.TestCase):
@@ -25,6 +30,9 @@ class TestGortexTools(unittest.TestCase):
             os.remove(self.test_file)
         if os.path.exists("test_write.txt"):
             os.remove("test_write.txt")
+        for cache_dir in ("logs/backups", "logs/versions", "logs/archives"):
+            if os.path.exists(cache_dir):
+                shutil.rmtree(cache_dir)
 
     def test_execute_shell_blacklist(self):
         """블랙리스트 명령어 차단 테스트"""
@@ -121,6 +129,56 @@ class TestGortexTools(unittest.TestCase):
         self.assertIn("keep.txt", members)
         self.assertNotIn("ignore_me.txt", members)
         shutil.rmtree(temp_dir)
+
+
+    def test_get_file_hash_computes_value(self):
+        path = "hash_test.txt"
+        with open(path, "w") as f:
+            f.write("hash-me")
+        file_hash = get_file_hash(path)
+        self.assertEqual(len(file_hash), 32)
+        os.remove(path)
+
+    def test_write_file_with_hash_records_hash(self):
+        path = "hash_output.txt"
+        status, new_hash = write_file_with_hash(path, "content")
+        self.assertIn("Successfully", status)
+        self.assertEqual(get_file_hash(path), new_hash)
+        os.remove(path)
+
+    def test_deep_integrity_check_finds_files(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            candidate = os.path.join(tmpdir, "track.txt")
+            with open(candidate, "w") as f:
+                f.write("track")
+            updated_cache, changed = deep_integrity_check(tmpdir, {})
+            rel_path = os.path.relpath(candidate, tmpdir)
+            self.assertIn(rel_path, changed)
+            self.assertEqual(updated_cache[rel_path], get_file_hash(candidate))
+
+    def test_get_changed_files_detects_modification(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = os.path.join(tmpdir, "mod.txt")
+            with open(target, "w") as f:
+                f.write("old")
+            rel_path = os.path.relpath(target, tmpdir)
+            cache = {rel_path: get_file_hash(target)}
+            with open(target, "w") as f:
+                f.write("new")
+            changed = get_changed_files(tmpdir, cache)
+            self.assertIn(rel_path, changed)
+
+    def test_apply_patch_replaces_content(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            target = os.path.join(tmpdir, "file.txt")
+            with open(target, "w") as f:
+                f.write("line1\nline2\nline3\n")
+            result = apply_patch(target, 2, 2, "patched")
+            self.assertIn("Successfully", result)
+            with open(target, "r") as f:
+                lines = f.read().splitlines()
+            self.assertEqual(lines[1], "patched")
+
 
 if __name__ == '__main__':
     unittest.main()
