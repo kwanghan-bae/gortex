@@ -391,6 +391,7 @@ async def run_gortex():
     ui = DashboardUI(console)
     observer = GortexObserver()
     total_tokens, total_cost = 0, 0.0
+    total_latency_ms, node_count = 0, 0
     
     # 세션별 파일 캐시 관리 (Isolation)
     cache_path = "logs/file_cache.json"
@@ -476,7 +477,10 @@ async def run_gortex():
                         async for event in app.astream(initial_state, config):
                             for node_name, output in event.items():
                                 node_latency_ms = int((time.time() - node_start_time) * 1000)
-                                node_start_time = time.time() # 다음 노드를 위해 초기화
+                                node_start_time = time.time()
+                                total_latency_ms += node_latency_ms
+                                node_count += 1
+                                avg_latency = total_latency_ms // node_count
                                 
                                 ui.current_agent = node_name
                                 has_tool = any((isinstance(m, tuple) and m[0] == "tool") or (hasattr(m, 'type') and m.type == "tool") for m in output.get("messages", []))
@@ -510,7 +514,8 @@ async def run_gortex():
                                     total_cost, 
                                     len(initial_state["active_constraints"]),
                                     auth_engine.get_provider(),
-                                    auth_engine.get_call_count()
+                                    auth_engine.get_call_count(),
+                                    avg_latency
                                 )
                                 ui.update_logs({"agent": node_name, "event": "node_complete"})
                                 # 정밀 프로파일링 기록
@@ -540,7 +545,8 @@ async def run_gortex():
                         total_cost, 
                         len(initial_state["active_constraints"]),
                         auth_engine.get_provider(),
-                        auth_engine.get_call_count()
+                        auth_engine.get_call_count(),
+                        total_latency_ms // max(1, node_count)
                     )
                     
                     # 매 턴 종료 후 세션 캐시 영속화

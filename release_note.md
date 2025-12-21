@@ -22,9 +22,16 @@
 - [x] **Infrastructure**: 외부 API 연동(예: Slack, Discord)을 통해 작업 완료 시 알림을 보내는 'Notification' 시스템 구축
 - [x] **Interface**: 터미널 UI를 넘어 브라우저에서 Gortex의 활동을 실시간 모니터링할 수 있는 'Web Dashboard' 프레임워크 구축
 - [x] **Infrastructure**: 에이전트의 도구 호출 로그를 분석하여 비용과 지연 시간을 최적화하는 'Performance Profiler' 노드 구현
-- [ ] **Interface**: 대시보드 사이드바에 현재 세션의 '평균 응답 지연 시간' 및 '토큰 당 비용' 추이 그래프 추가
+- [x] **Interface**: 대시보드 사이드바에 현재 세션의 '평균 응답 지연 시간' 및 '토큰 당 비용' 추이 시각화 보강
+- [ ] **Infrastructure**: 에이전트의 자기 개조(Self-Modification) 성공 확률을 높이기 위한 'Reflective Validation' 단계 추가
 
 ## ✅ Completed
+### v1.7.5 (Visual Latency & Cost Tracking UI)
+- [x] `ui/dashboard.py`: 사이드바 `USAGE STATS` 패널에 실시간 '평균 지연 시간(Avg Latency)' 표시 항목 추가
+- [x] `main.py`: 각 노드별 실행 시간을 누적하여 평균값을 계산하고 UI에 전달하는 실시간 프로파일링 연동
+- [x] `ui/dashboard.py`: 지연 시간에 따른 상태 색상(Green/Yellow/Red) 변화 로직을 적용하여 시스템 응답성 시각화
+- [x] `main.py`: 세션 전체의 토큰 비용과 지연 시간을 통합 관리하여 운영 효율성 모니터링 강화
+
 ### v1.7.4 (Performance Profiler & Cost Analysis)
 - [x] `core/observer.py`: 각 노드 실행 시 지연 시간(ms)과 상세 토큰 사용량을 기록할 수 있도록 프로파일링 스키마 확장
 - [x] `main.py`: 메인 루프 내에서 노드별 실행 시간을 정밀 측정하고 관찰자에게 실시간 기록하도록 통합

@@ -239,8 +239,8 @@ class DashboardUI:
             self.progress.remove_task(self.tool_task)
             self.tool_task = None
 
-    def update_sidebar(self, agent: str, step: str, tokens: int, cost: float, rules: int, provider: str = "GEMINI", call_count: int = 0):
-        """사이드바 정보 업데이트 (에이전트 및 LLM 상태 시각화 강화)"""
+    def update_sidebar(self, agent: str, step: str, tokens: int, cost: float, rules: int, provider: str = "GEMINI", call_count: int = 0, avg_latency: int = 0):
+        """사이드바 정보 업데이트 (에이전트, LLM 및 성능 상태 시각화 강화)"""
         self.current_agent = agent
         self.current_step = step
         self.tokens_used = tokens
@@ -267,6 +267,7 @@ class DashboardUI:
         provider_style = "bold blue" if provider == "GEMINI" else "bold green"
         status_text.append(f"{provider}\n", style=provider_style)
         
+        # 호출 빈도 시각화
         status_text.append(f"Load : ", style="bold")
         bars = min(10, (call_count + 1) // 2)
         load_color = "green" if bars < 4 else ("yellow" if bars < 8 else "red")
@@ -289,6 +290,9 @@ class DashboardUI:
         stats_table = Table.grid(expand=True)
         stats_table.add_row("Tokens:", f"[bold cyan]{tokens:,}[/bold cyan]")
         stats_table.add_row("Cost  :", f"[bold green]${cost:.6f}[/bold green]")
+        
+        latency_color = "green" if avg_latency < 3000 else ("yellow" if avg_latency < 7000 else "red")
+        stats_table.add_row("Avg Lat:", f"[{latency_color}]{avg_latency}ms[/{latency_color}]")
         
         stats_group = [stats_table]
         if self.tool_task is not None:
