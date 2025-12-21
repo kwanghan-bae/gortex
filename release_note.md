@@ -21,10 +21,16 @@
 - [x] **Infrastructure**: GitHub API 연동을 통해 프로젝트를 원격 저장소에 자동으로 푸시하는 '/deploy' 명령어 구현
 - [x] **Infrastructure**: 외부 API 연동(예: Slack, Discord)을 통해 작업 완료 시 알림을 보내는 'Notification' 시스템 구축
 - [x] **Interface**: 터미널 UI를 넘어 브라우저에서 Gortex의 활동을 실시간 모니터링할 수 있는 'Web Dashboard' 프레임워크 구축
-- [x] **Infrastructure**: 에이전트 간의 메시지 교환을 최적화하기 위한 'Context Compression' 엔진 고도화
-- [ ] **System**: 대규모 프로젝트 분석 시 파일 캐시 유효성을 검증하는 'Deep Integrity Check' 기능 추가
+- [x] **System**: 대규모 프로젝트 분석 시 파일 캐시 유효성을 검증하는 'Deep Integrity Check' 기능 추가
+- [ ] **Infrastructure**: 에이전트의 도구 호출 로그를 분석하여 비용과 지연 시간을 최적화하는 'Performance Profiler' 노드 구현
 
 ## ✅ Completed
+### v1.7.3 (Deep Integrity Check & Cache Healing)
+- [x] `utils/tools.py`: 프로젝트 전체 파일의 해시를 디스크와 동적으로 비교하여 불일치를 찾아내는 `deep_integrity_check` 로직 구현
+- [x] `main.py`: 시스템 부팅 및 세션 시작 시 자동 무결성 검사를 수행하고 캐시를 최신 상태로 자가 수복하도록 통합
+- [x] `main.py`: 무결성 검사 결과를 대시보드 시스템 메시지로 출력하여 사용자에게 파일 변경 감지 알림 제공
+- [x] `utils/tools.py`: 파일 삭제 케이스에 대한 캐시 자동 정리 로직 추가 및 안정성 강화
+
 ### v1.7.2 (Context Compression & Token Optimization)
 - [x] `utils/memory.py`: 단순 요약이 아닌 IDENTITY, GOAL, PROGRESS 등 구조화된 상태 보존형 압축(Synaptic Compression) 로직 구현
 - [x] `utils/memory.py`: 압축 시 `active_constraints`를 명시적으로 주입하여 시스템 제약 조건의 영속성 강화

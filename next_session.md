@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Context Compression & Token Optimization Complete (v1.7.2)
+**Status:** Deep Integrity Check & Cache Healing Complete (v1.7.3)
 
 ## 🧠 Current Context
-컨텍스트 압축 엔진이 고도화되어 이제 대화가 길어져도 시스템의 정체성과 작업 목표, 진행 상황이 유실되지 않습니다. 구조화된 요약본이 에이전트 간의 완벽한 상태 계승을 보장합니다.
+시스템 부팅 시 프로젝트의 모든 파일을 전수 조사하여 캐시와의 무결성을 검증하는 엔진이 안착되었습니다. 이제 외부에서 파일이 수정되거나 삭제되더라도 Gortex는 이를 즉시 인지하고 지식 베이스를 동기화할 수 있습니다.
 
 ## 🎯 Next Objective
-**Deep Integrity Check (Cache Validation)**
-1. **`Deep Integrity Check`**: 시스템 부팅 시 또는 대규모 작업 전, `file_cache`에 저장된 해시값과 실제 디스크의 파일 내용을 전수 조사하여 불일치를 해결합니다.
-2. **`Cache Healing`**: 변경된 파일이 발견되면 자동으로 캐시를 업데이트하거나 에이전트에게 관련 정보를 알리는 자가 수복 기능을 구현합니다.
+**Performance Profiler & Cost Analysis**
+1. **`Performance Profiler`**: 에이전트의 도구 호출 시간, 성공률, 토큰 사용 비용을 노드별로 정밀 측정하여 `trace.jsonl`에 기록합니다.
+2. **`Optimization Recommendations`**: 분석된 데이터를 바탕으로, 특정 작업에 너무 많은 비용이 들거나 지연 시간이 길어질 경우 `Optimizer`가 더 가벼운 모델로 전환하거나 도구 호출 방식을 변경하도록 제안하는 기능을 구현합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 구조화된 컨텍스트 압축 엔진 구현 완료 (v1.7.2).
-- 다음 목표: 파일 캐시 정밀 무결성 검사 및 자가 수복.
+- 파일 캐시 정밀 무결성 검증 완료 (v1.7.3).
+- 다음 목표: 성능 프로파일러 및 비용 분석 엔진 구축.
 
 작업 목표:
-1. `main.py` 또는 `utils/tools.py`에 프로젝트 전체 파일의 해시를 검증하는 `deep_integrity_check` 함수를 추가해줘.
-2. 시스템 부팅 시 이 검사를 수행하고, 캐시와 디스크 상태가 일치하지 않는 항목을 자동으로 수동 복구하는 로직을 강화해줘.
+1. `core/observer.py`를 확장하여 각 노드 실행 시 소요 시간과 상세 토큰 비용(입력/출력 구분)을 측정하는 프로파일링 로직을 작성해줘.
+2. `main.py` 또는 `ui/dashboard.py`에서 실시간으로 누적 비용과 평균 지연 시간을 표시하는 위젯 기능을 보강해줘.
 ```

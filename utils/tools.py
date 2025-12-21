@@ -120,3 +120,34 @@ def read_file(path: str) -> str:
         with open(path, 'r', encoding='utf-8') as f: return f.read()
     except Exception as e:
         return f"Error: {str(e)}"
+
+def deep_integrity_check(working_dir: str, current_cache: Dict[str, str]) -> Tuple[Dict[str, str], List[str]]:
+    """
+    프로젝트 전체 파일의 무결성을 검사하고 업데이트된 캐시와 변경된 파일 목록을 반환합니다.
+    """
+    updated_cache = current_cache.copy()
+    changed_files = []
+    
+    ignore_dirs = {'.git', 'venv', '__pycache__', '.DS_Store', 'logs', 'site-packages'}
+    
+    for root, dirs, filenames in os.walk(working_dir):
+        dirs[:] = [d for d in dirs if d not in ignore_dirs]
+        for f in filenames:
+            file_path = os.path.join(root, f)
+            rel_path = os.path.relpath(file_path, working_dir)
+            
+            actual_hash = get_file_hash(file_path)
+            cached_hash = updated_cache.get(rel_path)
+            
+            if actual_hash != cached_hash:
+                updated_cache[rel_path] = actual_hash
+                changed_files.append(rel_path)
+                
+    # 삭제된 파일 처리
+    deleted_files = []
+    for path in list(updated_cache.keys()):
+        if not os.path.exists(os.path.join(working_dir, path)):
+            del updated_cache[path]
+            deleted_files.append(path)
+            
+    return updated_cache, changed_files + [f"(deleted) {p}" for p in deleted_files]

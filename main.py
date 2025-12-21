@@ -21,7 +21,7 @@ from gortex.core.observer import GortexObserver
 from gortex.utils.token_counter import count_tokens, estimate_cost
 from gortex.core.auth import GortexAuth
 from gortex.core.evolutionary_memory import EvolutionaryMemory
-from gortex.utils.tools import get_file_hash
+from gortex.utils.tools import get_file_hash, deep_integrity_check
 from gortex.utils.indexer import SynapticIndexer
 from gortex.utils.docker_gen import DockerGenerator
 from gortex.utils.git_tool import GitTool
@@ -421,6 +421,16 @@ async def run_gortex():
         if thread_id not in all_sessions_cache:
             all_sessions_cache[thread_id] = {}
         session_cache = all_sessions_cache[thread_id]
+        
+        # [INTEGRITY] 부팅 시 파일 시스템 정밀 무결성 검사 수행
+        working_dir = os.getenv("WORKING_DIR", "./workspace")
+        os.makedirs(working_dir, exist_ok=True)
+        session_cache, changed = deep_integrity_check(working_dir, session_cache)
+        all_sessions_cache[thread_id] = session_cache
+        
+        if changed:
+            logger.info(f"🔍 Deep integrity check found {len(changed)} changes. Cache updated.")
+            ui.chat_history.append(("system", f"파일 시스템 정밀 검사 완료: {len(changed)}개의 변경 사항이 캐시에 반영되었습니다."))
 
         auth_engine = GortexAuth()
         evo_mem = EvolutionaryMemory()
