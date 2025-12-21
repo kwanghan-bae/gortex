@@ -56,9 +56,16 @@
 - [x] **Infrastructure**: 에이전트 간의 협업 도중 발생한 모든 의사결정의 인과 관계를 추적하고 그래프로 저장하는 'Causal Tracking' 구축
 - [x] **Intelligence**: 시스템의 모든 도구 호출 및 의사결정 내역을 인간이 읽기 쉬운 'Activity Stream'으로 실시간 변환하는 'Journalist' 노드 구현
 - [x] **System**: 에이전트가 코드를 작성할 때 보안 위협(Injection, XSS 등)을 실시간으로 스캔하고 차단하는 'Shielded Code Generation' 엔진 구축
-- [ ] **Infrastructure**: 다중 에이전트의 작업 결과를 시각적으로 요약하고 최종 승인을 관리하는 'Reviewer Dashboard' 구축
+- [x] **Infrastructure**: 다중 에이전트의 작업 결과를 시각적으로 요약하고 최종 승인을 관리하는 'Reviewer Dashboard' 구축
+- [ ] **Infrastructure**: 시스템 내부의 모든 정적 에셋(아이콘, 이미지 등)을 중앙에서 관리하는 'Synaptic Asset Manager' 구축
 
 ## ✅ Completed
+### v2.2.1 (Reviewer Dashboard & Multi-Agent Approval)
+- [x] `ui/dashboard.py`: 다중 에이전트의 작업 승인 현황을 실시간으로 관리하고 시각화하는 `review_board` 시스템 구현
+- [x] `agents/analyst.py`: 상호 검증(Cross-Validation) 과정에서 각 에이전트의 피드백과 승인 여부를 리뷰 보드에 자동 기록하는 로직 추가
+- [x] `ui/dashboard.py`: 리뷰 데이터를 웹 대시보드로 실시간 브로드캐스팅하여 다중 AI 전문가의 합의 과정을 사용자에게 투명하게 공개
+- [x] `agents/analyst.py`: 코드 리뷰, 스타일 분석 등 핵심 분석 결과와 리뷰 보드를 연동하여 품질 관리 워크플로우 안착
+
 ### v2.2.0 (Shielded Code Generation & Security Guard)
 - [x] `utils/tools.py`: 하드코딩된 비밀번호, SQL 인젝션, 위험한 시스템 호출 등 주요 보안 취약점을 탐지하는 `scan_security_risks` 정적 분석 엔진 구현
 - [x] `agents/coder.py`: 파일 수정 도구(`write_file`, `apply_patch`) 실행 전 실시간 보안 검사를 의무화하여 취약점 감지 시 즉시 차단하는 가드 로직 안착

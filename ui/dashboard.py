@@ -53,6 +53,7 @@ class DashboardUI:
         self.security_events = [] # 보안 이벤트 기록
         self.thought_timeline = [] # 타임라인 스냅샷 기록
         self.activity_stream = [] # 저널 스타일 활동 일지
+        self.review_board = {} # 에이전트 승인 현황 관리
         
         # Progress bar for tools
         self.progress = Progress(
@@ -131,6 +132,7 @@ class DashboardUI:
             "achievements": self.achievements,
             "security": self.security_events, # 보안 이벤트 추가
             "activity": self.activity_stream, # 활동 일지 추가
+            "review": self.review_board, # 리뷰 현황 추가
             "chat_history": [
                 (r, c if isinstance(c, str) else "[Rich Object]") 
                 for r, c in self.chat_history[-10:]
@@ -390,6 +392,19 @@ class DashboardUI:
         })
         if len(self.activity_stream) > 20:
             self.activity_stream.pop(0)
+        if self.web_manager:
+            asyncio.create_task(self._broadcast_to_web())
+
+    def update_review_board(self, task_id: str, agent_name: str, approved: bool, feedback: str):
+        """다중 에이전트 승인 현황 업데이트"""
+        if task_id not in self.review_board:
+            self.review_board[task_id] = {"title": task_id, "approvals": {}}
+            
+        self.review_board[task_id]["approvals"][agent_name] = {
+            "approved": approved,
+            "feedback": feedback,
+            "time": datetime.now().strftime("%H:%M:%S")
+        }
         if self.web_manager:
             asyncio.create_task(self._broadcast_to_web())
 
