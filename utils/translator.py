@@ -69,7 +69,6 @@ class SynapticTranslator:
         """
         try:
             response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], None)
-            import json
             return json.loads(response.text)
         except Exception as e:
             logger.error(f"Translation failed: {e}")
@@ -105,7 +104,6 @@ class SynapticTranslator:
         {json.dumps(texts, ensure_ascii=False)}
         """
         try:
-            import json
             response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
             return json.loads(response.text)
         except Exception as e:
