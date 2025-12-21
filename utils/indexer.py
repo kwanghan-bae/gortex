@@ -143,7 +143,9 @@ class SynapticIndexer:
 
     def _save_index(self):
         """인덱스를 JSON 파일로 저장"""
-        os.makedirs(os.path.dirname(self.index_path), exist_ok=True)
+        dirname = os.path.dirname(self.index_path)
+        if dirname:
+            os.makedirs(dirname, exist_ok=True)
         with open(self.index_path, "w", encoding='utf-8') as f:
             json.dump(self.index, f, ensure_ascii=False, indent=2)
 

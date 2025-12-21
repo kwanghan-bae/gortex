@@ -32,19 +32,24 @@ Commit messages MUST be written in **Korean** and follow this format:
 
 ---
 
-## 2. Quality Assurance (High-Rigor Testing)
+## 2. Quality Assurance (High-Rigor TDD)
 
-### 2.1 Test-First Principle (MANDATORY)
-*   모든 신규 기능 구현 및 로직 수정 시, 에이전트는 코드를 작성하기 전 또는 동시에 **테스트 시나리오를 먼저 설계**해야 한다.
-*   "테스트되지 않은 코드는 존재하지 않는 코드와 같다."
+### 2.1 Test-First Principle (ABSOLUTE MANDATE)
+*   **No Test, No Code**: 어떤 기능도 테스트 코드가 먼저(혹은 동시에) 작성되지 않으면 구현 코드를 작성할 수 없다.
+*   **Vibe Coding Defense**: 환각 방지를 위해, 모든 로직은 실행 가능한 테스트 케이스로 "검증된 사실"만 남긴다.
+*   **Red-Green-Refactor**:
+    1.  실패하는 테스트 작성 (`tests/test_*.py`)
+    2.  테스트를 통과하는 최소한의 코드 구현
+    3.  리팩토링 및 안정화
 
 ### 2.2 Strict Test Existence (CRITICAL)
 *   `pre_commit.sh` v1.3에 따라, 수정된 모든 로직 파일(`.py`)은 반드시 대응하는 테스트 파일(`tests/test_*.py`)을 가져야 한다.
 *   **테스트 파일 누락 시 커밋은 강제로 차단된다.**
+*   단순한 Mocking을 넘어, 실제 동작을 검증하는 **Integration Test** 비중을 늘려야 한다.
 
 ### 2.3 Coverage & Edge Cases
-*   단순 통과를 넘어, **Edge Case(예외 상황, 경계값)**에 대한 테스트가 포함되어야 한다.
-*   `coverage report`를 통해 주요 로직의 실행 여부를 확인하며, 가급적 80% 이상의 커버리지를 유지한다.
+*   **Coverage Goal**: 핵심 모듈(core, agents, utils)의 커버리지는 **70% 이상**을 유지해야 한다.
+*   **Edge Cases**: 입력값 검증, 예외 처리, 비동기 타임아웃 등 "망가질 수 있는 상황"을 집요하게 테스트하라.
 
 ### 2.4 No Placeholders (CRITICAL)
 *   **어떠한 상황에서도 소스 코드 내에 `# ...`, `(중략)`, `(생략)` 등의 플레이스홀더를 삽입할 수 없다.**
