@@ -46,9 +46,16 @@
 - [x] **Intelligence**: 에이전트가 도구 호출 전후의 시스템 상태를 영상처럼 '상상'하여 시각적으로 시뮬레이션하는 'Visual Simulation' 엔진 추가
 - [x] **Interface**: 에이전트의 사고 과정과 시뮬레이션 결과를 결합하여 보여주는 'Immersive Reasoning' 웹 UI 구축
 - [x] **Intelligence**: 여러 시나리오의 성공 가능성을 사전에 예측하고 최적의 가중치를 부여하는 'Speculative Score' 엔진 구현
-- [ ] **System**: 에이전트가 도구 호출 실패 시 과거의 수정 이력을 참조하여 즉각적인 해결책을 제안하는 'Self-Healing Memory' 구축
+- [x] **System**: 에이전트가 도구 호출 실패 시 과거의 수정 이력을 참조하여 즉각적인 해결책을 제안하는 'Self-Healing Memory' 구축
+- [ ] **Infrastructure**: 에이전트의 사고 과정을 음성으로 읽어주거나 사용자의 음성 명령을 이해하는 'Vocal Bridge' 엔진 구축
 
 ## ✅ Completed
+### v2.1.0 (Self-Healing Memory & Instant Recovery)
+- [x] `utils/healing_memory.py`: 에러 패턴과 성공적인 해결책을 매핑하여 저장하고 검색하는 자가 수복 엔진 구현
+- [x] `agents/coder.py`: 도구 실행 실패 시 `SelfHealingMemory`를 우선 조회하여 과거의 성공 사례를 즉시 적용하는 고속 복구 워크플로우 도입
+- [x] `agents/coder.py`: 성공적인 수복 사례를 자동으로 메모리에 학습시키는 지식 축적 루프 강화
+- [x] `utils/healing_memory.py`: 에러 메시지 정규화(Normalization)를 통해 경로 등 가변 정보를 배제하고 범용적인 패턴 매칭 지원
+
 ### v2.0.9 (Speculative Score & Probability Weighting)
 - [x] `agents/swarm.py`: 병렬 가설 추론 시 과거 성공 사례(`SemanticLogSearch`)를 연동하여 시나리오별 경험 가중치 부여 로직 구현
 - [x] `agents/swarm.py`: 확신도, 위험도, 경험 점수를 결합한 통합 `Speculative Score` 산출 알고리즘 도입

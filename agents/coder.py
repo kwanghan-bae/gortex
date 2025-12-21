@@ -6,6 +6,7 @@ from google.genai import types
 from gortex.core.auth import GortexAuth
 from gortex.core.state import GortexState
 from gortex.utils.tools import read_file, write_file, execute_shell, list_files, get_file_hash, apply_patch
+from gortex.utils.healing_memory import SelfHealingMemory
 
 logger = logging.getLogger("GortexCoder")
 
@@ -15,6 +16,7 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
     Planner가 수립한 계획을 한 단계씩 실행하며, 검증(Verification)을 통해 코드를 완성합니다.
     """
     auth = GortexAuth()
+    healing_mem = SelfHealingMemory()
     
     # 0. 반복 횟수 체크
     current_iteration = state.get("coder_iteration", 0)
@@ -54,6 +56,12 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
         pass # LLM에서 처리
     elif action == "execute_shell":
         tool_output = execute_shell(target)
+        # [SELF-HEALING] 에러 발생 시 즉각적인 해결책 검색
+        if "Exit Code: 0" not in tool_output:
+            instant_solution = healing_mem.find_solution(tool_output)
+            if instant_solution:
+                logger.info(f"🩹 Instant healing solution found!")
+                state["messages"].append(("system", f"HINT: 과거 해결책 발견. '{instant_solution['action']}'(target: {instant_solution['target']})을 시도하십시오."))
     elif action == "list_files":
         tool_output = list_files(target)
     
@@ -62,15 +70,16 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
     base_instruction = f"""너는 Gortex v1.0의 수석 개발자(Coder)다.
 현재 Planner가 수립한 계획 중 다음 단계를 실행해야 한다.
 
+[Self-Healing]
+- 시스템 힌트(HINT)로 과거 해결책이 제공되면, 이를 최우선으로 적용하라.
+
 [Precision Editing Rules]
 - 파일 전체를 바꾸기보다 특정 부분만 수정하는 것이 효율적이라면 `apply_patch` 도구를 사용하라.
-- `apply_patch`를 쓸 때는 `read_file`로 줄 번호를 정확히 확인한 후 호출하라.
 
 [Mental Sandbox Rules]
 도구를 호출하기 전, 반드시 다음 사항을 미리 '시뮬레이션'하라:
-1. 예상 결과: 이 도구가 성공했을 때 시스템 상태는 어떻게 변하는가?
-2. 위험 분석: 잘못된 경로, 권한 부족, 무한 루프, 데이터 유실 등의 위험이 있는가?
-3. 안전 가드: 위험이 감지되면 도구 호출을 중단하고 'failed' 상태와 함께 안전한 대안을 제시하라.
+1. 예상 결과 및 위험 분석
+2. 안전 가드: 위험 시 'failed' 상태와 함께 대안 제시
 
 [Standard Error Response Manual]
 - ModuleNotFoundError: 즉시 `execute_shell`로 `pip install <module>`을 실행하라.
@@ -102,7 +111,7 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
       "expected_outcome": "...", 
       "risk_level": "Low/Medium/High", 
       "safeguard_action": "...",
-      "visual_delta": [ {{{{ "target": "파일명/심볼", "change": "added/modified/deleted" }}}} ]
+      "visual_delta": []
   }}}},
   "status": "success" | "in_progress" | "failed"
 }}}} """
@@ -202,6 +211,9 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
                 new_file_cache[path] = current_hash
         elif fname == "execute_shell":
             result_msg = execute_shell(fargs["command"])
+            # 성공 시 학습
+            if "Exit Code: 0" in result_msg and "pip install" in fargs["command"]:
+                healing_mem.learn("ModuleNotFoundError", {"action": "execute_shell", "target": fargs["command"]})
         elif fname == "list_files":
             result_msg = list_files(fargs.get("directory", "."))
             
