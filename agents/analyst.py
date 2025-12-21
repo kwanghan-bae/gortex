@@ -475,12 +475,48 @@ class AnalystAgent:
             logger.error(f"Prediction failed: {e}")
             return []
 
+    def map_knowledge_relations(self):
+        """지식 간의 의미론적 상관관계를 분석하여 지식 지도(Graph) 구축"""
+        logger.info("🗺️ Mapping knowledge relations for the brain...")
+        from gortex.utils.vector_store import LongTermMemory
+        ltm = LongTermMemory()
+        
+        if len(ltm.memory) < 2:
+            return 0
+            
+        connections_made = 0
+        for i, item_a in enumerate(ltm.memory):
+            if "vector" not in item_a: continue
+            if "links" not in item_a: item_a["links"] = []
+            
+            for j, item_b in enumerate(ltm.memory):
+                if i == j or "vector" not in item_b: continue
+                
+                # 코사인 유사도 계산
+                vec_a, vec_b = item_a["vector"], item_b["vector"]
+                dot = sum(a * b for a, b in zip(vec_a, vec_b))
+                norm_a = math.sqrt(sum(a * a for a in vec_a))
+                norm_b = math.sqrt(sum(b * b for b in vec_b))
+                similarity = dot / (norm_a * norm_b) if norm_a > 0 and norm_b > 0 else 0
+                
+                # 유사도 0.85 이상이면 연결
+                target_id = item_b.get("id", str(j))
+                if similarity >= 0.85 and target_id not in item_a["links"]:
+                    item_a["links"].append(target_id)
+                    connections_made += 1
+                    
+        if connections_made > 0:
+            ltm._save_store()
+            logger.info(f"✅ Knowledge Map updated: {connections_made} connections formed.")
+        return connections_made
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""
     agent = AnalystAgent()
     
-    # [Knowledge Base Optimization] 정기적인 지식 정리 수행
+    # [Knowledge Base Optimization] 정기적인 지식 정리 및 관계 매핑 수행
     agent.garbage_collect_knowledge()
+    agent.map_knowledge_relations()
     
     last_msg_obj = state["messages"][-1]
     last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content

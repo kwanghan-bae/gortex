@@ -58,6 +58,19 @@ class ThreeJsBridge:
                     "end": node_map[edge["to"]],
                     "type": edge.get("type", "relation")
                 })
+        
+        # [Knowledge Mapping] 지식 노드 간 상관관계 엣지 추가
+        for node_id, info in nodes.items():
+            if info.get("links") and node_id in node_map:
+                for target_id in info["links"]:
+                    if target_id in node_map:
+                        converted_edges.append({
+                            "from": node_id,
+                            "to": target_id,
+                            "start": node_map[node_id],
+                            "end": node_map[target_id],
+                            "type": "correlation"
+                        })
                 
         return {"nodes": converted_nodes, "edges": converted_edges}
 

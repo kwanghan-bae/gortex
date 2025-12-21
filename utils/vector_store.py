@@ -56,7 +56,8 @@ class LongTermMemory:
             "vector": vector, # 벡터 데이터 저장
             "metadata": metadata or {},
             "timestamp": datetime.now().isoformat(),
-            "usage_count": 0
+            "usage_count": 0,
+            "links": [] # 지식 간 상관관계 링크 필드 추가
         })
         self._save_store()
         logger.info(f"🧠 Knowledge vectorized and memorized.")

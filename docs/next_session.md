@@ -1,23 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 지식 간 상관관계 분석 및 지식 지도 구축 (Knowledge Relation Mapper v1)
+- 사용자 의도 투영 및 목표 그래프 시각화 (User Intent Projection v1)
 
 ## Context
-- `LongTermMemory`에 수많은 지식이 쌓였으나, 각 지식은 서로 독립적인 조각으로 존재함.
-- "A 라이브러리 사용법"과 "B 아키텍처 규칙"이 서로 어떻게 연결되는지 분석하여, 에이전트가 지식을 소환할 때 관련 있는 다른 지식도 연쇄적으로 떠올리게(Spreading Activation) 해야 함.
+- 현재 에이전트는 사용자의 단발성 명령을 처리하고 있으나, 사용자가 머릿속에 그리는 장기적인 '큰 그림'은 알지 못함.
+- 사용자의 자연어 입력으로부터 '최종 목표'와 이를 이루기 위한 '세부 의도'들을 추출하여 웹 대시보드에 목표 그래프(Goal Graph)로 띄우고, 작업 진행에 따라 노드가 완성되는 시각적 동기화가 필요함.
 
 ## Scope
 ### Do
-- `agents/analyst.py`에 지식 간의 유사도와 인과성을 분석하여 관계(Edges)를 생성하는 `map_knowledge_relations` 메서드 추가.
-- `utils/vector_store.py`에 지식 간의 연결 정보를 저장할 `links` 필드 추가.
-- 3D 지식 그래프에서 지식 노드 간의 상관관계를 선으로 시각화.
+- `agents/manager.py`에서 사용자의 입력을 분석하여 '장기 목표'와 '단기 의도'를 구조화된 JSON으로 추출하는 로직 추가.
+- `ui/three_js_bridge.py`에 목표 그래프(Goal Nodes) 생성 및 상태(Pending/In-Progress/Done) 업데이트 로직 추가.
+- 사용자가 "내가 원하는 건 결국 X야"라고 말하면, 전체 목표 그래프가 즉시 재구성되는 인터랙티브 정렬 구현.
 
 ### Do NOT
-- 모든 지식을 강제로 연결하지 말 것 (유사도 0.8 이상의 고관련 지식만 연결).
+- 기존의 인과 관계 그래프와 섞지 말 것 (사용자의 '의도'와 시스템의 '수행'은 별개 층위로 표현).
 
 ## Expected Outputs
-- `agents/analyst.py`, `utils/vector_store.py`, `ui/three_js_bridge.py` 수정.
+- `agents/manager.py`, `ui/three_js_bridge.py`, `main.py` 수정.
 
 ## Completion Criteria
-- 웹 대시보드의 지식 그래프에서 특정 지식 노드를 선택했을 때, 관련 있는 다른 지식들이 연결되어 나타나는 것이 확인되어야 함.
+- 사용자 입력 시, 웹 대시보드 상단에 사용자의 의도를 구조화한 '의도 맵'이 나타나고, 에이전트의 활동이 해당 의도 노드에 수렴되는 과정이 확인되어야 함.

@@ -12,19 +12,24 @@
 - [x] **Interface**: 모든 에이전트 출력과 문서를 실시간 다국어 번역하여 제공하는 'Omni-Translator' 구축
 - [x] **Interface**: 현재 판단의 근거가 된 지식의 출처를 시각화하는 'Knowledge Lineage UI' 구축
 - [x] **Intelligence**: 사용자의 다음 행동을 예측하여 선제적으로 제안하는 'Predictive Next-Action' 엔진 구축
+- [x] **Intelligence**: 흩어진 지식들 간의 상관관계를 분석하여 지식 지도를 만드는 'Knowledge Relation Mapper' 도입
 - [x] **System**: 대규모 그래프 데이터 및 메시지의 효율적 관리를 위한 'Memory Pruning' 전략 도입
 - [x] **Interface**: 현재 작업 맥락에 따라 대시보드 구성을 최적화하는 'Context-Aware UI Layout' 구현
 - [x] **System**: 작업 완료 후 자동으로 결과물을 아카이빙하고 문서를 갱신하는 'Auto-Finalizer' 도입
 - [x] **Economy**: 에이전트 간 상호 평가를 통해 자원 할당 우선순위를 결정하는 'Peer Review Economy' 고도화
 - [x] **System**: 지식 검색 성능을 비약적으로 높이는 'Vector Embedding Search'로의 전환
 - [x] **Intelligence**: 에이전트의 모든 의미 있는 사고 과정을 스스로 요약하여 지식화하는 'Thought Memorization' 구현
-- [ ] **Intelligence**: 흩어진 지식들 간의 상관관계를 분석하여 지식 지도를 만드는 'Knowledge Relation Mapper' 도입
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.5.5 (Knowledge Mapping & Meta-Cognition)
+- [x] `agents/analyst.py`: 지식 간의 의미론적 유사성을 전수 분석하여 상관관계망(Links)을 형성하는 지식 지도 엔진 구현
+- [x] `utils/vector_store.py`: 지식 항목 간의 다차원 연결 고리를 보존하는 그래프 데이터 구조 확장
+- [x] `ui/three_js_bridge.py`: 구축된 지식 지도를 3D 공간에 연결선(Correlation)으로 시각화하여 지능의 입체적 구조 형상화
 
 ### v2.5.4 (Predictive UX & Next-Action Suggestions)
 - [x] `agents/analyst.py`: 현재 작업 맥락과 과거 패턴을 대조하여 사용자의 다음 행동을 실시간 예측하는 선점형 지능 구축
