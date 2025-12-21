@@ -20,13 +20,11 @@
 - **전략 업데이트**: Web UI 개발 잠정 중단 및 TUI 우선 순위 설정.
 
 ### v2.7.4 (Test Coverage Enforcement)
-- **Quality**: `utils/tools.py` `list_files`가 `.git*` 아티팩트를 완전히 숨겨 단위 테스트와 커버리지 집계가 일관된 스냅샷을 확보합니다.
-- **Quality**: `read_file`이 제한 내에서 줄을 축약할 때 `(truncated)` 표시를 명시적으로 추가하여 테스트 어서션을 만족합니다.
-- **Quality**: `core/commands.py` `/export` 경로가 기본 캐시를 빈 딕셔너리로 처리하여 직렬화 에러를 방지하고 안정적으로 데이터를 저장합니다.
-- **Quality**: `tests/test_commands.py`에 `/help`, `/status`, `/rca`, `/search`, `/map`, `/kg`, `/language`, `/export`/`/save`/`/load` 흐름 검증을 추가하여 CLI 커버리지를 확장했습니다.
-- **Quality**: `tests/test_indexer.py`에 `generate_map`, `generate_call_graph`, `get_impact_radius` 시나리오 테스트를 추가해 인덱싱 핵심 기능을 감시합니다.
-- **Quality**: `tests/test_ui.py`가 `update_debate_monitor`, `update_debt_panel`, `render_thought_tree`, 생각 로그/툴 진행 흐름을 검증하여 TUI 경로를 단위 테스트로 포섭합니다.
-- **Verification**: `PYTHONPATH=/Users/joel/Desktop/git coverage run -m pytest` + `coverage report`으로 전체 68% 커버리지 기록, 70% 목표를 위한 우선 순위(`ui/`, `utils/log_vectorizer`, `utils/message_queue` 등)를 정리했습니다.
+- **Quality**: `utils/tools.py`의 `list_files`, `execute_shell`, `archive_project_artifacts`, `compress_directory`가 경계 조건을 안전하게 처리하며 파일 및 압축 워크플로를 촘촘히 검증합니다.
+- **Quality**: `tests/test_message_queue.py`에서 Redis가 없는 더미 세션과 `publish`/`push_task`/`pop_task` 경로를 Mock 기반으로 보호합니다.
+- **Quality**: `tests/test_log_vectorizer.py`가 로그 인덱싱과 유사도 기반 검색을 테스트하여 trace 검색 근거를 뒷받침합니다.
+- **Quality**: `tests/test_three_js_bridge.py`가 사고 트리를 3D 객체로 변환하면서 노드/엣지 계층과 채색 기준을 확인합니다.
+- **Verification**: `PYTHONPATH=/Users/joel/Desktop/git coverage run -m pytest` → `coverage report`로 전체 70% 커버리지를 달성하여 다음 타깃(`ui/dashboard.py`, `utils/asset_manager.py`, `utils/table_detector.py`)을 명확히 했습니다.
 
 ### v2.7.2 (Core Modularization & High-Rigor Testing)
 - [x] **Architecture**: 1,000라인의 `main.py`를 `engine`, `commands`, `terminal`로 완벽히 해체 및 기능별 전문화 (유실 로직 전수 복구)

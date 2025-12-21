@@ -1,27 +1,27 @@
 # Next Session
 
 ## 세션 목표
-- 70% 커버리지 목표 달성을 위해 `utils/tools.py`, `utils/message_queue.py`, `utils/log_vectorizer.py`, `ui/three_js_bridge.py`의 핵심 흐름을 테스트로 발굴한다.
+- 70% 커버리지를 유지하면서 `ui/dashboard.py`, `utils/asset_manager.py`, `utils/table_detector.py`의 주요 흐름을 테스트로 확보한다.
 
 ## 컨텍스트
-- 최근 CLI, 인덱서, TUI 테스트를 확장하여 전체 커버리지는 68%까지 올라왔지만 `ui/`, `utils/` 일부 모듈이 여전히 낮은 상태다.
-- 자동화된 `coverage run -m pytest` → `coverage report` 반복 과정을 통해 취약 모듈을 추적하며, 문서(릴리즈 노트, 세션 로그, next_session)도 실시간으로 갱신하고 있다.
+- 최근 메시지 큐, 로그 벡터화, Three.js 브리지를 포함한 테스트 확장으로 전체 커버리지가 70%를 기록했고 릴리즈 노트에 주요 건들을 정리했습니다.
+- 자동 반복 사이클(`coverage run -m pytest` → `coverage report`)이 계속되며, 문서(릴리즈 노트/세션 로그/next_session)로 각 세션의 작업 상태를 추적하고 있습니다.
 
 ## 범위 (Scope)
 ### 수행할 작업 (Do)
-- `utils/tools.py`의 `execute_shell`, `archive_project_artifacts`, `compress_directory` 등 핵심 유틸리티의 동작/경계 조건을 위한 단위 테스트를 추가한다.
-- `utils/message_queue.py`, `utils/log_vectorizer.py`의 상태 변화 및 이벤트 처리 시나리오를 Mock 환경에서 검증하여 커버리지를 확장한다.
-- `ui/three_js_bridge.py`의 `convert_thought_to_3d` 등 3D 관련 보조 기능을 최소 복제 피처로 감싼 테스트를 작성하고, `DashboardUI`와의 연동 흐름을 일부 확인한다.
-- `coverage run -m pytest` → `coverage report` 사이클에서 통계를 수집하고, `docs/release_note.md`, `docs/sessions/session_XXXX.md`에 현황을 기록한다.
+- `ui/dashboard.py`의 레이아웃, 사이드바, 젠 애니메이션을 MagicMock한 Rich 객체로 렌더링하여 다양한 업데이트 흐름을 검증한다.
+- `utils/asset_manager.py`의 아이콘/리소스 로딩, 캐싱, 실패 시 폴백 경로를 Mock 파일 기반으로 테스트한다.
+- `utils/table_detector.py`의 텍스트/Markdown/CSV 입력을 조합해 테이블 판별과 행/열 추출이 일관되게 작동하는지 검증한다.
+- `coverage run -m pytest` → `coverage report` 사이클을 반복해 통계를 기록하고 `docs/release_note.md`, `docs/sessions/session_XXXX.md`를 갱신한다.
 
 ### 수행하지 않을 작업 (Do NOT)
-- Web UI(React/Three.js) 관련 코드 수정이나 대규모 아키텍처 리팩토링.
-- 독립적인 세션 메모리를 외부에 보관하거나 문서 기록 없이 진행하는 작업.
+- Web UI(React/Three.js) 본체나 `ui/three_js_bridge.py` 내 그래픽 컴포넌트를 직접 변경하지 않는다.
+- 대규모 아키텍처 리팩토링이나 새로운 에이전트 프로토콜 설계는 후속 세션으로 유보한다.
 
 ## 기대 결과
-- 새 테스트들이 `utils/`, `ui/three_js_bridge`를 중심으로 70% 커버리지 방향을 뚜렷하게 높이며, 리포트 상 주요 모듈의 최소 수치를 개선한다.
-- 문서(작업 로그/릴리즈 노트/next_session)가 자동화 흐름에 따라 최신 상태로 유지되는 패턴이 명확히 드러난다.
+- 새 테스트들은 `ui/dashboard.py`, `utils/asset_manager.py`, `utils/table_detector.py`의 핵심 분기를 커버하여 70% 이상을 유지하고, 리포트에 개선 추세를 보여준다.
+- 문서(작업 로그/릴리즈 노트/next_session)가 자동 반복 작업에 맞춰 최신 상태로 유지된다.
 
 ## 완료 기준
-- `coverage run -m pytest` 및 `coverage report`를 실행해 70% 목표를 향한 추세를 기록.
-- 작성한 테스트가 모두 통과하고 `docs/sessions/session_XXXX.md`에 작업 로그를 남김.
+- `coverage run -m pytest` 및 `coverage report`로 70% 이상을 다시 기록하고, 테스트가 모두 통과.
+- `docs/sessions/session_XXXX.md`에 해당 작업 세션 로그를 남겨 자동화 흐름을 문서화.
