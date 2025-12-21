@@ -96,6 +96,36 @@ class SynapticIndexer:
                         proj_map["edges"].append({"from": d["name"], "to": base, "type": "inheritance"})
         return proj_map
 
+    def generate_knowledge_graph(self) -> Dict[str, Any]:
+        """코드 구조와 진화적 메모리를 결합한 통합 지식 그래프 생성"""
+        from gortex.core.evolutionary_memory import EvolutionaryMemory
+        evo_mem = EvolutionaryMemory()
+        rules = evo_mem.rules
+        
+        # 1. 기존 프로젝트 맵(코드 구조) 생성
+        kg = self.generate_map()
+        
+        # 2. 규칙 노드 추가
+        for rule in rules:
+            rule_id = rule.get("id", "UNKNOWN_RULE")
+            kg["nodes"][rule_id] = {
+                "type": "rule",
+                "instruction": rule.get("instruction"),
+                "severity": rule.get("severity"),
+                "triggers": rule.get("trigger_patterns", [])
+            }
+            
+            # 3. 규칙과 관련 코드 노드 연결 (트리거 패턴 기반 단순 매칭)
+            for pattern in rule.get("trigger_patterns", []):
+                for node_id, node_info in kg["nodes"].items():
+                    if pattern.lower() in node_id.lower():
+                        kg["edges"].append({
+                            "from": rule_id, 
+                            "to": node_id, 
+                            "type": "constrains"
+                        })
+        return kg
+
     def _save_index(self):
         """인덱스를 JSON 파일로 저장"""
         os.makedirs(os.path.dirname(self.index_path), exist_ok=True)

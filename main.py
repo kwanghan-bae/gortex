@@ -167,14 +167,37 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         # 모듈별 노드 추가
         for mod_name, info in proj_map["nodes"].items():
             mod_tree = root_tree.add(f"📦 [bold yellow]{mod_name}[/bold yellow] ([dim]{info['file']}[/dim])")
-            if info["classes"]:
+            if info.get("classes"):
                 cls_tree = mod_tree.add("🏛️ [cyan]Classes[/cyan]")
                 for c in info["classes"]: cls_tree.add(f"[bold blue]{c}[/bold blue]")
-            if info["functions"]:
+            if info.get("functions"):
                 func_tree = mod_tree.add("λ [green]Functions[/green]")
                 for f in info["functions"]: func_tree.add(f"[bold green]{f}[/bold green]")
         
         ui.chat_history.append(("system", root_tree))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/kg":
+        ui.chat_history.append(("system", "🧠 통합 지식 그래프(Synaptic Knowledge Graph)를 생성 중입니다..."))
+        ui.update_main(ui.chat_history)
+        
+        indexer = SynapticIndexer()
+        if os.path.exists(indexer.index_path):
+            with open(indexer.index_path, "r", encoding='utf-8') as f:
+                indexer.index = json.load(f)
+        
+        kg_data = indexer.generate_knowledge_graph()
+        
+        if ui.web_manager:
+            asyncio.create_task(ui.web_manager.broadcast(json.dumps({
+                "type": "knowledge_graph",
+                "data": kg_data
+            }, ensure_ascii=False)))
+            ui.chat_history.append(("system", f"✅ 지식 그래프 생성 완료 ({len(kg_data['nodes'])} 노드). 웹 대시보드에서 확인 가능합니다."))
+        else:
+            ui.chat_history.append(("system", "❌ 웹 대시보드가 활성화되지 않아 그래프를 전송할 수 없습니다."))
+            
         ui.update_main(ui.chat_history)
         return "skip"
 

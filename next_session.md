@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Speculative Reasoning & Scenario Swarm Complete (v2.0.2)
+**Status:** Synaptic Knowledge Graph & Knowledge Integration Complete (v2.0.3)
 
 ## 🧠 Current Context
-병렬 가설 추론(Speculative Reasoning) 엔진이 성공적으로 안착되었습니다. 이제 Gortex는 하나의 정답을 기다리는 대신, 여러 가능성을 동시에 타진하고 가장 확신도가 높은 최적의 해결책을 선별할 수 있는 고차원적인 지능을 갖추게 되었습니다.
+통합 지식 그래프 시스템이 가동되었습니다. 이제 Gortex는 자신이 알고 있는 코드 구조와 학습된 규칙 사이의 연관성을 그래프 구조로 파악하며, 이는 복잡한 시스템의 제약 조건을 준수하면서 정확한 코드를 작성하는 데 핵심적인 역할을 합니다.
 
 ## 🎯 Next Objective
-**Synaptic Knowledge Graph (Visual Memory)**
-1. **`Knowledge Mapping`**: 인덱싱된 코드 정보(`Synaptic Index`)와 학습된 규칙(`Evolutionary Memory`)을 하나의 거대한 그래프 데이터베이스 구조로 통합합니다.
-2. **`Visual Exploration`**: 웹 대시보드에서 이 지식 그래프를 인터랙티브하게 탐색할 수 있는 기능을 구현하여, 시스템이 알고 있는 정보들 사이의 관계를 시각적으로 파악할 수 있게 합니다.
+**Cross-Validation (Independent Verification)**
+1. **`Cross-Validation Node`**: 에이전트(예: Coder)가 작업을 마친 직후, 해당 작업에 참여하지 않은 다른 모델 인스턴스(예: Analyst 또는 다른 Gemini 모델)가 결과의 정확성을 제3의 관점에서 검증합니다.
+2. **`Discrepancy Resolution`**: 두 에이전트 간의 의견 차이가 발생할 경우, 'Manager'가 개입하여 최종 결론을 내리거나 재수정을 지시하는 삼각 검증 워크플로우를 구축합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 병렬 가설 추론 엔진 완료 (v2.0.2).
-- 다음 목표: 지식 기반 그래프 통합 시각화(Synaptic Knowledge Graph).
+- 통합 지식 그래프 시스템 완료 (v2.0.3).
+- 다음 목표: 제3자 관점의 상호 검증(Cross-Validation).
 
 작업 목표:
-1. `utils/indexer.py`와 `EvolutionaryMemory`의 데이터를 결합하여 통합 지식 그래프(Nodes/Edges)를 생성하는 `generate_knowledge_graph` 기능을 작성해줘.
-2. 생성된 그래프 데이터를 웹 대시보드로 스트리밍하고, 노드 간의 논리적 연관성을 시각화하는 기반을 마련해줘.
+1. `agents/analyst.py`에 도구 호출 결과나 코드를 검증하는 `cross_validate` 메서드를 작성해줘.
+2. `coder` 완료 후 `analyst` 노드를 거치도록 `core/graph.py`의 라우팅 로직을 수정하여 상호 검증 루프를 보강해줘.
 ```

@@ -40,9 +40,16 @@
 - [x] **Intelligence**: 에이전트가 작업 중 스스로의 논리적 모순을 검증하는 'Self-Consistency' 체크 엔진 도입
 - [x] **System**: 에이전트가 도구 호출 시 '가상 커서(Virtual Cursor)'를 사용하여 코드의 특정 위치를 정확히 수정하는 정밀 편집 모드 도입
 - [x] **Intelligence**: 여러 가상의 실행 시나리오를 병렬로 검토하여 최적의 경로를 선택하는 'Speculative Reasoning' 엔진 구축
-- [ ] **Infrastructure**: 에이전트의 내부 지식 베이스를 그래프 DB 형식으로 시각화하고 관리하는 'Synaptic Knowledge Graph' 구축
+- [x] **Infrastructure**: 에이전트의 내부 지식 베이스를 그래프 DB 형식으로 시각화하고 관리하는 'Synaptic Knowledge Graph' 구축
+- [ ] **Intelligence**: 에이전트가 도구 호출 결과의 정확성을 제3의 관점에서 검증하는 'Cross-Validation' 노드 추가
 
 ## ✅ Completed
+### v2.0.3 (Synaptic Knowledge Graph & Knowledge Integration)
+- [x] `utils/indexer.py`: 코드 구조(클래스/함수)와 진화적 메모리(규칙)를 결합한 통합 지식 그래프 생성 로직 `generate_knowledge_graph` 구현
+- [x] `main.py`: 통합 지식 그래프를 생성하고 웹 대시보드로 실시간 스트리밍하는 `/kg` 명령어 추가
+- [x] `utils/indexer.py`: 규칙 트리거 패턴을 분석하여 관련 코드 노드와 자동으로 연결하는 지능형 엣지(Edge) 생성 알고리즘 도입
+- [x] `main.py`: 웹 대시보드 활성화 여부를 체크하여 데이터 전송의 안정성 및 예외 처리 강화
+
 ### v2.0.2 (Speculative Reasoning & Scenario Swarm)
 - [x] `agents/manager.py`: 복잡한 요청에 대해 안전, 효율, 혁신 등 다각도의 해결 시나리오를 생성하는 분기 로직 구현
 - [x] `agents/swarm.py`: 병렬로 실행된 시나리오들의 확신도(Certainty)와 위험도(Risk)를 정량 평가하여 최적의 안을 선별하는 평가기(Evaluator) 도입
