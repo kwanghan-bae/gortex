@@ -21,10 +21,16 @@
 - [x] **Infrastructure**: GitHub API 연동을 통해 프로젝트를 원격 저장소에 자동으로 푸시하는 '/deploy' 명령어 구현
 - [x] **Infrastructure**: 외부 API 연동(예: Slack, Discord)을 통해 작업 완료 시 알림을 보내는 'Notification' 시스템 구축
 - [x] **Interface**: 터미널 UI를 넘어 브라우저에서 Gortex의 활동을 실시간 모니터링할 수 있는 'Web Dashboard' 프레임워크 구축
-- [x] **Intelligence**: 에이전트의 사고 과정을 시각화하여 트리 구조로 보여주는 'Thought Tree' 웹 컴포넌트 구현
-- [ ] **Infrastructure**: 에이전트 간의 메시지 교환을 최적화하기 위한 'Context Compression' 엔진 고도화
+- [x] **Infrastructure**: 에이전트 간의 메시지 교환을 최적화하기 위한 'Context Compression' 엔진 고도화
+- [ ] **System**: 대규모 프로젝트 분석 시 파일 캐시 유효성을 검증하는 'Deep Integrity Check' 기능 추가
 
 ## ✅ Completed
+### v1.7.2 (Context Compression & Token Optimization)
+- [x] `utils/memory.py`: 단순 요약이 아닌 IDENTITY, GOAL, PROGRESS 등 구조화된 상태 보존형 압축(Synaptic Compression) 로직 구현
+- [x] `utils/memory.py`: 압축 시 `active_constraints`를 명시적으로 주입하여 시스템 제약 조건의 영속성 강화
+- [x] `utils/memory.py`: 최근 메시지 3개를 보존하여 작업의 연속성을 확보하는 지능형 메시지 슬라이싱 로직 적용
+- [x] `utils/memory.py`: 압축 과정에서 불필요한 메모리 점유를 방지하기 위한 `gc.collect()` 및 저온도(Temperature 0.0) 설정 최적화
+
 ### v1.7.1 (Structured Thought Tree Extraction)
 - [x] `agents/manager.py`: 사고 과정을 분석, 추론, 결정 단계로 구조화하는 `thought_tree` 응답 스키마 도입
 - [x] `agents/planner.py`: 설계 과정을 분석, 설계, 검증 계획으로 세분화하는 트리 구조 사고 로직 구현
