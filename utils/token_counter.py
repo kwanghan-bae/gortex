@@ -3,9 +3,10 @@ import re
 def count_tokens(text: str) -> int:
     """
     텍스트의 토큰 수를 대략적으로 추정합니다.
-    Gemini는 문자와 단어 경계에 따라 토큰을 나누지만,
-    일반적으로 한글은 1자당 1~2토큰, 영어는 단어당 약 1.3토큰으로 계산됩니다.
-    여기서는 보수적으로 (글자 수 / 2) + (단어 수) 정도로 계산합니다.
+    (Backend Agnostic Approximation)
+    
+    특정 토크나이저 라이브러리(tiktoken 등)를 사용하지 않고,
+    일반적인 UTF-8 문자 및 단어 분포를 기반으로 보수적인 근사치를 반환합니다.
     """
     if not text:
         return 0
@@ -15,15 +16,27 @@ def count_tokens(text: str) -> int:
     # 전체 글자 수
     chars = len(text)
     
-    # 대략적인 추정치 (Gemini API는 실제 응답에서 토큰 정보를 주지만, 
-    # google-genai 라이브러리의 응답 객체에서 확인 필요)
+    # 대략적인 추정치: (글자 수 * 0.5) + 단어 수
     return int((chars * 0.5) + words)
 
 def estimate_cost(tokens: int, model: str = "flash") -> float:
-    """토큰 당 예상 비용 계산 (1M 토큰 당 가격 기준)"""
-    if "pro" in model.lower():
-        # Gemini 1.5 Pro: $3.5 / 1M input
+    """
+    토큰 당 예상 비용 계산 (1M 토큰 당 가격 기준, USD).
+    Gemini 외의 로컬 모델(Ollama)은 비용을 0으로 산정합니다.
+    """
+    model_lower = model.lower()
+    
+    # Local Models (Free)
+    if any(k in model_lower for k in ["qwen", "llama", "mistral", "gemma", "phi"]):
+        return 0.0
+
+    # Gemini Pricing (Approx)
+    if "pro" in model_lower:
+        # Gemini 1.5 Pro: $3.5 / 1M input (Context Caching 미고려)
         return (tokens / 1_000_000) * 3.5
-    else:
+    elif "flash" in model_lower:
         # Gemini 1.5 Flash: $0.075 / 1M input
         return (tokens / 1_000_000) * 0.075
+    
+    # Unknown Model (Assume Free or Unknown)
+    return 0.0

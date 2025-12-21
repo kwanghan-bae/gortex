@@ -65,3 +65,9 @@ class GeminiBackend(LLMBackend):
         # GortexAuth가 초기화되었고 키가 있다면 사용 가능으로 간주
         # 실제 API 호출 테스트는 비용 문제로 생략
         return bool(self.auth.api_keys)
+
+    def supports_structured_output(self) -> bool:
+        return True
+        
+    def supports_function_calling(self) -> bool:
+        return True

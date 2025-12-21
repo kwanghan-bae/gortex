@@ -19,6 +19,11 @@
 - **안정성 강화**: 그래프 컴파일 로직 수정 및 런타임 에러(KeyError, TypeError) 해결.
 - **전략 업데이트**: Web UI 개발 잠정 중단 및 TUI 우선 순위 설정.
 
+### v2.8.2 (Token Agnosticism & Phase 2 Prep)
+- **Utility**: `utils/token_counter.py`를 개선하여 로컬 모델(Ollama) 사용 시 비용을 0으로 산정하고, 모델 독립적인 토큰 근사치 계산을 표준화했습니다.
+- **Architecture**: `LLMBackend`에 기능 지원 여부(Structured Output, Function Calling) 확인 인터페이스를 추가하여 에이전트의 동적 전략 수립을 지원합니다.
+- **Design**: `agents/coder.py`의 로컬 모델 전환을 위한 아키텍처 설계를 코드 레벨에 반영했습니다.
+
 ### v2.8.1 (Hybrid Memory Architecture)
 - **Refactoring**: `utils/memory.py`의 Gemini 직접 의존성을 제거하고 `LLMFactory` 기반으로 전환하여, 로컬 모델(Ollama)로도 장기 기억 압축이 가능해졌습니다.
 - **Compatibility**: 메시지 포맷(Tuple/Dict) 자동 변환 로직을 추가하여 기존 LangGraph 상태와의 호환성을 유지하면서 멀티 백엔드를 지원합니다.

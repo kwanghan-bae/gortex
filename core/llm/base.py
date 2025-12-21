@@ -29,3 +29,11 @@ class LLMBackend(ABC):
         (예: API 키 유효성, 로컬 서버 연결 상태 등)
         """
         pass
+        
+    def supports_structured_output(self) -> bool:
+        """JSON Schema 강제 등 구조화된 출력 지원 여부"""
+        return False
+        
+    def supports_function_calling(self) -> bool:
+        """Native Function Calling 지원 여부"""
+        return False

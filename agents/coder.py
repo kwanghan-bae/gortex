@@ -5,6 +5,7 @@ from typing import Dict, Any, List
 from google.genai import types
 from gortex.core.auth import GortexAuth
 from gortex.core.state import GortexState
+from gortex.core.llm.factory import LLMFactory # [PHASE 2] 백엔드 전환 준비
 from gortex.utils.tools import read_file, write_file, execute_shell, list_files, get_file_hash, apply_patch, scan_security_risks
 from gortex.utils.healing_memory import SelfHealingMemory
 
@@ -15,6 +16,11 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
     Gortex 시스템의 개발자(Coder) 노드.
     Planner가 수립한 계획을 한 단계씩 실행하며, 검증(Verification)을 통해 코드를 완성합니다.
     """
+    # [TODO: Phase 2] LLMFactory.get_default_backend()로 교체 필요.
+    # 현재는 Gemini의 Function Calling과 Response Schema에 강하게 의존하고 있음.
+    # Ollama 전환 시:
+    # 1. backend.supports_structured_output() 확인
+    # 2. False면 types.GenerateContentConfig 대신 프롬프트 기반 도구 호출 전략 사용
     auth = GortexAuth()
     healing_mem = SelfHealingMemory()
     

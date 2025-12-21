@@ -49,3 +49,12 @@ class OllamaBackend(LLMBackend):
             return response.status_code == 200
         except:
             return False
+
+    def supports_structured_output(self) -> bool:
+        # 최신 Ollama는 format='json' 지원하지만, Schema 강제는 모델 의존적임
+        # 안전하게 False로 두고 프롬프트 엔지니어링으로 해결 유도
+        return False
+        
+    def supports_function_calling(self) -> bool:
+        # Ollama도 도구 지원이 추가되었으나, Gortex 표준과 맞추기 위해 아직은 False
+        return False
