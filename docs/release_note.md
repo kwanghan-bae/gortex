@@ -19,6 +19,11 @@
 - **안정성 강화**: 그래프 컴파일 로직 수정 및 런타임 에러(KeyError, TypeError) 해결.
 - **전략 업데이트**: Web UI 개발 잠정 중단 및 TUI 우선 순위 설정.
 
+### v2.8.0 (Ollama Foundation & LLM Abstraction)
+- **Architecture**: `core/llm/` 패키지를 신설하고 `LLMBackend` 추상 계층을 도입하여 멀티 모델(Gemini/Ollama) 하이브리드 운영의 기반을 닦았습니다.
+- **Feature**: 로컬 Ollama 서버와 통신하는 `OllamaBackend` 및 기존 인증 모듈을 래핑한 `GeminiBackend`를 구현했습니다.
+- **Flexibility**: `LLMFactory`를 통해 환경 변수 설정만으로 런타임에 AI 백엔드를 교체할 수 있는 유연성을 확보했습니다.
+
 ### v2.7.5 (Evolutionary Memory & Synaptic Optimization Rigor)
 - **Quality**: `core/evolutionary_memory.py`의 규칙 강화, 충돌 감지, 매크로 및 GC 로직을 전수 검증하여 100% 커버리지를 달성했습니다.
 - **Quality**: `utils/memory.py`의 맥락 압축 및 가지치기 로직의 예외 경로와 조기 반환 조건을 확보하여 100% 커버리지를 달성했습니다.
