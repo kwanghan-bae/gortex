@@ -41,9 +41,16 @@
 - [x] **System**: 에이전트가 도구 호출 시 '가상 커서(Virtual Cursor)'를 사용하여 코드의 특정 위치를 정확히 수정하는 정밀 편집 모드 도입
 - [x] **Intelligence**: 여러 가상의 실행 시나리오를 병렬로 검토하여 최적의 경로를 선택하는 'Speculative Reasoning' 엔진 구축
 - [x] **Infrastructure**: 에이전트의 내부 지식 베이스를 그래프 DB 형식으로 시각화하고 관리하는 'Synaptic Knowledge Graph' 구축
-- [ ] **Intelligence**: 에이전트가 도구 호출 결과의 정확성을 제3의 관점에서 검증하는 'Cross-Validation' 노드 추가
+- [x] **Intelligence**: 에이전트가 도구 호출 결과의 정확성을 제3의 관점에서 검증하는 'Cross-Validation' 노드 추가
+- [ ] **Infrastructure**: 에이전트의 단기 기억을 외부 벡터 저장소로 확장하여 지식 보존력을 높이는 'Long-term Memory' 구축
 
 ## ✅ Completed
+### v2.0.4 (Independent Cross-Validation Loop)
+- [x] `agents/analyst.py`: 다른 에이전트의 성과물을 독립적인 관점에서 평가하고 비판하는 `cross_validate` 로직 구현
+- [x] `core/graph.py`: Coder 완료 후 반드시 Analyst의 검증을 거치도록 워크플로우 라우팅 및 조건부 엣지 고도화
+- [x] `agents/analyst.py`: 검증 결과가 기준에 미달할 경우 자동으로 Planner/Coder에게 재수정을 지시하는 삼각 검증 루프 안착
+- [x] `agents/analyst.py`: 작업 목표 대비 결과물의 무결성, 보안, 제약 조건 준수 여부를 정량 점수(Confidence)로 산출
+
 ### v2.0.3 (Synaptic Knowledge Graph & Knowledge Integration)
 - [x] `utils/indexer.py`: 코드 구조(클래스/함수)와 진화적 메모리(규칙)를 결합한 통합 지식 그래프 생성 로직 `generate_knowledge_graph` 구현
 - [x] `main.py`: 통합 지식 그래프를 생성하고 웹 대시보드로 실시간 스트리밍하는 `/kg` 명령어 추가

@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Synaptic Knowledge Graph & Knowledge Integration Complete (v2.0.3)
+**Status:** Independent Cross-Validation Loop Complete (v2.0.4)
 
 ## 🧠 Current Context
-통합 지식 그래프 시스템이 가동되었습니다. 이제 Gortex는 자신이 알고 있는 코드 구조와 학습된 규칙 사이의 연관성을 그래프 구조로 파악하며, 이는 복잡한 시스템의 제약 조건을 준수하면서 정확한 코드를 작성하는 데 핵심적인 역할을 합니다.
+제3자 관점의 상호 검증 시스템이 구축되었습니다. 이제 Gortex는 한 에이전트의 실수를 다른 에이전트(또는 다른 관점의 모델)가 즉시 잡아낼 수 있는 견제와 균형 시스템을 갖추게 되었으며, 이는 최종 출력물의 신뢰성을 극대화합니다.
 
 ## 🎯 Next Objective
-**Cross-Validation (Independent Verification)**
-1. **`Cross-Validation Node`**: 에이전트(예: Coder)가 작업을 마친 직후, 해당 작업에 참여하지 않은 다른 모델 인스턴스(예: Analyst 또는 다른 Gemini 모델)가 결과의 정확성을 제3의 관점에서 검증합니다.
-2. **`Discrepancy Resolution`**: 두 에이전트 간의 의견 차이가 발생할 경우, 'Manager'가 개입하여 최종 결론을 내리거나 재수정을 지시하는 삼각 검증 워크플로우를 구축합니다.
+**Long-term Memory (Vector Store Extension)**
+1. **`Context Persistence`**: 대화가 압축되거나 세션이 종료되더라도 사라지지 않는 '장기 기억' 저장소를 구축합니다. (ChromaDB 또는 단순 벡터 파일 활용)
+2. **`Semantic Retrieval`**: 현재 작업과 관련된 과거의 모든 지식(코드, 대화, 오류 해결 사례)을 의미 기반으로 검색하여 에이전트의 단기 기억(Context Window)을 보강합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 통합 지식 그래프 시스템 완료 (v2.0.3).
-- 다음 목표: 제3자 관점의 상호 검증(Cross-Validation).
+- 상호 검증 시스템 완료 (v2.0.4).
+- 다음 목표: 외부 벡터 저장소를 활용한 장기 기억(Long-term Memory) 구축.
 
 작업 목표:
-1. `agents/analyst.py`에 도구 호출 결과나 코드를 검증하는 `cross_validate` 메서드를 작성해줘.
-2. `coder` 완료 후 `analyst` 노드를 거치도록 `core/graph.py`의 라우팅 로직을 수정하여 상호 검증 루프를 보강해줘.
+1. `utils/memory.py` 또는 신규 `utils/vector_store.py`를 통해 지식을 임베딩하고 저장하는 기초 인프라를 작성해줘.
+2. 에이전트가 답변을 생성하기 전, 장기 기억 저장소에서 관련 정보를 인출(Retrieve)하는 워크플로우를 보강해줘.
 ```

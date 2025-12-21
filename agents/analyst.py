@@ -333,6 +333,37 @@ class AnalystAgent:
             logger.error(f"Dataset curation failed: {e}")
             return []
 
+    def cross_validate(self, goal: str, output: str) -> Dict[str, Any]:
+        """다른 에이전트의 출력물을 제3의 관점에서 상호 검증"""
+        prompt = f"""너는 Gortex v1.0의 수석 검증관이다. 
+        다음 작업 목표와 실행 결과를 비교하여 무결성을 검증하라.
+        
+        [Goal]
+        {goal}
+        
+        [Resulting Output/Code]
+        {output}
+        
+        [Verification Points]
+        1. 목표가 100% 달성되었는가?
+        2. 보안 취약점이나 논리적 모순이 있는가?
+        3. 기존 시스템 제약 조건을 위반하지 않았는가?
+        
+        결과는 반드시 다음 JSON 형식을 따라라:
+        {{
+            "is_valid": true/false,
+            "confidence_score": 0.0~1.0,
+            "critique": "발견된 문제점 또는 칭찬",
+            "required_fix": "수정이 필요하다면 구체적인 지시사항"
+        }}
+        """
+        try:
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], None)
+            return json.loads(response.text)
+        except Exception as e:
+            logger.error(f"Cross-validation failed: {e}")
+            return {"is_valid": True, "confidence_score": 1.0}
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""
     agent = AnalystAgent()
@@ -340,9 +371,29 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
     last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
     last_msg_lower = last_msg.lower()
 
-    # 1. 의도 판단 (Review vs Style vs Data vs Feedback)
+    # 1. 의도 판단 (Validation vs Review vs Style vs Data vs Feedback)
     
-    # 코딩 스타일 분석 요청
+    # 상호 검증 요청 (Graph에서 전이된 경우)
+    if state.get("next_node") == "analyst": # 명시적으로 analyst로 전이됨
+        # 가장 최근의 AI 성과물 검증
+        ai_outputs = [m for m in state["messages"] if (isinstance(m, tuple) and m[0] == "ai") or (hasattr(m, 'type') and m.type == "ai")]
+        if ai_outputs:
+            last_ai_msg = ai_outputs[-1][1] if isinstance(ai_outputs[-1], tuple) else ai_outputs[-1].content
+            val_res = agent.cross_validate("Current Task Plan", last_ai_msg)
+            
+            if not val_res["is_valid"]:
+                msg = f"🛡️ [Cross-Validation Alert] 결과물이 기준에 미달합니다.\n- 이유: {val_res['critique']}\n- 지시: {val_res['required_fix']}"
+                return {
+                    "messages": [("ai", msg)],
+                    "next_node": "planner" # 재수정 지시
+                }
+            else:
+                return {
+                    "messages": [("ai", f"🛡️ [Cross-Validation Passed] 무결성 검증 완료. (신뢰도: {val_res['confidence_score']*100:.0f}%)")],
+                    "next_node": "manager"
+                }
+
+    # 코딩 스타일 분석 요청 (이전 로직 유지)
     if "/analyze_style" in last_msg_lower or "스타일 분석" in last_msg_lower:
         style_info = agent.analyze_coding_style(state.get("working_dir", "."))
         agent.memory.save_rule(

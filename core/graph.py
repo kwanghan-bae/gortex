@@ -33,11 +33,12 @@ def route_after_summary(state: GortexState) -> str:
     """요약 후 원래 가려던 노드로 복귀"""
     return state.get("next_node", "manager")
 
-def route_coder(state: GortexState) -> Literal["coder", "manager", "__end__"]:
-    """Coder의 작업 완료 여부에 따라 라우팅"""
+def route_coder(state: GortexState) -> Literal["coder", "analyst", "__end__"]:
+    """Coder의 작업 완료 여부에 따라 라우팅 (Cross-Validation 단계 추가)"""
     next_node = state.get("next_node", "manager")
     if next_node == "__end__":
-        return "manager"
+        # 모든 step이 끝났다면 즉시 manager로 가지 않고 analyst 검증을 거침
+        return "analyst"
     return "coder"
 
 def compile_gortex_graph():
@@ -94,19 +95,21 @@ def compile_gortex_graph():
     # Planner -> Coder
     workflow.add_edge("planner", "coder")
 
-    # Coder 루프 및 완료 후 Manager 복귀
+    # Coder 루프 및 완료 후 Analyst(Cross-Validation) 거쳐 Manager 복귀
     workflow.add_conditional_edges(
         "coder",
         route_coder,
         {
             "coder": "coder",
-            "manager": "manager"
+            "analyst": "analyst"
         }
     )
 
-    # Researcher & Analyst & Optimizer 완료 후 Manager 복귀
-    workflow.add_edge("researcher", "manager")
+    # Analyst 완료 후 Manager 복귀
     workflow.add_edge("analyst", "manager")
+
+    # Researcher & Optimizer 완료 후 Manager 복귀
+    workflow.add_edge("researcher", "manager")
     workflow.add_edge("optimizer", "manager")
 
     return workflow
