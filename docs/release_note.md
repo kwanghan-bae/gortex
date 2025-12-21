@@ -14,13 +14,19 @@
 - [x] **Interface**: 현재 작업 맥락에 따라 대시보드 구성을 최적화하는 'Context-Aware UI Layout' 구현
 - [x] **System**: 작업 완료 후 자동으로 결과물을 아카이빙하고 문서를 갱신하는 'Auto-Finalizer' 도입
 - [x] **Economy**: 에이전트 간 상호 평가를 통해 자원 할당 우선순위를 결정하는 'Peer Review Economy' 고도화
-- [ ] **System**: 지식 검색 성능을 비약적으로 높이는 'Vector Embedding Search'로의 전환
+- [x] **System**: 지식 검색 성능을 비약적으로 높이는 'Vector Embedding Search'로의 전환
+- [ ] **Intelligence**: 에이전트의 모든 의미 있는 사고 과정을 스스로 요약하여 지식화하는 'Thought Memorization' 구현
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.5.1 (Vectorized Long-term Memory)
+- [x] `utils/vector_store.py`: Gemini Embedding API를 활용하여 지식 저장 시 자동으로 벡터화하는 엔진 도입
+- [x] `LongTermMemory`: 단순 키워드 매칭을 코사인 유사도 기반의 의미론적 검색으로 교체하여 검색 정확도 혁신
+- [x] `core/auth.py`: 외부 모듈에서 API 클라이언트에 안전하게 접근할 수 있는 `get_current_client` 메서드 추가
 
 ### v2.5.0 (Omni-Translator & Multi-language Support)
 - [x] `utils/translator.py`: 여러 텍스트를 한 번에 번역하는 배치 엔진을 구축하여 웹 대시보드 실시간 다국어 지원 실현

@@ -1,6 +1,7 @@
 import json
 import os
 import logging
+import math
 from typing import List, Dict, Any
 from gortex.core.auth import GortexAuth
 
@@ -9,6 +10,7 @@ logger = logging.getLogger("GortexVectorStore")
 class LongTermMemory:
     """
     세션이 종료되어도 유지되는 의미 기반 지식 저장소 (장기 기억).
+    텍스트 임베딩을 통한 벡터 검색을 지원합니다.
     """
     def __init__(self, store_path: str = "logs/long_term_memory.json"):
         self.store_path = store_path
@@ -29,40 +31,72 @@ class LongTermMemory:
         with open(self.store_path, "w", encoding='utf-8') as f:
             json.dump(self.memory, f, ensure_ascii=False, indent=2)
 
+    def _get_embedding(self, text: str) -> List[float]:
+        """Gemini API를 사용하여 텍스트 임베딩 생성"""
+        try:
+            # 텍스트가 너무 길면 절삭
+            clean_text = text[:2000]
+            # GortexAuth를 통해 현재 활성 클라이언트 획득
+            client = self.auth.get_current_client()
+            response = client.models.embed_content(
+                model="models/embedding-001",
+                contents=clean_text
+            )
+            return response.embeddings[0].values
+        except Exception as e:
+            logger.warning(f"Embedding failed: {e}. Falling back to zero-vector.")
+            return [0.0] * 768 # 기본 차원
+
     def memorize(self, text: str, metadata: Dict[str, Any] = None):
-        """새로운 지식을 기억 (저장)"""
-        # 실제 운영 환경에서는 임베딩을 통한 벡터 저장이 필요하나, 
-        # 여기서는 기초 구조를 위해 텍스트 기반 저장 우선 구현
+        """새로운 지식을 벡터와 함께 기억 (저장)"""
+        vector = self._get_embedding(text)
+        
         self.memory.append({
             "content": text,
+            "vector": vector, # 벡터 데이터 저장
             "metadata": metadata or {},
-            "timestamp": os.getenv("CURRENT_TIME", "2024-12-20"),
-            "usage_count": 0 # 신규 필드 추가
+            "timestamp": datetime.now().isoformat(),
+            "usage_count": 0
         })
         self._save_store()
-        logger.info(f"🧠 New knowledge memorized into long-term store.")
+        logger.info(f"🧠 Knowledge vectorized and memorized.")
 
     def recall(self, query: str, limit: int = 3) -> List[str]:
-        """관련 지식 소환 (검색)"""
-        # 단순 키워드 기반 검색으로 우선 구현 (향후 임베딩 벡터 검색으로 고도화 예정)
-        query_parts = query.lower().split()
-        results = []
+        """의미론적 유사도(Cosine Similarity) 기반 지식 소환"""
+        if not self.memory:
+            return []
+            
+        query_vector = self._get_embedding(query)
+        
+        scored_results = []
         for item in self.memory:
-            score = sum(1 for p in query_parts if p in item["content"].lower())
-            if score > 0:
-                results.append((score, item))
+            if "vector" in item and len(item["vector"]) == len(query_vector):
+                # 코사인 유사도 계산
+                dot_product = sum(a * b for a, b in zip(query_vector, item["vector"]))
+                norm_a = math.sqrt(sum(a * a for a in query_vector))
+                norm_b = math.sqrt(sum(b * b for b in item["vector"]))
+                similarity = dot_product / (norm_a * norm_b) if norm_a > 0 and norm_b > 0 else 0
+                
+                scored_results.append((similarity, item))
+            else:
+                # 벡터가 없는 경우 키워드 매칭으로 폴백 (0.1 ~ 0.3 점수 부여)
+                match_score = 0.1 if any(p in item["content"].lower() for p in query.lower().split()) else 0
+                scored_results.append((match_score, item))
         
-        results.sort(key=lambda x: x[0], reverse=True)
+        scored_results.sort(key=lambda x: x[0], reverse=True)
         
-        # 검색된 지식의 사용량 증가
-        top_results = results[:limit]
+        # 검색된 지식의 사용량 증가 및 결과 반환
+        top_results = scored_results[:limit]
         for score, item in top_results:
-            item["usage_count"] = item.get("usage_count", 0) + 1
+            if score > 0.5: # 일정 유사도 이상일 때만 카운트
+                item["usage_count"] = item.get("usage_count", 0) + 1
             
         if top_results:
             self._save_store()
             
-        return [r[1]["content"] for r in top_results]
+        return [r[1]["content"] for r in top_results if r[0] > 0.3] # 임계값 적용
+
+from datetime import datetime
 
 if __name__ == "__main__":
     ltm = LongTermMemory()

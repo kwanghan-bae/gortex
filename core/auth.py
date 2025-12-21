@@ -82,6 +82,10 @@ class GortexAuth:
         """현재 활성화된 LLM 제공업체명 반환"""
         return self._provider.upper()
 
+    def get_current_client(self) -> Any:
+        """현재 활성화된 Gemini 클라이언트 반환"""
+        return self.clients[self.current_index]
+
     def switch_account(self, error_message: str) -> bool:
         """다음 Gemini 계정으로 전환하거나 OpenAI로 폴백함"""
         if self.current_index < len(self.clients) - 1:

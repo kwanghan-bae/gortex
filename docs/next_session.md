@@ -1,23 +1,24 @@
 # Next Session
 
 ## Session Goal
-- 의미 기반 벡터 검색 엔진 도입 (Vector Search v1)
+- 사고 과정의 능동적 지식화 및 회상 시스템 (Thought Memorization v1)
 
 ## Context
-- 현재 `LongTermMemory`와 `SemanticLogSearch`가 단순 키워드 매칭에 의존하고 있어, 표현이 다를 경우 관련 지식을 찾지 못하는 한계가 있음.
-- `Sentence-Transformers` 또는 Gemini 임베딩 API를 활용하여 지식을 벡터화하고, 코사인 유사도(Cosine Similarity)를 통해 의미론적으로 유사한 정보를 검색해야 함.
+- 현재는 외부 트렌드나 사용자 매크로 위주로 지식이 쌓이고 있음.
+- 하지만 에이전트가 복잡한 디버깅이나 설계를 마친 후의 '깨달음'은 세션이 끝나면 휘발되는 경향이 있음.
+- `Analyst`가 매 턴 종료 시 에이전트의 사고 트리(`thought_tree`)를 분석하여, 미래에 가치 있는 '추론 패턴'을 추출하고 이를 벡터 지식으로 저장해야 함.
 
 ## Scope
 ### Do
-- `utils/vector_store.py`를 확장하여 지식 저장 시 임베딩(Embedding) 벡터를 함께 보관하도록 수정.
-- `recall` 메서드를 키워드 매칭에서 벡터 유사도 기반 검색으로 교체.
-- 외부 라이브러리 부재 시를 대비한 안전한 폴백(Keyword Match) 유지.
+- `agents/analyst.py`에 사고 과정을 요약하여 지식으로 변환하는 `memorize_valuable_thought` 메서드 추가.
+- `main.py` 스트리밍 루프 마지막에 의미 있는 사고를 선별하여 저장하도록 연동.
+- 저장 시 `type="reasoning_pattern"` 메타데이터를 활용하여 나중에 `Recall` 시 우선순위 부여.
 
 ### Do NOT
-- 대규모 벡터 DB(Chroma 등)를 즉시 도입하지 말 것 (우선 로컬 JSON 기반 벡터 저장으로 시작).
+- 모든 사소한 생각을 다 저장하지 말 것 (확신도나 결과 성과가 높은 것 위주로 선별).
 
 ## Expected Outputs
-- `utils/vector_store.py`, `requirements.txt` 수정.
+- `agents/analyst.py`, `main.py` 수정.
 
 ## Completion Criteria
-- "데이터 시각화 방법"이라고 물었을 때, "Plotly 활용 가이드"와 같이 키워드가 겹치지 않더라도 의미가 유사한 지식이 검색되는 것이 확인되어야 함.
+- 복잡한 문제 해결 후, 지식 베이스에 "이런 상황에서는 저런 식으로 접근하는 것이 효율적임"과 같은 추론 패턴이 저장되는 것이 확인되어야 함.

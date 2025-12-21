@@ -149,28 +149,45 @@ class TrendScoutAgent:
                 
                 # 3. tech_radar.json 업데이트
                 self.radar_data["last_scan"] = datetime.now().isoformat()
-                self.radar_data["models"] = extracted.get("models", [])
-                self.radar_data["patterns"] = extracted.get("patterns", [])
+                
+                # 테스트 환경의 Mock 객체 방어 로직 (JSON 직렬화 가능 여부 체크)
+                if not isinstance(extracted, dict):
+                    extracted = {}
+                
+                models = extracted.get("models", [])
+                patterns = extracted.get("patterns", [])
+                
+                # 리스트 타입이 아니면 (Mock 등) 빈 리스트로 초기화
+                if not isinstance(models, list): models = []
+                if not isinstance(patterns, list): patterns = []
+                
+                self.radar_data["models"] = models
+                self.radar_data["patterns"] = patterns
                 self._save_radar()
                 
                 # [Knowledge Base Integration] 최신 트렌드를 장기 기억 저장소에 통합
-                for m in extracted.get("models", []):
-                    knowledge_text = f"최신 모델 정보: {m['name']}는 {m['status']} 상태이며, 특징은 다음과 같다: {m.get('note')}"
-                    self.ltm.memorize(knowledge_text, {"source": "TrendScout", "type": "model", "topic": m['name']})
+                for m in models:
+                    if isinstance(m, dict) and "name" in m:
+                        knowledge_text = f"최신 모델 정보: {m.get('name')}는 {m.get('status')} 상태이며, 특징은 다음과 같다: {m.get('note')}"
+                        self.ltm.memorize(knowledge_text, {"source": "TrendScout", "type": "model", "topic": m.get('name')})
                 
-                for p in extracted.get("patterns", []):
-                    knowledge_text = f"신규 에이전트 패턴: {p['topic']} - {p.get('summary')}"
-                    self.ltm.memorize(knowledge_text, {"source": "TrendScout", "type": "pattern", "topic": p['topic']})
+                for p in patterns:
+                    if isinstance(p, dict) and "topic" in p:
+                        knowledge_text = f"신규 에이전트 패턴: {p.get('topic')} - {p.get('summary')}"
+                        self.ltm.memorize(knowledge_text, {"source": "TrendScout", "type": "pattern", "topic": p.get('topic')})
 
                 # 알림용 요약 메시지 생성
                 notifications = []
-                for m in extracted.get("models", []):
-                    notifications.append(f"✨ 신규 모델 발견: {m['name']} ({m['status']})")
+                for m in models:
+                    if isinstance(m, dict):
+                        notifications.append(f"✨ 신규 모델 발견: {m.get('name')} ({m.get('status')})")
                 return notifications
         except Exception as e:
             logger.error(f"Trend analysis parsing failed: {e}")
+            # 파싱 실패 시 원문을 요약하여 반환 (가짜 데이터 생성 금지)
+            return [f"트렌드 스캔 완료 (구조화 실패): {response.text[:200]}..."]
             
-        return ["트렌드 분석 중 오류가 발생했으나, 스캔은 완료되었습니다."]
+        return ["트렌드 분석 스캔은 완료되었으나 새로운 항목이 발견되지 않았습니다."]
 
     async def analyze_adoption_opportunity(self, file_list: List[str]) -> List[str]:
         """신기술 도입 기회 분석"""
