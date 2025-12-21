@@ -130,7 +130,35 @@ class ThreeJsBridge:
         return {"nodes": converted_nodes, "edges": converted_edges}
 
     def convert_causal_graph_to_3d(self, graph_data: Dict[str, Any]) -> Dict[str, Any]:
-        # ... (중략) ...
+        """인과 관계 그래프를 3D 타임라인 구조로 변환"""
+        nodes = graph_data.get("nodes", [])
+        edges = graph_data.get("edges", [])
+        
+        converted_nodes = []
+        node_map = {}
+        import math
+        
+        # 시간순 배치를 위해 노드 순회
+        for i, node in enumerate(nodes):
+            # 시간축(X)을 따라 배치하고 Y, Z는 무작위성을 부여하여 겹침 방지
+            pos = {
+                "x": i * 15,
+                "y": math.sin(i) * 10,
+                "z": math.cos(i) * 10
+            }
+            
+            converted_node = {
+                "id": node["id"],
+                "position": pos,
+                "label": node["label"],
+                "agent": node["agent"],
+                "event": node["event"],
+                "color": self._get_color_by_agent(node["agent"])
+            }
+            converted_nodes.append(converted_node)
+            node_map[node["id"]] = pos
+
+        converted_edges = []
         for edge in edges:
             if edge["from"] in node_map and edge["to"] in node_map:
                 converted_edges.append({

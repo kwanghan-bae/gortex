@@ -3,8 +3,8 @@
 > 💡 **Versioning Policy**: 메이저 버전(v1.x, v2.x ...)이 변경될 때마다 이전 기록은 `docs/archive/`로 이동하며, 메인 릴리즈 노트는 항상 최신 상태를 유지합니다.
 
 ## 🚀 Backlog (Pending Tasks)
-- [x] **Infrastructure**: 시스템 내부의 모든 텍스트를 타겟 언어로 자동 로컬라이징하는 'System Localization' 구축
-- [ ] **Infrastructure**: 에이전트 도구 메시지를 i18n 키값으로 전면 마이그레이션
+- [x] **Infrastructure**: 에이전트 도구 메시지를 i18n 키값으로 전면 마이그레이션
+- [ ] **Interface**: 에이전트에게 고유한 성격과 전문성을 부여하는 'Persona Profiles' 구축
 - [ ] **Intelligence**: 에이전트의 사고 트리에 멀티모달 데이터를 포함하는 'Visual Reasoning' 도입 (v2.6.5 기반)
 
 ---
@@ -13,17 +13,16 @@
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
 
-### v2.6.8 (System-wide Localization Framework)
-- [x] `docs/i18n/`: 다국어 지원을 위한 키-밸류 기반 메시지 사전(ko, en) 구축 및 데이터 인프라 안착
-- [x] `utils/translator.py`: 런타임 변수 치환이 가능한 싱글톤 로컬라이징 엔진 `SystemTranslator` 구현
-- [x] `main.py`: 하드코딩된 시스템 메시지를 제거하고 설정 언어에 맞춰 실시간으로 텍스트를 치환하는 연동 완료
+### v2.6.9 (Integrity Recovery & Message Migration)
+- [x] **Critical Fix**: 코드 수정 도구 오용으로 발생한 소스 오염(중략 기호 삽입)을 전면 스캔하여 복구 및 무결성 재검증
+- [x] `docs/i18n/`: Planner, Coder, Analyst 등 모든 핵심 에이전트의 응답 메시지를 다국어 사전 체계로 전면 마이그레이션 완료
+- [x] `Infrastructure`: `i18n.t` 기반의 메시지 출력 방식을 표준화하여 시스템의 글로벌 서비스 기반 확보
 
-### v2.6.7 (Dependency Clustering & Structural Insight)
-- [x] `ui/three_js_bridge.py`: 파일 경로 및 심볼 명명 규칙을 분석하여 복잡한 노드들을 논리적 그룹(Cluster)으로 자동 묶는 엔진 구현
-- [x] `Infrastructure`: 각 클러스터에 고유한 시각적 속성(Color, ID)을 부여하여 거시적인 시스템 아키텍처 조망 기능 강화
-- [x] `UI Integration`: 인과 그래프와 지식 지도를 통합하여 입체적인 군집 기반 시각화 데이터 파이프라인 완성
+### v2.6.7 ~ v2.6.8 요약
+- [x] **v2.6.8**: 시스템 전역 다국어 지원(i18n) 엔진 및 데이터 인프라 구축
+- [x] **v2.6.7**: 3D 의존성 그래프 노드 자율 군집화(Clustering) 및 시각화 시스템 구현
 
-### v2.6.6 (Autonomous Workspace Organizer & Archiving)
+### v2.6.4 ~ v2.6.6 요약
 - [x] `utils/tools.py`: 프로젝트 부산물들을 명명 규칙에 따라 안전하게 격리 보관하는 아카이빙 엔진 구축
 - [x] `agents/analyst.py`: 세션 종료 시 작업 공간을 스캔하여 백업 및 임시 파일을 자동 정리하는 지능형 클리너 구현
 - [x] `Infrastructure`: 누적되는 작업 로그와 버전을 프로젝트별로 구조화하여 장기적인 유지보수성 확보

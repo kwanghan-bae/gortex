@@ -21,7 +21,51 @@ class ResearcherAgent:
         self.ltm = LongTermMemory()
         self.timeout = 8000  # 8 seconds (SPEC)
 
-# ... (중략) ...
+    async def scrape_url(self, url: str) -> str:
+        """Playwright를 사용하여 URL의 텍스트 콘텐츠를 추출 (이미지 제외)"""
+        logger.info(f"🌐 Scraping: {url}")
+        
+        # 캐시 확인
+        cached = self.cache.get(url)
+        if cached:
+            logger.info("♻️  Using cached research data.")
+            return cached
+
+        try:
+            async with async_playwright() as p:
+                browser = await p.chromium.launch(headless=True)
+                # 성능을 위해 이미지 및 CSS 차단 시도
+                context = await browser.new_context(user_agent="Mozilla/5.0")
+                page = await context.new_page()
+                
+                # 리소스 차단 로직
+                async def block_aggressively(route):
+                    if route.request.resource_type in ["image", "media", "font"]:
+                        await route.abort()
+                    else:
+                        await route.continue_()
+                await page.route("**/*", block_aggressively)
+
+                await page.goto(url, timeout=self.timeout, wait_until="domcontentloaded")
+                content = await page.content()
+                await browser.close()
+
+                # HTML 정제 (BeautifulSoup)
+                soup = BeautifulSoup(content, 'html.parser')
+                # 광고, 스크립트 등 제거
+                for s in soup(['script', 'style', 'nav', 'footer', 'header', 'aside']):
+                    s.decompose()
+                
+                text = soup.get_text(separator=' ', strip=True)
+                # 다중 공백 제거
+                text = re.sub(r'\s+', ' ', text)
+                
+                # 결과 캐싱
+                self.cache.set(url, text[:10000]) # 상위 1만자만 저장
+                return text[:5000] # 분석용으로 5천자 반환
+        except Exception as e:
+            logger.error(f"Scraping failed for {url}: {e}")
+            return f"Error: {e}"
 
     async def fetch_api_docs(self, library_name: str) -> str:
         """라이브러리의 최신 API 문서를 정밀하게 검색 및 추출"""

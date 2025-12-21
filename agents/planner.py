@@ -128,6 +128,7 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
         # Plan을 상태에 저장하고 Coder에게 넘김
         plan_steps = [json.dumps(step, ensure_ascii=False) for step in plan_data["steps"]]
         
+        from gortex.utils.translator import i18n
         updates = {
             "thought_process": plan_data.get("thought_process"),
             "impact_analysis": plan_data.get("impact_analysis"),
@@ -136,7 +137,7 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
             "plan": plan_steps,
             "current_step": 0,
             "next_node": "coder",
-            "messages": [("ai", f"계획을 수립했습니다: {plan_data.get('goal')} ({len(plan_steps)} steps)")]
+            "messages": [("ai", i18n.t("task.plan_established", goal=plan_data.get('goal'), steps=len(plan_steps)))]
         }
         
         if plan_data.get("impact_analysis"):
@@ -160,7 +161,8 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
 
     except Exception as e:
         logger.error(f"Error parsing planner response: {e}")
+        from gortex.utils.translator import i18n
         return {
             "next_node": "__end__", 
-            "messages": [("ai", f"계획 수립 중 오류가 발생했습니다: {e}")]
+            "messages": [("ai", i18n.t("error.general", error=str(e)))]
         }

@@ -571,7 +571,8 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
         # 원본 시나리오 데이터를 바탕으로 정밀 합의 도출
         res = agent.synthesize_consensus("High-Risk System Decision", debate_data)
         
-        msg = f"🤝 **에이전트 간 정밀 합의 도출 완료**\n\n"
+        from gortex.utils.translator import i18n
+        msg = f"🤝 **{i18n.t('analyst.consensus_reached', decision=res.get('final_decision')[:50])}**\n\n"
         msg += f"📌 **최종 결정**: {res.get('final_decision')}\n"
         msg += f"💡 **결정 근거**: {res.get('rationale')}\n\n"
         
@@ -661,6 +662,7 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
     data_files = [f for f in last_msg.split() if f.endswith(('.csv', '.xlsx', '.json'))]
     if data_files:
         result = agent.analyze_data(data_files[0])
-        return {"messages": [("ai", f"Data analysis for {data_files[0]} complete.")], "next_node": "manager"}
+        from gortex.utils.translator import i18n
+        return {"messages": [("ai", i18n.t("analyst.data_analyzed", file=data_files[0]))], "next_node": "manager"}
 
     return {"messages": [("ai", "분석을 마쳤습니다.")], "next_node": "manager"}

@@ -242,12 +242,13 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
         
         check_res = execute_shell(f"./scripts/pre_commit.sh --selective {files_arg}")
         
+        from gortex.utils.translator import i18n
         if "Ready to commit" in check_res:
             logger.info("✅ Selective check passed.")
             return {
                 "thought": coder_thought, "thought_tree": coder_tree,
                 "current_step": current_step_idx + 1, "coder_iteration": 0,
-                "next_node": "coder", "messages": [("ai", f"Step {current_step_idx+1} 완료 및 증분 검증 통과.")]
+                "next_node": "coder", "messages": [("ai", i18n.t("task.step_completed", step=current_step_idx+1))]
             }
         else:
             logger.warning("❌ Selective check failed. Triggering self-correction...")
@@ -257,7 +258,7 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
                 "thought_tree": coder_tree,
                 "coder_iteration": current_iteration + 1,
                 "messages": [
-                    ("ai", "❌ 증분 검증 실패로 인해 자가 수정을 시도합니다."),
+                    ("ai", i18n.t("task.step_failed", step=current_step_idx+1)),
                     ("tool", check_res)
                 ],
                 "next_node": "coder"

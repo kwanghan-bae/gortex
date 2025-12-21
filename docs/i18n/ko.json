@@ -1,10 +1,16 @@
 {
   "system.initialized": "Gortex v1.0 초기화 완료. (ID: {thread_id})",
+  "system.reboot_required": "시스템 설정이 변경되었습니다. 재부팅이 필요합니다.",
   "task.plan_established": "계획을 수립했습니다: {goal} ({steps} 단계)",
   "task.all_completed": "모든 계획된 작업을 완료했습니다.",
   "task.step_completed": "{step} 단계 완료 및 검증 통과.",
+  "task.step_failed": "{step} 단계 검증 실패. 자가 수정을 시도합니다.",
   "error.general": "죄송합니다. 요청을 분석하는 중에 오류가 발생했습니다: {error}",
   "error.api_quota": "API 할당량이 모두 소진되었습니다. 잠시 후 재시도하거나 키를 교체하세요.",
+  "error.security_violation": "보안 위반이 감지되었습니다: {command}",
   "ui.mode_changed": "UI 레이아웃이 {mode} 모드로 전환되었습니다.",
-  "archive.success": "{count}개의 부산물이 {path}에 보관되었습니다."
+  "archive.success": "{count}개의 부산물이 {path}에 보관되었습니다.",
+  "analyst.review_complete": "코드 품질 리뷰를 마쳤습니다. 보안 위험 {risk_count}건 발견.",
+  "analyst.consensus_reached": "에이전트 간 정밀 합의 도출 완료: {decision}",
+  "analyst.data_analyzed": "{file} 파일에 대한 데이터 분석을 완료했습니다."
 }

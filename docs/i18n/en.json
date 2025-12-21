@@ -1,10 +1,16 @@
 {
   "system.initialized": "Gortex v1.0 Initialized. (ID: {thread_id})",
+  "system.reboot_required": "System settings updated. Reboot required.",
   "task.plan_established": "New plan established: {goal} ({steps} steps)",
   "task.all_completed": "All planned tasks have been successfully completed.",
   "task.step_completed": "Step {step} completed and verified.",
+  "task.step_failed": "Step {step} verification failed. Attempting self-correction...",
   "error.general": "Sorry, an error occurred during request analysis: {error}",
   "error.api_quota": "API quota exhausted. Please try again later or rotate keys.",
+  "error.security_violation": "Security violation detected: {command}",
   "ui.mode_changed": "UI layout switched to {mode} mode.",
-  "archive.success": "{count} artifacts archived to {path}."
+  "archive.success": "{count} artifacts archived to {path}.",
+  "analyst.review_complete": "Code quality review complete. {risk_count} security risks found.",
+  "analyst.consensus_reached": "Multi-agent consensus reached: {decision}",
+  "analyst.data_analyzed": "Data analysis for {file} complete."
 }
