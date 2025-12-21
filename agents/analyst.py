@@ -200,9 +200,50 @@ class AnalystAgent:
             logger.error(f"Consensus synthesis failed: {e}")
             return {"final_decision": "Error during synthesis.", "rationale": str(e), "action_plan": []}
 
+    def garbage_collect_knowledge(self):
+        """장기 기억 저장소(Knowledge Base)의 불필요한 정보 정리"""
+        logger.info("🧹 Starting Knowledge Base Garbage Collection...")
+        
+        from gortex.utils.vector_store import LongTermMemory
+        ltm_store = LongTermMemory()
+        
+        original_count = len(ltm_store.memory)
+        now = datetime.now()
+        
+        # 1. 중복 제거 (Content 기반)
+        unique_memory = {}
+        for item in ltm_store.memory:
+            content = item["content"]
+            if content not in unique_memory or item.get("usage_count", 0) > unique_memory[content].get("usage_count", 0):
+                unique_memory[content] = item
+        
+        # 2. 오래되고 안 쓰이는 지식 제거 (예: 30일 이상 경과 & 사용 0회)
+        final_memory = []
+        for item in unique_memory.values():
+            try:
+                # 타임스탬프 파싱 (형식에 따라 예외 처리)
+                ts = datetime.fromisoformat(item.get("timestamp", now.isoformat()))
+                age_days = (now - ts).days
+                if age_days > 30 and item.get("usage_count", 0) == 0:
+                    continue # 삭제
+            except: pass
+            final_memory.append(item)
+            
+        ltm_store.memory = final_memory
+        ltm_store._save_store()
+        
+        removed = original_count - len(final_memory)
+        if removed > 0:
+            logger.info(f"✅ Knowledge GC complete: Removed {removed} items.")
+        return removed
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""
     agent = AnalystAgent()
+    
+    # [Knowledge Base Optimization] 정기적인 지식 정리 수행
+    agent.garbage_collect_knowledge()
+    
     last_msg_obj = state["messages"][-1]
     last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
     last_msg_lower = last_msg.lower()

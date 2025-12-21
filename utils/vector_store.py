@@ -36,7 +36,8 @@ class LongTermMemory:
         self.memory.append({
             "content": text,
             "metadata": metadata or {},
-            "timestamp": os.getenv("CURRENT_TIME", "2024-12-20")
+            "timestamp": os.getenv("CURRENT_TIME", "2024-12-20"),
+            "usage_count": 0 # 신규 필드 추가
         })
         self._save_store()
         logger.info(f"🧠 New knowledge memorized into long-term store.")
@@ -49,10 +50,19 @@ class LongTermMemory:
         for item in self.memory:
             score = sum(1 for p in query_parts if p in item["content"].lower())
             if score > 0:
-                results.append((score, item["content"]))
+                results.append((score, item))
         
         results.sort(key=lambda x: x[0], reverse=True)
-        return [r[1] for r in results[:limit]]
+        
+        # 검색된 지식의 사용량 증가
+        top_results = results[:limit]
+        for score, item in top_results:
+            item["usage_count"] = item.get("usage_count", 0) + 1
+            
+        if top_results:
+            self._save_store()
+            
+        return [r[1]["content"] for r in top_results]
 
 if __name__ == "__main__":
     ltm = LongTermMemory()

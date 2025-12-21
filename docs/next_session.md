@@ -1,23 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 지식 베이스 최적화 및 가비지 컬렉션 (Knowledge GC v1)
+- 실시간 API 문서 학습 및 기술 활용 (Live Documentation Learning v1)
 
 ## Context
-- `LongTermMemory`에 트렌드와 합의 교훈이 계속 쌓이면서, 유사한 지식이 중복 저장되거나 과거의 잘못된 정보가 남을 우려가 있음.
-- 지식의 사용 빈도(`usage_count`)와 최신성(`timestamp`)을 기준으로 지식 베이스를 정기적으로 청소하는 메커니즘이 필요함.
+- 에이전트가 새로운 라이브러리를 사용하거나 기존 로직을 최신 버전으로 업데이트할 때, 내부 지식만으로는 한계가 있음.
+- `Researcher`를 통해 특정 라이브러리의 공식 문서(또는 API Reference)를 실시간으로 검색하여 핵심 시그니처를 지식화하고, 이를 작업에 즉시 반영해야 함.
 
 ## Scope
 ### Do
-- `utils/vector_store.py`에 지식 항목별 `usage_count` 필드 추가 및 `recall` 시 카운트 증가 로직 추가.
-- `AnalystAgent`에 `garbage_collect_knowledge` 메서드를 추가하여 불필요한 지식 삭제.
-- `main.py` 부팅 시 또는 매 턴마다 자동으로 GC가 수행되도록 연동.
+- `agents/researcher.py`에 공식 문서를 타겟팅하여 스캔하는 `fetch_live_docs` 메서드 추가.
+- `agents/planner.py`에서 계획 수립 시 '문서 학습' 단계를 전략적으로 제안하도록 지침 보강.
+- 학습된 문서를 `LongTermMemory`에 임시 저장하여 `Coder`가 참조할 수 있게 함.
 
 ### Do NOT
-- 중요한 아키텍처 결정이나 사용자가 명시적으로 저장한 매크로 삭제 금지.
+- 대규모 사이트 전체 크롤링 금지 (특정 API 페이지 한정).
 
 ## Expected Outputs
-- `utils/vector_store.py`, `agents/analyst.py`, `main.py` 수정.
+- `agents/researcher.py`, `agents/planner.py` 수정.
 
 ## Completion Criteria
-- 중복되거나 오랫동안 사용되지 않은 지식이 자동으로 제거되고, 지식 베이스 파일 크기가 최적화되는 것이 확인되어야 함.
+- 새로운 라이브러리 사용 요청 시, Researcher가 문서를 검색하여 요약하고 Coder가 해당 요약을 바탕으로 정확한 코드를 작성하는 것이 확인되어야 함.

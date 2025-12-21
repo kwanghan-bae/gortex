@@ -8,13 +8,19 @@
 - [x] **Interface**: 에이전트 간의 가상 토론 과정을 시각화하는 'Debate Monitor' 웹 UI 구축
 - [x] **Intelligence**: 합의 결과의 유효성을 사후 평가하여 페르소나별 가중치를 동적으로 조절하는 'Consensus Learner' 도입
 - [x] **Intelligence**: 외부 트렌드 및 기술 뉴스를 주기적으로 요약하여 'Synaptic Knowledge Base'로 통합하는 로직 구축
-- [ ] **Infrastructure**: 축적된 지식 중 유효하지 않거나 중복된 정보를 정리하는 'Knowledge GC' 노드 추가
+- [x] **Infrastructure**: 축적된 지식 중 유효하지 않거나 중복된 정보를 정리하는 'Knowledge GC' 노드 추가
+- [ ] **Intelligence**: 특정 라이브러리의 최신 API 문서를 실시간 학습하여 적용하는 'Live Documentation Learning' 구현
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.3.5 (Knowledge Base Optimization)
+- [x] `utils/vector_store.py`: 지식 활용도 측정을 위한 `usage_count` 기반 가치 평가 시스템 구축
+- [x] `agents/analyst.py`: 중복 및 노후화된 지식을 자동으로 선별하고 제거하는 `Knowledge GC` 엔진 구현
+- [x] `main.py`: 시스템 부팅 및 에이전트 분석 단계에 자동 최적화 파이프라인 통합
 
 ### v2.3.4 (Synaptic Knowledge Base Integration)
 - [x] `agents/trend_scout.py`: 발견된 외부 기술 트렌드를 `LongTermMemory`에 자동 각인하는 지식 습득 파이프라인 구축

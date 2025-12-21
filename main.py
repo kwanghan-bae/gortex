@@ -691,9 +691,10 @@ async def run_gortex():
     from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
     import aiosqlite
     
-    # 부팅 시 자동 인덱싱 수행
+    # 부팅 시 자동 인덱싱 및 지식 베이스 최적화 수행
     indexer = SynapticIndexer()
     indexer.scan_project()
+    AnalystAgent().garbage_collect_knowledge()
 
     db_path = os.getenv("DB_PATH", "gortex_sessions.db")
     async with aiosqlite.connect(db_path) as db:
