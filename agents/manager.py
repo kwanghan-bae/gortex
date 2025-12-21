@@ -3,6 +3,7 @@ from typing import Dict, List, Any
 from google.genai import types
 from gortex.core.auth import GortexAuth
 from gortex.core.state import GortexState
+from gortex.utils.log_vectorizer import SemanticLogSearch
 
 logger = logging.getLogger("GortexManager")
 
@@ -12,10 +13,23 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     사용자의 의도를 분석하고 적절한 에이전트로 라우팅합니다.
     """
     auth = GortexAuth()
+    log_search = SemanticLogSearch()
     
-    # 1. 시스템 프롬프트 구성 (진화된 제약 조건 주입)
-    base_instruction = """너는 Gortex v1.0 시스템의 수석 매니저(Manager)다.
+    # 1. 과거 유사 사례 검색 (CBR)
+    last_msg_obj = state["messages"][-1]
+    last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
+    past_cases = log_search.search_similar_cases(last_msg)
+    
+    case_context = ""
+    if past_cases:
+        case_context = "\n[PAST SIMILAR CASES (FOR REFERENCE)]\n"
+        for i, case in enumerate(past_cases):
+            case_context += f"Case {i+1}: {case.get('agent')} encountered {case.get('event')}. Payload: {json.dumps(case.get('payload'))}\n"
+
+    # 2. 시스템 프롬프트 구성
+    base_instruction = f"""너는 Gortex v1.0 시스템의 수석 매니저(Manager)다.
 사용자의 요청을 분석하여 다음 중 가장 적합한 에이전트에게 작업을 배분하라.
+{case_context}
 
 에이전트 역할:
 - planner: 코드 작성, 버그 수정, 파일 시스템 조작, 리팩토링 등 모든 개발 관련 작업.

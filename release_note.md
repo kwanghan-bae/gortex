@@ -23,10 +23,16 @@
 - [x] **Interface**: 터미널 UI를 넘어 브라우저에서 Gortex의 활동을 실시간 모니터링할 수 있는 'Web Dashboard' 프레임워크 구축
 - [x] **Infrastructure**: 에이전트의 도구 호출 로그를 분석하여 비용과 지연 시간을 최적화하는 'Performance Profiler' 노드 구현
 - [x] **Interface**: 사용자의 복잡한 요구사항을 시각적 다이어그램으로 변환하여 보여주는 'Architecture Sketcher' 기능 추가
-- [x] **Intelligence**: 에이전트가 도구 호출 전 예상 결과를 미리 시뮬레이션하는 'Mental Sandbox' 로직 구현
-- [ ] **System**: 대규모 로그 데이터를 벡터화하여 유사한 오류 해결 사례를 검색하는 'Semantic Log Search' 엔진 추가
+- [x] **System**: 대규모 로그 데이터를 벡터화하여 유사한 오류 해결 사례를 검색하는 'Semantic Log Search' 엔진 추가
+- [ ] **Infrastructure**: 에이전트의 작업 성과를 주간/월간 리포트로 자동 요약하여 이메일로 전송하는 'Executive Reporter' 노드 구현
 
 ## ✅ Completed
+### v1.7.9 (Semantic Log Search & Case-Based Reasoning)
+- [x] `utils/log_vectorizer.py`: `trace.jsonl` 로그 파일의 주요 이벤트를 인덱싱하고 키워드 기반 유사 사례를 검색하는 엔진 구현
+- [x] `agents/manager.py`: 사용자 요청 처리 전 과거의 유사한 해결 사례를 검색하여 프롬프트에 참조(Reference) 맥락으로 자동 주입
+- [x] `utils/log_vectorizer.py`: 에이전트명, 이벤트 타입, 페이로드 정보를 결합한 다차원 검색 인덱스 구조 설계
+- [x] `agents/manager.py`: 사례 기반 추론(CBR) 기법을 도입하여 과거의 성공 패턴을 현재 작업에 능동적으로 재활용하도록 고도화
+
 ### v1.7.8 (Mental Sandbox & Pre-Action Simulation)
 - [x] `agents/coder.py`: 도구 호출 전 예상 결과와 위험 요소를 분석하는 Mental Sandbox 규칙 및 지침 추가
 - [x] `agents/coder.py`: 위험도가 높은 작업(데이터 유실 등) 감지 시 도구 실행을 스스로 중단하고 안전한 대안을 제시하도록 로직 보강
