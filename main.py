@@ -301,6 +301,14 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
             }, ensure_ascii=False)))
         return "skip"
 
+    elif cmd == "/timeline":
+        if ui.web_manager:
+            asyncio.create_task(ui.web_manager.broadcast(json.dumps({
+                "type": "thought_timeline",
+                "data": ui.thought_timeline
+            }, ensure_ascii=False)))
+        return "skip"
+
     elif cmd == "/report":
         ui.chat_history.append(("system", "📊 성과 리포트를 생성 중입니다..."))
         ui.update_main(ui.chat_history)

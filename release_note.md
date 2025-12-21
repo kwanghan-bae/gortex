@@ -44,9 +44,16 @@
 - [x] **Intelligence**: 에이전트가 도구 호출 결과의 정확성을 제3의 관점에서 검증하는 'Cross-Validation' 노드 추가
 - [x] **Interface**: 사용자의 복잡한 데이터 분석 요청을 시각적 차트로 자동 변환하는 'Auto-Chart' 기능 구현
 - [x] **Intelligence**: 에이전트가 도구 호출 전후의 시스템 상태를 영상처럼 '상상'하여 시각적으로 시뮬레이션하는 'Visual Simulation' 엔진 추가
-- [ ] **Interface**: 에이전트의 사고 과정과 시뮬레이션 결과를 결합하여 보여주는 'Immersive Reasoning' 웹 UI 구축
+- [x] **Interface**: 에이전트의 사고 과정과 시뮬레이션 결과를 결합하여 보여주는 'Immersive Reasoning' 웹 UI 구축
+- [ ] **Intelligence**: 여러 시나리오의 성공 가능성을 사전에 예측하고 최적의 가중치를 부여하는 'Speculative Score' 엔진 고도화
 
 ## ✅ Completed
+### v2.0.8 (Immersive Reasoning & Timeline Scrubbing)
+- [x] `ui/dashboard.py`: 세션 중 발생하는 모든 사고 과정과 시뮬레이션 결과를 스냅샷으로 기록하는 `thought_timeline` 시스템 구현
+- [x] `main.py`: 웹 대시보드에서 과거의 추론 시점을 탐색할 수 있도록 전체 타임라인 데이터를 전송하는 `/timeline` 명령어 추가
+- [x] `ui/dashboard.py`: 타임라인 스냅샷에 에이전트명, 사고 내용, 트리 구조, 아키텍처 맵을 통합하여 데이터 무결성 확보
+- [x] `ui/dashboard.py`: 최대 50개의 스냅샷을 유지하는 롤링 윈도우(Rolling Window) 방식을 적용하여 메모리 효율성 최적화
+
 ### v2.0.7 (Visual Simulation & Dreaming Node)
 - [x] `agents/coder.py`: 도구 실행 전 변경 예정인 파일, 클래스, 함수 등 아키텍처의 변화를 구조화된 데이터(`visual_delta`)로 상상하는 기능 구현
 - [x] `agents/coder.py`: `simulation` 스키마를 확장하여 예상 결과, 위험 수준, 시각적 차분 정보를 통합적으로 생성하도록 고도화

@@ -51,6 +51,7 @@ class DashboardUI:
         self.call_count = 0
         self.achievements = [] # 주요 마일스톤 성과 기록
         self.security_events = [] # 보안 이벤트 기록
+        self.thought_timeline = [] # 타임라인 스냅샷 기록
         
         # Progress bar for tools
         self.progress = Progress(
@@ -204,11 +205,27 @@ class DashboardUI:
             asyncio.create_task(self._broadcast_to_web())
 
     def update_thought(self, thought: str, agent_name: str = "agent", tree: list = None):
-        """에이전트의 사고 과정 실시간 업데이트 (트리 데이터 지원)"""
+        """에이전트의 사고 과정 실시간 업데이트 (타임라인 스냅샷 포함)"""
         self.agent_thought = thought
         if tree:
             self.thought_tree = tree
-        self.thought_history.append((agent_name, thought, datetime.now().isoformat()))
+        
+        timestamp = datetime.now().isoformat()
+        self.thought_history.append((agent_name, thought, timestamp))
+        
+        # [TIMELINE] 현재 상태 스냅샷 저장
+        snapshot = {
+            "timestamp": timestamp,
+            "agent": agent_name,
+            "thought": thought,
+            "tree": self.thought_tree,
+            "diagram": self.current_diagram,
+            "step": self.current_step
+        }
+        self.thought_timeline.append(snapshot)
+        if len(self.thought_timeline) > 50: # 최대 50개 유지
+            self.thought_timeline.pop(0)
+
         style = self.agent_colors.get(agent_name.lower(), "agent.manager")
         title = f"💭 [{style}]AGENT REASONING ({agent_name.upper()})[/{style}]"
         self.layout["thought"].update(Panel(Text(thought, style="italic cyan"), title=title, border_style="cyan", padding=(1, 2)))
