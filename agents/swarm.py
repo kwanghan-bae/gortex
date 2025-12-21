@@ -44,15 +44,28 @@ async def execute_parallel_task(task_desc: str, state: GortexState) -> Dict[str,
     except Exception as e:
         return {"task": task_desc, "report": f"Error: {e}", "certainty": 0, "risk": 1, "experience_score": 0, "file_cache_delta": {}, "success": False}
 
+from gortex.utils.log_vectorizer import SemanticLogSearch
+from gortex.utils.message_queue import GortexMessageQueue
+
+logger = logging.getLogger("GortexSwarm")
+
 async def swarm_node_async(state: GortexState) -> Dict[str, Any]:
-    """병렬 에이전트 협업 노드 (Async) - 경험 기반 가중치 평가 포함"""
+    """병렬 에이전트 협업 노드 (Async) - MQ 연동 기초 포함"""
     tasks = state.get("plan", [])
     if not tasks:
         return {"next_node": "manager"}
 
-    logger.info(f"🐝 Swarm speculatively evaluating {len(tasks)} scenarios with experience weighting...")
+    mq = GortexMessageQueue()
+    logger.info(f"🐝 Swarm processing {len(tasks)} tasks...")
+    
+    # 1. 태스크들을 MQ에 발행 (Event-Driven 준비)
+    for t in tasks:
+        mq.publish("gortex_tasks", {"task": t, "state_id": "session_context"})
+
+    # 2. 기존 실시간 병렬 실행 (하위 호환 및 즉각 처리)
     task_results = await asyncio.gather(*[execute_parallel_task(t, state) for t in tasks])
     
+    # ... (이하 시나리오 평가 로직 동일)
     # 고도화된 시나리오 평가 (Score = (Certainty * (1 - Risk)) + ExperienceScore)
     scored_results = []
     for res in task_results:
@@ -68,7 +81,7 @@ async def swarm_node_async(state: GortexState) -> Dict[str, Any]:
     merged_file_cache = state.get("file_cache", {}).copy()
     merged_file_cache.update(winner.get("file_cache_delta", {}))
 
-    combined_msg = f"🐝 Swarm 가설 추론 결과 (경험 기반 최적 시나리오 선택됨):\n\n"
+    combined_msg = f"🐝 Swarm 가설 추론 결과 (Event-Driven MQ로 작업 동시 발행됨):\n\n"
     combined_msg += f"✅ **선택된 안**: {winner['task']}\n"
     combined_msg += f"📊 **최종 점수**: {winner_score:.2f} (확신: {winner['certainty']*100:.0f}%, 경험가중: +{winner['experience_score']:.1f})\n\n"
     combined_msg += f"📝 **상세 보고**:\n{winner['report']}\n\n"

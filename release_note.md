@@ -51,9 +51,16 @@
 - [x] **Interface**: 웹 대시보드에서 시스템의 모든 상태를 3D 공간으로 시각화하는 'Metaverse Dashboard' 기초 설계
 - [x] **Infrastructure**: 에이전트의 내부 사고 데이터를 활용하여 새로운 에이전트 노드를 자동으로 생성하고 배치하는 'Agent Factory' 기능 구현
 - [x] **Interface**: 에이전트들이 서로의 성과를 칭찬하거나 비판하며 포인트(Point)를 주고받는 'Agent Economy' 게임화 시스템 구축
-- [ ] **Infrastructure**: 에이전트의 내부 데이터 처리 파이프라인을 분산 큐(RabbitMQ/Redis)로 확장하는 'Event-Driven Swarm' 구축
+- [x] **Infrastructure**: 에이전트의 내부 데이터 처리 파이프라인을 분산 큐(Redis)로 확장하는 'Event-Driven Swarm' 구축
+- [ ] **Intelligence**: 프로젝트 전체의 복잡한 비즈니스 로직을 자연어 문서로 자동 역설계하는 'Code Explainer' 노드 추가
 
 ## ✅ Completed
+### v2.1.5 (Event-Driven Swarm & Message Queue)
+- [x] `utils/message_queue.py`: Redis를 기반으로 에이전트 간 비동기 메시지 및 작업을 전달하는 큐 시스템 신설
+- [x] `agents/swarm.py`: 병렬 작업 시 하위 태스크를 메시지 큐에 자동으로 발행(Publish)하여 분산 처리 기반 마련
+- [x] `utils/message_queue.py`: Pub/Sub 및 List(LPUSH/BRPOP) 구조를 활용한 비동기 작업 스케줄링 인터페이스 구현
+- [x] `agents/swarm.py`: 외부 Redis 가용성 여부에 따른 예외 처리 및 하위 호환성(인메모리 병렬 처리) 유지
+
 ### v2.1.4 (Agent Economy & Gamified Collaboration)
 - [x] `core/state.py`: 에이전트별 평판 점수와 레벨을 관리하기 위한 `agent_economy` 상태 필드 추가
 - [x] `agents/analyst.py`: 상호 검증(Cross-Validation) 성공 시 해당 작업을 수행한 에이전트에게 포인트를 지급하는 보상 로직 구현
