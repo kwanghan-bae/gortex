@@ -650,6 +650,11 @@ async def run_gortex():
                                             elif "Successfully wrote to" in str(content):
                                                 ui.add_achievement(f"File updated: {str(content).split('/')[-1]}", icon="📝")
 
+                                        # [SECURITY] 보안 경고 감지
+                                        if "❌ Security Alert" in str(content):
+                                            ui.add_security_event("Forbidden Command", str(content))
+                                            Notifier().send_notification(f"보안 위반 감지: {str(content)}", title="🚨 Security Violation")
+
                                         if isinstance(content, str):
                                             t = count_tokens(content)
                                             node_tokens += t

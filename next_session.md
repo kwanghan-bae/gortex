@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Secure Node Transport & E2E Encryption Complete (v1.9.6)
+**Status:** Security Shield Dashboard & Audit Complete (v1.9.7)
 
 ## 🧠 Current Context
-시스템의 데이터 보호 인프라가 구축되었습니다. 이제 세션 상태와 민감한 요약 정보는 디스크에 암호화된 상태로 저장되며, 이는 멀티 사용자 환경이나 외부 노출 시에도 Gortex의 지식 베이스를 안전하게 지켜줍니다.
+보안 실드 대시보드가 구축되어 이제 Gortex의 안전성을 실시간으로 감시할 수 있습니다. 차단된 명령어와 보안 위반 이력이 투명하게 기록되며, 이는 특히 자율적인 환경에서 Gortex의 신뢰도를 높여줍니다.
 
 ## 🎯 Next Objective
-**Security Shield Dashboard (Visual Security)**
-1. **`Security Visualization`**: 현재 암호화가 적용된 필드 수, 차단된 위험 명령어 횟수, 보안 위협 탐지 이력 등을 시각화하여 보여줍니다.
-2. **`Audit Log Browser`**: 웹 대시보드에서 보안 관련 이벤트(인증 실패, 권한 상승 시도 등)만 따로 모아볼 수 있는 전용 브라우저 기능을 구현합니다.
+**Self-Consistency Check (Logical Verification)**
+1. **`Logical Consistency`**: 에이전트가 답변을 내놓기 전, 자신의 추론 과정에 모순이 없는지 스스로 재검토(Reflect)하는 단계를 추가합니다.
+2. **`Verification Node`**: `Optimizer` 또는 별도 노드에서 에이전트의 최종 출력이 사용자의 원래 목표와 일치하는지, 그리고 사실 관계에 오류가 없는지 '자기 일관성'을 검증합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 내부 데이터 암호화 시스템 완료 (v1.9.6).
-- 다음 목표: 보안 상태 시각화 대시보드(Security Shield) 구축.
+- 보안 실드 및 감사 시스템 완료 (v1.9.7).
+- 다음 목표: 논리적 자가 일관성 검증(Self-Consistency Check).
 
 작업 목표:
-1. `ui/dashboard.py`를 확장하여 보안 관련 통계를 관리하는 `security_stats` 필드를 추가해줘.
-2. `utils/tools.py`의 보안 경고 발생 시 이 통계가 실시간 업데이트되도록 연동하고, 웹 대시보드로 브로드캐스팅해줘.
+1. `agents/manager.py` 또는 `agents/planner.py`에 답변 생성 전 스스로의 논리를 비판적으로 검토하는 'Internal Critique' 단계를 지침에 추가해줘.
+2. 검증 결과 모순이 발견되면 스스로 답변을 수정하거나 재추론을 수행하는 루프를 보강해줘.
 ```

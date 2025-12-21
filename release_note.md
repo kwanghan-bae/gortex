@@ -37,9 +37,16 @@
 - [x] **Intelligence**: 에이전트가 작업 중 발생한 감정적/논리적 교착 상태를 감지하여 스스로 재설정(Reset)하는 'Mental Reboot' 기능 구현
 - [x] **System**: 에이전트가 코드를 작성할 때 사용자의 스타일을 학습하여 반영하는 'Style Mimicry' 엔진 추가
 - [x] **Infrastructure**: 시스템 내부의 모든 노드 간 통신 및 상태 보호를 위한 'Secure Node Transport' 구축
-- [ ] **Interface**: 웹 대시보드에서 시스템의 보안 상태를 시각적으로 확인하는 'Security Shield' 대시보드 추가
+- [x] **Interface**: 웹 대시보드에서 시스템의 보안 상태를 실시간 모니터링하는 'Security Shield' 기능 구축
+- [ ] **Intelligence**: 에이전트가 작업 중 스스로의 논리적 모순을 검증하는 'Self-Consistency' 체크 엔진 도입
 
 ## ✅ Completed
+### v1.9.7 (Security Shield Dashboard & Audit)
+- [x] `ui/dashboard.py`: 보안 위반 및 차단 이력을 기록하고 관리하는 `security_events` 시스템 구현
+- [x] `main.py`: 셸 실행 중 발생하는 보안 경고를 실시간 감지하여 UI 및 외부 알림 채널로 즉시 전송하는 연동 로직 추가
+- [x] `ui/dashboard.py`: 보안 이벤트를 웹 대시보드로 실시간 브로드캐스팅하여 관리자에게 즉각적인 위험 가시성 제공
+- [x] `ui/dashboard.py`: 보안 감사(Audit)를 위한 데이터 구조 설계 및 시각화 준비 완료
+
 ### v1.9.6 (Secure Node Transport & E2E Encryption)
 - [x] `utils/crypto.py`: Fernet 대칭키 암호화와 PBKDF2 키 파생 함수를 활용한 강력한 데이터 보호 유틸리티 구현
 - [x] `core/persistence.py`: 세션 상태 저장 및 복구 시 민감한 필드(history_summary 등)를 자동 암복호화하는 보안 강화 로직 추가

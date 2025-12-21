@@ -50,6 +50,7 @@ class DashboardUI:
         self.provider = "GEMINI"
         self.call_count = 0
         self.achievements = [] # 주요 마일스톤 성과 기록
+        self.security_events = [] # 보안 이벤트 기록
         
         # Progress bar for tools
         self.progress = Progress(
@@ -126,6 +127,7 @@ class DashboardUI:
             "thought_graph": self._generate_thought_graph(), # 마인드맵용 그래프 데이터 추가
             "diagram": self.current_diagram,
             "achievements": self.achievements,
+            "security": self.security_events, # 보안 이벤트 추가
             "chat_history": [
                 (r, c if isinstance(c, str) else "[Rich Object]") 
                 for r, c in self.chat_history[-10:]
@@ -350,6 +352,16 @@ class DashboardUI:
         if keyword:
             results = [t for t in results if keyword.lower() in t[1].lower()]
         return results
+
+    def add_security_event(self, event_type: str, details: str):
+        """보안 관련 이벤트(차단 등)를 기록"""
+        self.security_events.append({
+            "time": datetime.now().strftime("%H:%M:%S"),
+            "type": event_type,
+            "details": details
+        })
+        if self.web_manager:
+            asyncio.create_task(self._broadcast_to_web())
 
     def render(self):
         return self.layout
