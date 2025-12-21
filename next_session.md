@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Causal Tracking & Decision Lineage Complete (v2.1.7)
+**Status:** Root Cause Tree & Visual RCA Complete (v2.1.8)
 
 ## 🧠 Current Context
-의사결정 인과 관계 추적 시스템이 가동되었습니다. 이제 Gortex는 모든 결과물에 대해 그 근원이 되는 판단과 행동을 역추적할 수 있는 '족보'를 가집니다. 이는 시스템의 책임성을 높이고 복잡한 오류의 원인을 정밀하게 진단하는 데 핵심적인 자산이 됩니다.
+근본 원인 분석(RCA) 트리 시스템이 구축되었습니다. 이제 Gortex에서 발생하는 모든 성공과 실패에 대해, 그 결정에 도달하기까지의 구체적인 인과 관계를 시각적으로 추적할 수 있습니다. 이는 시스템의 투명성과 디버깅 효율을 극대화합니다.
 
 ## 🎯 Next Objective
-**Root Cause Tree Visualization**
-1. **`RCA Tree Logic`**: 특정 이벤트 ID를 기준으로 해당 지점까지 도달한 모든 인과 관계를 트리 구조로 재구성하는 로직을 구현합니다.
-2. **`Visual RCA`**: 웹 대시보드에서 특정 로그나 성과를 클릭하면, 그 원인이 된 사고 체인을 역순으로 화려한 애니메이션과 함께 시각화하여 보여주는 전용 뷰를 구축합니다.
+**Journalist Node (Activity Stream)**
+1. **`Activity Streaming`**: 에이전트의 딱딱한 도구 호출 로그(`read_file`, `execute_shell` 등)를 인간이 읽기 쉬운 저널(Journal) 스타일의 문장으로 실시간 변환합니다.
+2. **`Real-time Blogging`**: 웹 대시보드에서 Gortex의 활동을 마치 실시간 블로그 포스팅처럼 보여주는 'Activity Stream' 위젯을 구현하여, 사용자가 기술적인 지식 없이도 Gortex의 성과를 즐겁게 관찰할 수 있게 합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 인과 관계 추적 데이터 시스템 완료 (v2.1.7).
-- 다음 목표: 근본 원인 분석 트리(Root Cause Tree) 시각화.
+- 인과 관계 역추적 시스템 완료 (v2.1.8).
+- 다음 목표: 실시간 활동 저널링 시스템(Journalist Node).
 
 작업 목표:
-1. `core/observer.py` 또는 `DashboardUI`에 특정 `event_id`의 계보를 추적하여 트리 데이터를 생성하는 `get_causal_chain` 메서드를 작성해줘.
-2. 웹 대시보드로 이 체인 데이터를 스트리밍하고, 노드 간의 인과 관계를 시각적으로 표현하는 기능을 보강해줘.
+1. `agents/analyst.py`에 도구 호출 로그를 자연어로 변환하는 `journalize_activity` 메서드를 작성해줘.
+2. `DashboardUI`에 실시간으로 생성된 저널 문장을 저장하고 표시하는 `activity_stream` 필드와 UI 로직을 추가해줘.
 ```

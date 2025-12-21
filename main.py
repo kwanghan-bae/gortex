@@ -346,6 +346,30 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         ui.update_main(ui.chat_history)
         return "skip"
 
+    elif cmd == "/rca":
+        if len(cmd_parts) < 2:
+            ui.chat_history.append(("system", "사용법: /rca [event_id]"))
+        else:
+            event_id = cmd_parts[1]
+            chain = observer.get_causal_chain(event_id)
+            if not chain:
+                ui.chat_history.append(("system", f"❌ 이벤트 ID '{event_id}'의 계보를 찾을 수 없습니다."))
+            else:
+                rca_tree = Tree(f"🛡️ [bold magenta]Root Cause Analysis: {event_id}[/bold magenta]")
+                # 과거 순서로 정렬하여 트리 구성
+                for ev in reversed(chain):
+                    rca_tree.add(f"[bold cyan]{ev['agent']}[/bold cyan] -> {ev['event']} ([dim]{ev['id']}[/dim])")
+                
+                ui.chat_history.append(("system", rca_tree))
+                
+                if ui.web_manager:
+                    asyncio.create_task(ui.web_manager.broadcast(json.dumps({
+                        "type": "causal_chain",
+                        "data": chain
+                    }, ensure_ascii=False)))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
     elif cmd == "/notify":
         msg = user_input[8:].strip() if len(user_input) > 8 else "현재 Gortex 시스템이 정상 작동 중입니다."
         notifier = Notifier()

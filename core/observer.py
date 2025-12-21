@@ -51,6 +51,35 @@ class GortexObserver:
             logger.error(f"Failed to write trace log: {e}")
         return event_id
 
+    def get_causal_chain(self, start_event_id: str) -> List[Dict[str, Any]]:
+        """특정 이벤트 ID로부터 루트까지 인과 관계 체인을 역추적"""
+        if not os.path.exists(self.log_path):
+            return []
+            
+        try:
+            with open(self.log_path, "r", encoding="utf-8") as f:
+                logs = [json.loads(line) for line in f]
+            
+            # ID 기반 검색 맵 생성
+            log_map = {l["id"]: l for l in logs if "id" in l}
+            
+            chain = []
+            current_id = start_event_id
+            
+            # 순환 참조 방지를 위해 최대 깊이 제한
+            for _ in range(100):
+                if current_id not in log_map:
+                    break
+                event = log_map[current_id]
+                chain.append(event)
+                current_id = event.get("cause_id")
+                if not current_id:
+                    break
+            return chain # [최신 -> 과거] 순서
+        except Exception as e:
+            logger.error(f"Failed to trace causal chain: {e}")
+            return []
+
 # LangChain Callback 형식으로 확장 가능 (여기서는 단순화된 형태 제공)
 class FileLoggingCallbackHandler:
     def __init__(self, observer: GortexObserver):
