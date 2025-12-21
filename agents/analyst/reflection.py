@@ -13,8 +13,10 @@ class ReflectionAnalyst(AnalystAgent):
         """실패 사례 분석을 통한 방어 규칙 생성"""
         prompt = f"다음 에러를 분석하여 재발 방지 규칙을 JSON으로 제안하라.\nError: {error_log}\nContext: {context}"
         try:
-            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
-            return json.loads(response.text)
+            response_text = self.backend.generate("gemini-1.5-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
         except Exception as e:
             logger.error(f"Rule generation failed: {e}")
             return None
@@ -23,8 +25,10 @@ class ReflectionAnalyst(AnalystAgent):
         """여러 에이전트의 상반된 의견을 조율하여 최종 합의안 도출"""
         prompt = f"주제: {topic}\n토론 데이터: {json.dumps(scenarios)}\n가장 합리적인 최종 결정을 JSON으로 요약하라."
         try:
-            response = self.auth.generate("gemini-1.5-pro", [("user", prompt)], {"response_mime_type": "application/json"})
-            return json.loads(response.text)
+            response_text = self.backend.generate("gemini-1.5-pro", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
         except Exception as e:
             return {"final_decision": "Decision failed", "rationale": str(e)}
 
@@ -33,8 +37,10 @@ class ReflectionAnalyst(AnalystAgent):
         if not constraints: return {"is_valid": True}
         prompt = f"규칙: {json.dumps(constraints)}\n도구 호출: {json.dumps(tool_call)}\n위반 여부를 JSON으로 반환하라."
         try:
-            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
-            return json.loads(response.text)
+            response_text = self.backend.generate("gemini-1.5-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
         except: return {"is_valid": True}
 
     def suggest_refactor_target(self) -> Optional[Dict[str, Any]]:
@@ -46,17 +52,19 @@ class ReflectionAnalyst(AnalystAgent):
         """사용자 피드백을 분석하여 개선 규칙 추출"""
         prompt = f"피드백 분석: {feedback}\n개선이 필요한 규칙들을 JSON 리스트로 추출하라."
         try:
-            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
-            return json.loads(response.text)
+            response_text = self.backend.generate("gemini-1.5-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+            return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
         except: return []
 
     def learn_from_interaction(self, question: str, answer: str):
         """질의응답을 통한 실시간 지식 학습"""
         prompt = f"질문: {question}\n답변: {answer}\n시스템이 기억해야 할 핵심 정보를 추출하라."
         try:
-            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], None)
+            response_text = self.backend.generate("gemini-1.5-flash", [{"role": "user", "content": prompt}])
             from gortex.utils.vector_store import LongTermMemory
-            LongTermMemory().memorize(f"User Knowledge: {response.text}", {"source": "Interaction"})
+            LongTermMemory().memorize(f"User Knowledge: {response_text}", {"source": "Interaction"})
         except: pass
 
     def predict_next_actions(self, state: Any) -> List[Dict[str, str]]:

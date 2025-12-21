@@ -4,8 +4,8 @@ import os
 import re
 from typing import Dict, Any, List, Optional
 from datetime import datetime
-from gortex.core.auth import GortexAuth
 from gortex.core.state import GortexState
+from gortex.core.llm.factory import LLMFactory
 from gortex.core.evolutionary_memory import EvolutionaryMemory
 from gortex.utils.vector_store import LongTermMemory
 
@@ -14,7 +14,7 @@ logger = logging.getLogger("GortexAnalystBase")
 class AnalystAgent:
     """Gortex 시스템의 분석 및 진화 담당 에이전트 (Base Class)"""
     def __init__(self):
-        self.auth = GortexAuth()
+        self.backend = LLMFactory.get_default_backend()
         self.memory = EvolutionaryMemory()
         self.ltm = LongTermMemory() # LTM 직접 소유 (복구)
 

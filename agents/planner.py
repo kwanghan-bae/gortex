@@ -4,6 +4,7 @@ from typing import Dict, Any, List
 from google.genai import types
 from gortex.core.auth import GortexAuth
 from gortex.core.state import GortexState
+from gortex.core.llm.factory import LLMFactory
 from gortex.utils.tools import list_files
 from gortex.utils.indexer import SynapticIndexer
 

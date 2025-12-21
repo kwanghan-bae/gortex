@@ -1,26 +1,27 @@
 # Next Session
 
 ## 세션 목표
-- `OLLAMA_PLAN.md` 전면 적용 마무리: `agents/manager.py`가 `LLMFactory`를 사용하도록 리팩토링하고, 전체 에이전트 워크플로우에서의 모델 전환 안정성을 검증한다.
+- `OLLAMA_PLAN.md` 전면 적용 확대: `Planner`, `Researcher`, `Analyst` 에이전트가 `LLMFactory`를 사용하도록 리팩토링하여 시스템 전체의 하이브리드 LLM 아키텍처를 완성한다.
+- **Efficiency Benchmarking**: 로컬 모델(Ollama)과 클라우드 모델(Gemini) 간의 작업 성공률 및 비용 대비 성능을 비교할 수 있는 기초 벤치마킹 유틸리티 개발.
 
 ## 컨텍스트
-- Phase 1(Memory), Phase 2(Coder) 및 TUI 안정화가 완료되었습니다.
-- 이제 시스템의 두뇌인 `Manager`가 백엔드 상황에 따라 적절한 모델을 할당하고 조율하는 최종 하이브리드 로직을 완성해야 합니다.
+- `Coder` 및 `Manager`의 리팩토링이 완료되어 핵심 제어 흐름에 하이브리드 전략이 성공적으로 안착되었습니다.
+- `pre-commit` 무한 루프 이슈가 해결되어 자동화된 품질 검증 환경이 안정화되었습니다.
 
 ## 범위 (Scope)
 ### 수행할 작업 (Do)
-- `agents/manager.py`: `GortexAuth` 직접 의존성 제거 및 `LLMFactory` 도입.
-- **Routing Intelligence**: `OLLAMA_PLAN.md` 원칙(Worker vs Manager)에 따라, 단순 라우팅은 로컬 모델을 고려하고 복잡한 전략 수립은 Gemini를 강제하는 로직 구현.
-- **Unified Testing**: `tests/test_manager.py` 업데이트 및 전체 `pytest` 실행을 통한 통합 무결성 확인.
+- `agents/planner.py`, `agents/researcher.py`, `agents/analyst/base.py`: `LLMFactory` 도입 및 응답 파싱 로직 표준화.
+- `utils/efficiency_monitor.py` (신규): 모델별 토큰 사용량 및 성공/실패 여부를 추적하는 경량 모니터링 모듈 설계.
+- 전체 테스트 커버리지 유지 및 `scripts/pre_commit.sh` 안정성 확인.
 
 ### 수행하지 않을 작업 (Do NOT)
-- `Manager`의 복잡한 의도 분석(Intent Projection) 로직을 로컬 모델로 전면 이관하지 않는다. (성능 검증 전까지)
+- 에이전트 로직 자체의 대규모 기능 변경은 지양하고, LLM 연동 방식의 추상화에 집중한다.
 
 ## 기대 결과
-- Gortex 시스템 전체가 특정 LLM 공급자에 종속되지 않는 완전한 추상화 상태에 도달한다.
-- 하이브리드 모드 운영 시 API 비용 최적화가 극대화된다.
+- 모든 에이전트가 단일 인터페이스(`LLMFactory`)를 통해 모델에 접근하게 된다.
+- 로컬 LLM 운영의 실질적인 이득을 수치화할 수 있는 기반이 마련된다.
 
 ## 완료 기준
-- `agents/manager.py` 리팩토링 완료.
+- 잔여 주요 에이전트 리팩토링 완료.
 - 통합 테스트 통과.
-- `docs/sessions/session_0063.md` 기록.
+- `docs/sessions/session_0064.md` 기록.

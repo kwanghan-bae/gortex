@@ -21,17 +21,16 @@ class TestGortexAnalyst(unittest.TestCase):
         if os.path.exists(self.memory_path):
             os.remove(self.memory_path)
 
-    @patch('gortex.agents.analyst.base.GortexAuth')
-    def test_analyze_data_csv(self, mock_auth_cls):
+    @patch('gortex.agents.analyst.base.LLMFactory')
+    def test_analyze_data_csv(self, mock_factory):
         """CSV 파일 분석 기능 테스트 (딕셔너리 반환 대응)"""
-        mock_auth = mock_auth_cls.return_value
-        mock_res = MagicMock()
-        mock_res.text = json.dumps({
+        mock_backend = MagicMock()
+        mock_backend.generate.return_value = json.dumps({
             "chart_type": "bar",
             "title": "Test Chart",
             "plotly_json": {"data": [], "layout": {}}
         })
-        mock_auth.generate.return_value = mock_res
+        mock_factory.get_default_backend.return_value = mock_backend
 
         agent = AnalystAgent()
         result = agent.analyze_data(self.test_csv)
@@ -40,24 +39,24 @@ class TestGortexAnalyst(unittest.TestCase):
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["file"], self.test_csv)
 
-    @patch('gortex.agents.analyst.base.GortexAuth')
-    def test_analyze_feedback(self, mock_auth_cls):
+    @patch('gortex.agents.analyst.base.LLMFactory')
+    def test_analyze_feedback(self, mock_factory):
         """부정 피드백 분석 및 규칙 추출 테스트"""
-        mock_auth = mock_auth_cls.return_value
-        mock_res = MagicMock()
-        mock_res.text = json.dumps({
+        mock_backend = MagicMock()
+        mock_backend.generate.return_value = json.dumps([{
             "feedback_detected": True,
             "instruction": "항상 snake_case를 사용하라",
             "trigger_patterns": ["naming", "변수명"],
             "severity": 4
-        })
-        mock_auth.generate.return_value = mock_res
+        }])
+        mock_factory.get_default_backend.return_value = mock_backend
 
         agent = AnalystAgent()
         result = agent.analyze_feedback([MagicMock(content="변수명 왜 이래? snake_case로 해")])
         
         self.assertIsNotNone(result)
-        self.assertEqual(result["instruction"], "항상 snake_case를 사용하라")
+        self.assertIsInstance(result, list)
+        self.assertEqual(result[0]["instruction"], "항상 snake_case를 사용하라")
 
     def test_evolutionary_memory_save_and_get(self):
         """학습된 규칙 저장 및 로드 테스트"""

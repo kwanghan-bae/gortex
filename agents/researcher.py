@@ -4,7 +4,7 @@ import re
 from typing import Dict, Any, List
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
-from gortex.core.auth import GortexAuth
+from gortex.core.llm.factory import LLMFactory
 from gortex.core.state import GortexState
 from gortex.utils.cache import GortexCache
 from gortex.utils.vector_store import LongTermMemory
@@ -75,8 +75,9 @@ class ResearcherAgent:
         # 1. 검색 수행
         search_results = await self.search_and_summarize(query)
         
-        # 2. LLM을 통한 정밀 필터링 및 시그니처 추출
-        auth = GortexAuth()
+        # 2. LLM을 통한 정밀 필터링 및 시그니처 추출 (LLMFactory 적용)
+        from gortex.core.llm.factory import LLMFactory
+        backend = LLMFactory.get_default_backend()
         prompt = f"""다음 검색 결과에서 라이브러리 '{library_name}'의 
         핵심 클래스, 함수 시그니처, 그리고 간단한 예제 코드를 추출하라. 
         불필요한 설명은 배제하고 개발자가 즉시 참조할 수 있는 기술 정보 위주로 요약하라.
@@ -84,15 +85,15 @@ class ResearcherAgent:
         [Search Results]
         {search_results}
         """
-        response = auth.generate("gemini-1.5-flash", [("user", prompt)], None)
+        response_text = backend.generate("gemini-1.5-flash", [{"role": "user", "content": prompt}])
         
         # 3. [Knowledge Integration] 실시간 문서를 장기 기억에 임시 저장
         self.ltm.memorize(
-            f"Live API Docs ({library_name}): {response.text[:1000]}...",
+            f"Live API Docs ({library_name}): {response_text[:1000]}...",
             {"source": "LiveDocs", "library": library_name, "type": "api_reference"}
         )
         
-        return response.text
+        return response_text
 
     async def search_and_summarize(self, query: str) -> str:
         """검색 쿼리를 기반으로 웹 조사 수행"""
@@ -107,27 +108,30 @@ class ResearcherAgent:
 def researcher_node(state: GortexState) -> Dict[str, Any]:
     """Researcher 노드 엔트리 포인트"""
     agent = ResearcherAgent()
-    auth = GortexAuth()
+    from gortex.core.llm.factory import LLMFactory
+    backend = LLMFactory.get_default_backend()
     from gortex.utils.prompt_loader import loader
-    
-    # 최근 API 호출 빈도에 따라 모델 선택
-    call_count = state.get("api_call_count", 0)
-    gemini_model = "gemini-2.5-flash-lite" if call_count > 10 else "gemini-1.5-flash"
     
     # 1. 의도 및 쿼리 추출 (외부 템플릿 사용)
     last_msg_obj = state["messages"][-1]
     last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
     
-    # 지침 로드 (필요한 경우 템플릿 추가 정의 가능하나 여기선 기본 id 사용)
+    # 지침 로드
     base_instruction = loader.get_prompt("researcher")
-    
-    # 의도 분석 프롬프트 (구조 유지를 위해 우선 내장 유지 혹은 추가 키로 분리 고려)
     intent_prompt = f"{base_instruction}\n\n사용자 요청: {last_msg}\n\n위 요청을 분석하여 검색 필요 여부와 쿼리를 JSON으로 반환하라."
     
+    assigned_model = state.get("assigned_model", "gemini-1.5-flash")
+    config = {"temperature": 0.0}
+    if backend.supports_structured_output():
+        from google.genai import types
+        config = types.GenerateContentConfig(response_mime_type="application/json")
+
     try:
-        response = auth.generate(gemini_model, [("user", intent_prompt)], {"response_mime_type": "application/json"})
+        response_text = backend.generate(assigned_model, [{"role": "user", "content": intent_prompt}], config)
         import json
-        req_info = json.loads(response.text)
+        import re
+        json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+        req_info = json.loads(json_match.group(0)) if json_match else json.loads(response_text)
         query = req_info.get("query", last_msg)
     except:
         req_info = {"is_docs_needed": False, "query": last_msg}
@@ -154,13 +158,13 @@ def researcher_node(state: GortexState) -> Dict[str, Any]:
         else:
             research_result = loop.run_until_complete(agent.search_and_summarize(query))
 
-    # 3. 결과 요약 (외부 템플릿 사용)
+    # 3. 결과 요약
     summary_instruction = loader.get_prompt("researcher_summary")
     summary_prompt = f"{summary_instruction}\n\n사용자 요청: {last_msg}\n검색 결과: {research_result}"
     
-    summary_res = auth.generate("gemini-3-flash-preview", [("user", summary_prompt)], None)
+    summary_text = backend.generate(assigned_model, [{"role": "user", "content": summary_prompt}])
 
     return {
-        "messages": [("ai", summary_res.text)],
+        "messages": [("ai", summary_text)],
         "next_node": "manager"
     }
