@@ -231,26 +231,31 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
         }
 
     if status == "success":
-        # [Autonomous Pre-Commit] 성공 보고 전 자율 검증 수행
-        logger.info("🧪 Running autonomous pre-commit check...")
-        check_res = execute_shell("./scripts/pre_commit.sh")
+        # [Autonomous Selective Pre-Commit] 변경된 파일 기반 고속 자율 검증
+        logger.info("⚡ Running autonomous selective check...")
+        from gortex.utils.tools import get_changed_files
+        
+        changed_files = get_changed_files(state.get("working_dir", "."), state.get("file_cache", {}))
+        files_arg = " ".join(changed_files)
+        
+        check_res = execute_shell(f"./scripts/pre_commit.sh --selective {files_arg}")
         
         if "Ready to commit" in check_res:
-            logger.info("✅ Autonomous check passed.")
+            logger.info("✅ Selective check passed.")
             return {
                 "thought": coder_thought, "thought_tree": coder_tree,
                 "current_step": current_step_idx + 1, "coder_iteration": 0,
-                "next_node": "coder", "messages": [("ai", f"Step {current_step_idx+1} 완료 및 검증 통과.")]
+                "next_node": "coder", "messages": [("ai", f"Step {current_step_idx+1} 완료 및 증분 검증 통과.")]
             }
         else:
-            logger.warning("❌ Autonomous check failed. Triggering self-correction...")
-            # 실패 로그와 함께 다시 Coder에게 기회 부여 (또는 Analyst로 라우팅)
+            logger.warning("❌ Selective check failed. Triggering self-correction...")
+            # 실패 로그와 함께 다시 Coder에게 기회 부여
             return {
-                "thought": f"Pre-commit failed after success attempt. Needs correction. Log: {check_res[:200]}",
+                "thought": f"Selective pre-commit failed. Correction needed. Log: {check_res[:200]}",
                 "thought_tree": coder_tree,
                 "coder_iteration": current_iteration + 1,
                 "messages": [
-                    ("ai", "❌ 자율 검증 실패로 인해 자가 수정을 시도합니다."),
+                    ("ai", "❌ 증분 검증 실패로 인해 자가 수정을 시도합니다."),
                     ("tool", check_res)
                 ],
                 "next_node": "coder"

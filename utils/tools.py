@@ -3,8 +3,9 @@ import shutil
 import subprocess
 import logging
 import hashlib
+import re
 from datetime import datetime
-from typing import Dict, Union, Tuple, Optional
+from typing import Dict, Union, Tuple, Optional, List
 
 logger = logging.getLogger("GortexTools")
 
@@ -160,6 +161,22 @@ def deep_integrity_check(working_dir: str, current_cache: Dict[str, str]) -> Tup
             deleted_files.append(path)
             
     return updated_cache, changed_files + [f"(deleted) {p}" for p in deleted_files]
+
+def get_changed_files(working_dir: str, current_cache: Dict[str, str]) -> List[str]:
+    """현재 캐시와 대조하여 변경된 파일 목록만 추출"""
+    changed = []
+    ignore_dirs = {'.git', 'venv', '__pycache__', 'logs', 'site-packages'}
+    
+    for root, dirs, filenames in os.walk(working_dir):
+        dirs[:] = [d for d in dirs if d not in ignore_dirs]
+        for f in filenames:
+            file_path = os.path.join(root, f)
+            rel_path = os.path.relpath(file_path, working_dir)
+            
+            actual_hash = get_file_hash(file_path)
+            if actual_hash != current_cache.get(rel_path):
+                changed.append(rel_path)
+    return list(set(changed))
 
 def apply_patch(path: str, start_line: int, end_line: int, new_content: str) -> str:
     """

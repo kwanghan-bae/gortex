@@ -1,5 +1,5 @@
 #!/bin/bash
-# Gortex Pre-Commit Check Script v1.3 (Strict Quality Control)
+# Gortex Pre-Commit Check Script v1.4 (Selective Testing Support)
 
 set -e
 GREEN='\033[0;32m'
@@ -7,7 +7,18 @@ RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-echo -e "${GREEN}🔍 Starting High-Rigor Pre-Commit Checks...${NC}"
+# Parse Arguments
+SELECTIVE_MODE=false
+FILES_TO_TEST=""
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --selective) SELECTIVE_MODE=true; shift ;;
+        *) FILES_TO_TEST="$FILES_TO_TEST $1"; shift ;;
+    esac
+done
+
+echo -e "${GREEN}🔍 Starting Pre-Commit Checks (Mode: $([ "$SELECTIVE_MODE" = true ] && echo "Selective" || echo "Full"))...${NC}"
 
 # Python Command Setup
 if [ -d "venv" ]; then
@@ -55,15 +66,45 @@ for file in $STAGED_FILES; do
     fi
 done
 
+function run_full_tests() {
+    if $PYTHON_CMD -m coverage --version &> /dev/null; then
+        $PYTHON_CMD -m coverage run -m unittest discover -s tests -p "test_*.py"
+        $PYTHON_CMD -m coverage report -m
+    else
+        $PYTHON_CMD -m unittest discover -s tests -p "test_*.py"
+    fi
+}
+
 # ==========================================
 # 3. Unit Tests & Coverage (CRITICAL)
 # ==========================================
-echo -e "📊 Running tests with coverage..."
-if $PYTHON_CMD -m coverage --version &> /dev/null; then
-    $PYTHON_CMD -m coverage run -m unittest discover -s tests -p "test_*.py"
-    $PYTHON_CMD -m coverage report -m
+echo -e "📊 Running tests..."
+
+if [ "$SELECTIVE_MODE" = true ] && [ -n "$FILES_TO_TEST" ]; then
+    echo -e "⚡ Identifying relevant tests for changed files..."
+    SPECIFIC_TESTS=""
+    for file in $FILES_TO_TEST; do
+        filename=$(basename "$file" .py)
+        FOUND=$(find tests -name "test_${filename}*.py")
+        if [ -n "$FOUND" ]; then
+            SPECIFIC_TESTS="$SPECIFIC_TESTS $FOUND"
+        fi
+    done
+    
+    if [ -n "$SPECIFIC_TESTS" ]; then
+        echo -e "🎯 Targeting: $SPECIFIC_TESTS"
+        if $PYTHON_CMD -m coverage --version &> /dev/null; then
+            $PYTHON_CMD -m coverage run -m unittest $SPECIFIC_TESTS
+            $PYTHON_CMD -m coverage report -m
+        else
+            $PYTHON_CMD -m unittest $SPECIFIC_TESTS
+        fi
+    else
+        echo -e "${YELLOW}⚠️  No specific tests found. Running all tests...${NC}"
+        run_full_tests
+    fi
 else
-    $PYTHON_CMD -m unittest discover -s tests -p "test_*.py"
+    run_full_tests
 fi
 
 if [ $? -ne 0 ]; then

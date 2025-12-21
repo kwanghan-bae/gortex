@@ -3,15 +3,20 @@
 > 💡 **Versioning Policy**: 메이저 버전(v1.x, v2.x ...)이 변경될 때마다 이전 기록은 `docs/archive/`로 이동하며, 메인 릴리즈 노트는 항상 최신 상태를 유지합니다.
 
 ## 🚀 Backlog (Pending Tasks)
-- [x] **System**: 핵심 설계 의사결정 및 컨텍스트 자동 고정 (Context Pinning) 구현
-- [ ] **Infrastructure**: 변경된 파일만 식별하여 증분 테스트를 수행하는 'Selective Testing' 노드 추가
+- [x] **Infrastructure**: 변경된 파일만 식별하여 증분 테스트를 수행하는 'Selective Testing' 구현
 - [ ] **Interface**: 3D 그래프에서 영향 받는 노드들을 묶어 보여주는 'Dependency Clustering' 시각화
+- [ ] **Intelligence**: 에이전트의 사고 트리에 멀티모달 데이터를 포함하는 'Visual Reasoning' 도입
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.6.4 (Selective Incremental Testing)
+- [x] `utils/tools.py`: 캐시 해시 비교를 통해 현재 수정된 파일들만 기민하게 식별하는 엔진 구현
+- [x] `scripts/pre_commit.sh`: 특정 파일과 연관된 테스트만 골라 실행하는 선택적 검증 모드(v1.4) 도입
+- [x] `agents/coder.py`: 자율 검증 루프에 증분 테스트를 결합하여 개발 생산성 및 피드백 속도 획기적 개선
 
 ### v2.6.3 (Context Pinning & Immutable Decisions)
 - [x] `core/state.py`: 삭제 및 요약 로직으로부터 격리되어 항상 보존되는 `pinned_messages` 레이어 도입
