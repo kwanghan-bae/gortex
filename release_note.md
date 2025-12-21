@@ -62,9 +62,16 @@
 - [x] **Interface**: 인덱싱된 코드베이스 내에서 특정 비즈니스 기능의 구현 지점을 자연어로 검색하는 'Semantic Code Search' 고도화
 - [x] **Infrastructure**: 에이전트의 사고 과정을 브라우저에서 인터랙티브한 3D 마인드맵으로 시각화하는 'Neural Mindmap' 구현
 - [x] **Intelligence**: 에이전트가 생성한 코드의 'Time Complexity'와 'Memory Footprint'를 예측하여 보고하는 'Resource Profiler' 기능 구현
-- [ ] **Interface**: 인덱싱된 코드 내의 모든 함수 호출 관계를 3D 토폴로지 맵으로 시각화하는 'Call Graph 3D' 구현
+- [x] **Interface**: 인덱싱된 코드 내의 모든 함수 호출 관계를 3D 토폴로지 맵으로 시각화하는 'Call Graph 3D' 구현
+- [ ] **Infrastructure**: 에이전트의 사고 과정을 VR/AR 기기에서 입체적으로 체험할 수 있는 'Spatial Reasoning SDK' 기초 설계
 
 ## ✅ Completed
+### v2.2.7 (Call Graph 3D & Topology Visualization)
+- [x] `utils/indexer.py`: AST 분석을 통해 함수 본문 내의 호출 구문을 전수 추출하고 `generate_call_graph` 로직 구현
+- [x] `main.py`: 프로젝트 전체의 함수 호출 관계를 실시간 분석하고 웹 대시보드로 스트리밍하는 `/callgraph` 명령어 추가
+- [x] `utils/indexer.py`: 프로젝트 내 다른 모듈의 함수 호출을 식별하여 유향 그래프(Directed Graph) 데이터 구조 구축
+- [x] `main.py`: 웹 대시보드에서 Three.js를 활용하여 복잡한 함수 위상(Topology)을 3D로 탐색할 수 있는 기반 마련
+
 ### v2.2.6 (Resource Profiler & Complexity Analysis)
 - [x] `agents/analyst.py`: 생성된 파이썬 코드의 시간/공간 복잡도를 정적으로 분석하고 점수화하는 `profile_resource_usage` 엔진 구현
 - [x] `agents/analyst.py`: 상호 검증(Cross-Validation) 과정에 성능 프로파일링을 통합하여 기능적 무결성과 자원 효율성을 동시에 평가

@@ -220,6 +220,28 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         ui.update_main(ui.chat_history)
         return "skip"
 
+    elif cmd == "/callgraph":
+        ui.chat_history.append(("system", "📡 함수 호출 관계도(Call Graph)를 분석 중입니다..."))
+        ui.update_main(ui.chat_history)
+        
+        indexer = SynapticIndexer()
+        if os.path.exists(indexer.index_path):
+            with open(indexer.index_path, "r", encoding='utf-8') as f:
+                indexer.index = json.load(f)
+        
+        call_data = indexer.generate_call_graph()
+        
+        if ui.web_manager:
+            asyncio.create_task(ui.web_manager.broadcast(json.dumps({
+                "type": "call_graph",
+                "data": call_data
+            }, ensure_ascii=False)))
+            ui.chat_history.append(("system", f"✅ 호출 관계도 생성 완료 ({len(call_data['nodes'])} 함수). 웹 대시보드에서 3D 위상 맵을 확인하세요."))
+        else:
+            ui.chat_history.append(("system", "❌ 웹 대시보드 비활성화 상태입니다."))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
     elif cmd == "/dockerize":
         gen = DockerGenerator()
         res1 = gen.generate_dockerfile()

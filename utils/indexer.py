@@ -40,7 +40,7 @@ class SynapticIndexer:
         logger.info(f"✅ Indexing complete. Indexed {len(new_index)} files.")
 
     def _analyze_tree(self, tree: ast.AST) -> List[Dict[str, Any]]:
-        """AST를 분석하여 클래스, 함수, 임포트 정보 추출"""
+        """AST를 분석하여 클래스, 함수, 임포트, 호출 정보 추출"""
         definitions = []
         for node in ast.walk(tree):
             if isinstance(node, ast.ClassDef):
@@ -52,28 +52,43 @@ class SynapticIndexer:
                     "docstring": ast.get_docstring(node)
                 })
             elif isinstance(node, ast.FunctionDef):
+                # 함수 내부의 다른 함수 호출 수집
+                calls = []
+                for subnode in ast.walk(node):
+                    if isinstance(subnode, ast.Call):
+                        try:
+                            call_name = ast.unparse(subnode.func)
+                            calls.append(call_name)
+                        except: pass
+                
                 definitions.append({
                     "type": "function",
                     "name": node.name,
                     "line": node.lineno,
                     "args": [arg.arg for arg in node.args.args],
+                    "calls": list(set(calls)), # 중복 제거
                     "docstring": ast.get_docstring(node)
                 })
             elif isinstance(node, ast.Import):
                 for alias in node.names:
-                    definitions.append({
-                        "type": "import",
-                        "name": alias.name,
-                        "line": node.lineno
-                    })
+                    definitions.append({"type": "import", "name": alias.name, "line": node.lineno})
             elif isinstance(node, ast.ImportFrom):
-                definitions.append({
-                    "type": "import_from",
-                    "module": node.module,
-                    "names": [alias.name for alias in node.names],
-                    "line": node.lineno
-                })
+                definitions.append({"type": "import_from", "module": node.module, "names": [alias.name for alias in node.names], "line": node.lineno})
         return definitions
+
+    def generate_call_graph(self) -> Dict[str, Any]:
+        """함수 간 호출 관계 그래프 생성"""
+        nodes = {}
+        edges = []
+        for file_path, defs in self.index.items():
+            for d in defs:
+                if d["type"] == "function":
+                    func_id = f"{file_path}:{d['name']}"
+                    nodes[func_id] = {"name": d["name"], "file": file_path}
+                    for called in d.get("calls", []):
+                        # 프로젝트 내의 다른 함수를 호출하는지 매칭 (단순화된 이름 기반 매칭)
+                        edges.append({"from": func_id, "to_name": called})
+        return {"nodes": nodes, "edges": edges}
 
     def generate_map(self) -> Dict[str, Any]:
         """프로젝트의 모듈간 관계 및 클래스 계층 구조 맵 생성"""
