@@ -25,10 +25,16 @@
 - [x] **Interface**: 사용자의 복잡한 요구사항을 시각적 다이어그램으로 변환하여 보여주는 'Architecture Sketcher' 기능 추가
 - [x] **System**: 대규모 로그 데이터를 벡터화하여 유사한 오류 해결 사례를 검색하는 'Semantic Log Search' 엔진 추가
 - [x] **Infrastructure**: 에이전트의 작업 성과를 리포트로 자동 요약하여 제공하는 'Executive Reporter' 기능 구현
-- [x] **Interface**: 대시보드에 현재 세션의 주요 성과를 시각적으로 보여주는 'Achievement Timeline' 트래킹 구현
-- [ ] **Infrastructure**: 다중 언어 지원을 위한 'Synaptic Translator' 노드 및 다국어 UI 프레임워크 구축
+- [x] **Infrastructure**: 다중 언어 지원을 위한 'Synaptic Translator' 노드 및 다국어 UI 프레임워크 구축
+- [ ] **Interface**: 웹 대시보드에 실시간 로그 스트리밍을 넘어서는 'Interactive Console' 기능 추가
 
 ## ✅ Completed
+### v1.8.2 (Synaptic Translator & Multi-language Support)
+- [x] `utils/translator.py`: 입력 텍스트의 언어를 감지하고 자연스러운 한국어/목표 언어 번역을 수행하는 지능형 번역 엔진 구축
+- [x] `agents/manager.py`: 사용자의 입력 언어를 자동 감지하여 시스템의 처리 맥락(한국어 우선)과 응답 언어를 동적으로 선택하도록 통합
+- [x] `utils/translator.py`: 기술 용어 보존 및 자연스러운 문체 변환을 위한 전문 번역 프롬프트 최적화
+- [x] `agents/manager.py`: 다국어 환경에서도 일관된 추론 품질을 유지할 수 있도록 내부 번역 브리지 구조 설계
+
 ### v1.8.1 (Achievement Timeline Widget)
 - [x] `ui/dashboard.py`: 세션의 주요 마일스톤을 시간순으로 기록하는 `achievements` 데이터 구조 및 관리 로직 추가
 - [x] `main.py`: 에이전트의 작업 완료, 계획 수립, 파일 수정 등 성공적인 이벤트를 감지하여 성과 타임라인에 자동 등록

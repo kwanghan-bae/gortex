@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Achievement Timeline Widget Complete (v1.8.1)
+**Status:** Synaptic Translator & Multi-language Support Complete (v1.8.2)
 
 ## 🧠 Current Context
-성과 타임라인 기능이 도입되어 이제 Gortex가 달성한 주요 마일스톤들이 실시간으로 기록되고 시각화됩니다. 이는 사용자에게 시스템의 진행 상황을 더 긍정적이고 직관적으로 전달하는 역할을 합니다.
+다국어 지원 엔진이 구축되어 이제 Gortex는 전 세계 다양한 언어의 요청을 이해하고 적절한 언어로 응답할 수 있습니다. 시스템 내부의 지식 베이스와 지침은 한국어로 유지하면서도 사용자와의 접점은 글로벌하게 확장되었습니다.
 
 ## 🎯 Next Objective
-**Synaptic Translator (Multi-language Support)**
-1. **`Multi-language Engine`**: 사용자가 다른 언어(예: 영어, 일본어)로 질문하더라도 내부적으로는 한국어 제약 조건을 유지하면서 자연스럽게 응답할 수 있는 번역 브리지를 구축합니다.
-2. **`Language Detection`**: 입력 언어를 자동 감지하여, 응답 언어를 사용자의 선호에 맞추는 지능형 언어 선택 로직을 구현합니다.
+**Interactive Web Console (Bi-directional Communication)**
+1. **`Web Console`**: 현재 읽기 전용인 웹 대시보드에 사용자가 직접 명령어를 입력하거나 에이전트에게 중단/수정 지시를 내릴 수 있는 입력창(Console)을 추가합니다.
+2. **`Bi-directional WebSocket`**: 서버에서 클라이언트로의 스트리밍뿐만 아니라, 웹에서의 입력을 에이전트의 현재 루프에 실시간으로 개입(Interrupt/Inject)시키는 기능을 구현합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 성과 타임라인 트래킹 기능 완료 (v1.8.1).
-- 다음 목표: 다국어 지원 엔진(Synaptic Translator) 구축.
+- 다국어 지원 번역 엔진 완료 (v1.8.2).
+- 다음 목표: 웹 대시보드 인터랙티브 콘솔 및 양방향 통신 구현.
 
 작업 목표:
-1. `utils/translator.py`를 신설하여 입력 언어를 감지하고 필요시 번역을 수행하는 기초 로직을 작성해줘.
-2. `Manager` 노드에서 사용자의 입력 언어를 판단하여, 시스템 제약 조건(한국어 우선)과 사용자의 편의성 사이의 균형을 맞추는 프롬프트를 보강해줘.
+1. `ui/web_server.py`의 WebSocket 엔드포인트를 수정하여 클라이언트로부터의 메시지(명령어) 수신 기능을 강화해줘.
+2. 웹에서 들어온 입력을 `main.py`의 입력 큐에 주입하여 에이전트 실행 도중 개입할 수 있는 구조를 구상해줘.
 ```

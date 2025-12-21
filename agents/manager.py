@@ -4,6 +4,7 @@ from google.genai import types
 from gortex.core.auth import GortexAuth
 from gortex.core.state import GortexState
 from gortex.utils.log_vectorizer import SemanticLogSearch
+from gortex.utils.translator import SynapticTranslator
 
 logger = logging.getLogger("GortexManager")
 
@@ -14,11 +15,18 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     """
     auth = GortexAuth()
     log_search = SemanticLogSearch()
+    translator = SynapticTranslator()
     
-    # 1. 과거 유사 사례 검색 (CBR)
+    # 1. 언어 감지 및 번역 (다국어 지원)
     last_msg_obj = state["messages"][-1]
-    last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
-    past_cases = log_search.search_similar_cases(last_msg)
+    raw_input = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
+    lang_info = translator.detect_and_translate(raw_input)
+    
+    # 내부 처리는 한국어 맥락을 포함한 원문 활용
+    internal_input = lang_info.get("translated_text", raw_input) if not lang_info.get("is_korean") else raw_input
+
+    # 2. 과거 유사 사례 검색 (CBR)
+    past_cases = log_search.search_similar_cases(internal_input)
     
     case_context = ""
     if past_cases:
@@ -26,23 +34,20 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         for i, case in enumerate(past_cases):
             case_context += f"Case {i+1}: {case.get('agent')} encountered {case.get('event')}. Payload: {json.dumps(case.get('payload'))}\n"
 
-    # 2. 시스템 프롬프트 구성
+    # 3. 시스템 프롬프트 구성
     base_instruction = f"""너는 Gortex v1.0 시스템의 수석 매니저(Manager)다.
 사용자의 요청을 분석하여 다음 중 가장 적합한 에이전트에게 작업을 배분하라.
 {case_context}
+
+[Language Context]
+- Detected User Language: {lang_info.get('detected_lang')}
+- Is Korean: {lang_info.get('is_korean')}
+- 지침: 내부 추론과 기록은 한국어로 하되, 'response_to_user'가 필요할 경우 사용자의 언어로 자연스럽게 작성하라.
 
 에이전트 역할:
 - planner: 코드 작성, 버그 수정, 파일 시스템 조작, 리팩토링 등 모든 개발 관련 작업.
 - researcher: 최신 정보 검색, 기술 조사, 문서 탐색 등 외부 지식이 필요한 작업.
 - analyst: 데이터 분석(CSV/Excel), 사용자의 비판적 피드백 분석(자가 진화용).
-
-라우팅 규칙:
-1. 사용자의 의도가 명확하면 'next_node'를 해당 에이전트 이름으로 설정하라.
-2. 작업이 완료되었다고 판단되면 'next_node'를 '__end__'로 설정하라.
-3. 사용자의 요청이 모호하거나 추가 정보가 필요하면 직접 질문을 던지고 'next_node'를 '__end__'로 설정하라. (추측하지 마라)
-
-응답 형식:
-항상 JSON 형식으로 생각(thought)과 다음 노드(next_node)를 결정하라.
 """
 
     # 자가 진화 엔진에서 학습된 규칙이 있다면 주입
