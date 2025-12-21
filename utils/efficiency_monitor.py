@@ -108,3 +108,36 @@ class EfficiencyMonitor:
             scores[model] = round(success_score + latency_score + cost_score, 2)
             
         return scores
+
+    def get_evolution_history(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """시스템 진화(코드 수정) 이력을 반환합니다."""
+        if not os.path.exists(self.stats_path):
+            return []
+
+        history = []
+        try:
+            with open(self.stats_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    data = json.loads(line)
+                    if data.get("agent") == "evolution" and data.get("success"):
+                        history.append(data)
+            return sorted(history, key=lambda x: x["timestamp"], reverse=True)[:limit]
+        except Exception as e:
+            logger.error(f"Failed to get evolution history: {e}")
+            return []
+
+    def apply_immediate_feedback(self, model_id: str, success: bool, weight: float = 1.0):
+        """
+        작업 성공/실패 시 해당 모델의 평판에 즉각적인 가중치를 부여합니다. (RLHF-lite)
+        가상의 로그를 생성하여 다음 점수 계산 시 즉시 반영되도록 합니다.
+        """
+        # 아주 큰 토큰 값이나 레이턴시를 페널티/보상으로 사용하여 점수 조정 유도
+        penalty_tokens = 50000 if not success else 0
+        self.record_interaction(
+            agent_name="feedback_loop",
+            model_id=model_id,
+            success=success,
+            tokens=int(penalty_tokens * weight),
+            latency_ms=10000 if not success else 0,
+            metadata={"type": "immediate_feedback"}
+        )

@@ -220,6 +220,8 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
                 "next_node": "coder", "messages": [("ai", f"✅ Step {current_step_idx+1} 완료")]
             }
         else:
+            # RLHF-lite: 테스트 실패 시 즉각적 페널티 부여
+            monitor.apply_immediate_feedback(assigned_model, False, weight=1.0)
             return {
                 "thought": "Correction needed.", "coder_iteration": current_iteration + 1,
                 "messages": [("ai", "❌ 검증 실패"), ("tool", check_res)],

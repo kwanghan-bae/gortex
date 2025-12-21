@@ -503,10 +503,23 @@ class DashboardUI:
         self.layout["stats"].update(Panel(Group(*stats_group), title=f"📊 [bold {border_color}]USAGE STATS[/]", border_style="green" if tokens > 0 else border_color))
 
         # Evolution
-        evo_text = Text(f"Active Rules: {rules}\n", style="bold magenta")
+        from gortex.utils.efficiency_monitor import EfficiencyMonitor
+        evo_history = EfficiencyMonitor().get_evolution_history(limit=3)
+        
+        evo_group = []
+        evo_group.append(Text(f"Active Rules: {rules}", style="bold magenta"))
+        
+        if evo_history:
+            evo_group.append(Text("\n[Recent Evolutions]", style="bold dim"))
+            for ev in evo_history:
+                tech = ev.get("metadata", {}).get("tech", "Unknown")
+                file = ev.get("metadata", {}).get("file", "").split("/")[-1]
+                evo_group.append(Text(f"• {tech} -> {file}", style="magenta", overflow="ellipsis"))
+        
         if rules > 0:
-            evo_text.append("[LEARNED MODE]", style="blink magenta")
-        self.layout["evolution"].update(Panel(evo_text, title=f"🧬 [bold {border_color}]EVOLUTION[/]", border_style="magenta" if rules > 0 else border_color))
+            evo_group.append(Text("\n[LEARNED MODE]", style="blink magenta"))
+            
+        self.layout["evolution"].update(Panel(Group(*evo_group), title=f"🧬 [bold {border_color}]EVOLUTION[/]", border_style="magenta" if rules > 0 else border_color))
 
     def add_achievement(self, text: str, icon: str = "🏆"):
         """새로운 성과(마일스톤)를 타임라인에 추가"""

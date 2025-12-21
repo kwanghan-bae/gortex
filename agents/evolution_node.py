@@ -79,7 +79,10 @@ class EvolutionNode:
             latency_ms = int((time.time() - start_time) * 1000)
             success = "Ready to commit" in check_res
             
+            # RLHF-lite: 실시간 피드백 루프 적용
             self.monitor.record_interaction("evolution", assigned_model, success, len(new_code)//4, latency_ms, metadata={"tech": tech_name, "file": target_file})
+            if not success:
+                self.monitor.apply_immediate_feedback(assigned_model, False, weight=2.0) # 진화 실패는 큰 페널티
 
             if success:
                 logger.info(f"✅ Evolution successful: {target_file} updated with {tech_name}")
