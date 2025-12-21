@@ -224,12 +224,45 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
         msg += f"\n🛡️ **남은 위험**: {res.get('residual_risk')}\n"
         msg += f"🚀 **실행 계획**: {', '.join(res.get('action_plan', []))}"
             
+        history = state.get("consensus_history", [])
+        history.append({
+            "timestamp": datetime.now().isoformat(),
+            "topic": "High-Risk System Decision",
+            "decision": res.get("final_decision"),
+            "scenarios": debate_data,
+            "performance": None # 사후 측정 예정
+        })
+
         return {
             "messages": [("ai", msg)],
             "next_node": "manager",
             "active_constraints": state.get("active_constraints", []) + [f"Consensus: {res.get('final_decision')[:50]}..."],
-            "debate_context": [] # 처리 완료 후 초기화
+            "debate_context": [],
+            "consensus_history": history
         }
+
+    # [Consensus Learner] 이전 합의 결과의 성과 평가
+    history = state.get("consensus_history", [])
+    if history and history[-1]["performance"] is None and state.get("last_efficiency"):
+        eff = state["last_efficiency"]
+        history[-1]["performance"] = eff
+        logger.info(f"🎓 Learning from consensus: Efficiency {eff}")
+        
+        # 성과가 매우 좋거나 나쁠 경우 진화 규칙으로 등록
+        if eff >= 90:
+            agent.memory.save_rule(
+                f"Proven Success: {history[-1]['decision']}",
+                ["consensus", "high-risk"],
+                severity=5,
+                context=f"Achieved {eff} efficiency."
+            )
+        elif eff < 40:
+            agent.memory.save_rule(
+                f"Ineffective Strategy (Avoid): {history[-1]['decision']}",
+                ["consensus", "avoid"],
+                severity=4,
+                context=f"Failed with {eff} efficiency."
+            )
 
     if state.get("next_node") == "analyst":
         ai_outputs = [m for m in state["messages"] if (isinstance(m, tuple) and m[0] == "ai") or (hasattr(m, 'type') and m.type == "ai")]

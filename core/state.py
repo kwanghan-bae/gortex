@@ -42,4 +42,6 @@ class GortexState(TypedDict):
     efficiency_history: List[float]
     # 에이전트 간 토론 시나리오 데이터 (Consensus용)
     debate_context: List[Dict[str, Any]]
+    # 합의 결과 및 사후 성과 데이터 이력
+    consensus_history: List[Dict[str, Any]]
 

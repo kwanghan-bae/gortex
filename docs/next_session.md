@@ -1,23 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 합의 결과 사후 평가 및 페르소나 가중치 학습 (Consensus Learner v1)
+- 외부 기술 트렌드의 지식 베이스화 (Synaptic Knowledge Base v1)
 
 ## Context
-- 토론 시스템이 완성되었으나, 모든 결정이 항상 최선은 아닐 수 있음.
-- 합의된 안을 실행한 후의 효율성 점수(`efficiency_score`)를 추적하여, 특정 상황에서 어떤 관점(Innovation vs Stability)이 더 성공적이었는지 기록해야 함.
+- `TrendScout`이 매일 새로운 기술을 스캔하고 있으나, 그 데이터가 `tech_radar.json`에만 머물러 있어 실제 추론 시 깊이 있게 활용되지 못함.
+- 스캔된 내용을 지식 단위(Snippets)로 분절하고, 이를 장기 기억(Vector Store)에 통합하여 모든 에이전트가 최신 기술 정보를 바탕으로 대화할 수 있게 해야 함.
 
 ## Scope
 ### Do
-- `core/state.py`에 `consensus_history` 필드 추가 (합의안 및 사후 점수 기록).
-- `agents/analyst.py`에서 이전 합의안의 실행 결과를 평가하여 '교훈(Lesson)'을 추출하는 로직 추가.
-- 추출된 교훈을 `EvolutionaryMemory`에 저장하여 향후 합의 시 가중치로 활용.
+- `agents/trend_scout.py`에서 스캔된 트렌드를 `LongTermMemory`에 저장하는 로직 추가.
+- `utils/vector_store.py` (또는 관련 유틸)를 확장하여 지식의 출처(Source: TrendScout)를 명시함.
+- `agents/manager.py`가 사용자 요청 시 최신 트렌드 지식을 우선적으로 검색하도록 검색 가중치 조정.
 
 ### Do NOT
-- 복잡한 머신러닝 알고리즘 도입 금지 (단순한 점수 기반 통계 활용).
+- 대규모 웹 크롤링 금지 (기존 TrendScout 검색 결과만 활용).
 
 ## Expected Outputs
-- `core/state.py`, `agents/analyst.py`, `core/evolutionary_memory.py` 수정.
+- `agents/trend_scout.py`, `agents/manager.py` 수정.
 
 ## Completion Criteria
-- 합의안 실행 후의 효율성 점수가 합의 이력에 정상 기록되고, Analyst가 이를 분석하는 과정이 확인되어야 함.
+- TrendScout 실행 후, 새로운 기술 키워드에 대해 Manager가 "최신 트렌드에 따르면..."이라고 답변하는 것이 확인되어야 함.
