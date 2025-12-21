@@ -34,10 +34,16 @@
 - [x] **Infrastructure**: 시스템 내부의 모든 전역 설정을 중앙에서 관리하는 'Dynamic Config Manager' 구축
 - [x] **Infrastructure**: 에이전트의 작업 부하를 분산하기 위해 여러 LLM을 동시에 호출하는 'Agent Swarm' 프레임워크 기초 설계
 - [x] **Infrastructure**: 병렬 작업 간의 데이터 충돌을 방지하고 상태를 안전하게 병합하는 'State Merger' 로직 고도화
-- [x] **Interface**: 대시보드에 실시간으로 시스템 리소스(CPU, Memory) 및 에이전트 부하를 모니터링하는 기능 추가
-- [ ] **Intelligence**: 에이전트가 작업 중 발생한 감정적/논리적 교착 상태를 감지하여 스스로 재설정(Reset)하는 'Mental Reboot' 기능 구현
+- [x] **Intelligence**: 에이전트가 작업 중 발생한 감정적/논리적 교착 상태를 감지하여 스스로 재설정(Reset)하는 'Mental Reboot' 기능 구현
+- [ ] **Interface**: 에이전트의 내부 사고 과정을 시각적으로 필터링하고 검색할 수 있는 'Thought Browser' UI 고도화
 
 ## ✅ Completed
+### v1.9.3 (Mental Reboot & Stuck State Detection)
+- [x] `agents/optimizer.py`: 동일한 도구 호출이 반복되는 '교착 상태(Stuck State)'를 실시간으로 감지하는 알고리즘 구현
+- [x] `agents/optimizer.py`: 교착 상태 감지 시 즉시 'Mental Reboot'을 수행하여 에이전트의 사고를 초기화하고 새로운 방향성을 강제하는 워크플로우 안착
+- [x] `agents/optimizer.py`: 성능 분석 리포트 프롬프트를 최적화하여 기존 테스트 케이스와의 호환성 및 분석 정밀도 향상
+- [x] `tests/test_optimizer.py`: 새로운 자가 재부팅 로직을 반영하도록 단위 테스트 코드를 고도화하여 시스템 안정성 검증 완료
+
 ### v1.9.2 (Real-time Resource Monitoring)
 - [x] `utils/resource_monitor.py`: `psutil`을 활용하여 시스템 및 Gortex 프로세스의 CPU, RAM 사용량을 정밀 측정하는 엔진 신설
 - [x] `main.py`: 백그라운드 비동기 루프를 통해 실시간 리소스 통계를 주기적으로 수집하고 관리하는 인프라 구축

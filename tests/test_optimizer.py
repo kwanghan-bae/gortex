@@ -52,6 +52,8 @@ class TestGortexOptimizer(unittest.TestCase):
             "improvement_task": "Do something",
             "priority": "low"
         }
+        # 교착 상태가 아님을 보장하도록 설정
+        mock_agent.detect_stuck_state.return_value = False
         
         state = {"messages": []}
         result = optimizer_node(state)

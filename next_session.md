@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Real-time Resource Monitoring Complete (v1.9.2)
+**Status:** Mental Reboot & Stuck State Detection Complete (v1.9.3)
 
 ## 🧠 Current Context
-실시간 리소스 모니터링 시스템이 가동되었습니다. 이제 Gortex가 현재 하드웨어 자원을 얼마나 효율적으로 사용하고 있는지 파악할 수 있으며, 이는 특히 병렬 작업(Swarm) 시의 부하 제어 전략 수립에 중요한 지표가 됩니다.
+에이전트의 '자가 치유'를 위한 교착 상태 감지 및 정신적 재부팅 로직이 구축되었습니다. 이제 Gortex는 무한 루프나 논리적 함정에 빠졌을 때 스스로를 초기화하고 다른 해결책을 모색할 수 있는 회복 탄력성을 갖추게 되었습니다.
 
 ## 🎯 Next Objective
-**Mental Reboot (Stuck State Detection)**
-1. **`Stuck State Detection`**: 에이전트가 동일한 행동을 무의미하게 반복하거나, 논리적 모순에 빠져 진전이 없는 '교착 상태'를 감지합니다.
-2. **`Self-Reset Workflow`**: 교착 상태 감지 시, 현재의 컨텍스트를 강제로 요약하고 에이전트의 내부 상태를 재초기화(Reboot)하여 새로운 관점에서 문제를 바라보도록 유도하는 기능을 구현합니다.
+**Thought Browser (Advanced Search & Filter)**
+1. **`Thought Browsing`**: 수천 줄의 사고 로그를 에이전트별, 중요도별, 또는 특정 키워드로 실시간 필터링하여 브라우징할 수 있는 UI를 구축합니다.
+2. **`Visual Filtering`**: 웹 대시보드에서 특정 에이전트의 사고 흐름만 추적하거나, '결정(Decision)' 노드만 모아볼 수 있는 인터랙티브 필터를 구현하여 투명성을 강화합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 실시간 리소스 모니터링 기능 완료 (v1.9.2).
-- 다음 목표: 에이전트 교착 상태 감지 및 자가 재부팅(Mental Reboot).
+- 교착 상태 감지 및 자가 재부팅 완료 (v1.9.3).
+- 다음 목표: 사고 과정 브라우저(Thought Browser) UI 고도화.
 
 작업 목표:
-1. `agents/optimizer.py` 또는 신규 노드에서 에이전트의 반복 패턴을 분석하여 교착 상태를 판별하는 `detect_stuck_state` 로직을 작성해줘.
-2. 교착 상태 확인 시 현재 대화 내역을 압축하고 에이전트에게 'Mental Reboot' 명령을 내려 새로운 해결책을 강제하는 워크플로우를 보강해줘.
+1. `ui/dashboard.py` 및 `ui/web_server.py`를 확장하여 사고 로그를 필터링하여 전송하는 기능을 추가해줘.
+2. 웹 대시보드에서 특정 에이전트(Manager, Coder 등)의 사고만 선택해서 볼 수 있는 데이터 필터링 로직을 작성해줘.
 ```
