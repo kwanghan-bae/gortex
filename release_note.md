@@ -26,9 +26,16 @@
 - [x] **System**: 대규모 로그 데이터를 벡터화하여 유사한 오류 해결 사례를 검색하는 'Semantic Log Search' 엔진 추가
 - [x] **Infrastructure**: 에이전트의 작업 성과를 리포트로 자동 요약하여 제공하는 'Executive Reporter' 기능 구현
 - [x] **Infrastructure**: 다중 언어 지원을 위한 'Synaptic Translator' 노드 및 다국어 UI 프레임워크 구축
-- [ ] **Interface**: 웹 대시보드에 실시간 로그 스트리밍을 넘어서는 'Interactive Console' 기능 추가
+- [x] **Interface**: 웹 대시보드에 실시간 로그 스트리밍을 넘어서는 'Interactive Console' 기능 추가
+- [ ] **Intelligence**: 에이전트가 생성한 코드의 'Clean Code Score'를 측정하고 리팩토링 포인트를 제안하는 'Code Reviewer' 노드 추가
 
 ## ✅ Completed
+### v1.8.3 (Interactive Web Console & Bi-directional Sync)
+- [x] `ui/web_server.py`: WebSocket을 통해 클라이언트로부터 사용자 입력을 수신하고 큐(`input_queue`)에 저장하는 기능 구현
+- [x] `main.py`: 터미널 입력과 웹 입력 큐를 비동기적으로 동시 감시하여 먼저 발생한 입력을 처리하는 멀티 채널 입력 시스템 구축
+- [x] `ui/web_server.py`: JSON 형식의 명령어를 파싱하여 `user_input` 타입의 메시지를 식별하고 처리하는 로직 추가
+- [x] `main.py`: 웹 콘솔을 통해 원격지에서도 Gortex에게 직접 명령을 내리고 개입할 수 있는 양방향 통신 인프라 안착
+
 ### v1.8.2 (Synaptic Translator & Multi-language Support)
 - [x] `utils/translator.py`: 입력 텍스트의 언어를 감지하고 자연스러운 한국어/목표 언어 번역을 수행하는 지능형 번역 엔진 구축
 - [x] `agents/manager.py`: 사용자의 입력 언어를 자동 감지하여 시스템의 처리 맥락(한국어 우선)과 응답 언어를 동적으로 선택하도록 통합

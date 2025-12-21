@@ -36,8 +36,31 @@ logger = logging.getLogger("GortexMain")
 load_dotenv()
 
 async def get_user_input(console: Console):
-    """비차단 방식으로 사용자 입력을 받음"""
-    return await asyncio.get_event_loop().run_in_executor(None, console.input, "[bold green]User > [/bold green]")
+    """터미널 입력과 웹 입력 큐를 동시에 감시하며 비차단 방식으로 입력을 받음"""
+    from gortex.ui.web_server import manager
+    
+    # 터미널 입력을 위한 비동기 태스크
+    terminal_task = asyncio.create_task(
+        asyncio.get_event_loop().run_in_executor(None, console.input, "[bold green]User > [/bold green]")
+    )
+    
+    # 웹 큐 입력을 위한 비동기 태스크
+    web_task = asyncio.create_task(manager.input_queue.get())
+    
+    # 먼저 도착하는 입력을 반환
+    done, pending = await asyncio.wait(
+        [terminal_task, web_task],
+        return_when=asyncio.FIRST_COMPLETED
+    )
+    
+    # 나머지 태스크 취소
+    for task in pending:
+        task.cancel()
+        
+    result = done.pop().result()
+    if isinstance(result, str):
+        return result.strip()
+    return ""
 
 async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObserver, all_sessions_cache: dict = None, thread_id: str = None) -> str:
     """'/'로 시작하는 명령어를 처리합니다. 반환값에 따라 메인 루프의 행동을 결정합니다."""
