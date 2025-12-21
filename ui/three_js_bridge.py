@@ -155,6 +155,27 @@ class ThreeJsBridge:
                 
         return {"nodes": converted_nodes, "edges": converted_edges}
 
+    def apply_impact_highlight(self, graph_3d: Dict[str, Any], impact_data: Dict[str, List[str]]) -> Dict[str, Any]:
+        """특정 노드 및 연결된 영향 범위 노드들에 하이라이트(Glow) 적용"""
+        direct_files = impact_data.get("direct", [])
+        indirect_files = impact_data.get("indirect", [])
+        target_file = impact_data.get("target", "")
+        
+        for node in graph_3d.get("nodes", []):
+            node_file = node.get("file") or node.get("label", "").split(":")[-1].strip()
+            
+            if node_file == target_file:
+                node["color"] = "#ff0000" # 강렬한 빨강 (타겟)
+                node["spatial_metadata"] = {"glow": 1.0, "scale": 2.0}
+            elif node_file in direct_files:
+                node["color"] = "#ff4444" # 빨강 (직접 영향)
+                node["spatial_metadata"] = {"glow": 0.7, "scale": 1.5}
+            elif node_file in indirect_files:
+                node["color"] = "#ff8888" # 연한 빨강 (간접 영향)
+                node["spatial_metadata"] = {"glow": 0.4, "scale": 1.2}
+                
+        return graph_3d
+
     def _get_color_by_agent(self, agent_name: str) -> str:
         """에이전트별 고유 색상 매핑"""
         colors = {

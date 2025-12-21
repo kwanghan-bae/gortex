@@ -795,6 +795,16 @@ async def run_gortex():
                                 if output.get("ui_mode"):
                                     ui.set_mode(output["ui_mode"])
 
+                                # [VISUAL IMPACT] 수정 영향 범위 시각적 하이라이트 스트리밍
+                                if node_name == "planner" and output.get("impact_analysis") and ui.web_manager:
+                                    current_causal = observer.get_causal_graph()
+                                    causal_3d = ThreeJsBridge().convert_causal_graph_to_3d(current_causal)
+                                    highlighted_3d = ThreeJsBridge().apply_impact_highlight(causal_3d, output["impact_analysis"])
+                                    asyncio.create_task(ui.web_manager.broadcast(json.dumps({
+                                        "type": "causal_graph_3d",
+                                        "data": highlighted_3d
+                                    }, ensure_ascii=False)))
+
                                 # [VISUAL SIMULATION] 도구 실행 전 미래 상태 시뮬레이션 스트리밍
                                 if output.get("simulation") and ui.web_manager:
                                     sim_delta = output["simulation"].get("expected_graph_delta")

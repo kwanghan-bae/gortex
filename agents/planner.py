@@ -81,7 +81,16 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
             "type": "OBJECT",
             "properties": {
                 "thought_process": {"type": "STRING", "description": "전체 설계 요약"},
-                "impact_analysis": {"type": "STRING", "description": "수정 시 영향을 받는 파일 및 리스크 분석"},
+                "impact_analysis": {
+                    "type": "OBJECT",
+                    "properties": {
+                        "target": {"type": "STRING", "description": "수정 대상 메인 파일"},
+                        "direct": {"type": "ARRAY", "items": {"type": "STRING"}, "description": "직접 영향 받는 파일 목록"},
+                        "indirect": {"type": "ARRAY", "items": {"type": "STRING"}, "description": "간접 영향 받는 파일 목록"},
+                        "risk_level": {"type": "STRING", "enum": ["Critical", "High", "Medium", "Low"]}
+                    },
+                    "required": ["target", "direct", "indirect", "risk_level"]
+                },
                 "internal_critique": {"type": "STRING", "description": "설계 계획에 대한 비판적 재검토"},
                 "thought_tree": {
                     "type": "ARRAY",
@@ -156,7 +165,12 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
         }
         
         if plan_data.get("impact_analysis"):
-            updates["messages"].append(("system", f"⚠️ **수정 영향 범위 분석**: {plan_data['impact_analysis']}"))
+            impact = plan_data["impact_analysis"]
+            impact_msg = f"⚠️ **수정 영향 범위 분석** (위험도: {impact.get('risk_level', 'Unknown')})\n"
+            impact_msg += f"- 대상: {impact.get('target')}\n"
+            if impact.get("direct"): impact_msg += f"- 직접 영향: {', '.join(impact['direct'])}\n"
+            if impact.get("indirect"): impact_msg += f"- 간접 영향: {', '.join(impact['indirect'])}"
+            updates["messages"].append(("system", impact_msg))
         
         if plan_data.get("pre_fetch"):
             updates["pre_fetch"] = plan_data["pre_fetch"]
