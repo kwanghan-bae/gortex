@@ -11,13 +11,19 @@
 - [x] **System**: 대규모 그래프 데이터 및 메시지의 효율적 관리를 위한 'Memory Pruning' 전략 도입
 - [x] **Interface**: 현재 작업 맥락에 따라 대시보드 구성을 최적화하는 'Context-Aware UI Layout' 구현
 - [x] **System**: 작업 완료 후 자동으로 결과물을 아카이빙하고 문서를 갱신하는 'Auto-Finalizer' 도입
-- [ ] **Economy**: 에이전트 간 상호 평가를 통해 자원 할당 우선순위를 결정하는 'Peer Review Economy' 고도화
+- [x] **Economy**: 에이전트 간 상호 평가를 통해 자원 할당 우선순위를 결정하는 'Peer Review Economy' 고도화
+- [ ] **Interface**: 파일 수정 영향 범위를 3D 그래프에 시각적으로 강조하는 'Visual Impact Highlighter' 구현
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.4.8 (Peer Review Economy & Resource Purchase)
+- [x] `core/state.py`: 에이전트별 가상 자산을 관리하는 `token_credits` 경제 지표 도입
+- [x] `agents/analyst.py`: 우수한 작업 성과를 낸 에이전트에게 실시간으로 크레딧을 지급하는 보상 시스템 구축
+- [x] `agents/manager.py`: 보유한 크레딧을 소모하여 고성능 모델(Pro)을 구매하는 '자원 시장' 메커니즘 구현
 
 ### v2.4.7 (Auto-Finalizer & Self-Documentation)
 - [x] `agents/analyst.py`: 세션 종료 시 활동 내역을 요약하고 `docs/` 하위의 모든 문서를 스스로 갱신하는 자동 기록 엔진 구축

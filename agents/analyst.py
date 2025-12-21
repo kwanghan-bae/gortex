@@ -322,6 +322,7 @@ class AnalystAgent:
         
         # 1. 최근 로그 분석을 통한 성과 요약 요청
         prompt = f"""지금까지의 작업 이력과 로그를 바탕으로 이번 세션의 성과를 요약하라.
+        현재 상태: 에너지 {state.get('agent_energy')}%, 효율 {state.get('last_efficiency')}
         
         [State Messages]
         {state['messages'][-15:]}
@@ -343,7 +344,7 @@ class AnalystAgent:
             # 2. session_XXXX.md 작성
             sessions_dir = "docs/sessions"
             os.makedirs(sessions_dir, exist_ok=True)
-            existing_sessions = [f for f in os.listdir(sessions_dir) if f.startswith("session_")]
+            existing_sessions = [f for f in os.listdir(sessions_dir) if f.startswith("session_") and f.endswith(".md")]
             next_num = len(existing_sessions) + 1
             session_file = os.path.join(sessions_dir, f"session_{next_num:04d}.md")
             
@@ -376,7 +377,6 @@ class AnalystAgent:
                 new_entry = f"### {res_data.get('version')} ({res_data.get('goal')})\n"
                 new_entry += chr(10).join([f"- [x] {d}" for d in res_data.get('done', [])]) + "\n\n"
                 
-                # 'Completed' 섹션 바로 뒤에 추가
                 marker = "## ✅ Completed (Recent Milestones)"
                 if marker in content:
                     updated_content = content.replace(marker, f"{marker}\n{new_entry}")
@@ -395,13 +395,13 @@ class AnalystAgent:
 
 ## Scope
 ### Do
-- {res_data.get('next_goal')} 관련 로직 구현
+- {res_data.get('next_goal')} 관련 로직 구현 및 검증
 
 ## Expected Outputs
-- 관련 에이전트 코드 수정
+- 관련 에이전트 코드 수정 및 테스트 코드 작성
 
 ## Completion Criteria
-- 기능을 성공적으로 수행하고 테스트를 통과함
+- 기능을 성공적으로 수행하고 pre_commit.sh를 통과함
 """
             with open(next_sess_path, "w", encoding='utf-8') as f:
                 f.write(next_sess_content)
@@ -499,9 +499,15 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
                     msg += "\n⚠️ 주의: 비효율적인 로직이 감지되었습니다. 최적화를 권장합니다."
                 
                 economy = state.get("agent_economy", {}).copy()
+                credits = state.get("token_credits", {}).copy()
+                
                 if "coder" not in economy: economy["coder"] = {"points": 0, "level": "Novice"}
+                if "coder" not in credits: credits["coder"] = 100.0 # 기본 크레딧
+                
                 economy["coder"]["points"] += 10
-                return {"messages": [("ai", msg)], "agent_economy": economy, "next_node": "manager"}
+                credits["coder"] += 10.0 # 검증 통과 보상
+                
+                return {"messages": [("ai", msg)], "agent_economy": economy, "token_credits": credits, "next_node": "manager"}
 
     if "/explain" in last_msg_lower:
         return {"messages": [("ai", "Logic explanation complete.")], "next_node": "manager"}

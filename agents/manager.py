@@ -243,13 +243,21 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         
         target_node = res_data.get("next_node", "__end__")
         
-        # [Dynamic Model Tiering] 에이전트 레벨 및 에너지에 따른 모델 할당
+        # [Peer Review Economy] 크레딧 기반 모델 할당 및 비용 차감
         assigned_model = "gemini-1.5-flash"
+        credits = state.get("token_credits", {}).copy()
+        
         if target_node in ["planner", "coder", "analyst"]:
             level = state.get("agent_economy", {}).get(target_node, {}).get("level", "Novice")
-            if level == "Master" and energy >= 30:
+            balance = credits.get(target_node, 100.0)
+            
+            # 비용 정의: PRO 모델 = 50.0 credits
+            if level == "Master" and energy >= 30 and balance >= 50.0:
                 assigned_model = "gemini-1.5-pro"
-                logger.info(f"💎 Master agent '{target_node}' granted access to PRO model.")
+                credits[target_node] = balance - 50.0 # 비용 차감
+                logger.info(f"💎 Master agent '{target_node}' purchased PRO model. Remaining: {credits[target_node]}")
+            elif level == "Master" and balance < 50.0:
+                logger.info(f"💸 Insufficient credits for '{target_node}'. Falling back to FLASH.")
             elif energy < 30:
                 logger.info(f"🔋 Low energy. Forcing FLASH model for '{target_node}'.")
         
@@ -260,7 +268,8 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
             "next_node": target_node,
             "assigned_model": assigned_model,
             "agent_energy": new_energy,
-            "ui_mode": res_data.get("ui_mode", "standard")
+            "ui_mode": res_data.get("ui_mode", "standard"),
+            "token_credits": credits
         }
         
         if res_data.get("parallel_tasks"):
