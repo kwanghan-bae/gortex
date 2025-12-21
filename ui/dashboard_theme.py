@@ -1,20 +1,16 @@
 from rich.theme import Theme
 
-# KORTEX & Gortex SPEC에 정의된 컬러 팔레트 적용
-GORTEX_THEME = Theme({
+# 기본 공통 스타일
+BASE_STYLES = {
     "info": "cyan",
     "warn": "bold yellow",
     "err": "bold red",
     "user": "bold green",
     "ai": "bold blue",
     "system": "dim white",
-    "mgr.thought": "italic cyan",
-    "cdr.exec": "bold green",
-    "radar.new": "bold magenta",
     "status.ok": "green",
     "status.busy": "yellow",
     "status.error": "red",
-    # Agent Specific Colors
     "agent.manager": "bold cyan",
     "agent.planner": "bold yellow",
     "agent.coder": "bold green",
@@ -23,5 +19,47 @@ GORTEX_THEME = Theme({
     "agent.trend_scout": "italic magenta",
     "agent.summarizer": "dim cyan",
     "agent.optimizer": "bold red"
-})
+}
 
+THEMES = {
+    "classic": Theme(BASE_STYLES),
+    "matrix": Theme({
+        **BASE_STYLES,
+        "user": "bold green on black",
+        "ai": "bold green on black",
+        "system": "dim green",
+        "agent.manager": "bold green",
+        "info": "green"
+    }),
+    "cyberpunk": Theme({
+        **BASE_STYLES,
+        "user": "bold magenta",
+        "ai": "bold cyan",
+        "agent.manager": "bold yellow",
+        "info": "bright_magenta"
+    }),
+    "monochrome": Theme({
+        k: "dim white" if "agent" not in k else "bold white" 
+        for k in BASE_STYLES
+    })
+}
+
+class ThemeManager:
+    def __init__(self, default_theme: str = "classic"):
+        self.current_theme_name = default_theme
+        
+    def get_theme(self, name: str = None) -> Theme:
+        name = name or self.current_theme_name
+        return THEMES.get(name, THEMES["classic"])
+
+    def set_theme(self, name: str):
+        if name in THEMES:
+            self.current_theme_name = name
+            return True
+        return False
+
+    def list_themes(self) -> list:
+        return list(THEMES.keys())
+
+# 하위 호환성을 위한 기본 테마 객체 유지
+GORTEX_THEME = THEMES["classic"]

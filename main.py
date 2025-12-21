@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 
 from gortex.core.graph import compile_gortex_graph
 from gortex.ui.dashboard import DashboardUI
-from gortex.ui.dashboard_theme import GORTEX_THEME
+from gortex.ui.dashboard_theme import GORTEX_THEME, ThemeManager
 from gortex.core.observer import GortexObserver
 from gortex.utils.token_counter import count_tokens, estimate_cost
 from gortex.core.auth import GortexAuth
@@ -62,7 +62,7 @@ async def get_user_input(console: Console):
         return result.strip()
     return ""
 
-async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObserver, all_sessions_cache: dict = None, thread_id: str = None) -> str:
+async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObserver, all_sessions_cache: dict = None, thread_id: str = None, theme_manager: ThemeManager = None) -> str:
     """'/'로 시작하는 명령어를 처리합니다. 반환값에 따라 메인 루프의 행동을 결정합니다."""
     cmd_parts = user_input.lower().strip().split()
     cmd = cmd_parts[0]
@@ -71,6 +71,22 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         ui.chat_history = []
         ui.update_main([])
         ui.update_thought("Chat history cleared.")
+        return "skip"
+    
+    elif cmd == "/theme":
+        if not theme_manager:
+            return "skip"
+        if len(cmd_parts) < 2:
+            themes = ", ".join(theme_manager.list_themes())
+            ui.chat_history.append(("system", f"사용 가능한 테마: {themes}"))
+        else:
+            new_theme = cmd_parts[1]
+            if theme_manager.set_theme(new_theme):
+                ui.console.theme = theme_manager.get_theme()
+                ui.chat_history.append(("system", f"✅ 테마가 '{new_theme}'(으)로 변경되었습니다."))
+            else:
+                ui.chat_history.append(("system", f"❌ 알 수 없는 테마: {new_theme}"))
+        ui.update_main(ui.chat_history)
         return "skip"
     
     elif cmd == "/index":
@@ -464,6 +480,7 @@ async def run_gortex():
     logger.info("📡 Gortex Web Dashboard server started at http://localhost:8000")
 
     console = Console(theme=GORTEX_THEME)
+    theme_manager = ThemeManager()
     ui = DashboardUI(console)
     observer = GortexObserver()
     total_tokens, total_cost = 0, 0.0
@@ -530,7 +547,7 @@ async def run_gortex():
 
                     cmd_status = "continue"
                     if user_input.startswith("/"):
-                        cmd_status = await handle_command(user_input, ui, observer, all_sessions_cache, thread_id)
+                        cmd_status = await handle_command(user_input, ui, observer, all_sessions_cache, thread_id, theme_manager)
                         if cmd_status == "skip": continue
                     
                     # 세션 캐시 유효성 검사

@@ -29,9 +29,16 @@
 - [x] **Interface**: 웹 대시보드에 실시간 로그 스트리밍을 넘어서는 'Interactive Console' 기능 추가
 - [x] **Infrastructure**: 외부 깃허브 이슈(Issues)나 PR을 분석하여 작업을 자동 할당하는 'GitHub Agent' 기능 구축
 - [x] **System**: 에이전트가 코드를 작성하기 전 최신 오픈소스 라이브러리 및 API 문서를 검색하여 참조하는 'Live Documentation' 노드 추가
-- [ ] **Infrastructure**: 대시보드 UI 테마를 사용자의 취향에 맞게 동적으로 변경할 수 있는 'Theming Engine' 구축
+- [x] **Infrastructure**: 대시보드 UI 테마를 사용자의 취향에 맞게 동적으로 변경할 수 있는 'Theming Engine' 구축
+- [ ] **Intelligence**: 에이전트의 복합적인 사고 과정을 구조화하여 보여주는 'Thought Mindmap' 기능 추가
 
 ## ✅ Completed
+### v1.8.7 (Dynamic Theming Engine & Visual Customization)
+- [x] `ui/dashboard_theme.py`: Classic, Matrix, Cyberpunk, Monochrome 등 다양한 프리셋 테마를 지원하는 `ThemeManager` 클래스 신설
+- [x] `main.py`: 실시간으로 UI 테마를 조회하고 변경할 수 있는 `/theme [name]` 명령어 구현
+- [x] `main.py`: 테마 변경 시 `DashboardUI`의 콘솔 스타일을 즉시 동기화하여 시각적 즉각성 확보
+- [x] `ui/dashboard_theme.py`: 에이전트별 전용 색상과 시스템 상태 색상을 테마별로 최적화하여 일관된 사용자 경험 제공
+
 ### v1.8.6 (Live Documentation & Real-time API Search)
 - [x] `agents/researcher.py`: 특정 라이브러리의 공식 문서와 API 레퍼런스를 정밀하게 검색 및 추출하는 `fetch_api_docs` 구현
 - [x] `agents/researcher.py`: 사용자 요청으로부터 문서 검색 필요성을 자동 감지하고 최적의 기술 쿼리를 생성하는 인텔리전스 강화
