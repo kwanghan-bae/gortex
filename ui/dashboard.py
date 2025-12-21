@@ -8,9 +8,8 @@ from rich.syntax import Syntax
 from rich.json import JSON
 from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn, SpinnerColumn
 from gortex.utils.table_detector import try_render_as_table
+from gortex.utils.asset_manager import SynapticAssetManager
 from datetime import datetime
-import json
-import asyncio
 
 def create_layout() -> Layout:
     """대시보드 레이아웃 생성: 채팅(Main), 사고(Thought), 사이드바(Sidebar)"""
@@ -34,6 +33,7 @@ def create_layout() -> Layout:
 class DashboardUI:
     def __init__(self, console: Console):
         self.console = console
+        self.assets = SynapticAssetManager()
         self.layout = create_layout()
         self.chat_history = []
         self.agent_thought = ""
@@ -156,10 +156,13 @@ class DashboardUI:
 
         for role, content in display_msgs:
             if role == "user":
-                msg_group.append(Panel(content, title="👤 [bold green]USER[/bold green]", border_style="green", padding=(0, 1)))
+                icon = self.assets.get_icon("user")
+                msg_group.append(Panel(content, title=f"{icon} [bold green]USER[/bold green]", border_style="green", padding=(0, 1)))
             elif role == "ai":
-                msg_group.append(Panel(content, title="🤖 [bold blue]GORTEX[/bold blue]", border_style="blue", padding=(0, 1)))
+                icon = self.assets.get_icon("robot")
+                msg_group.append(Panel(content, title=f"{icon} [bold blue]GORTEX[/bold blue]", border_style="blue", padding=(0, 1)))
             elif role == "tool":
+                icon = self.assets.get_icon("info")
                 if isinstance(content, str):
                     display_content = content
                     if len(content) > 2000:
@@ -171,7 +174,7 @@ class DashboardUI:
                         if (stripped.startswith("{}") and stripped.endswith("}")) or (stripped.startswith("[") and stripped.endswith("]")):
                             json.loads(stripped)
                             renderable = JSON(stripped)
-                            msg_group.append(Panel(renderable, title="🛠️ [bold yellow]OBSERVATION (JSON)[/bold yellow]", border_style="yellow", style="dim"))
+                            msg_group.append(Panel(renderable, title=f"{icon} [bold yellow]OBSERVATION (JSON)[/bold yellow]", border_style="yellow", style="dim"))
                             continue
                     except:
                         pass
@@ -179,7 +182,7 @@ class DashboardUI:
                     # 2. 테이블 형식 검사
                     table_renderable = try_render_as_table(display_content)
                     if table_renderable:
-                        msg_group.append(Panel(table_renderable, title="🛠️ [bold yellow]OBSERVATION (TABLE)[/bold yellow]", border_style="yellow", style="dim"))
+                        msg_group.append(Panel(table_renderable, title=f"{icon} [bold yellow]OBSERVATION (TABLE)[/bold yellow]", border_style="yellow", style="dim"))
                         continue
 
                     # 3. 코드 형태인 경우 하이라이팅
@@ -192,14 +195,15 @@ class DashboardUI:
                         elif "const " in display_content or "function " in display_content: lang = "javascript"
                         
                         syntax_content = Syntax(display_content, lang, theme="monokai", line_numbers=True, word_wrap=True)
-                        msg_group.append(Panel(syntax_content, title=f"🛠️ [bold yellow]OBSERVATION ({lang.upper()})[/bold yellow]", border_style="yellow", style="dim"))
+                        msg_group.append(Panel(syntax_content, title=f"{icon} [bold yellow]OBSERVATION ({lang.upper()})[/bold yellow]", border_style="yellow", style="dim"))
                     else:
-                        msg_group.append(Panel(display_content, title="🛠️ [bold yellow]OBSERVATION[/bold yellow]", border_style="yellow", style="dim"))
+                        msg_group.append(Panel(display_content, title=f"{icon} [bold yellow]OBSERVATION[/bold yellow]", border_style="yellow", style="dim"))
                 else:
-                    msg_group.append(Panel(content, title="🛠️ [bold yellow]OBSERVATION[/bold yellow]", border_style="yellow", style="dim"))
+                    msg_group.append(Panel(content, title=f"{icon} [bold yellow]OBSERVATION[/bold yellow]", border_style="yellow", style="dim"))
             elif role == "system":
+                icon = self.assets.get_icon("info")
                 if isinstance(content, str):
-                    msg_group.append(Text(f"⚙️ {content}", style="dim white"))
+                    msg_group.append(Text(f"{icon} {content}", style="dim white"))
                 else:
                     msg_group.append(content)
         
@@ -306,7 +310,8 @@ class DashboardUI:
         status_text = Text()
         status_text.append(f"Agent: ", style="bold")
         agent_style = self.agent_colors.get(agent.lower(), "dim white")
-        status_text.append(f"{agent.upper()}\n", style=agent_style if agent != "Idle" else "green")
+        agent_label = self.assets.get_agent_label(agent)
+        status_text.append(f"{agent_label}\n", style=agent_style if agent != "Idle" else "green")
         status_text.append(f"LLM  : ", style="bold")
         provider_style = "bold blue" if provider == "GEMINI" else "bold green"
         status_text.append(f"{provider}\n", style=provider_style)

@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Reviewer Dashboard & Multi-Agent Approval Complete (v2.2.1)
+**Status:** Synaptic Asset Manager & UI Refactoring Complete (v2.2.2)
 
 ## 🧠 Current Context
-다중 에이전트 승인 시스템(Reviewer Dashboard)이 구축되었습니다. 이제 중요한 작업은 여러 에이전트의 검증과 합의를 거쳐야 하며, 이 과정은 웹 대시보드에서 실시간으로 모니터링됩니다. 이는 시스템의 집단 지성을 활용한 품질 제어 능력을 극대화합니다.
+중앙 에셋 관리 시스템이 도입되어 UI의 일관성과 확장성이 크게 향상되었습니다. 이제 모든 시각적 요소와 메시지 템플릿은 중앙에서 통제되며, 이는 테마 변경이나 다국어 대응 시 핵심적인 역할을 합니다.
 
 ## 🎯 Next Objective
-**Synaptic Asset Manager (Static Asset Management)**
-1. **`Asset Centralization`**: 시스템에서 사용하는 모든 아이콘, 템플릿, 정적 텍스트 에셋들을 중앙 저장소에서 관리합니다.
-2. **`Dynamic Asset Loading`**: 테마나 언어 설정에 따라 적절한 에셋을 동적으로 불러와 UI에 적용하며, 새로운 에셋을 시스템 중단 없이 추가할 수 있는 유연한 구조를 구축합니다.
+**File Time Machine (Automatic File Versioning)**
+1. **`File Versioning`**: `write_file`이나 `apply_patch`가 호출될 때마다, 원본 파일의 스냅샷을 `logs/backups/versions/` 디렉토리에 시간순으로 자동 아카이빙합니다.
+2. **`Visual Restore`**: 웹 대시보드에서 파일의 과거 버전을 시각적으로 비교(Diff)하고, 클릭 한 번으로 특정 시점의 파일 상태로 복구(Rollback)하는 기능을 구현합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 다중 에이전트 리뷰 보드 완료 (v2.2.1).
-- 다음 목표: 중앙 에셋 관리 시스템(Synaptic Asset Manager) 구축.
+- 중앙 에셋 관리 시스템 완료 (v2.2.2).
+- 다음 목표: 파일 버전 관리 및 타임머신(File Time Machine) 구축.
 
 작업 목표:
-1. `utils/asset_manager.py`를 신설하여 아이콘, 시스템 메시지 템플릿 등을 관리하는 `AssetManager` 클래스를 구현해줘.
-2. `DashboardUI` 및 `main.py`에서 하드코딩된 문자열이나 아이콘을 `AssetManager`를 통해 로드하도록 리팩토링해줘.
+1. `utils/tools.py`의 `write_file`을 확장하여 수정 전 원본의 전체 계보(Version History)를 저장하는 기능을 추가해줘.
+2. `main.py`에 `/rollback [path] [version_id]` 명령어를 추가하여 과거 버전으로 파일을 즉시 복구하는 로직을 구현해줘.
 ```

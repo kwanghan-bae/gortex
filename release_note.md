@@ -57,9 +57,16 @@
 - [x] **Intelligence**: 시스템의 모든 도구 호출 및 의사결정 내역을 인간이 읽기 쉬운 'Activity Stream'으로 실시간 변환하는 'Journalist' 노드 구현
 - [x] **System**: 에이전트가 코드를 작성할 때 보안 위협(Injection, XSS 등)을 실시간으로 스캔하고 차단하는 'Shielded Code Generation' 엔진 구축
 - [x] **Infrastructure**: 다중 에이전트의 작업 결과를 시각적으로 요약하고 최종 승인을 관리하는 'Reviewer Dashboard' 구축
-- [ ] **Infrastructure**: 시스템 내부의 모든 정적 에셋(아이콘, 이미지 등)을 중앙에서 관리하는 'Synaptic Asset Manager' 구축
+- [x] **Infrastructure**: 시스템 내부의 모든 정적 에셋(아이콘, 이미지 등)을 중앙에서 관리하는 'Synaptic Asset Manager' 구축
+- [ ] **Infrastructure**: 에이전트의 작업 중 발생하는 모든 파일을 시간순으로 아카이빙하고 복구할 수 있는 'File Time Machine' 구축
 
 ## ✅ Completed
+### v2.2.2 (Synaptic Asset Manager & UI Refactoring)
+- [x] `utils/asset_manager.py`: 아이콘, 에이전트 레이블, 메시지 템플릿 등을 중앙 관리하는 싱글톤 엔진 신설
+- [x] `ui/dashboard.py`: 하드코딩된 아이콘과 문자열을 `AssetManager` 참조 구조로 리팩토링하여 스타일 일관성 및 관리 효율성 강화
+- [x] `utils/asset_manager.py`: 외부 JSON 파일(`assets.json`)을 통한 에셋 영속화 및 동적 로딩 지원
+- [x] `ui/dashboard.py`: 에이전트 레이블 최적화(e.g., ARCHITECT, DEVELOPER)를 통해 전문적인 터미널 분위기 조성
+
 ### v2.2.1 (Reviewer Dashboard & Multi-Agent Approval)
 - [x] `ui/dashboard.py`: 다중 에이전트의 작업 승인 현황을 실시간으로 관리하고 시각화하는 `review_board` 시스템 구현
 - [x] `agents/analyst.py`: 상호 검증(Cross-Validation) 과정에서 각 에이전트의 피드백과 승인 여부를 리뷰 보드에 자동 기록하는 로직 추가
