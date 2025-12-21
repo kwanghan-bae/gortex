@@ -27,10 +27,16 @@
 - [x] **Infrastructure**: 에이전트의 작업 성과를 리포트로 자동 요약하여 제공하는 'Executive Reporter' 기능 구현
 - [x] **Infrastructure**: 다중 언어 지원을 위한 'Synaptic Translator' 노드 및 다국어 UI 프레임워크 구축
 - [x] **Interface**: 웹 대시보드에 실시간 로그 스트리밍을 넘어서는 'Interactive Console' 기능 추가
-- [x] **Intelligence**: 에이전트가 생성한 코드의 'Clean Code Score'를 측정하고 리팩토링 포인트를 제안하는 'Code Reviewer' 노드 구현
-- [ ] **Infrastructure**: 외부 깃허브 이슈(Issues)나 PR을 분석하여 작업을 자동 할당하는 'GitHub Agent' 노드 구축
+- [x] **Infrastructure**: 외부 깃허브 이슈(Issues)나 PR을 분석하여 작업을 자동 할당하는 'GitHub Agent' 기능 구축
+- [ ] **System**: 에이전트가 코드를 작성하기 전 최신 오픈소스 라이브러리 및 API 문서를 검색하여 참조하는 'Live Documentation' 노드 추가
 
 ## ✅ Completed
+### v1.8.5 (GitHub Agent & PR Automation)
+- [x] `utils/git_tool.py`: GitHub API(v3)를 연동하여 오픈된 이슈 목록 조회 및 Pull Request 자동 생성 기능 구현
+- [x] `main.py`: 현재 브랜치의 변경 사항을 원격에 푸시하고 PR을 즉시 생성하는 `/pr [owner/repo] [title]` 명령어 추가
+- [x] `utils/git_tool.py`: `GITHUB_TOKEN` 환경 변수를 통한 보안 인증 및 API 호출 헤더 최적화
+- [x] `main.py`: 배포(`deploy`)와 PR 생성 워크플로우를 분리하여 더 세밀한 버전 관리 제어 지원
+
 ### v1.8.4 (Code Reviewer & Quality Scoring)
 - [x] `agents/analyst.py`: 파이썬 코드를 Clean Code 및 PEP8 기준으로 정밀 분석하는 `review_code` 엔진 구현
 - [x] `agents/analyst.py`: 스타일, 복잡도, 주석 적정성을 수치화(Score)하고 구체적인 리팩토링 팁을 생성하는 로직 추가

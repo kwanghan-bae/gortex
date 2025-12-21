@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Code Reviewer & Quality Scoring Complete (v1.8.4)
+**Status:** GitHub Agent & PR Automation Complete (v1.8.5)
 
 ## 🧠 Current Context
-코드 품질 측정 및 리뷰 시스템이 구축되었습니다. 이제 Gortex는 기능적인 완성도를 넘어 코드의 가독성, 유지보수 용이성까지 스스로 평가하고 개선할 수 있는 '품질 관리 지능'을 갖추게 되었습니다.
+GitHub API 연동이 완료되어 이제 Gortex는 이슈 분석부터 코드 수정, 그리고 최종 PR 생성까지 이어지는 전체 개발 사이클을 자동화할 수 있습니다. 이는 협업 환경에서 Gortex의 독립적인 기여 가능성을 열어줍니다.
 
 ## 🎯 Next Objective
-**GitHub Agent (Issue & PR Automation)**
-1. **`Issue Analysis`**: 지정된 GitHub 저장소의 오픈된 이슈를 읽어와 작업 우선순위를 정하고 에이전트에게 할당합니다.
-2. **`PR Creation`**: 작업이 완료되면 자동으로 브랜치를 생성하고, 변경 내역 요약과 함께 GitHub Pull Request를 생성하는 자동화 파이프라인을 구축합니다.
+**Live Documentation (Real-time API Search)**
+1. **`Documentation Retrieval`**: 새로운 라이브러리나 생소한 API를 사용해야 할 때, 에이전트가 코드를 작성하기 전 구글 검색이나 공식 문서를 실시간으로 크롤링하여 최신 사용법을 학습합니다.
+2. **`Context Enrichment`**: 검색된 최신 API 시그니처와 예제 코드를 Coder의 프롬프트에 주입하여, 할루시네이션(Hallucination)을 최소화하고 정확한 코드를 작성하도록 돕습니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 코드 리뷰 및 품질 점수화 완료 (v1.8.4).
-- 다음 목표: GitHub 이슈 및 PR 자동화(GitHub Agent).
+- GitHub 연동 및 자동 PR 기능 완료 (v1.8.5).
+- 다음 목표: 실시간 API 문서 검색 및 맥락 강화(Live Documentation).
 
 작업 목표:
-1. `utils/git_tool.py`를 확장하여 GitHub API를 통한 이슈 조회 및 PR 생성 기능을 추가해줘.
-2. `agents/manager.py`에서 저장소 링크가 주어지면 이슈를 분석하여 작업을 배분하는 지침을 보강해줘.
+1. `agents/researcher.py`의 검색 기능을 고도화하여 특정 라이브러리의 최신 API 문서를 정밀하게 추출하는 `fetch_api_docs` 메서드를 추가해줘.
+2. `coder`가 생소한 모듈을 다룰 때 자동으로 `researcher`를 호출하여 문서를 읽어오도록 워크플로우를 보강해줘.
 ```
