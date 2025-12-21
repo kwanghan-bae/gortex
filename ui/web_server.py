@@ -42,8 +42,11 @@ async def websocket_endpoint(websocket: WebSocket):
                 msg = json.loads(data)
                 if msg.get("type") == "user_input":
                     await manager.push_input(msg.get("text"))
+                elif msg.get("type") == "filter_thoughts":
+                    # 메인 루프와의 통신을 위한 큐 활용 또는 글로벌 참조 필요
+                    # 여기서는 단순화를 위해 큐에 특수 명령어로 주입
+                    await manager.push_input(f"/filter_thoughts {msg.get('agent', '')} {msg.get('keyword', '')}")
             except:
-                # 단순 텍스트인 경우 처리
                 await manager.push_input(data)
     except WebSocketDisconnect:
         manager.disconnect(websocket)

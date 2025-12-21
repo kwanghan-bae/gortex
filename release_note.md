@@ -35,9 +35,16 @@
 - [x] **Infrastructure**: 에이전트의 작업 부하를 분산하기 위해 여러 LLM을 동시에 호출하는 'Agent Swarm' 프레임워크 기초 설계
 - [x] **Infrastructure**: 병렬 작업 간의 데이터 충돌을 방지하고 상태를 안전하게 병합하는 'State Merger' 로직 고도화
 - [x] **Intelligence**: 에이전트가 작업 중 발생한 감정적/논리적 교착 상태를 감지하여 스스로 재설정(Reset)하는 'Mental Reboot' 기능 구현
-- [ ] **Interface**: 에이전트의 내부 사고 과정을 시각적으로 필터링하고 검색할 수 있는 'Thought Browser' UI 고도화
+- [x] **Interface**: 에이전트의 내부 사고 과정을 시각적으로 필터링하고 검색할 수 있는 'Thought Browser' 인프라 구축
+- [ ] **System**: 에이전트가 코드를 작성할 때 사용자의 스타일을 학습하여 반영하는 'Style Mimicry' 엔진 추가
 
 ## ✅ Completed
+### v1.9.4 (Thought Browser & Advanced Filtering)
+- [x] `ui/dashboard.py`: 세션 전체의 사고 히스토리를 에이전트명 및 키워드로 검색할 수 있는 `filter_thoughts` 로직 구현
+- [x] `ui/web_server.py`: WebSocket을 통해 웹 클라이언트의 필터링 요청을 수신하고 처리하는 양방향 통신 기능 확장
+- [x] `main.py`: 웹 대시보드 전용 내부 명령어 `/filter_thoughts` 추가 및 필터링된 데이터의 실시간 브로드캐스팅 연동
+- [x] `ui/dashboard.py`: 사고 트리의 그래프 변환 로직과 필터링 시스템을 통합하여 투명한 추론 모니터링 환경 안착
+
 ### v1.9.3 (Mental Reboot & Stuck State Detection)
 - [x] `agents/optimizer.py`: 동일한 도구 호출이 반복되는 '교착 상태(Stuck State)'를 실시간으로 감지하는 알고리즘 구현
 - [x] `agents/optimizer.py`: 교착 상태 감지 시 즉시 'Mental Reboot'을 수행하여 에이전트의 사고를 초기화하고 새로운 방향성을 강제하는 워크플로우 안착

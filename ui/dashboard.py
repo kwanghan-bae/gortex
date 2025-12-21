@@ -342,5 +342,14 @@ class DashboardUI:
         if self.web_manager:
             asyncio.create_task(self._broadcast_to_web())
 
+    def filter_thoughts(self, agent_name: str = None, keyword: str = None) -> list:
+        """사고 히스토리를 필터링하여 반환"""
+        results = self.thought_history
+        if agent_name:
+            results = [t for t in results if t[0].lower() == agent_name.lower()]
+        if keyword:
+            results = [t for t in results if keyword.lower() in t[1].lower()]
+        return results
+
     def render(self):
         return self.layout

@@ -264,6 +264,19 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         ui.update_main(ui.chat_history)
         return "skip"
 
+    elif cmd == "/filter_thoughts":
+        agent_name = cmd_parts[1] if len(cmd_parts) > 1 and cmd_parts[1] != "" else None
+        keyword = cmd_parts[2] if len(cmd_parts) > 2 and cmd_parts[2] != "" else None
+        filtered = ui.filter_thoughts(agent_name, keyword)
+        
+        if ui.web_manager:
+            # 필터링된 결과만 전용 타입으로 웹에 전송
+            asyncio.create_task(ui.web_manager.broadcast(json.dumps({
+                "type": "filtered_thoughts",
+                "data": filtered
+            }, ensure_ascii=False)))
+        return "skip"
+
     elif cmd == "/report":
         ui.chat_history.append(("system", "📊 성과 리포트를 생성 중입니다..."))
         ui.update_main(ui.chat_history)
