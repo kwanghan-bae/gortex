@@ -29,16 +29,16 @@ class GortexObserver:
                 shutil.move(self.log_path, f"{self.log_path}.{ts}.bak")
                 logger.info(f"Logs rotated: {self.log_path}.{ts}.bak")
 
-    def log_event(self, agent: str, event_type: str, payload: Any, latency_ms: Optional[int] = None):
-
-        """이벤트를 JSONL 형식으로 기록"""
+    def log_event(self, agent: str, event_type: str, payload: Any, latency_ms: Optional[int] = None, tokens: Optional[Dict[str, int]] = None):
+        """이벤트를 JSONL 형식으로 기록 (정밀 프로파일링 지원)"""
         entry = {
             "timestamp": datetime.now().isoformat(),
             "trace_id": self.trace_id,
             "agent": agent,
-            "event": event_type, # 'thought', 'tool_call', 'result', 'error'
+            "event": event_type, # 'thought', 'tool_call', 'node_complete', 'error'
             "payload": payload,
-            "latency_ms": latency_ms
+            "latency_ms": latency_ms,
+            "tokens": tokens # {"input": 100, "output": 50} 형식
         }
         
         try:

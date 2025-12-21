@@ -21,10 +21,16 @@
 - [x] **Infrastructure**: GitHub API 연동을 통해 프로젝트를 원격 저장소에 자동으로 푸시하는 '/deploy' 명령어 구현
 - [x] **Infrastructure**: 외부 API 연동(예: Slack, Discord)을 통해 작업 완료 시 알림을 보내는 'Notification' 시스템 구축
 - [x] **Interface**: 터미널 UI를 넘어 브라우저에서 Gortex의 활동을 실시간 모니터링할 수 있는 'Web Dashboard' 프레임워크 구축
-- [x] **System**: 대규모 프로젝트 분석 시 파일 캐시 유효성을 검증하는 'Deep Integrity Check' 기능 추가
-- [ ] **Infrastructure**: 에이전트의 도구 호출 로그를 분석하여 비용과 지연 시간을 최적화하는 'Performance Profiler' 노드 구현
+- [x] **Infrastructure**: 에이전트의 도구 호출 로그를 분석하여 비용과 지연 시간을 최적화하는 'Performance Profiler' 노드 구현
+- [ ] **Interface**: 대시보드 사이드바에 현재 세션의 '평균 응답 지연 시간' 및 '토큰 당 비용' 추이 그래프 추가
 
 ## ✅ Completed
+### v1.7.4 (Performance Profiler & Cost Analysis)
+- [x] `core/observer.py`: 각 노드 실행 시 지연 시간(ms)과 상세 토큰 사용량을 기록할 수 있도록 프로파일링 스키마 확장
+- [x] `main.py`: 메인 루프 내에서 노드별 실행 시간을 정밀 측정하고 관찰자에게 실시간 기록하도록 통합
+- [x] `core/observer.py`: `trace.jsonl` 로그 파일에 입력/출력 토큰 구분 및 레이턴시 정보를 포함하여 향후 최적화 데이터 기반 마련
+- [x] `main.py`: 작업 완료 시 세션 ID와 함께 외부 채널 알림 메시지에도 소요 시간 정보를 포함하도록 개선 검토 기반 마련
+
 ### v1.7.3 (Deep Integrity Check & Cache Healing)
 - [x] `utils/tools.py`: 프로젝트 전체 파일의 해시를 디스크와 동적으로 비교하여 불일치를 찾아내는 `deep_integrity_check` 로직 구현
 - [x] `main.py`: 시스템 부팅 및 세션 시작 시 자동 무결성 검사를 수행하고 캐시를 최신 상태로 자가 수복하도록 통합

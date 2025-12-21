@@ -4,6 +4,7 @@ import random
 import logging
 import json
 import shutil
+import time
 from datetime import datetime
 from rich.console import Console
 from rich.live import Live
@@ -471,8 +472,12 @@ async def run_gortex():
                     elif cmd_status == "scout": initial_state["next_node"] = "trend_scout"
 
                     try:
+                        node_start_time = time.time()
                         async for event in app.astream(initial_state, config):
                             for node_name, output in event.items():
+                                node_latency_ms = int((time.time() - node_start_time) * 1000)
+                                node_start_time = time.time() # 다음 노드를 위해 초기화
+                                
                                 ui.current_agent = node_name
                                 has_tool = any((isinstance(m, tuple) and m[0] == "tool") or (hasattr(m, 'type') and m.type == "tool") for m in output.get("messages", []))
                                 ui.start_tool_progress("Executing tool...") if has_tool else ui.stop_tool_progress()
@@ -481,6 +486,7 @@ async def run_gortex():
                                 tree = output.get("thought_tree")
                                 if thought: ui.update_thought(thought, agent_name=node_name, tree=tree)
 
+                                node_tokens = 0
                                 if "messages" in output:
                                     for msg in output["messages"]:
                                         role, content = (msg[0], msg[1]) if isinstance(msg, tuple) else (msg.type, msg.content)
@@ -492,6 +498,7 @@ async def run_gortex():
 
                                         if isinstance(content, str):
                                             t = count_tokens(content)
+                                            node_tokens += t
                                             total_tokens += t
                                             total_cost += estimate_cost(t)
                                 
@@ -506,7 +513,13 @@ async def run_gortex():
                                     auth_engine.get_call_count()
                                 )
                                 ui.update_logs({"agent": node_name, "event": "node_complete"})
-                                observer.log_event(node_name, "node_complete", output)
+                                # 정밀 프로파일링 기록
+                                observer.log_event(
+                                    node_name, "node_complete", 
+                                    {"goal": output.get("goal")}, 
+                                    latency_ms=node_latency_ms,
+                                    tokens={"output": node_tokens}
+                                )
                                 if "file_cache" in output: session_cache.update(output["file_cache"])
                                 await asyncio.sleep(0.01)
                                 ui.reset_thought_style()
