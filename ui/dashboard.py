@@ -118,6 +118,9 @@ class DashboardUI:
         if not self.web_manager:
             return
             
+        from gortex.ui.three_js_bridge import ThreeJsBridge
+        bridge_3d = ThreeJsBridge()
+        
         state = {
             "agent": self.current_agent,
             "step": self.current_step,
@@ -127,6 +130,7 @@ class DashboardUI:
             "call_count": self.call_count,
             "thought": self.agent_thought,
             "thought_tree": self.thought_tree,
+            "thought_tree_3d": bridge_3d.convert_thought_to_3d(self.thought_tree), # 3D 신경망 추가
             "thought_graph": self._generate_thought_graph(), # 마인드맵용 그래프 데이터 추가
             "diagram": self.current_diagram,
             "achievements": self.achievements,

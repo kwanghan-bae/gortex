@@ -56,6 +56,60 @@ class ThreeJsBridge:
                 
         return {"nodes": converted_nodes, "edges": converted_edges}
 
+    def convert_thought_to_3d(self, thought_tree: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """사고 과정을 3D 신경망 구조로 변환"""
+        converted_nodes = []
+        node_map = {}
+        
+        # 계층별 배치를 위한 기초 알고리즘
+        for i, item in enumerate(thought_tree):
+            node_id = item.get("id")
+            parent_id = item.get("parent_id")
+            
+            # 확신도에 따른 크기 및 밝기 조절
+            certainty = item.get("certainty", 0.5)
+            size = 1 + certainty * 2
+            
+            # 위치 계산 (단순 계층형 트리 배치)
+            depth = 0
+            curr = item
+            while curr.get("parent_id"):
+                depth += 1
+                # 부모 노드 찾기 (단순화)
+                parent = next((t for t in thought_tree if t["id"] == curr["parent_id"]), None)
+                if not parent: break
+                curr = parent
+            
+            pos = {
+                "x": depth * 20,
+                "y": (i % 5) * 10 - 20,
+                "z": (i // 5) * 10 - 20
+            }
+            
+            converted_node = {
+                "id": node_id,
+                "position": pos,
+                "text": item.get("text"),
+                "certainty": certainty,
+                "size": size,
+                "type": item.get("type", "analysis"),
+                "color": "#ffaa00" if item.get("type") == "decision" else "#00aaff"
+            }
+            converted_nodes.append(converted_node)
+            node_map[node_id] = pos
+
+        converted_edges = []
+        for item in thought_tree:
+            if item.get("parent_id") and item["parent_id"] in node_map:
+                converted_edges.append({
+                    "from": item["parent_id"],
+                    "to": item["id"],
+                    "start": node_map[item["parent_id"]],
+                    "end": node_map[item["id"]]
+                })
+                
+        return {"nodes": converted_nodes, "edges": converted_edges}
+
     def _get_color_by_type(self, node_type: str) -> str:
         colors = {
             "class": "#00ff00", # Green

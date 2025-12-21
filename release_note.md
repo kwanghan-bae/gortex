@@ -60,9 +60,16 @@
 - [x] **Infrastructure**: 시스템 내부의 모든 정적 에셋(아이콘, 이미지 등)을 중앙에서 관리하는 'Synaptic Asset Manager' 구축
 - [x] **Infrastructure**: 에이전트의 작업 중 발생하는 모든 파일을 시간순으로 아카이빙하고 복구할 수 있는 'File Time Machine' 구축
 - [x] **Interface**: 인덱싱된 코드베이스 내에서 특정 비즈니스 기능의 구현 지점을 자연어로 검색하는 'Semantic Code Search' 고도화
-- [ ] **Infrastructure**: 에이전트의 사고 과정을 브라우저에서 인터랙티브한 3D 마인드맵으로 시각화하는 'Neural Mindmap' 라이브러리 연동
+- [x] **Infrastructure**: 에이전트의 사고 과정을 브라우저에서 인터랙티브한 3D 마인드맵으로 시각화하는 'Neural Mindmap' 구현
+- [ ] **Intelligence**: 에이전트가 생성한 코드의 'Time Complexity'와 'Memory Footprint'를 예측하여 보고하는 'Resource Profiler' 노드 추가
 
 ## ✅ Completed
+### v2.2.5 (Neural Mindmap & 3D Thinking visualization)
+- [x] `ui/three_js_bridge.py`: 에이전트의 복합적인 사고 트리(`thought_tree`)를 3D 신경망 구조로 변환하는 `convert_thought_to_3d` 로직 구현
+- [x] `ui/dashboard.py`: 실시간으로 뻗어나가는 사고 노드와 연결선을 웹 대시보드로 브로드캐스팅하는 파이프라인 고도화
+- [x] `ui/three_js_bridge.py`: 사고의 확신도(`certainty`)에 따라 노드 크기와 색상의 밝기를 동적으로 조절하는 시각적 피드백 시스템 도입
+- [x] `ui/three_js_bridge.py`: 계층형 트리 배치 알고리즘을 적용하여 3D 공간에서의 사고 흐름 가독성 최적화
+
 ### v2.2.4 (Semantic Code Search & Natural Language Query)
 - [x] `utils/indexer.py`: LLM 기반의 쿼리 정규화(Normalization) 기능을 통해 사용자의 구어체 질문을 기술적 키워드로 자동 변환하는 로직 구현
 - [x] `main.py`: 의미론적 관련성을 점수화(Scoring)하여 가장 적합한 코드 심볼을 상위에 노출하는 지능형 `/search` 명령어 고도화
