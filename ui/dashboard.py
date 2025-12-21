@@ -59,6 +59,7 @@ class DashboardUI:
         self.review_board = {} # 에이전트 승인 현황 관리
         self.debt_list = [] # 기술 부채(복잡도) 목록
         self.active_debate = [] # 현재 진행 중인 토론 데이터
+        self.target_language = "ko" # 웹 UI 타겟 언어
         
         # Progress bar for tools
         self.progress = Progress(
@@ -119,23 +120,33 @@ class DashboardUI:
         return {"nodes": nodes, "edges": edges}
 
     async def _broadcast_to_web(self):
-        """현재 UI 상태를 웹 대시보드로 전송"""
+        """현재 UI 상태를 웹 대시보드로 전송 (실시간 번역 포함)"""
         if not self.web_manager:
             return
             
         from gortex.ui.three_js_bridge import ThreeJsBridge
+        from gortex.utils.translator import SynapticTranslator
         bridge_3d = ThreeJsBridge()
+        translator = SynapticTranslator()
+        
+        # 실시간 번역 대상 데이터 구성
+        trans_data = {
+            "thought": self.agent_thought,
+            "step": self.current_step
+        }
+        translated = translator.translate_batch(trans_data, self.target_language)
         
         state = {
             "agent": self.current_agent,
-            "step": self.current_step,
+            "step": translated.get("step", self.current_step),
             "tokens": self.tokens_used,
             "cost": self.total_cost,
             "provider": self.provider,
             "call_count": self.call_count,
             "energy": self.energy,
             "efficiency": self.efficiency,
-            "thought": self.agent_thought,
+            "ui_language": self.target_language,
+            "thought": translated.get("thought", self.agent_thought),
             "thought_tree": self.thought_tree,
             "thought_tree_3d": bridge_3d.convert_thought_to_3d(self.thought_tree), # 3D 신경망 추가
             "thought_graph": self._generate_thought_graph(), # 마인드맵용 그래프 데이터 추가

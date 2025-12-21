@@ -33,7 +33,9 @@ class GortexState(TypedDict):
     # {agent_name: {"points": int, "level": str, "achievements": List[str]}}
     agent_economy: Dict[str, Dict[str, Any]] 
     # 에이전트별 가상 화폐 (고성능 모델 사용권 구매용)
-    token_credits: Dict[str, float]    
+    token_credits: Dict[str, float]
+    # UI 및 에이전트 출력 타겟 언어 (ko, en, ja, zh 등)
+    ui_language: str    
     # 7. Energy Awareness (작업 여력 관리)
     # 0~100 사이의 가상 에너지 수치
     agent_energy: int 

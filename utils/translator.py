@@ -51,3 +51,22 @@ class SynapticTranslator:
         except Exception as e:
             logger.error(f"Response translation failed: {e}")
             return text
+
+    def translate_batch(self, texts: Dict[str, str], target_lang_code: str) -> Dict[str, str]:
+        """여러 텍스트 항목을 한 번에 번역"""
+        if target_lang_code == "ko" or not texts:
+            return texts
+            
+        prompt = f"""다음 JSON 데이터 내의 텍스트들을 언어 코드 '{target_lang_code}'로 번역하라.
+        JSON 키는 유지하고 값만 번역된 내용으로 교체하라. 기술 용어는 보존하라.
+        
+        [Data]
+        {json.dumps(texts, ensure_ascii=False)}
+        """
+        try:
+            import json
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
+            return json.loads(response.text)
+        except Exception as e:
+            logger.error(f"Batch translation failed: {e}")
+            return texts

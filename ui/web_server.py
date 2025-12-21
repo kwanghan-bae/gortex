@@ -33,6 +33,10 @@ class ConnectionManager:
             except:
                 pass
 
+    async def push_input(self, text: str):
+        """외부 입력을 시스템 큐에 삽입"""
+        await self.input_queue.put(text)
+
 manager = ConnectionManager()
 
 @app.websocket("/ws")
@@ -49,6 +53,8 @@ async def websocket_endpoint(websocket: WebSocket):
                     await manager.push_input(msg.get("text"))
                 elif msg.get("type") == "filter_thoughts":
                     await manager.push_input(f"/filter_thoughts {msg.get('agent', '')} {msg.get('keyword', '')}")
+                elif msg.get("type") == "set_lang":
+                    await manager.push_input(f"/set_lang {msg.get('code', 'ko')}")
             except:
                 await manager.push_input(data)
     except WebSocketDisconnect:

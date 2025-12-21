@@ -322,30 +322,30 @@ class AnalystAgent:
         
         # 1. 최근 로그 분석을 통한 성과 요약 요청
         prompt = f"""지금까지의 작업 이력과 로그를 바탕으로 이번 세션의 성과를 요약하라.
-        현재 상태: 에너지 {state.get('agent_energy')}%, 효율 {state.get('last_efficiency')}
+        현재 프로젝트 상태: 에너지 {state.get('agent_energy')}%, 최근 효율 {state.get('last_efficiency')}
         
         [State Messages]
-        {state['messages'][-15:]}
+        {state['messages'][-20:]}
         
         결과 형식 (JSON):
         {{
-            "version": "v2.x.x",
+            "version": "v2.x.x (현재 버전보다 1단계 높은 번호 제안)",
             "goal": "이번 세션의 핵심 목표",
-            "done": ["완료된 작업 1", "2"],
-            "undone": ["수행하지 못한 작업 1"],
-            "decisions": ["주요 기술적 결정 1"],
-            "next_goal": "다음 세션에 권장되는 목표"
+            "done": ["완료된 구체적 작업 1", "2"],
+            "undone": ["수행하지 못한 작업 및 이유"],
+            "decisions": ["주요 기술적 판단 및 합의 사항"],
+            "next_goal": "다음 세션에 수행할 최우선 작업 (Context 반영)"
         }}
         """
         try:
             response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
             res_data = json.loads(response.text)
             
-            # 2. session_XXXX.md 작성
+            # 2. session_XXXX.md 작성 (정확한 번호 산출)
             sessions_dir = "docs/sessions"
             os.makedirs(sessions_dir, exist_ok=True)
-            existing_sessions = [f for f in os.listdir(sessions_dir) if f.startswith("session_") and f.endswith(".md")]
-            next_num = len(existing_sessions) + 1
+            existing = [f for f in os.listdir(sessions_dir) if f.startswith("session_") and f.endswith(".md")]
+            next_num = len(existing) + 1
             session_file = os.path.join(sessions_dir, f"session_{next_num:04d}.md")
             
             session_content = f"""# Session {next_num:04d}
@@ -368,13 +368,14 @@ class AnalystAgent:
             with open(session_file, "w", encoding='utf-8') as f:
                 f.write(session_content)
 
-            # 3. release_note.md 업데이트
+            # 3. release_note.md 업데이트 (최상단 주입)
             rel_note_path = "docs/release_note.md"
             if os.path.exists(rel_note_path):
                 with open(rel_note_path, "r", encoding='utf-8') as f:
                     content = f.read()
                 
-                new_entry = f"### {res_data.get('version')} ({res_data.get('goal')})\n"
+                version_str = res_data.get('version', 'v2.x.x')
+                new_entry = f"### {version_str} ({res_data.get('goal')})\n"
                 new_entry += chr(10).join([f"- [x] {d}" for d in res_data.get('done', [])]) + "\n\n"
                 
                 marker = "## ✅ Completed (Recent Milestones)"
@@ -391,17 +392,17 @@ class AnalystAgent:
 - {res_data.get('next_goal')}
 
 ## Context
-- {res_data.get('goal')} 완료 후 자동 생성됨.
+- {res_data.get('goal')} 완료 후 자동 갱신됨 (세션 {next_num:04d}).
 
 ## Scope
 ### Do
-- {res_data.get('next_goal')} 관련 로직 구현 및 검증
+- {res_data.get('next_goal')} 관련 기능 구현 및 테스트
 
 ## Expected Outputs
-- 관련 에이전트 코드 수정 및 테스트 코드 작성
+- 관련 에이전트 수정 및 신규 문서 생성
 
 ## Completion Criteria
-- 기능을 성공적으로 수행하고 pre_commit.sh를 통과함
+- 기능을 완수하고 pre_commit.sh를 통과함
 """
             with open(next_sess_path, "w", encoding='utf-8') as f:
                 f.write(next_sess_content)
