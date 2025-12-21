@@ -30,7 +30,6 @@ class SelfHealingMemory:
 
     def learn(self, error_pattern: str, solution_action: Dict[str, Any]):
         """에러와 해결책을 학습"""
-        # 단순화를 위해 에러 메시지 정규화 후 저장
         norm_error = self._normalize_error(error_pattern)
         self.memory.append({
             "error": norm_error,
@@ -50,9 +49,17 @@ class SelfHealingMemory:
                 return item["solution"]
         return None
 
+    def get_solution_hint(self, error_msg: str) -> Optional[str]:
+        """에러 메시지에 대한 텍스트 힌트 반환"""
+        solution = self.find_solution(error_msg)
+        if solution:
+            if isinstance(solution, dict) and "action" in solution:
+                return f"Try this: {solution.get('target', '')} (Action: {solution['action']})"
+            return str(solution)
+        return None
+
     def _normalize_error(self, text: str) -> str:
         """에러 메시지에서 변하는 부분(경로 등)을 제거하여 일반화"""
-        # 예: '/users/joel/file.py' -> '<path>'
         text = re.sub(r'\/[^\s]+', '<path>', text)
         return text.strip().lower()
 

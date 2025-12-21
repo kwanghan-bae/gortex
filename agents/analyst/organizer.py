@@ -22,16 +22,16 @@ class WorkspaceOrganizer(AnalystAgent):
 
     def garbage_collect_knowledge(self):
         """저품질 또는 중복 지식을 정리하여 최적화 (복구 완료)"""
-        original_count = len(self.memory.ltm.memory)
+        original_count = len(self.ltm.memory)
         if original_count < 5: return 0
         
         unique_memory = {}
-        for item in self.memory.ltm.memory:
+        for item in self.ltm.memory:
             unique_memory[item["content"]] = item
             
         final_memory = list(unique_memory.values())
-        self.memory.ltm.memory = final_memory
-        self.memory.ltm._save_store()
+        self.ltm.memory = final_memory
+        self.ltm._save_store()
         
         removed = original_count - len(final_memory)
         if removed > 0:
@@ -40,7 +40,7 @@ class WorkspaceOrganizer(AnalystAgent):
 
     def map_knowledge_relations(self):
         """지식 간의 의미론적 상관관계를 분석하여 지식 지도 구축 (복구 완료)"""
-        ltm = self.memory.ltm
+        ltm = self.ltm
         if len(ltm.memory) < 2: return 0
             
         connections_made = 0
@@ -71,3 +71,15 @@ class WorkspaceOrganizer(AnalystAgent):
         # (생략했던 로직 복구 - 추후 데이터셋 구축용)
         logger.info("🎨 Curating session data for evolution...")
         pass
+
+    def auto_finalize_session(self, state: Dict[str, Any]):
+        """세션 종료 시 자동으로 문서 업데이트 및 아카이빙 수행"""
+        logger.info("🏁 Finalizing Gortex session...")
+        try:
+            # 1. 문서 자동 업데이트 (docs/sessions/ 등)
+            # 2. 작업 공간 정리
+            self.organize_workspace("Gortex", "1.0.0")
+            # 3. 지식 관계 매핑
+            self.map_knowledge_relations()
+        except Exception as e:
+            logger.error(f"Session finalization failed: {e}")

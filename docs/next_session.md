@@ -1,23 +1,24 @@
 # Next Session
 
-## Session Goal
-- UI 시스템 모듈화 및 테스트 커버리지 대폭 확대 (Testing Blitz v1)
+## 세션 목표
+- TUI 위젯 고도화 및 데이터 시각화 강화 (TUI Perfection Phase 2)
 
-## Context
-- v2.7.2에서 핵심 로직 모듈화가 성공적으로 안착됨.
-- 이제 `ui/dashboard.py`와 `ui/three_js_bridge.py`의 비대한 로직을 컴포넌트별로 분리하고, 전체 시스템의 테스트 케이스를 100개 이상으로 확장해야 함.
+## 컨텍스트
+- 리팩토링 유실 복구가 완료되어 시스템이 안정화됨.
+- Web UI 중단 결정에 따라, 기존에 웹에서만 볼 수 있었던 데이터(기술 부채, 토론 현황 등)를 TUI에서 더 효과적으로 보여줘야 함.
 
-## Scope
-### Do
-- `ui/dashboard.py`를 `LayoutManager`, `WidgetHandler`, `WebStreamer` 등으로 분리.
-- `ui/three_js_bridge.py`를 좌표 변환기와 기하 데이터 생성기로 분리.
-- 분리된 모든 모듈에 대해 경계값 및 예외 상황 테스트 50개 이상 신규 추가.
+## 범위 (Scope)
+### 수행할 작업 (Do)
+- `DashboardUI`의 `debt_list`, `active_debate` 데이터를 메인 화면에 더 상세히 렌더링하는 전용 위젯 추가.
+- 터미널 크기에 따른 레이아웃 최적화 (가변 창 크기 대응).
+- `AnalystAgent`의 코드 품질 리뷰 결과를 TUI에 즉각 반영하는 인터랙션 강화.
+- 실시간 활동 일지(Journal) 패널의 가독성 개선.
 
-### Do NOT
-- 시각적 디자인이나 기능을 변경하지 말 것 (오직 구조적 개선 및 검증 강화).
+### 수행하지 않을 작업 (Do NOT)
+- Web UI(React/Three.js) 관련 코드 수정 금지.
 
-## Expected Outputs
-- `ui/` 하위 신규 모듈들, `tests/` 내 대량의 신규 테스트 파일.
+## 기대 결과
+- 터미널만으로도 시스템의 모든 상태를 정밀하게 모니터링 가능한 수준의 UI 완성.
 
-## Completion Criteria
-- 모든 거대 파일의 300라인 이하 달성 및 `pre_commit.sh` 커버리지 확인 시 테스트 케이스 100개 이상 통과.
+## 완료 기준
+- 모든 신규 위젯이 에러 없이 렌더링되며, 실시간 데이터 업데이트 확인.

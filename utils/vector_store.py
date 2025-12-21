@@ -47,6 +47,19 @@ class LongTermMemory:
         with open(path, "w", encoding='utf-8') as f:
             json.dump(self.shards[namespace], f, ensure_ascii=False, indent=2)
 
+    @property
+    def memory(self) -> List[Dict[str, Any]]:
+        """AnalystAgent 등의 하위 호환성을 위해 'global' 샤드를 기본 메모리로 반환"""
+        return self._load_shard("global")
+
+    @memory.setter
+    def memory(self, value: List[Dict[str, Any]]):
+        self.shards["global"] = value
+
+    def _save_store(self):
+        """AnalystAgent 등에서 호출하는 저장 메서드 (global 샤드 저장)"""
+        self._save_shard("global")
+
     def _get_embedding(self, text: str) -> List[float]:
         """Gemini API를 사용하여 텍스트 임베딩 생성"""
         try:

@@ -276,8 +276,40 @@ class DashboardUI:
         if self.web_manager:
             asyncio.create_task(self._broadcast_to_web())
 
+    def render_thought_tree(self) -> Group:
+        """사고 트리를 터미널용 계층 구조로 렌더링"""
+        if not self.thought_tree:
+            return Group(Text("No thought tree available.", style="dim"))
+
+        tree_display = []
+        # 부모-자식 관계 맵 생성
+        children = {}
+        roots = []
+        for item in self.thought_tree:
+            p_id = item.get("parent_id")
+            if not p_id:
+                roots.append(item)
+            else:
+                if p_id not in children: children[p_id] = []
+                children[p_id].append(item)
+
+        def add_node(node, indent=0):
+            prefix = "  " * indent + ("┗━ " if indent > 0 else "● ")
+            type_color = "cyan" if node["type"] == "analysis" else ("yellow" if node["type"] == "design" else "green")
+            line = Text(prefix)
+            line.append(node["text"], style=f"bold {type_color}")
+            tree_display.append(line)
+            
+            for child in children.get(node["id"], []):
+                add_node(child, indent + 1)
+
+        for root in roots:
+            add_node(root)
+            
+        return Group(*tree_display)
+
     def update_thought(self, thought: str, agent_name: str = "agent", tree: list = None):
-        """에이전트의 사고 과정 실시간 업데이트 (타임라인 스냅샷 포함)"""
+        """에이전트의 사고 과정 실시간 업데이트 (TUI 트리 렌더링 추가)"""
         self.agent_thought = thought
         if tree:
             self.thought_tree = tree
@@ -300,7 +332,17 @@ class DashboardUI:
 
         style = self.agent_colors.get(agent_name.lower(), "agent.manager")
         title = f"💭 [{style}]AGENT REASONING ({agent_name.upper()})[/{style}]"
-        self.layout["thought"].update(Panel(Text(thought, style="italic cyan"), title=title, border_style="cyan", padding=(1, 2)))
+        
+        # 트리 데이터가 있으면 트리와 함께 표시
+        if self.thought_tree:
+            thought_group = Group(
+                Text(thought, style="italic cyan"),
+                Text("\n[Thought Tree Structure]", style="bold dim"),
+                self.render_thought_tree()
+            )
+            self.layout["thought"].update(Panel(thought_group, title=title, border_style="cyan", padding=(1, 2)))
+        else:
+            self.layout["thought"].update(Panel(Text(thought, style="italic cyan"), title=title, border_style="cyan", padding=(1, 2)))
         
         if self.web_manager:
             asyncio.create_task(self._broadcast_to_web())

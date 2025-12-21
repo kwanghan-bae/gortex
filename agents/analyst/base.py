@@ -7,6 +7,7 @@ from datetime import datetime
 from gortex.core.auth import GortexAuth
 from gortex.core.state import GortexState
 from gortex.core.evolutionary_memory import EvolutionaryMemory
+from gortex.utils.vector_store import LongTermMemory
 
 logger = logging.getLogger("GortexAnalystBase")
 
@@ -15,6 +16,7 @@ class AnalystAgent:
     def __init__(self):
         self.auth = GortexAuth()
         self.memory = EvolutionaryMemory()
+        self.ltm = LongTermMemory() # LTM 직접 소유 (복구)
 
     def calculate_efficiency_score(self, success: bool, tokens: int, latency_ms: int, energy_cost: int) -> float:
         """작업의 효율성을 수치화 (0~100) - 원본 정교한 공식 복구"""

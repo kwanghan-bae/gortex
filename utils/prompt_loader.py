@@ -9,15 +9,21 @@ class PromptLoader:
     """
     외부 YAML 파일로부터 에이전트 프롬프트 템플릿을 로드하고 관리함.
     """
-    def __init__(self, prompt_dir: str = "docs/prompts"):
-        self.prompt_dir = prompt_dir
+    def __init__(self, prompt_dir: str = None):
+        if prompt_dir is None:
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            self.prompt_dir = os.path.join(base_dir, "docs/prompts")
+        else:
+            self.prompt_dir = prompt_dir
         self.templates = self._load_all_templates()
         self.personas = self._load_personas()
 
     def _load_personas(self) -> Dict[str, Any]:
-        path = "docs/i18n/personas.json"
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        path = os.path.join(base_dir, "docs/i18n/personas.json")
         if os.path.exists(path):
             try:
+                import json
                 with open(path, 'r', encoding='utf-8') as f:
                     return json.load(f)
             except:

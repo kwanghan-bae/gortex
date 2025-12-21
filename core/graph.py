@@ -112,4 +112,7 @@ def compile_gortex_graph():
     workflow.add_edge("researcher", "manager")
     workflow.add_edge("optimizer", "manager")
 
-    return workflow
+    # 그래프 컴파일 (체크포인터 추가)
+    from langgraph.checkpoint.memory import MemorySaver
+    checkpointer = MemorySaver()
+    return workflow.compile(checkpointer=checkpointer)

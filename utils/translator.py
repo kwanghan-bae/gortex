@@ -14,8 +14,13 @@ class SystemTranslator:
         self._load_all_dicts()
 
     def _load_all_dicts(self):
-        i18n_dir = "docs/i18n"
-        if not os.path.exists(i18n_dir): return
+        # 파일의 위치를 기준으로 상대 경로 설정
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        i18n_dir = os.path.join(base_dir, "docs/i18n")
+        if not os.path.exists(i18n_dir): 
+            # Fallback for different execution contexts
+            i18n_dir = "gortex/docs/i18n"
+            if not os.path.exists(i18n_dir): return
         
         for file in os.listdir(i18n_dir):
             if file.endswith(".json"):

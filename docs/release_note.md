@@ -13,6 +13,12 @@
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
 
+### v2.7.3 (2025-12-21)
+- **리팩토링 유실 복구**: `SelfHealingMemory`, `LongTermMemory` 하위 호환성 전수 복구.
+- **TUI 시각화**: 사고 트리(Thought Tree) 터미널 렌더링 기능 추가.
+- **안정성 강화**: 그래프 컴파일 로직 수정 및 런타임 에러(KeyError, TypeError) 해결.
+- **전략 업데이트**: Web UI 개발 잠정 중단 및 TUI 우선 순위 설정.
+
 ### v2.7.2 (Core Modularization & High-Rigor Testing)
 - [x] **Architecture**: 1,000라인의 `main.py`를 `engine`, `commands`, `terminal`로 완벽히 해체 및 기능별 전문화 (유실 로직 전수 복구)
 - [x] **Refactoring**: `analyst.py`를 `reflection`, `organizer`, `base` 서브 모듈로 분산하여 지식 정리 및 아카이빙 로직 정교화
