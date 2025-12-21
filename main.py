@@ -680,6 +680,17 @@ async def run_gortex():
                                     latency_ms=node_latency_ms,
                                     tokens={"output": node_tokens}
                                 )
+                                
+                                # [PRE-FETCH] 예측 로딩 수행
+                                if output.get("pre_fetch"):
+                                    from gortex.utils.tools import read_file
+                                    for pf_path in output["pre_fetch"]:
+                                        if pf_path not in session_cache:
+                                            # 백그라운드 로드 (단순화: 여기서는 동기 로드 후 캐시 업데이트)
+                                            read_file(pf_path)
+                                            session_cache[pf_path] = get_file_hash(pf_path)
+                                            logger.info(f"🚀 Pre-fetched: {pf_path}")
+
                                 if "file_cache" in output: session_cache.update(output["file_cache"])
                                 await asyncio.sleep(0.01)
                                 ui.reset_thought_style()

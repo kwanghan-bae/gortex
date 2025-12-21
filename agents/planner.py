@@ -71,7 +71,7 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
         base_instruction += f"\n\n[USER-SPECIFIC EVOLVED RULES]\n{constraints_str}"
 
     config = types.GenerateContentConfig(
-        system_instruction=base_instruction + "\n\n[Thought Tree Rules]\n사용자의 목표를 달성하기 위한 설계 과정을 논리적인 트리 구조(분석 -> 설계 -> 검증 계획)로 구성하라.\n\n[Architecture Sketcher]\n복잡한 로직이나 모듈 간 상호작용이 필요한 경우, 반드시 'diagram_code' 필드에 Mermaid 형식의 다이어그램 코드를 작성하라.\n\n[Self-Consistency Rules]\n계획을 확정하기 전, 반드시 'internal_critique' 단계에서 설계의 누락 사항이나 모순을 재검토하라.",
+        system_instruction=base_instruction + "\n\n[Thought Tree Rules]\n사용자의 목표를 달성하기 위한 설계 과정을 논리적인 트리 구조(분석 -> 설계 -> 검증 계획)로 구성하라.\n\n[Architecture Sketcher]\n복잡한 로직이나 모듈 간 상호작용이 필요한 경우, 반드시 'diagram_code' 필드에 Mermaid 형식의 다이어그램 코드를 작성하라.\n\n[Self-Consistency Rules]\n계획을 확정하기 전, 반드시 'internal_critique' 단계에서 설계의 누락 사항이나 모순을 재검토하라.\n\n[Predictive Pre-fetching]\n다음 단계에서 필요할 것으로 예상되는 리소스(파일 읽기 등)가 있다면 'pre_fetch' 리스트에 포함시켜 시스템 지연 시간을 최적화하라.",
         temperature=0.0,
         response_mime_type="application/json",
         response_schema={
@@ -88,11 +88,16 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
                             "parent_id": {"type": "STRING", "nullable": True},
                             "text": {"type": "STRING"},
                             "type": {"type": "STRING", "enum": ["analysis", "design", "verification"]},
-                            "priority": {"type": "INTEGER", "description": "1~5"},
-                            "certainty": {"type": "NUMBER", "description": "0.0~1.0"}
+                            "priority": {"type": "INTEGER"},
+                            "certainty": {"type": "NUMBER"}
                         },
                         "required": ["id", "text", "type", "priority", "certainty"]
                     }
+                },
+                "pre_fetch": {
+                    "type": "ARRAY",
+                    "items": {"type": "STRING"},
+                    "description": "다음 단계들을 위해 미리 로드해둘 파일 경로 목록"
                 },
                 "diagram_code": {"type": "STRING", "description": "Mermaid 형식의 아키텍처 다이어그램 코드 (선택사항)"},
                 "goal": {"type": "STRING"},
@@ -104,7 +109,7 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
                             "id": {"type": "INTEGER"},
                             "action": {
                                 "type": "STRING", 
-                                "enum": ["read_file", "write_file", "execute_shell", "list_files"]
+                                "enum": ["read_file", "write_file", "execute_shell", "list_files", "apply_patch"]
                             },
                             "target": {"type": "STRING"},
                             "reason": {"type": "STRING"}
@@ -143,6 +148,10 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
             "next_node": "coder",
             "messages": [("ai", f"계획을 수립했습니다: {plan_data.get('goal')} ({len(plan_steps)} steps)")]
         }
+        
+        if plan_data.get("pre_fetch"):
+            updates["pre_fetch"] = plan_data["pre_fetch"]
+            logger.info(f"🚀 Pre-fetching suggested for {len(plan_data['pre_fetch'])} files.")
         
         if plan_data.get("diagram_code"):
             updates["diagram_code"] = plan_data["diagram_code"]
