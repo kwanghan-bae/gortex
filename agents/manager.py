@@ -78,6 +78,11 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
             break
 
 
+    # 에너지 상태에 따른 지침 주입
+    energy = state.get("agent_energy", 100)
+    if energy < 50:
+        base_instruction += f"\n\n[Energy Alert] 현재 너의 에너지가 {energy}%로 낮다. 가급적 가벼운 모델로 처리 가능한 단순한 계획을 수립하고, 불필요한 도구 호출을 자제하라."
+
     config = types.GenerateContentConfig(
         system_instruction=base_instruction + "\n\n[Thought Tree Rules]\n사고 과정을 논리적인 트리 구조로 세분화하라. 루트 노드에서 시작하여 분석, 판단, 결론으로 이어지는 노드 리스트를 생성하라.\n\n[Self-Consistency Rules]\n최종 결정을 내리기 전, 반드시 'internal_critique' 단계에서 자신의 논리적 모순이나 위험 요소를 비판적으로 재검토하라.",
         temperature=0.0,
@@ -118,11 +123,13 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     )
 
     # 2. Gemini 호출을 통한 의도 분석 및 라우팅 결정
-    # 최근 API 호출 빈도에 따라 모델 선택 (Adaptive Throttling)
+    # 최근 API 호출 빈도 및 에너지 수준에 따라 모델 선택 (Adaptive Throttling & Energy Awareness)
     call_count = state.get("api_call_count", 0)
-    if call_count > 10:
+    
+    if call_count > 10 or energy < 30:
         model_id = "gemini-2.5-flash-lite"
-        logger.warning(f"⚠️ High API usage ({call_count}). Throttling to {model_id}")
+        reason = "High API usage" if call_count > 10 else "Low Energy"
+        logger.warning(f"⚠️ {reason} ({call_count}/{energy}). Throttling to {model_id}")
     else:
         # 설정된 기본 모델 사용
         from gortex.core.config import GortexConfig
@@ -131,7 +138,7 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     response = auth.generate(
         model_id=model_id,
         contents=state["messages"],
-        config=config
+        config=config 
     )
 
 
@@ -142,11 +149,15 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         logger.info(f"Manager Thought: {res_data.get('thought')}")
         logger.info(f"Critique: {res_data.get('internal_critique')}")
         
+        # 에너지 소모 기록 (단순화: 매 턴 5% 감소)
+        new_energy = max(0, energy - 5)
+        
         updates = {
             "thought": res_data.get("thought"),
             "internal_critique": res_data.get("internal_critique"),
             "thought_tree": res_data.get("thought_tree"),
-            "next_node": res_data.get("next_node", "__end__")
+            "next_node": res_data.get("next_node", "__end__"),
+            "agent_energy": new_energy
         }
         
         if res_data.get("parallel_tasks"):

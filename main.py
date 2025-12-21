@@ -657,6 +657,7 @@ async def run_gortex():
     total_tokens, total_cost = 0, 0.0
     total_latency_ms, node_count = 0, 0
     agent_economy = {} # 에이전트 평판 및 포인트 데이터
+    agent_energy = 100 # 가상 에너지 (기본 100%)
     
     # 세션별 파일 캐시 관리 (Isolation)
     cache_path = "logs/file_cache.json"
@@ -734,7 +735,8 @@ async def run_gortex():
                         "file_cache": session_cache,
                         "active_constraints": evo_mem.get_active_constraints(user_input),
                         "api_call_count": auth_engine.get_call_count(),
-                        "agent_economy": agent_economy
+                        "agent_economy": agent_economy,
+                        "agent_energy": agent_energy
                     }
                     if cmd_status == "summarize": initial_state["messages"] = [("system", "Manual summary trigger")] * 12
                     elif cmd_status == "scout": initial_state["next_node"] = "trend_scout"
@@ -820,6 +822,10 @@ async def run_gortex():
                                             "type": "agent_economy",
                                             "data": agent_economy
                                         }, ensure_ascii=False)))
+
+                                # [ENERGY] 에너지 상태 업데이트
+                                if "agent_energy" in output:
+                                    agent_energy = output["agent_energy"]
 
                                 # 정밀 프로파일링 및 인과 관계 기록
                                 last_event_id = observer.log_event(

@@ -64,9 +64,15 @@
 - [x] **Intelligence**: 에이전트가 생성한 코드의 'Time Complexity'와 'Memory Footprint'를 예측하여 보고하는 'Resource Profiler' 기능 구현
 - [x] **Interface**: 인덱싱된 코드 내의 모든 함수 호출 관계를 3D 토폴로지 맵으로 시각화하는 'Call Graph 3D' 구현
 - [x] **Infrastructure**: 에이전트의 사고 과정을 VR/AR 기기에서 입체적으로 체험할 수 있는 'Spatial Reasoning SDK' 기초 설계
-- [ ] **Intelligence**: 에이전트가 도구 호출 시 스스로의 '에너지 수준'을 관리하며 효율적으로 작업하는 'Energy-Aware Tasking' 구현
+- [x] **Intelligence**: 에이전트가 도구 호출 시 스스로의 '에너지 수준'을 관리하며 효율적으로 작업하는 'Energy-Aware Tasking' 구현
 
 ## ✅ Completed
+### v2.2.9 (Energy-Aware Tasking & Work-Life Balance)
+- [x] `core/state.py`: 에이전트의 가상 에너지 상태를 나타내는 `agent_energy` 필드 추가 (0~100)
+- [x] `agents/manager.py`: 에너지 수준이 낮거나 API 호출이 빈번할 경우 자동으로 경량 모델(`flash-lite`)로 전환하는 지능형 스케줄링 구현
+- [x] `main.py`: 에이전트의 작업 결과에 따라 에너지 소모가 세션 간 지속되도록 상태 업데이트 로직 강화
+- [x] `agents/manager.py`: 에너지가 부족할 경우 복잡한 도구 호출을 자제하고 단순한 계획을 수립하도록 시스템 프롬프트 동적 주입
+
 ### v2.2.8 (Spatial Reasoning SDK & WebXR Foundation)
 - [x] `ui/three_js_bridge.py`: VR/AR 기기와의 상호작용을 위한 공간 메타데이터(Glow, Haptic, Scale) 생성 로직 추가
 - [x] `ui/web_server.py`: WebXR 기기를 식별하고 전용 고주파 스트리밍을 지원하는 멀티 기기 WebSocket 관리 시스템 구축

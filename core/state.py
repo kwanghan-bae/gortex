@@ -31,4 +31,8 @@ class GortexState(TypedDict):
     # 6. Agent Economy (게임화 및 평판)
     # {agent_name: {"points": int, "level": str, "achievements": List[str]}}
     agent_economy: Dict[str, Dict[str, Any]] 
+    
+    # 7. Energy Awareness (작업 여력 관리)
+    # 0~100 사이의 가상 에너지 수치
+    agent_energy: int 
 
