@@ -151,3 +151,28 @@ def deep_integrity_check(working_dir: str, current_cache: Dict[str, str]) -> Tup
             deleted_files.append(path)
             
     return updated_cache, changed_files + [f"(deleted) {p}" for p in deleted_files]
+
+def apply_patch(path: str, start_line: int, end_line: int, new_content: str) -> str:
+    """
+    파일의 특정 범위(start_line~end_line)를 새로운 내용으로 교체합니다. (1-based index)
+    """
+    try:
+        if not os.path.exists(path):
+            return f"Error: File not found at {path}"
+            
+        with open(path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            
+        # 범위 유효성 검사
+        if start_line < 1 or end_line > len(lines) or start_line > end_line:
+            return f"Error: Invalid line range {start_line}-{end_line} (Total lines: {len(lines)})"
+            
+        # 패치 적용 (0-based 인덱스로 변환)
+        # lines[start-1:end] 를 교체
+        new_lines = lines[:start_line-1] + [new_content + "\n"] + lines[end_line:]
+        
+        # 원자적 쓰기 활용
+        write_file(path, "".join(new_lines))
+        return f"Successfully applied patch to {path} at lines {start_line}-{end_line}."
+    except Exception as e:
+        return f"Error applying patch: {str(e)}"

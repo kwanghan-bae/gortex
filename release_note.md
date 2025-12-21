@@ -38,10 +38,16 @@
 - [x] **System**: 에이전트가 코드를 작성할 때 사용자의 스타일을 학습하여 반영하는 'Style Mimicry' 엔진 추가
 - [x] **Infrastructure**: 시스템 내부의 모든 노드 간 통신 및 상태 보호를 위한 'Secure Node Transport' 구축
 - [x] **Intelligence**: 에이전트가 작업 중 스스로의 논리적 모순을 검증하는 'Self-Consistency' 체크 엔진 도입
-- [x] **Infrastructure**: 에이전트의 사고 과정을 주기적으로 아카이빙하여 성능 개선 데이터셋으로 변환하는 'Dataset Generator' 추가
-- [ ] **System**: 에이전트가 도구 호출 시 '가상 커서(Virtual Cursor)'를 사용하여 코드의 특정 위치를 정확히 수정하는 지능형 편집 모드 도입
+- [x] **System**: 에이전트가 도구 호출 시 '가상 커서(Virtual Cursor)'를 사용하여 코드의 특정 위치를 정확히 수정하는 정밀 편집 모드 도입
+- [ ] **Infrastructure**: 에이전트의 작업 실행 속도를 2배 이상 높이는 'Predictive Pre-fetching' 인프라 구축
 
 ## ✅ Completed
+### v2.0.0 (Virtual Cursor & Precision Editing)
+- [x] `utils/tools.py`: 파일 전체 덮어쓰기 없이 특정 줄 범위를 교체하는 정밀 편집 도구 `apply_patch` 구현
+- [x] `agents/coder.py`: 대규모 파일 수정 시 `apply_patch`를 우선적으로 활용하여 토큰 효율성과 편집 정확도를 높이는 로직 도입
+- [x] `agents/coder.py`: 도구 호출 전 예상 결과와 위험을 미리 시뮬레이션하는 'Mental Sandbox' 워크플로우 정식 통합
+- [x] `agents/coder.py`: 구조화된 사고 트리 및 메타데이터(Certainty, Priority)를 응답 스키마에 기본 반영하여 추론 투명성 확보
+
 ### v1.9.9 (Dataset Generator & Learning Loop)
 - [x] `agents/analyst.py`: 세션 로그를 분석하여 성공적인 추론 케이스를 추출하고 파인튜닝용 데이터셋 형식으로 변환하는 `curate_session_data` 구현
 - [x] `main.py`: 세션 종료 시 고품질 데이터를 선별하여 `logs/datasets/` 디렉토리에 JSONL 형식으로 자동 아카이빙하는 파이프라인 구축
