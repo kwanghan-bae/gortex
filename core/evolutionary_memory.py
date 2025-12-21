@@ -108,6 +108,27 @@ class EvolutionaryMemory:
             context=f"Score: {score} | Context: {context}"
         )
 
+    def save_macro(self, name: str, steps: List[str], description: str = ""):
+        """사용자가 정의한 매크로(Skill) 저장"""
+        macro_id = f"MACRO_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        new_macro = {
+            "id": macro_id,
+            "type": "macro",
+            "name": name,
+            "steps": steps,
+            "description": description,
+            "trigger_patterns": [name], # 매크로 이름이 트리거
+            "created_at": datetime.now().isoformat(),
+            "usage_count": 0
+        }
+        self.memory.append(new_macro)
+        self._persist()
+        logger.info(f"New macro saved: {name}")
+
+    def get_macros(self) -> List[Dict[str, Any]]:
+        """저장된 모든 매크로 반환"""
+        return [m for m in self.memory if m.get("type") == "macro"]
+
     def _persist(self):
         try:
             with open(self.file_path, 'w', encoding='utf-8') as f:
@@ -116,9 +137,12 @@ class EvolutionaryMemory:
             logger.error(f"Failed to persist evolutionary memory: {e}")
 
     def get_active_constraints(self, context_text: str) -> List[str]:
-        """컨텍스트와 매칭되는 활성 제약 조건(규칙) 목록 반환"""
+        """컨텍스트와 매칭되는 활성 제약 조건(규칙) 목록 반환 (매크로 제외)"""
         active_rules = []
         for rule in self.memory:
+            if rule.get("type") == "macro":
+                continue # 매크로는 제약조건이 아님
+                
             if any(pattern.lower() in context_text.lower() for pattern in rule["trigger_patterns"]):
                 active_rules.append(rule["learned_instruction"])
                 rule["usage_count"] = rule.get("usage_count", 0) + 1

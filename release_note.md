@@ -67,6 +67,10 @@
 - [x] **Intelligence**: 에이전트가 도구 호출 시 스스로의 '에너지 수준'을 관리하며 효율적으로 작업하는 'Energy-Aware Tasking' 구현
 
 ## ✅ Completed
+### v2.2.18 (Natural Language Macro)
+- [x] `core/evolutionary_memory.py`: 매크로(Skill) 저장(`save_macro`) 및 조회(`get_macros`) 기능 구현
+- [x] `agents/manager.py`: 사용자가 정의한 매크로를 학습하거나 실행하도록 지시하는 시스템 프롬프트 로직 추가
+
 ### v2.2.17 (Automated Test Generation)
 - [x] `agents/planner.py`: 코드 수정 시 반드시 단위 테스트(`tests/test_*.py`) 작성 단계를 포함하도록 계획 수립 로직 강화
 - [x] `agents/coder.py`: `unittest` 기반의 테스트 코드 작성 가이드라인을 시스템 프롬프트에 추가하여 품질 표준화

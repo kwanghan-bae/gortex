@@ -1,24 +1,25 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-21
-**Status:** Automated Test Generation Complete (v2.2.17)
+**Status:** Natural Language Macro Complete (v2.2.18)
 
 ## 🧠 Current Context
-시스템은 품질(테스트), 효율(에너지), 진화(리팩토링)의 3박자를 갖추었습니다. 이제 사용자가 자신만의 워크플로우를 시스템에 가르칠 수 있는 '자연어 매크로(Natural Language Macro)' 기능을 도입하여 개인화된 경험을 극대화해야 합니다.
+시스템은 매크로를 통해 사용자의 워크플로우를 학습합니다. 이제 프로젝트의 건강 상태를 더 깊이 파악하기 위해, 코드베이스 전체의 복잡도(Complexity)를 시각화하여 기술 부채(Technical Debt)가 쌓인 곳을 알려주는 기능이 필요합니다.
 
 ## 🎯 Next Objective
-**Natural Language Macro (Skill Learning v1)**
-1. **`Macro Recognition`**: `agents/manager.py`가 "앞으로 X라고 하면 Y, Z를 수행해"와 같은 사용자의 가르침(Teaching) 의도를 인식합니다.
-2. **`Skill Memory`**: `core/evolutionary_memory.py`에 새로운 스킬(매크로)을 저장하고, 이후 `planner`가 이를 참조하여 복합적인 작업을 단일 명령어로 수행할 수 있도록 확장합니다.
+**Code Complexity Heatmap (Technical Debt Visualization)**
+1. **`Complexity Scanner`**: `agents/analyst.py`가 프로젝트 내 모든 소스 코드를 스캔하여 파일별 사이클로매틱 복잡도(Cyclomatic Complexity)를 계산하고 점수화합니다.
+2. **`Debt Dashboard`**: 가장 복잡도가 높은 상위 5개 파일과 점수를 대시보드(터미널/웹)에 'Technical Debt' 패널로 시각화합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 테스트 자동 생성 로직 완료 (v2.2.17).
-- 다음 목표: 자연어 매크로 학습 기능 구현.
+- 매크로 기능 구현 완료 (v2.2.18).
+- 다음 목표: 코드 복잡도 히트맵 시각화.
 
 작업 목표:
-1. `agents/manager.py`의 시스템 프롬프트에 "사용자가 새로운 작업 패턴을 가르치려 할 때(If user teaches a new macro...)"에 대한 처리 지침을 추가해줘.
-2. `core/evolutionary_memory.py`에 매크로(Macro) 형태의 지식을 별도로 저장하고 관리하는 `save_macro` 및 `get_macro` 메서드를 구현해줘.
+1. `agents/analyst.py`에 `scan_project_complexity` 메서드를 추가하여 전체 파일의 복잡도를 계산해줘 (외부 라이브러리 `radon` 사용 시도, 없으면 간단한 분기문 카운팅 로직 사용).
+2. `main.py`에서 주기적으로(또는 `/scan_debt` 명령어로) 이 메서드를 호출하고, 결과를 `ui.update_debt_panel`로 전달해줘.
+3. `ui/dashboard.py`에 `Technical Debt` 패널을 추가해줘.
 ```

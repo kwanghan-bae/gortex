@@ -5,6 +5,7 @@ from typing import Dict, List, Any
 from google.genai import types
 from gortex.core.auth import GortexAuth
 from gortex.core.state import GortexState
+from gortex.core.evolutionary_memory import EvolutionaryMemory
 from gortex.utils.log_vectorizer import SemanticLogSearch
 from gortex.utils.translator import SynapticTranslator
 from gortex.utils.vector_store import LongTermMemory
@@ -20,6 +21,7 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     log_search = SemanticLogSearch()
     translator = SynapticTranslator()
     ltm = LongTermMemory()
+    evo_mem = EvolutionaryMemory()
     
     # 1. 언어 감지 및 번역 (다국어 지원)
     last_msg_obj = state["messages"][-1]
@@ -44,14 +46,27 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         for i, case in enumerate(past_cases):
             case_context += f"Case {i+1}: {case.get('agent')} encountered {case.get('event')}. Payload: {json.dumps(case.get('payload'))}\n"
 
-    # 4. 시스템 프롬프트 구성
+    # 4. 학습된 매크로 확인
+    macros = evo_mem.get_macros()
+    macro_context = ""
+    if macros:
+        macro_context = "\n[Learned Macros (User-Defined Skills)]\n"
+        for m in macros:
+            macro_context += f"- Command: '{m['name']}' -> Steps: {m['steps']}\n"
+
+    # 5. 시스템 프롬프트 구성
     base_instruction = f"""너는 Gortex v1.0 시스템의 수석 매니저(Manager)다.
 사용자의 요청을 분석하여 다음 중 가장 적합한 에이전트에게 작업을 배분하라.
 {ltm_context}
 {case_context}
+{macro_context}
 
 [Speculative Reasoning Rules]
 사용자의 요청이 복잡하거나 해결 방법이 여러 가지인 경우, 'swarm' 노드를 통해 병렬 검토하라.
+
+[Macro Learning Rules]
+1. 사용자가 "배워(Learn): [명령어]는 [작업1], [작업2]...를 의미해"라고 하면, 이를 새로운 매크로로 저장하도록 'analyst'에게 요청하라.
+2. 사용자가 저장된 매크로 명령어(예: "배포 실행해")를 사용하면, 정의된 단계들을 실행 계획에 포함시키도록 'planner'에게 상세히 지시하라.
 
 [Agent Factory Rules]
 만약 현재 가용한 에이전트(planner, researcher, analyst)로 처리하기에 지나치게 전문화된 영역(예: 양자역학 분석, 특정 게임 엔진 튜닝 등)이 반복적으로 요청된다면, 새로운 전문 에이전트의 생성을 결정하라. 
@@ -60,7 +75,7 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
 에이전트 역할:
 - planner: 코드 작성, 버그 수정, 에이전트 자가 생성(Agent Factory) 등 모든 개발 관련 작업.
 - researcher: 최신 정보 검색, 기술 조사.
-- analyst: 데이터 분석, 피드백 분석.
+- analyst: 데이터 분석, 피드백 분석, 매크로 저장.
 - swarm: 병렬 추론 및 분산 처리.
 """
 
