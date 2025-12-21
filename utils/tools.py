@@ -199,3 +199,21 @@ def register_new_node(node_name: str, function_name: str, file_name: str) -> str
         return f"✅ Successfully registered node '{node_name}' in core/graph.py. System reboot required."
     except Exception as e:
         return f"❌ Failed to register node: {e}"
+
+def scan_security_risks(code: str) -> List[Dict[str, str]]:
+    """생성된 코드 내의 보안 취약점 패턴 스캔"""
+    risks = []
+    patterns = [
+        (r"(?i)(password|passwd|secret|api_key|token)\s*=\s*['\"][^'\"]+['\"]", "Hardcoded Secret"),
+        (r"eval\(", "Dangerous function: eval()"),
+        (r"exec\(", "Dangerous function: exec()"),
+        (r"os\.system\(", "Dangerous function: os.system()"),
+        (r"subprocess\.Popen\(.*shell=True", "Subprocess with shell=True"),
+        (r"cursor\.execute\(f?['\"].*\{.*\}", "Potential SQL Injection")
+    ]
+    
+    for pattern, risk_type in patterns:
+        if re.search(pattern, code):
+            risks.append({"type": risk_type, "pattern": pattern})
+            
+    return risks

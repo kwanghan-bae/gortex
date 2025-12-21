@@ -55,9 +55,16 @@
 - [x] **Intelligence**: 프로젝트 전체의 복잡한 비즈니스 로직을 자연어 문서로 자동 역설계하는 'Code Explainer' 기능 구축
 - [x] **Infrastructure**: 에이전트 간의 협업 도중 발생한 모든 의사결정의 인과 관계를 추적하고 그래프로 저장하는 'Causal Tracking' 구축
 - [x] **Intelligence**: 시스템의 모든 도구 호출 및 의사결정 내역을 인간이 읽기 쉬운 'Activity Stream'으로 실시간 변환하는 'Journalist' 노드 구현
-- [ ] **System**: 에이전트가 코드를 작성할 때 보안 위협(Injection, XSS 등)을 실시간으로 스캔하고 차단하는 'Shielded Code Generation' 엔진 추가
+- [x] **System**: 에이전트가 코드를 작성할 때 보안 위협(Injection, XSS 등)을 실시간으로 스캔하고 차단하는 'Shielded Code Generation' 엔진 구축
+- [ ] **Infrastructure**: 다중 에이전트의 작업 결과를 시각적으로 요약하고 최종 승인을 관리하는 'Reviewer Dashboard' 구축
 
 ## ✅ Completed
+### v2.2.0 (Shielded Code Generation & Security Guard)
+- [x] `utils/tools.py`: 하드코딩된 비밀번호, SQL 인젝션, 위험한 시스템 호출 등 주요 보안 취약점을 탐지하는 `scan_security_risks` 정적 분석 엔진 구현
+- [x] `agents/coder.py`: 파일 수정 도구(`write_file`, `apply_patch`) 실행 전 실시간 보안 검사를 의무화하여 취약점 감지 시 즉시 차단하는 가드 로직 안착
+- [x] `agents/coder.py`: 보안 가이드라인과 함께 에이전트에게 재작성을 지시하여 '보안이 검증된 코드'만 저장되도록 하는 지능형 워크플로우 강화
+- [x] `utils/tools.py`: 정규식 기반의 6대 핵심 보안 위험 패턴 스캔 기능을 통해 실시간 코드 안정성 확보
+
 ### v2.1.9 (Journalist Node & Activity Stream)
 - [x] `agents/analyst.py`: 기술적인 로그를 친근하고 명확한 자연어 문장으로 변환하는 `journalize_activity` 엔진 구현
 - [x] `ui/dashboard.py`: 실시간으로 생성된 활동 저널을 저장하고 관리하는 `activity_stream` 데이터 구조 및 인터페이스 추가

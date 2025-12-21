@@ -5,7 +5,7 @@ from typing import Dict, Any, List
 from google.genai import types
 from gortex.core.auth import GortexAuth
 from gortex.core.state import GortexState
-from gortex.utils.tools import read_file, write_file, execute_shell, list_files, get_file_hash, apply_patch
+from gortex.utils.tools import read_file, write_file, execute_shell, list_files, get_file_hash, apply_patch, scan_security_risks
 from gortex.utils.healing_memory import SelfHealingMemory
 
 logger = logging.getLogger("GortexCoder")
@@ -194,6 +194,23 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
         fargs = fc.args
         result_msg = ""
         new_file_cache = state.get("file_cache", {}).copy()
+
+        # [SECURITY SCAN] 도구 호출 전 실시간 보안 검사
+        if fname in ["write_file", "apply_patch"]:
+            code_to_check = fargs.get("content") or fargs.get("new_content", "")
+            risks = scan_security_risks(code_to_check)
+            if risks:
+                logger.warning(f"🚨 Security risks detected!")
+                return {
+                    "thought": f"보안 취약점 감지: {risks[0]['type']}",
+                    "thought_tree": coder_tree,
+                    "coder_iteration": current_iteration + 1,
+                    "messages": [
+                        ("ai", f"❌ 보안 취약점({risks[0]['type']}) 감지로 실행이 차단되었습니다."),
+                        ("system", "보안 가이드라인을 준수하여 다시 작성하십시오.")
+                    ],
+                    "next_node": "coder"
+                }
 
         if fname == "write_file":
             result_msg = write_file(fargs["path"], fargs["content"])
