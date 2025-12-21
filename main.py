@@ -31,6 +31,7 @@ from gortex.utils.git_tool import GitTool
 from gortex.utils.notifier import Notifier
 from gortex.utils.resource_monitor import ResourceMonitor
 from gortex.utils.crypto import GortexCrypto
+from gortex.utils.vocal_bridge import VocalBridge
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -108,6 +109,15 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
             ui.chat_history.append(("system", f"✅ 설정 변경됨: {key} = {val}"))
         else:
             ui.chat_history.append(("system", "사용법: /config [key] [value] 또는 /config (조회)"))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/voice":
+        config = GortexConfig()
+        current = config.get("voice_enabled", False)
+        config.set("voice_enabled", not current)
+        status = "활성화" if not current else "비활성화"
+        ui.chat_history.append(("system", f"🔊 음성 인터랙션이 {status}되었습니다."))
         ui.update_main(ui.chat_history)
         return "skip"
     
@@ -550,7 +560,8 @@ async def run_gortex():
     ui = DashboardUI(console)
     observer = GortexObserver()
     res_monitor = ResourceMonitor()
-    crypto = GortexCrypto() # 보안 엔진 초기화
+    crypto = GortexCrypto() 
+    vocal = VocalBridge() # 음성 엔진 초기화
     
     # [MONITOR] 리소스 모니터링 백그라운드 루프
     async def monitor_loop():
@@ -671,6 +682,12 @@ async def run_gortex():
                                         role, content = (msg[0], msg[1]) if isinstance(msg, tuple) else (msg.type, msg.content)
                                         ui.chat_history.append((role, content))
                                         
+                                        # [VOICE] 음성 출력 처리
+                                        if role == "ai" and GortexConfig().get("voice_enabled"):
+                                            if isinstance(content, str) and len(content) < 500:
+                                                vocal.text_to_speech(content)
+                                                vocal.play_audio("logs/response.mp3")
+
                                         # [ACHIEVEMENT] 주요 마일스톤 감지
                                         if role == "ai":
                                             if "모든 계획된 작업을 완료했습니다" in str(content):

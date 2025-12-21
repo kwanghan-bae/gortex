@@ -47,9 +47,16 @@
 - [x] **Interface**: 에이전트의 사고 과정과 시뮬레이션 결과를 결합하여 보여주는 'Immersive Reasoning' 웹 UI 구축
 - [x] **Intelligence**: 여러 시나리오의 성공 가능성을 사전에 예측하고 최적의 가중치를 부여하는 'Speculative Score' 엔진 구현
 - [x] **System**: 에이전트가 도구 호출 실패 시 과거의 수정 이력을 참조하여 즉각적인 해결책을 제안하는 'Self-Healing Memory' 구축
-- [ ] **Infrastructure**: 에이전트의 사고 과정을 음성으로 읽어주거나 사용자의 음성 명령을 이해하는 'Vocal Bridge' 엔진 구축
+- [x] **Infrastructure**: 에이전트의 사고 과정을 음성으로 읽어주거나 사용자의 음성 명령을 이해하는 'Vocal Bridge' 엔진 구축
+- [ ] **Interface**: 웹 대시보드에서 시스템의 모든 상태를 3D 공간으로 시각화하는 'Metaverse Dashboard' 기초 설계
 
 ## ✅ Completed
+### v2.1.1 (Vocal Bridge & Voice Interaction)
+- [x] `utils/vocal_bridge.py`: OpenAI TTS 및 Whisper(STT)를 활용한 음성 변환 및 재생 엔진 신설
+- [x] `main.py`: 에이전트의 답변을 실시간으로 음성 변환하여 재생하는 `/voice` 토글 명령어 및 자동 재생 로직 구현
+- [x] `main.py`: `GortexConfig`와 연동하여 음성 인터랙션 활성화 상태를 세션 간 유지 지원
+- [x] `utils/vocal_bridge.py`: macOS(`afplay`) 및 Windows(`SoundPlayer`) 환경별 오디오 재생 폴백 처리 지원
+
 ### v2.1.0 (Self-Healing Memory & Instant Recovery)
 - [x] `utils/healing_memory.py`: 에러 패턴과 성공적인 해결책을 매핑하여 저장하고 검색하는 자가 수복 엔진 구현
 - [x] `agents/coder.py`: 도구 실행 실패 시 `SelfHealingMemory`를 우선 조회하여 과거의 성공 사례를 즉시 적용하는 고속 복구 워크플로우 도입
