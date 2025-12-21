@@ -67,6 +67,10 @@
 - [x] **Intelligence**: 에이전트가 도구 호출 시 스스로의 '에너지 수준'을 관리하며 효율적으로 작업하는 'Energy-Aware Tasking' 구현
 
 ## ✅ Completed
+### v2.2.11 (Advanced Efficiency Integration)
+- [x] `agents/swarm.py`: 병렬 작업 결과 취합 시 효율성 점수를 반영하여 최적의 안(Winner) 선정
+- [x] `agents/manager.py`: 최근 효율성(`last_efficiency`)이 낮을 경우 상세 계획 수립을 지시하는 동적 프롬프트 적용
+
 ### v2.2.10 (Efficiency Scoring & Self-Optimization)
 - [x] `agents/analyst.py`: 비용(토큰, 레이턴시, 에너지) 대비 성과를 측정하는 `calculate_efficiency_score` 메서드 구현
 - [x] `core/evolutionary_memory.py`: 높은 효율성 점수를 기록한 작업 패턴을 영구 규칙으로 승격시키는 `promote_efficient_pattern` 로직 추가

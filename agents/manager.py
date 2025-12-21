@@ -83,6 +83,11 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     if energy < 50:
         base_instruction += f"\n\n[Energy Alert] 현재 너의 에너지가 {energy}%로 낮다. 가급적 가벼운 모델로 처리 가능한 단순한 계획을 수립하고, 불필요한 도구 호출을 자제하라."
 
+    # 효율성 상태에 따른 지침 주입
+    last_eff = state.get("last_efficiency", 100.0)
+    if last_eff < 40.0:
+        base_instruction += f"\n\n[Efficiency Alert] 최근 작업의 효율성 점수가 {last_eff:.1f}로 매우 낮다. 이는 비효율적인 접근 방식 때문일 수 있다. 이번 계획 수립 시에는 더 신중하고 상세한(Detailed) 단계를 구성하여 실패 비용을 줄여라."
+
     config = types.GenerateContentConfig(
         system_instruction=base_instruction + "\n\n[Thought Tree Rules]\n사고 과정을 논리적인 트리 구조로 세분화하라. 루트 노드에서 시작하여 분석, 판단, 결론으로 이어지는 노드 리스트를 생성하라.\n\n[Self-Consistency Rules]\n최종 결정을 내리기 전, 반드시 'internal_critique' 단계에서 자신의 논리적 모순이나 위험 요소를 비판적으로 재검토하라.",
         temperature=0.0,

@@ -35,4 +35,6 @@ class GortexState(TypedDict):
     # 7. Energy Awareness (작업 여력 관리)
     # 0~100 사이의 가상 에너지 수치
     agent_energy: int 
+    # 최근 작업의 효율성 점수 (0.0~100.0)
+    last_efficiency: float
 
