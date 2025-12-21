@@ -58,6 +58,11 @@ class ThemeManager:
             return True
         return False
 
+    def get_color(self, style_name: str) -> str:
+        """현재 테마에서 스타일 이름에 해당하는 색상 반환"""
+        theme = self.get_theme()
+        return theme.styles.get(style_name, "white")
+
     def list_themes(self) -> list:
         return list(THEMES.keys())
 

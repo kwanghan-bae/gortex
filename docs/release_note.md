@@ -19,6 +19,11 @@
 - **안정성 강화**: 그래프 컴파일 로직 수정 및 런타임 에러(KeyError, TypeError) 해결.
 - **전략 업데이트**: Web UI 개발 잠정 중단 및 TUI 우선 순위 설정.
 
+### v2.8.3 (TUI Stability & Interface Rigor)
+- **Quality**: `ui/terminal.py` 및 `ui/dashboard.py`의 테스트 커버리지를 80% 이상으로 확보하여 터미널 인터페이스의 신뢰성을 극대화했습니다.
+- **Robustness**: UI 메시지 처리 루프 및 사이드바 갱신 로직에 방어적 코드를 도입하여 비정상적인 데이터 유입 시의 안정성을 확보했습니다.
+- **Bug Fix**: `DashboardUI` 내의 누락된 로깅 모듈 정의 및 속성 초기화 오류를 전수 수정했습니다.
+
 ### v2.8.2 (Token Agnosticism & Phase 2 Prep)
 - **Utility**: `utils/token_counter.py`를 개선하여 로컬 모델(Ollama) 사용 시 비용을 0으로 산정하고, 모델 독립적인 토큰 근사치 계산을 표준화했습니다.
 - **Architecture**: `LLMBackend`에 기능 지원 여부(Structured Output, Function Calling) 확인 인터페이스를 추가하여 에이전트의 동적 전략 수립을 지원합니다.

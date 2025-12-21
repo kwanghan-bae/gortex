@@ -1,25 +1,28 @@
 # Next Session
 
 ## 세션 목표
-- 미뤄뒀던 TUI 안정화 작업을 재개하여 `ui/terminal.py` 및 `ui/dashboard.py`의 테스트 커버리지를 80% 이상으로 끌어올린다.
+- `OLLAMA_PLAN.md` Phase 2(Bounded Execution) 본 작업: `agents/coder.py`가 `LLMFactory`를 사용하도록 리팩토링하고, 로컬 모델(Ollama) 기반의 단순 코드 구현 능력을 실험한다.
 
 ## 컨텍스트
-- `core/llm` 추상화 및 `utils/memory.py` 적용을 통해 로컬 모델 도입 기반(Phase 1)을 성공적으로 마쳤습니다.
-- Phase 2(Coder 적용)는 설계가 완료되었으나 실제 구현은 복잡도가 높으므로, 잠시 숨을 고르며 시스템의 얼굴인 TUI의 안정성을 확보하는 것이 전략적으로 유리합니다.
+- Phase 1(Memory)과 TUI 인프라가 모두 안정화되었습니다.
+- 이제 실제 작업자 에이전트인 `Coder`가 Gemini의 값비싼 추론 대신 로컬 모델을 활용하여 간단한 함수 작성이나 리팩토링을 수행할 수 있는지 검증해야 합니다.
 
 ## 범위 (Scope)
 ### 수행할 작업 (Do)
-- `tests/test_ui.py`: 기존 UI 테스트를 확장하여 `ui/terminal.py`의 Rich 라이브러리 렌더링 로직을 Mocking 검증.
-- `ui/dashboard.py`: 대시보드 갱신 루프 및 이벤트 핸들링 로직의 예외 처리를 테스트.
-- `coverage run`: UI 모듈 커버리지 측정 및 목표(80%) 달성 확인.
+- `agents/coder.py`: `GortexAuth`를 `LLMFactory.get_default_backend()`로 교체.
+- **Capability-based Logic**: 백엔드가 `supports_structured_output()`을 지원하지 않을 경우(Ollama), JSON Schema 대신 프롬프트 지시 및 텍스트 파싱 전략으로 자동 전환하는 로직 구현.
+- **Fallback Strategy**: 로컬 모델의 출력이 파싱 불가능하거나 품질이 낮을 경우 자동으로 Gemini로 재시도하는 회복 로직 구현.
+- `tests/test_coder.py`: 새로운 백엔드 주입 구조에 맞춰 테스트 코드 수정.
 
 ### 수행하지 않을 작업 (Do NOT)
-- `Coder`의 로컬 모델 적용 구현은 이번 세션에서 진행하지 않는다.
+- `Manager`의 오케스트레이션 로직은 여전히 Gemini를 최우선으로 사용한다.
+- 복잡한 다중 파일 수정 작업은 여전히 Gemini를 권장 모드로 유지한다.
 
 ## 기대 결과
-- 사용자가 직접 마주하는 터미널 인터페이스의 버그를 사전에 차단하고 신뢰성을 높인다.
+- 단순 작업에 한해 로컬 모델을 사용함으로써 API 비용을 절감하고 오프라인 가용성을 높인다.
+- 모델의 능력에 따라 동적으로 행동을 최적화하는 'Hybrid AI'의 정수를 구현한다.
 
 ## 완료 기준
-- `ui/terminal.py` 커버리지 80% 이상.
-- `ui/dashboard.py` 커버리지 80% 이상.
-- `docs/sessions/session_0061.md` 기록.
+- `Coder` 에이전트에서 `LLMFactory` 기반 백엔드 주입 완료.
+- Ollama 시뮬레이션 환경에서 단순 코드 생성 성공.
+- `docs/sessions/session_0062.md` 기록.

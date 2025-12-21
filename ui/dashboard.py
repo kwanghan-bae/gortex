@@ -9,7 +9,17 @@ from rich.json import JSON
 from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn, SpinnerColumn
 from gortex.utils.table_detector import try_render_as_table
 from gortex.utils.asset_manager import SynapticAssetManager
+from gortex.ui.dashboard_theme import ThemeManager
 from datetime import datetime
+import logging
+import asyncio
+
+logger = logging.getLogger("GortexDashboard")
+
+try:
+    from gortex.ui.three_js_bridge import ThreeJsBridge
+except ImportError:
+    ThreeJsBridge = None
 
 def create_layout() -> Layout:
     """대시보드 레이아웃 생성: 채팅(Main), 사고(Thought), 사이드바(Sidebar)"""
@@ -35,6 +45,8 @@ class DashboardUI:
     def __init__(self, console: Console):
         self.console = console
         self.assets = SynapticAssetManager()
+        self.theme = ThemeManager()
+        self.bridge = None # 3D Bridge (lazy init)
         self.layout = create_layout()
         self.chat_history = []
         self.agent_thought = ""
@@ -218,7 +230,14 @@ class DashboardUI:
         if len(messages) > 15:
             msg_group.append(Text(f"⬆️ (이전 대화 기록은 /logs 또는 /history로 확인 가능)", style="dim white italic", justify="center"))
 
-        for role, content in display_msgs:
+        for item in display_msgs:
+            try:
+                if not isinstance(item, (list, tuple)) or len(item) < 2:
+                    continue
+                role, content = item
+            except Exception:
+                continue
+
             if role == "user":
                 icon = self.assets.get_icon("user")
                 msg_group.append(Panel(content, title=f"{icon} [bold green]USER[/bold green]", border_style="green", padding=(0, 1)))
@@ -393,7 +412,7 @@ class DashboardUI:
             self.progress.remove_task(self.tool_task)
             self.tool_task = None
 
-    def update_sidebar(self, agent: str, step: str, tokens: int, cost: float, rules: int, provider: str = "GEMINI", call_count: int = 0, avg_latency: int = 0, energy: int = 100, efficiency: float = 100.0, knowledge_lineage: list = None, suggested_actions: list = None):
+    def update_sidebar(self, agent: str = "Idle", step: str = "N/A", tokens: int = 0, cost: float = 0.0, rules: int = 0, provider: str = "GEMINI", call_count: int = 0, avg_latency: int = 0, energy: int = 100, efficiency: float = 100.0, knowledge_lineage: list = None, suggested_actions: list = None):
         """사이드바 정보 업데이트 (에이전트, 성능 및 행동 예측 시각화)"""
         self.current_agent = agent
         self.current_step = step

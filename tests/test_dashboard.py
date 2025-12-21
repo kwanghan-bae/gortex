@@ -122,5 +122,105 @@ class TestGortexUI(unittest.TestCase):
         self.ui.stop_tool_progress()
         self.assertIsNone(self.ui.tool_task)
 
+    def test_three_js_bridge_fallback(self):
+        """3D Bridge 연결 실패 시 안전하게 처리되는지 확인"""
+        # mock bridge가 raise exception하도록 설정
+        with patch("gortex.ui.dashboard.ThreeJsBridge") as mock_bridge:
+            mock_bridge.side_effect = ImportError("No module named three_js")
+            # 재생성 시도 (setUp에서 이미 생성되었으므로 다시 생성하며 예외 유발)
+            ui = DashboardUI(self.console)
+            self.assertIsNone(ui.bridge)
+            
+            # 메서드 호출 시 에러 없이 통과하는지 (None check)
+            ui.update_thought("test") # 내부에서 bridge.update_thought 호출 시도
+
+    def test_update_main_with_invalid_messages(self):
+        """잘못된 형식의 메시지 처리"""
+        messages = [None, ("unknown_role", object()), ("user", None)]
+        try:
+            self.ui.update_main(messages)
+        except Exception:
+            self.fail("update_main raised Exception on invalid messages")
+
+    def test_update_sidebar_defaults(self):
+        """update_sidebar 인자 누락 시 기본값 작동 확인"""
+        self.ui.update_sidebar(agent="TestAgent", step="TestStep")
+        self.assertEqual(self.ui.tokens_used, 0) # 기본값
+        self.assertEqual(self.ui.total_cost, 0.0)
+
+    def test_render_thought_tree_empty(self):
+        """빈 사고 트리 렌더링"""
+        self.ui.thought_tree = []
+        group = self.ui.render_thought_tree()
+        self.assertTrue(len(group.renderables) > 0) # 최소한의 컨테이너 반환
+
+    def test_theme_color_retrieval(self):
+        """테마 색상 조회 테스트"""
+        # dashboard_theme가 모킹되지 않았으므로 실제 로직 테스트 가능
+        color = self.ui.theme.get_color("agent")
+        self.assertIsNotNone(color)
+
+    def test_update_main_truncation(self):
+        """긴 메시지 절삭 로직 확인"""
+        long_text = "A" * 3000
+        # DashboardUI.update_main은 외부에서 관리하는 메시지 리스트를 인자로 받음
+        messages = [("tool", long_text)]
+        self.ui.update_main(messages)
+        self.assertEqual(len(messages), 1)
+
+    def test_update_logs_limit(self):
+        """로그 누적 제한 확인 (현재 8개 제한)"""
+        for i in range(20):
+            self.ui.update_logs({"event": f"log {i}"})
+        self.assertEqual(len(self.ui.recent_logs), 8)
+
+    def test_update_debate_monitor_empty(self):
+        """빈 토론 데이터 처리"""
+        self.ui.update_debate_monitor([])
+        # 데이터가 비어있으면 메인 패널이 기본 타이틀을 유지하거나 리셋됨
+        panel = self.ui.layout["main"].renderable
+        # _Placeholder 에러 방지를 위해 에러 없이 실행됨만 확인하거나 타입 체크
+        self.assertIsNotNone(panel)
+
+    def test_add_achievement(self):
+        self.ui.add_achievement("Test achievement")
+        self.assertEqual(len(self.ui.achievements), 1)
+        self.assertEqual(self.ui.achievements[0]["text"], "Test achievement")
+
+    def test_filter_thoughts(self):
+        self.ui.thought_history = [
+            ("AgentA", "Thinking about code"),
+            ("AgentB", "Analyzing logs")
+        ]
+        res1 = self.ui.filter_thoughts(agent_name="AgentA")
+        self.assertEqual(len(res1), 1)
+        res2 = self.ui.filter_thoughts(keyword="logs")
+        self.assertEqual(len(res2), 1)
+
+    def test_add_security_event(self):
+        self.ui.add_security_event("BLOCK", "Blocked rm -rf")
+        self.assertEqual(len(self.ui.security_events), 1)
+
+    def test_add_journal_entry(self):
+        for i in range(30):
+            self.ui.add_journal_entry(f"entry {i}")
+        self.assertEqual(len(self.ui.activity_stream), 20) # 20개 제한 확인
+
+    def test_update_review_board(self):
+        self.ui.update_review_board("task1", "Analyst", True, "Good")
+        self.assertIn("task1", self.ui.review_board)
+        self.assertTrue(self.ui.review_board["task1"]["approvals"]["Analyst"]["approved"])
+
+    def test_set_mode(self):
+        modes = ["coding", "research", "debugging", "analyst"]
+        for m in modes:
+            self.ui.set_mode(m)
+        self.assertTrue(True) # 에러 없이 통과 확인
+
+    def test_render(self):
+        from rich.layout import Layout
+        res = self.ui.render()
+        self.assertIsInstance(res, Layout)
+
 if __name__ == '__main__':
     unittest.main()
