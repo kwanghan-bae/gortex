@@ -54,11 +54,13 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
 4. 시스템 최적화 제안(System Optimization Request)이 포함된 경우, 그 타당성을 반드시 검토하라.
 5. 코드를 작성(`write_file`, `apply_patch`)하는 작업이 포함된다면, 반드시 그 직후에 해당 기능에 대한 단위 테스트(`tests/test_X.py`)를 작성하거나 업데이트하는 단계를 포함해야 한다.
 6. 사용자가 특정 라이브러리(예: requests, pandas 등)의 사용법이나 최신 기능을 요청하는 경우, 코드를 작성하기 전 반드시 `researcher` 에이전트를 통해 최신 API 문서를 학습하는 단계를 우선적으로 배치하라.
+7. 파일 수정 계획이 포함된 경우, 반드시 해당 수정이 다른 모듈에 미치는 영향(Impact Radius)을 분석하고, 영향받는 주요 파일 리스트를 `impact_analysis` 필드에 명시하라.
 
 [Output Schema (Strict JSON)]
 반드시 다음 JSON 구조를 준수하라:
 {{
   "thought_process": "현재 상황 분석 및 계획 수립 이유",
+  "impact_analysis": "수정 시 영향을 받는 파일 및 모듈 분석 결과",
   "goal": "최종 달성 목표 요약",
   "steps": [
     {{"id": 1, "action": "tool_name", "target": "file_path_or_command", "reason": "구체적인 이유"}}
@@ -79,6 +81,7 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
             "type": "OBJECT",
             "properties": {
                 "thought_process": {"type": "STRING", "description": "전체 설계 요약"},
+                "impact_analysis": {"type": "STRING", "description": "수정 시 영향을 받는 파일 및 리스크 분석"},
                 "internal_critique": {"type": "STRING", "description": "설계 계획에 대한 비판적 재검토"},
                 "thought_tree": {
                     "type": "ARRAY",
@@ -143,6 +146,7 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
         
         updates = {
             "thought_process": plan_data.get("thought_process"),
+            "impact_analysis": plan_data.get("impact_analysis"),
             "internal_critique": plan_data.get("internal_critique"),
             "thought_tree": plan_data.get("thought_tree"),
             "plan": plan_steps,
@@ -150,6 +154,9 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
             "next_node": "coder",
             "messages": [("ai", f"계획을 수립했습니다: {plan_data.get('goal')} ({len(plan_steps)} steps)")]
         }
+        
+        if plan_data.get("impact_analysis"):
+            updates["messages"].append(("system", f"⚠️ **수정 영향 범위 분석**: {plan_data['impact_analysis']}"))
         
         if plan_data.get("pre_fetch"):
             updates["pre_fetch"] = plan_data["pre_fetch"]

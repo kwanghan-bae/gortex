@@ -181,6 +181,50 @@ class SynapticIndexer:
         results.sort(key=lambda x: x["score"], reverse=True)
         return results
 
+    def get_impact_radius(self, target_file: str) -> Dict[str, List[str]]:
+        """특정 파일 수정 시 영향을 받는 직접/간접 모듈 분석"""
+        if not self.index:
+            self.scan_project()
+            
+        target_module = target_file.replace("/", ".").replace(".py", "")
+        direct_impact = []
+        indirect_impact = []
+        
+        # 1단계: 직접 임포트 또는 호출하는 모듈 찾기
+        for file_path, defs in self.index.items():
+            if file_path == target_file: continue
+            
+            is_direct = False
+            for d in defs:
+                # 임포트 확인
+                if d["type"] == "import" and target_module in d["name"]:
+                    is_direct = True
+                elif d["type"] == "import_from" and d["module"] and target_module.endswith(d["module"]):
+                    is_direct = True
+                # 함수 호출 확인 (단순 이름 기반)
+                target_funcs = [def_item["name"] for def_item in self.index.get(target_file, []) if def_item["type"] == "function"]
+                if d["type"] == "function" and any(tf in d.get("calls", []) for tf in target_funcs):
+                    is_direct = True
+                    
+            if is_direct:
+                direct_impact.append(file_path)
+
+        # 2단계: 간접 영향(직접 영향 받는 모듈을 다시 참조하는 모듈)
+        for file_path, defs in self.index.items():
+            if file_path == target_file or file_path in direct_impact: continue
+            
+            for direct in direct_impact:
+                direct_mod = direct.replace("/", ".").replace(".py", "")
+                if any(d["type"] in ["import", "import_from"] and (direct_mod in str(d.get("name", "")) or direct_mod in str(d.get("module", ""))) for d in defs):
+                    indirect_impact.append(file_path)
+                    break
+                    
+        return {
+            "target": target_file,
+            "direct": list(set(direct_impact)),
+            "indirect": list(set(indirect_impact))
+        }
+
 if __name__ == "__main__":
     # 독립 실행 테스트
     logging.basicConfig(level=logging.INFO)

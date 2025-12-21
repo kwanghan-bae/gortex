@@ -7,7 +7,7 @@
 - [x] **Interface**: 사용자가 정의한 복잡한 아키텍처 규칙을 실시간 검증하는 'Constraint Validator' 노드 추가
 - [x] **Intelligence**: 에이전트가 도구 호출 전후의 시스템 상태 전이를 시각적으로 모델링하는 'Visual Simulation' 고도화
 - [x] **Interface**: 에이전트가 의사결정 트레이드오프를 사용자에게 질문하고 답변을 학습하는 'Interactive Decision Learning' 구현
-- [ ] **Intelligence**: 특정 파일 수정 시 영향을 받는 모듈 범위를 예측하는 'Dependency Impact Analyzer' 노드 추가
+- [x] **Intelligence**: 특정 파일 수정 시 영향을 받는 모듈 범위를 예측하는 'Dependency Impact Analyzer' 노드 추가
 - [ ] **System**: 대규모 그래프 데이터의 효율적 렌더링을 위한 'Rolling Window' 캐싱 전략 도입
 
 ---
@@ -15,6 +15,11 @@
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.4.4 (Dependency Impact Analyzer & Risk Prediction)
+- [x] `utils/indexer.py`: 코드 수정 시 직간접적으로 영향을 받는 모듈 리스트를 역추적하는 리스크 분석 엔진 구축
+- [x] `agents/planner.py`: 계획 수립 단계에서 영향 범위(Impact Radius) 분석을 의무화하고 사용자에게 잠재적 리스크 보고
+- [x] `main.py`: 아키텍처 의존성 데이터를 시각화 파이프라인과 연동하여 수정 전 위험 지점을 대시보드에 노출
 
 ### v2.4.3 (Interactive Decision Learning)
 - [x] `agents/manager.py`: 독단적 결정이 어려운 상황에서 사용자 개입을 요청하는 'Human-in-the-loop' 워크플로우 도입
