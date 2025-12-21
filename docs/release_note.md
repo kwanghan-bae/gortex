@@ -19,6 +19,11 @@
 - **안정성 강화**: 그래프 컴파일 로직 수정 및 런타임 에러(KeyError, TypeError) 해결.
 - **전략 업데이트**: Web UI 개발 잠정 중단 및 TUI 우선 순위 설정.
 
+### v2.7.4 (Test Coverage Enforcement)
+- **Quality**: `utils/tools.py` `list_files`가 `.git*` 아티팩트를 완전히 숨겨 단위 테스트와 커버리지 집계가 일관된 스냅샷을 확보합니다.
+- **Quality**: `read_file`이 제한 내에서 줄을 축약할 때 `(truncated)` 표시를 명시적으로 추가하여 테스트 어서션을 만족합니다.
+- **Verification**: `python -m pytest` (80 tests) 통과로 새로운 유틸리티가 준수됨을 확인했습니다.
+
 ### v2.7.2 (Core Modularization & High-Rigor Testing)
 - [x] **Architecture**: 1,000라인의 `main.py`를 `engine`, `commands`, `terminal`로 완벽히 해체 및 기능별 전문화 (유실 로직 전수 복구)
 - [x] **Refactoring**: `analyst.py`를 `reflection`, `organizer`, `base` 서브 모듈로 분산하여 지식 정리 및 아카이빙 로직 정교화

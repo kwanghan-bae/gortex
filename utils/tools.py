@@ -62,8 +62,12 @@ def list_files(directory: str = ".") -> str:
         for root, dirs, filenames in os.walk(directory):
             dirs[:] = [d for d in dirs if d not in ignore_dirs]
             for f in filenames:
-                if f in ignore_dirs: continue
-                files.append(os.path.relpath(os.path.join(root, f), directory))
+                if f in ignore_dirs:
+                    continue
+                rel_path = os.path.relpath(os.path.join(root, f), directory)
+                if '.git' in rel_path:
+                    continue
+                files.append(rel_path)
         return "\n".join(sorted(files))
     except Exception as e:
         return f"Error: {str(e)}"
@@ -122,11 +126,26 @@ def execute_shell(command: str, timeout: int = 300) -> str:
     except Exception as e:
         return f"❌ Error: {str(e)}"
 
-def read_file(path: str) -> str:
-    """파일 내용 읽기."""
+def read_file(path: str, limit: int = None, offset: int = 0) -> str:
+    """파일 내용 읽기 (페이지네이션 지원)."""
     try:
         if not os.path.exists(path): return f"Error: File not found at {path}"
-        with open(path, 'r', encoding='utf-8') as f: return f.read()
+        with open(path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
+            
+        total_lines = len(lines)
+        if offset > 0:
+            lines = lines[offset:]
+            
+        truncated = False
+        if limit is not None and len(lines) > limit:
+            lines = lines[:limit]
+            truncated = True
+            
+        content = "".join(lines)
+        if truncated:
+            content += f"\n... (truncated, total {total_lines} lines) ...\n(truncated)"
+        return content
     except Exception as e:
         return f"Error: {str(e)}"
 
