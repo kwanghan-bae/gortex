@@ -12,7 +12,15 @@ class TestGortexAuth(unittest.TestCase):
 
         self.mock_getenv = self.env_patcher.start()
         # 기본적으로 두 개의 키가 있다고 가정
-        self.mock_getenv.side_effect = lambda k: "fake_key_1" if k == "GEMINI_API_KEY_1" else ("fake_key_2" if k == "GEMINI_API_KEY_2" else None)
+        def getenv_side_effect(key):
+            if key == "GEMINI_API_KEY_1":
+                return "fake_key_1"
+            if key == "GEMINI_API_KEY_2":
+                return "fake_key_2"
+            if key == "OPENAI_API_KEY":
+                return "fake_openai"
+            return None
+        self.mock_getenv.side_effect = getenv_side_effect
         
         # google.genai.Client 생성자 Mocking
         self.client_patcher = patch('google.genai.Client')
@@ -73,6 +81,45 @@ class TestGortexAuth(unittest.TestCase):
         self.assertEqual(result, "Success")
         # 3초 대기 확인
         mock_sleep.assert_called_with(3)
+
+    @patch('gortex.core.auth.time.time')
+    def test_call_count_prunes_old_entries(self, mock_time):
+        auth = GortexAuth()
+        base = 1000.0
+        auth.call_history = [base - 70, base - 20]
+        mock_time.return_value = base
+        self.assertEqual(auth.get_call_count(), 1)
+
+    def test_provider_is_uppercase(self):
+        auth = GortexAuth()
+        self.assertEqual(auth.get_provider(), "GEMINI")
+
+    def test_switch_account_falls_back_to_openai(self):
+        auth = GortexAuth()
+        auth.current_index = len(auth.clients) - 1
+        auth.openai_client = MagicMock()
+        switched = auth.switch_account("Quota")
+        self.assertTrue(switched)
+        self.assertEqual(auth.get_provider(), "OPENAI")
+
+    def test_switch_account_no_fallback(self):
+        auth = GortexAuth()
+        auth.clients = [MagicMock()]
+        auth.current_index = len(auth.clients) - 1
+        auth.openai_client = None
+        switched = auth.switch_account("Quota")
+        self.assertFalse(switched)
+
+    def test_generate_uses_openai_when_provider(self):
+        auth = GortexAuth()
+        response = MagicMock()
+        response.choices = [MagicMock(message=MagicMock(content="resp"))]
+        openai_client = MagicMock()
+        openai_client.chat.completions.create.return_value = response
+        auth.openai_client = openai_client
+        auth._provider = "openai"
+        result = auth.generate("gemini-1.5-flash", [("user", "hi")])
+        self.assertEqual(result.text, "resp")
 
 if __name__ == '__main__':
     unittest.main()
