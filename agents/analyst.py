@@ -312,6 +312,46 @@ class AnalystAgent:
             logger.error(f"Constraint validation failed: {e}")
             return {"is_valid": True} # 오류 시 기본 통과 (안전 모드)
 
+    def learn_from_interaction(self, question: str, user_answer: str) -> Optional[Dict[str, Any]]:
+        """사용자의 답변을 분석하여 개인화된 선호도 규칙 생성"""
+        logger.info("🧠 Learning user preference from interaction...")
+        
+        prompt = f"""다음은 에이전트의 질문과 사용자의 답변이다.
+        사용자의 취향, 선호하는 기술 스택, 또는 특정 작업 방식을 추출하여 영구 규칙으로 생성하라.
+        
+        [Question]
+        {question}
+        
+        [User Answer]
+        {user_answer}
+        
+        결과 형식 (JSON):
+        {{
+            "instruction": "앞으로 에이전트가 지켜야 할 개인화된 지침",
+            "trigger_patterns": ["이 선호도가 적용될 키워드"],
+            "severity": 3,
+            "pref_type": "style/tech/workflow"
+        }}
+        """
+        try:
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
+            res_data = json.loads(response.text)
+            
+            if res_data.get("instruction"):
+                self.memory.save_rule(
+                    instruction=res_data["instruction"],
+                    trigger_patterns=res_data["trigger_patterns"],
+                    severity=res_data.get("severity", 3),
+                    source_session="interactive_learning",
+                    context=f"User Interaction: {user_answer[:100]}"
+                )
+                logger.info(f"✨ New preference learned: {res_data['instruction'][:50]}...")
+                return res_data
+        except Exception as e:
+            logger.error(f"Interactive learning failed: {e}")
+            
+        return None
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""
     agent = AnalystAgent()

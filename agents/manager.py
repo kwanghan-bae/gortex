@@ -75,6 +75,10 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
 {case_context}
 {macro_context}
 
+[Interactive Decision Rules]
+만약 사용자의 주관적인 취향이 중요하거나, 여러 기술적 선택지 중 트레이드오프가 뚜렷한 상황이라면 독단적으로 결정하지 마라.
+이 경우 `requires_user_input`을 true로 설정하고, `question_to_user`에 선택지의 장단점을 포함한 정중한 질문을 작성하라. 사용자의 답변은 시스템의 장기적인 선호도 규칙으로 학습될 것이다.
+
 [Speculative Reasoning Rules]
 사용자의 요청이 복잡하거나 해결 방법이 여러 가지인 경우, 'swarm' 노드를 통해 병렬 검토하라. 
 만약 작업의 위험도가 높거나(Risk > 0.7), 시스템의 핵심 구조를 변경하는 요청인 경우 반드시 **'토론 모드(Debate Mode)'**를 활성화하라. 
@@ -174,6 +178,14 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
                 "next_node": {
                     "type": "STRING", 
                     "enum": ["planner", "researcher", "analyst", "swarm", "optimizer", "__end__"]
+                },
+                "requires_user_input": {
+                    "type": "BOOLEAN",
+                    "description": "중요한 결정에 대해 사용자의 승인이나 의견이 필요한 경우 true"
+                },
+                "question_to_user": {
+                    "type": "STRING",
+                    "description": "사용자에게 물어볼 구체적인 질문 내용"
                 },
                 "parallel_tasks": {
                     "type": "ARRAY",

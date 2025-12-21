@@ -676,6 +676,7 @@ async def run_gortex():
     agent_energy = 100 # 가상 에너지 (기본 100%)
     last_efficiency = 100.0 # 최근 효율성 점수
     efficiency_history = [] # 효율성 이력
+    last_question = None # 직전 에이전트의 질문 저장
 
     # 세션별 파일 캐시 관리 (Isolation)
     cache_path = "logs/file_cache.json"
@@ -737,6 +738,14 @@ async def run_gortex():
                     
                     actual_input = f"[CONTEXT: 이전 작업 중단 후 재개됨] {user_input}" if interrupted_last_time else user_input
                     interrupted_last_time = False
+
+                    # [INTERACTIVE LEARNING] 에이전트 질문에 대한 답변 학습
+                    if last_question and user_input:
+                        try:
+                            from gortex.agents.analyst import AnalystAgent
+                            AnalystAgent().learn_from_interaction(last_question, user_input)
+                            last_question = None
+                        except: pass
 
                     cmd_status = "continue"
                     if user_input.startswith("/"):
@@ -857,6 +866,10 @@ async def run_gortex():
                                             "type": "agent_economy",
                                             "data": agent_economy
                                         }, ensure_ascii=False)))
+
+                                # [QUESTION] 사용자 질문 캡처
+                                if node_name == "manager" and output.get("question_to_user"):
+                                    last_question = output["question_to_user"]
 
                                 # [ENERGY] 에너지 상태 업데이트
                                 if "agent_energy" in output:

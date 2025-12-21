@@ -1,24 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 인터랙티브 의사결정 학습 및 사용자 선호도 모델링 (Decision Learning v1)
+- 파일 수정 영향 범위 분석 및 시각화 (Dependency Impact Analyzer v1)
 
 ## Context
-- 현재 에이전트들은 주로 과거 로그나 규칙에 의존하여 판단하고 있음.
-- 하지만 미묘한 설계 선택(A 기술 vs B 기술)이나 사용자의 주관적 취향이 개입되는 지점에서는 명시적인 질문이 필요함.
-- 에이전트가 "이런 이유로 A를 선택하려는데 괜찮으신가요?"라고 묻고, 사용자의 피드백을 `EvolutionaryMemory`에 즉시 기록하는 기능이 필요함.
+- 시스템이 복잡해짐에 따라, 한 파일을 수정했을 때 예상치 못한 모듈에서 버그가 발생하는 리스크가 커지고 있음.
+- `Synaptic Map`과 `Call Graph` 데이터를 활용하여, 특정 파일 수정 시 직접/간접적으로 영향을 받는 파일 목록을 추출하고 이를 대시보드에 경고로 표시해야 함.
 
 ## Scope
 ### Do
-- `agents/manager.py`에 불확실성이 높거나 트레이드오프가 뚜렷한 경우 '사용자 개입 요청(Request User Input)'을 생성하는 로직 추가.
-- 사용자의 응답을 분석하여 새로운 '사용자 선호도 규칙'을 생성하는 `AnalystAgent.learn_from_interaction` 메서드 추가.
-- 대시보드 UI에 질문 패널 하이라이트 기능 보강.
+- `utils/indexer.py` (또는 관련 로직)를 확장하여 파일 간 의존성 역추적 로직 구현.
+- `agents/planner.py`에서 계획 수립 시 '영향 범위 분석' 단계를 포함하고, 위험 모듈을 보고함.
+- 웹 대시보드 3D 그래프에서 영향 받는 노드들을 붉게 하이라이트 처리하는 데이터 스트리밍.
 
 ### Do NOT
-- 모든 사소한 단계에서 질문하지 말 것 (에너지/효율성 기반으로 꼭 필요한 경우만 질문).
+- 단순 Import 관계뿐만 아니라 실제 함수 호출 관계까지 고려할 것.
 
 ## Expected Outputs
-- `agents/manager.py`, `agents/analyst.py`, `ui/dashboard.py` 수정.
+- `utils/indexer.py`, `agents/planner.py`, `main.py` 수정.
 
 ## Completion Criteria
-- 에이전트가 작업을 멈추고 사용자에게 질문을 던지는 상황이 발생하고, 답변 후 해당 내용이 새로운 규칙으로 저장되는 과정이 확인되어야 함.
+- 특정 파일 수정 계획이 수립될 때, 그로 인해 영향을 받는 다른 파일 목록이 로그와 대시보드에 명확히 표시되는 것이 확인되어야 함.
