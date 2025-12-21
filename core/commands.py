@@ -132,7 +132,7 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
         export_dir = "logs/exports"; os.makedirs(export_dir, exist_ok=True)
         export_path = f"{export_dir}/session_{thread_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         serializable = [(r, c if isinstance(c, str) else f"[Rich Object]") for r, c in ui.chat_history]
-        data = {"thread_id": thread_id, "chat_history": serializable, "file_cache": all_sessions_cache.get(thread_id, {{}})}
+        data = {"thread_id": thread_id, "chat_history": serializable, "file_cache": all_sessions_cache.get(thread_id, {})}
         with open(export_path, "w", encoding='utf-8') as f: json.dump(data, f, ensure_ascii=False, indent=2)
         ui.chat_history.append(("system", f"✅ Exported: {export_path}"))
         ui.update_main(ui.chat_history)
@@ -141,6 +141,80 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
     elif cmd == "/clear":
         ui.chat_history = []
         ui.update_main([])
+        return "skip"
+
+    elif cmd == "/bug":
+        bug_report_msg = "🐛 **버그 리포트**: [이슈 리포트 링크](https://github.com/kwanghan-bae/gortex/issues/new)"
+        ui.chat_history.append(("system", bug_report_msg))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/mode":
+        if len(cmd_parts) < 2:
+            ui.chat_history.append(("system", "⚠️ 사용 가능한 모드: coding, research, debugging, analyst, standard"))
+        else:
+            mode = cmd_parts[1]
+            valid_modes = ["coding", "research", "debugging", "analyst", "standard"]
+            if mode in valid_modes:
+                ui.set_mode(mode)
+                ui.chat_history.append(("system", f"🎭 UI가 '{mode}' 모드로 전환되었습니다."))
+            else:
+                ui.chat_history.append(("system", f"❌ 잘못된 모드입니다. 사용 가능: {', '.join(valid_modes)}"))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/theme":
+        if len(cmd_parts) < 2:
+            ui.chat_history.append(("system", "사용법: /theme [dark|light|dracula|...]"))
+        else:
+            theme_name = cmd_parts[1]
+            if theme_manager:
+                theme_manager.apply_theme(theme_name)
+                ui.chat_history.append(("system", f"🎨 테마가 '{theme_name}'으로 변경되었습니다."))
+            else:
+                ui.chat_history.append(("system", "❌ 테마 매니저를 사용할 수 없습니다."))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/save":
+        save_path = f"logs/sessions/snapshot_{thread_id}.json"
+        try:
+            with open(save_path, "w", encoding='utf-8') as f:
+                json.dump(all_sessions_cache.get(thread_id, {}), f, indent=2)
+            ui.chat_history.append(("system", f"💾 세션 상태가 저장되었습니다: {save_path}"))
+        except Exception as e:
+            ui.chat_history.append(("system", f"❌ 저장 실패: {e}"))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/load":
+        save_path = f"logs/sessions/snapshot_{thread_id}.json"
+        if os.path.exists(save_path):
+            try:
+                with open(save_path, "r", encoding='utf-8') as f:
+                    data = json.load(f)
+                    all_sessions_cache[thread_id] = data
+                ui.chat_history.append(("system", f"📂 세션 상태가 복원되었습니다."))
+            except Exception as e:
+                ui.chat_history.append(("system", f"❌ 복원 실패: {e}"))
+        else:
+            ui.chat_history.append(("system", "❌ 저장된 세션 스냅샷이 없습니다."))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/history":
+        log_path = observer.log_path if observer else "logs/trace.jsonl"
+        if os.path.exists(log_path):
+            try:
+                with open(log_path, "r", encoding='utf-8') as f:
+                    lines = f.readlines()[-10:] # Last 10 lines
+                history_text = "".join(lines)
+                ui.chat_history.append(("system", Panel(history_text, title="RECENT LOGS", border_style="dim")))
+            except Exception as e:
+                ui.chat_history.append(("system", f"❌ 로그 읽기 실패: {e}"))
+        else:
+            ui.chat_history.append(("system", "❌ 로그 파일이 없습니다."))
+        ui.update_main(ui.chat_history)
         return "skip"
 
     ui.chat_history.append(("system", f"❓ 알 수 없는 명령어: {cmd}"))

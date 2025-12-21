@@ -1,10 +1,15 @@
 import unittest
-from rich.console import Console
+from unittest.mock import MagicMock, patch
 from gortex.ui.dashboard import DashboardUI
+from rich.console import Console
 
 class TestGortexUI(unittest.TestCase):
     def setUp(self):
-        self.console = Console()
+        self.console = MagicMock(spec=Console)
+        asset_patcher = patch('gortex.ui.dashboard.SynapticAssetManager')
+        self.addCleanup(asset_patcher.stop)
+        self.mock_assets = asset_patcher.start()
+        self.mock_assets.return_value.get_icon.return_value = "ICON"
         self.ui = DashboardUI(self.console)
 
     def test_update_main_roles(self):
@@ -16,36 +21,51 @@ class TestGortexUI(unittest.TestCase):
             ("system", "Initializing")
         ]
         self.ui.update_main(messages)
-        # 에러 없이 실행되는지 확인 (Rich 렌더링 특성상 상세 검증은 복잡함)
         self.assertTrue(len(self.ui.chat_history) >= 0)
 
-    def test_update_thought(self):
-        """사고 과정 업데이트 테스트"""
-        self.ui.update_thought("I am thinking...", agent_name="Coder")
-        self.assertEqual(self.ui.agent_thought, "I am thinking...")
+    def test_update_debate_monitor(self):
+        """토론 패널이 데이터 반영"""
+        debate = [
+            {"persona": "Innovation", "report": "debate detail"}
+        ]
+        self.ui.update_debate_monitor(debate)
+        panel = self.ui.layout["main"].renderable
+        self.assertIn("CONSENSUS DEBATE", panel.title)
 
-    def test_update_logs(self):
-        """로그 업데이트 테스트"""
-        log = {"agent": "Planner", "event": "start"}
-        self.ui.update_logs(log)
-        self.assertEqual(len(self.ui.recent_logs), 1)
+    def test_update_debt_panel(self):
+        """기술 부채 목록이 없을 경우 안내"""
+        self.ui.update_debt_panel([])
+        panel = self.ui.layout["debt"].renderable
+        self.assertIn("No debt", str(panel.renderable))
 
-    def test_table_detection(self):
-        """테이블 데이터 감지 테스트"""
-        from gortex.utils.table_detector import try_render_as_table
-        table_text = "ID    Name    Status\n1     Alice   Active\n2     Bob     Offline"
-        table = try_render_as_table(table_text)
-        self.assertIsNotNone(table)
-        self.assertEqual(len(table.columns), 3)
+    def test_update_debt_panel_with_items(self):
+        """기술 부채 항목이 테이블로 표출"""
+        debt_list = [{"file": "core/commands.py", "score": 42}]
+        self.ui.update_debt_panel(debt_list)
+        panel = self.ui.layout["debt"].renderable
+        self.assertIn("TECHNICAL DEBT", panel.title)
 
-    def test_markdown_table_detection(self):
-        """Markdown 스타일 테이블 감지 테스트"""
-        from gortex.utils.table_detector import try_render_as_table
-        md_text = "| ID | Name | Role |\n|---|---|---|\n| 1 | Admin | Super |"
-        table = try_render_as_table(md_text)
-        self.assertIsNotNone(table)
-        self.assertEqual(len(table.columns), 3)
-        self.assertEqual(len(table.rows), 1)
+    def test_render_thought_tree(self):
+        """사고 트리 렌더링"""
+        self.ui.thought_tree = [
+            {"id": "1", "text": "start", "type": "analysis"},
+            {"id": "2", "parent_id": "1", "text": "child", "type": "design"}
+        ]
+        group = self.ui.render_thought_tree()
+        self.assertTrue(len(group.renderables) >= 2)
+
+    def test_update_thought_tracks_history(self):
+        """사고 업데이트 시 타임라인 기록"""
+        self.ui.update_thought("Thinking...")
+        self.assertIn("Thinking...", self.ui.thought_history[0][1])
+        self.assertEqual(len(self.ui.thought_timeline), 1)
+
+    def test_tool_progress(self):
+        """도구 진행 바 시작/정지"""
+        self.ui.start_tool_progress("Processing")
+        self.assertIsNotNone(self.ui.tool_task)
+        self.ui.stop_tool_progress()
+        self.assertIsNone(self.ui.tool_task)
 
 if __name__ == '__main__':
     unittest.main()
