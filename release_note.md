@@ -35,10 +35,16 @@
 - [x] **Infrastructure**: 에이전트의 작업 부하를 분산하기 위해 여러 LLM을 동시에 호출하는 'Agent Swarm' 프레임워크 기초 설계
 - [x] **Infrastructure**: 병렬 작업 간의 데이터 충돌을 방지하고 상태를 안전하게 병합하는 'State Merger' 로직 고도화
 - [x] **Intelligence**: 에이전트가 작업 중 발생한 감정적/논리적 교착 상태를 감지하여 스스로 재설정(Reset)하는 'Mental Reboot' 기능 구현
-- [x] **Interface**: 에이전트의 내부 사고 과정을 시각적으로 필터링하고 검색할 수 있는 'Thought Browser' 인프라 구축
-- [ ] **System**: 에이전트가 코드를 작성할 때 사용자의 스타일을 학습하여 반영하는 'Style Mimicry' 엔진 추가
+- [x] **System**: 에이전트가 코드를 작성할 때 사용자의 스타일을 학습하여 반영하는 'Style Mimicry' 엔진 추가
+- [ ] **Infrastructure**: 시스템 내부의 모든 노드 간 통신을 암호화하여 보안을 강화하는 'Secure Node Transport' 구축
 
 ## ✅ Completed
+### v1.9.5 (Style Mimicry & Personalized Coding)
+- [x] `agents/analyst.py`: 프로젝트의 기존 소스 코드를 분석하여 고유한 명명법, 주석 스타일, 패턴을 추출하는 `analyze_coding_style` 구현
+- [x] `agents/analyst.py`: 추출된 스타일 가이드를 `EvolutionaryMemory`에 영구 규칙으로 등록하여 모든 코딩 작업에 자동 적용되도록 통합
+- [x] `agents/analyst.py`: `/analyze_style` 명령어를 통해 사용자가 명시적으로 스타일 학습을 트리거할 수 있는 인터페이스 제공
+- [x] `agents/analyst.py`: 샘플 코드 추출 시 용량 및 토큰 최적화 로직을 적용하여 분석 효율성 확보
+
 ### v1.9.4 (Thought Browser & Advanced Filtering)
 - [x] `ui/dashboard.py`: 세션 전체의 사고 히스토리를 에이전트명 및 키워드로 검색할 수 있는 `filter_thoughts` 로직 구현
 - [x] `ui/web_server.py`: WebSocket을 통해 웹 클라이언트의 필터링 요청을 수신하고 처리하는 양방향 통신 기능 확장

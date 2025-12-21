@@ -264,6 +264,38 @@ class AnalystAgent:
             logger.error(f"Code review failed: {e}")
             return {"score": 100, "needs_refactoring": False}
 
+    def analyze_coding_style(self, working_dir: str = ".") -> Dict[str, Any]:
+        """프로젝트 코드를 분석하여 개인화된 코딩 스타일 가이드 추출"""
+        from gortex.utils.tools import list_files, read_file
+        files = list_files(working_dir).split("\n")
+        # 분석을 위한 샘플 파일 선택 (최대 5개)
+        py_files = [f for f in files if f.endswith(".py") and "test" not in f][:5]
+        
+        sample_codes = ""
+        for f in py_files:
+            sample_codes += f"\n--- File: {f} ---\n{read_file(os.path.join(working_dir, f))[:2000]}\n"
+
+        prompt = f"""다음 코드 샘플들을 분석하여 이 프로젝트만의 고유한 '코딩 스타일 가이드'를 작성하라.
+        
+        [Sample Codes]
+        {sample_codes}
+        
+        결과는 반드시 다음 JSON 형식을 따라라:
+        {{
+            "naming_convention": "변수, 클래스, 함수의 명명 규칙 분석",
+            "comment_style": "주석 작성 방식 (Docstring 형식 등)",
+            "architectural_pattern": "자주 사용되는 구조나 패턴",
+            "instruction": "에이전트가 코드를 작성할 때 따라야 할 한 문장의 핵심 스타일 지침",
+            "trigger_patterns": ["coding", "style", "mimicry"]
+        }}
+        """
+        try:
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], None)
+            return json.loads(response.text)
+        except Exception as e:
+            logger.error(f"Style analysis failed: {e}")
+            return {"instruction": "PEP8 표준 스타일을 준수하라.", "trigger_patterns": ["coding"]}
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""
     agent = AnalystAgent()
@@ -271,8 +303,26 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
     last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
     last_msg_lower = last_msg.lower()
 
-    # 1. 의도 판단 (Review vs Data vs Feedback)
+    # 1. 의도 판단 (Review vs Style vs Data vs Feedback)
     
+    # 코딩 스타일 분석 요청
+    if "/analyze_style" in last_msg_lower or "스타일 분석" in last_msg_lower:
+        style_info = agent.analyze_coding_style(state.get("working_dir", "."))
+        agent.memory.save_rule(
+            instruction=style_info["instruction"],
+            trigger_patterns=style_info["trigger_patterns"],
+            severity=3,
+            context="Personalized Coding Style"
+        )
+        msg = f"🎨 프로젝트 코딩 스타일 분석 완료!\n"
+        msg += f"- 명명 규칙: {style_info.get('naming_convention')}\n"
+        msg += f"- 주석 스타일: {style_info.get('comment_style')}\n"
+        msg += f"- 학습된 지침: '{style_info['instruction']}'가 진화적 메모리에 등록되었습니다."
+        return {
+            "messages": [("ai", msg)],
+            "next_node": "manager"
+        }
+
     # 코드 리뷰 요청 확인
     if "리뷰" in last_msg_lower or "검토" in last_msg_lower or "review" in last_msg_lower:
         # 코드 추출 (단순화: 마지막 메시지 전체 또는 코드 블록)
