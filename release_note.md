@@ -27,9 +27,16 @@
 - [x] **Infrastructure**: 에이전트의 작업 성과를 리포트로 자동 요약하여 제공하는 'Executive Reporter' 기능 구현
 - [x] **Infrastructure**: 다중 언어 지원을 위한 'Synaptic Translator' 노드 및 다국어 UI 프레임워크 구축
 - [x] **Interface**: 웹 대시보드에 실시간 로그 스트리밍을 넘어서는 'Interactive Console' 기능 추가
-- [ ] **Intelligence**: 에이전트가 생성한 코드의 'Clean Code Score'를 측정하고 리팩토링 포인트를 제안하는 'Code Reviewer' 노드 추가
+- [x] **Intelligence**: 에이전트가 생성한 코드의 'Clean Code Score'를 측정하고 리팩토링 포인트를 제안하는 'Code Reviewer' 노드 구현
+- [ ] **Infrastructure**: 외부 깃허브 이슈(Issues)나 PR을 분석하여 작업을 자동 할당하는 'GitHub Agent' 노드 구축
 
 ## ✅ Completed
+### v1.8.4 (Code Reviewer & Quality Scoring)
+- [x] `agents/analyst.py`: 파이썬 코드를 Clean Code 및 PEP8 기준으로 정밀 분석하는 `review_code` 엔진 구현
+- [x] `agents/analyst.py`: 스타일, 복잡도, 주석 적정성을 수치화(Score)하고 구체적인 리팩토링 팁을 생성하는 로직 추가
+- [x] `agents/analyst.py`: 리뷰 결과 점수가 낮을 경우 자동으로 `planner`로 라우팅하여 자가 개선을 유도하는 워크플로우 통합
+- [x] `agents/analyst.py`: 다국어 및 다양한 메시지 포맷(Tuple/Object)에 대한 예외 처리 및 분기 로직 강화
+
 ### v1.8.3 (Interactive Web Console & Bi-directional Sync)
 - [x] `ui/web_server.py`: WebSocket을 통해 클라이언트로부터 사용자 입력을 수신하고 큐(`input_queue`)에 저장하는 기능 구현
 - [x] `main.py`: 터미널 입력과 웹 입력 큐를 비동기적으로 동시 감시하여 먼저 발생한 입력을 처리하는 멀티 채널 입력 시스템 구축

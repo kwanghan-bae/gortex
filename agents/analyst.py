@@ -235,12 +235,61 @@ class AnalystAgent:
             logger.error(f"Report generation failed: {e}")
             return f"리포트 생성 중 오류 발생: {e}"
 
+    def review_code(self, code: str, file_path: str = "unknown") -> Dict[str, Any]:
+        """코드 품질을 정적으로 분석하여 점수와 개선안 제공"""
+        prompt = f"""다음 파이썬 코드를 'Clean Code' 및 'PEP8' 기준으로 정밀 리뷰하라.
+        
+        [File]
+        {file_path}
+        
+        [Code]
+        {code}
+        
+        결과는 반드시 다음 JSON 형식을 따라라:
+        {{
+            "score": 0~100 (정수),
+            "critique": {{
+                "style": "스타일 관련 지적",
+                "complexity": "복잡도 관련 지적",
+                "documentation": "주석 관련 지적"
+            }},
+            "refactoring_tips": ["팁 1", "팁 2"],
+            "needs_refactoring": true/false
+        }}
+        """
+        try:
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], None)
+            return json.loads(response.text)
+        except Exception as e:
+            logger.error(f"Code review failed: {e}")
+            return {"score": 100, "needs_refactoring": False}
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""
     agent = AnalystAgent()
-    last_msg = state["messages"][-1].content.lower()
+    last_msg_obj = state["messages"][-1]
+    last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
+    last_msg_lower = last_msg.lower()
 
-    # 1. 의도 판단
+    # 1. 의도 판단 (Review vs Data vs Feedback)
+    
+    # 코드 리뷰 요청 확인
+    if "리뷰" in last_msg_lower or "검토" in last_msg_lower or "review" in last_msg_lower:
+        # 코드 추출 (단순화: 마지막 메시지 전체 또는 코드 블록)
+        code_to_review = last_msg
+        review_res = agent.review_code(code_to_review)
+        
+        msg = f"🔍 코드 리뷰 결과 (점수: {review_res['score']}/100)\n"
+        msg += f"- 스타일: {review_res['critique']['style']}\n"
+        msg += f"- 복잡도: {review_res['critique']['complexity']}\n"
+        msg += f"- 개선팁: {', '.join(review_res['refactoring_tips'])}"
+        
+        updates = {
+            "messages": [("ai", msg)],
+            "next_node": "planner" if review_res["needs_refactoring"] else "manager"
+        }
+        return updates
+
     data_files = [f for f in last_msg.split() if f.endswith(('.csv', '.xlsx', '.json'))]
     
     if data_files:

@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Interactive Web Console & Bi-directional Sync Complete (v1.8.3)
+**Status:** Code Reviewer & Quality Scoring Complete (v1.8.4)
 
 ## 🧠 Current Context
-웹 대시보드와 터미널 간의 양방향 통신이 가능해졌습니다. 이제 사용자는 웹 인터페이스를 통해 Gortex에게 실시간 명령을 내릴 수 있으며, 이는 원격 관리 및 모바일 환경에서의 조작성을 극대화합니다.
+코드 품질 측정 및 리뷰 시스템이 구축되었습니다. 이제 Gortex는 기능적인 완성도를 넘어 코드의 가독성, 유지보수 용이성까지 스스로 평가하고 개선할 수 있는 '품질 관리 지능'을 갖추게 되었습니다.
 
 ## 🎯 Next Objective
-**Code Reviewer (Static Analysis & Clean Code)**
-1. **`Clean Code Scoring`**: 에이전트가 코드를 작성하거나 수정할 때, PEP8 준수 여부, 함수 복잡도, 주석 적정성 등을 평가하여 점수를 매깁니다.
-2. **`Refactoring Advice`**: 점수가 낮은 코드에 대해 `analyst` 노드와 협력하여 구체적인 리팩토링 제안을 생성하고, 사용자에게 승인을 요청하거나 스스로 개선 계획을 수립합니다.
+**GitHub Agent (Issue & PR Automation)**
+1. **`Issue Analysis`**: 지정된 GitHub 저장소의 오픈된 이슈를 읽어와 작업 우선순위를 정하고 에이전트에게 할당합니다.
+2. **`PR Creation`**: 작업이 완료되면 자동으로 브랜치를 생성하고, 변경 내역 요약과 함께 GitHub Pull Request를 생성하는 자동화 파이프라인을 구축합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 웹 콘솔 양방향 통신 완료 (v1.8.3).
-- 다음 목표: 코드 리뷰 및 품질 측정 엔진(Code Reviewer) 구축.
+- 코드 리뷰 및 품질 점수화 완료 (v1.8.4).
+- 다음 목표: GitHub 이슈 및 PR 자동화(GitHub Agent).
 
 작업 목표:
-1. `agents/analyst.py`에 코드 품질을 평가하는 `review_code` 메서드를 추가해줘. (Complexity, Style, Documentation 기준)
-2. `coder` 노드 완료 후 결과 코드를 `analyst`에게 보내 리뷰 점수를 받고, 일정 점수 미달 시 자동으로 리팩토링 단계를 계획하도록 연동해줘.
+1. `utils/git_tool.py`를 확장하여 GitHub API를 통한 이슈 조회 및 PR 생성 기능을 추가해줘.
+2. `agents/manager.py`에서 저장소 링크가 주어지면 이슈를 분석하여 작업을 배분하는 지침을 보강해줘.
 ```
