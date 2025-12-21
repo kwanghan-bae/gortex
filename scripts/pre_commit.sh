@@ -54,7 +54,7 @@ if command -v ruff &> /dev/null; then
     ruff check . --fix || { echo -e "${RED}❌ Lint errors found! Fix them before committing.${NC}"; exit 1; }
 else
     echo -e "${YELLOW}⚠️  Ruff not found. Falling back to basic syntax check...${NC}"
-    find . -name "*.py" -not -path "./venv/*" | xargs python3 -m py_compile || { echo -e "${RED}❌ Syntax Error Detected!${NC}"; exit 1; }
+    find . -name "*.py" -not -path "./venv/*" -not -path "./logs/*" | xargs python3 -m py_compile || { echo -e "${RED}❌ Syntax Error Detected!${NC}"; exit 1; }
 fi
 
 # ==========================================

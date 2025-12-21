@@ -1,27 +1,27 @@
 # Next Session
 
 ## 세션 목표
-- `OLLAMA_PLAN.md` 전면 적용 확대: `Planner`, `Researcher`, `Analyst` 에이전트가 `LLMFactory`를 사용하도록 리팩토링하여 시스템 전체의 하이브리드 LLM 아키텍처를 완성한다.
-- **Efficiency Benchmarking**: 로컬 모델(Ollama)과 클라우드 모델(Gemini) 간의 작업 성공률 및 비용 대비 성능을 비교할 수 있는 기초 벤치마킹 유틸리티 개발.
+- **Evolutionary Node Realization**: 비어있는 `agents/evolution_node.py`를 정식 구현하여 시스템이 스스로 소스 코드를 분석하고 아키텍처 개선안을 적용하는 자가 진화 루프를 가동한다.
+- **Intelligent Model Routing**: `EfficiencyMonitor`에 축적된 데이터를 분석하여, 특정 작업에 대해 가장 효율적인 모델(Ollama vs Gemini)을 자동으로 선택하는 라우팅 엔진 프로토타입 개발.
 
 ## 컨텍스트
-- `Coder` 및 `Manager`의 리팩토링이 완료되어 핵심 제어 흐름에 하이브리드 전략이 성공적으로 안착되었습니다.
-- `pre-commit` 무한 루프 이슈가 해결되어 자동화된 품질 검증 환경이 안정화되었습니다.
+- 모든 에이전트가 하이브리드 아키텍처로 전환되어 모델 교체가 자유로운 상태입니다.
+- 성능 데이터가 축적되기 시작했으므로, 이제는 데이터에 기반한 의사결정이 가능합니다.
 
 ## 범위 (Scope)
 ### 수행할 작업 (Do)
-- `agents/planner.py`, `agents/researcher.py`, `agents/analyst/base.py`: `LLMFactory` 도입 및 응답 파싱 로직 표준화.
-- `utils/efficiency_monitor.py` (신규): 모델별 토큰 사용량 및 성공/실패 여부를 추적하는 경량 모니터링 모듈 설계.
-- 전체 테스트 커버리지 유지 및 `scripts/pre_commit.sh` 안정성 확인.
+- `agents/evolution_node.py`: 코드 구조 개선 및 패턴 승격을 담당하는 신규 노드 구현.
+- `utils/efficiency_monitor.py`: 수집된 데이터를 바탕으로 모델 성능 순위를 반환하는 분석 메서드 추가.
+- `core/engine.py`: 에이전트 호출 전 최적 모델을 예측하여 할당하는 가이드 로직 실험.
 
 ### 수행하지 않을 작업 (Do NOT)
-- 에이전트 로직 자체의 대규모 기능 변경은 지양하고, LLM 연동 방식의 추상화에 집중한다.
+- 시스템 아키텍처의 근간(Graph 구조)을 사용자 승인 없이 대규모로 파괴하지 않는다.
 
 ## 기대 결과
-- 모든 에이전트가 단일 인터페이스(`LLMFactory`)를 통해 모델에 접근하게 된다.
-- 로컬 LLM 운영의 실질적인 이득을 수치화할 수 있는 기반이 마련된다.
+- 시스템이 스스로 성능을 모니터링하고 최적의 리소스를 배분하는 지능형 멀티 에이전트로 한 단계 도약한다.
+- 자가 진화 로직을 통해 기술 부채가 자동으로 감지되고 해소되는 환경이 구축된다.
 
 ## 완료 기준
-- 잔여 주요 에이전트 리팩토링 완료.
-- 통합 테스트 통과.
-- `docs/sessions/session_0064.md` 기록.
+- `evolution_node.py` 동작 확인.
+- 모델 성능 기반 자동 라우팅 프로토타입 완성.
+- `docs/sessions/session_0065.md` 기록.

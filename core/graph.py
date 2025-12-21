@@ -14,9 +14,10 @@ from gortex.agents.analyst import analyst_node
 from gortex.agents.trend_scout import trend_scout_node
 from gortex.agents.optimizer import optimizer_node
 from gortex.agents.swarm import swarm_node
+from gortex.agents.evolution_node import evolution_node
 from gortex.utils.memory import summarizer_node
 
-def route_manager(state: GortexState) -> Literal["summarizer", "planner", "researcher", "analyst", "optimizer", "swarm", "__end__"]:
+def route_manager(state: GortexState) -> Literal["summarizer", "planner", "researcher", "analyst", "optimizer", "swarm", "evolution", "__end__"]:
     """Manager의 결정에 따라 다음 노드로 라우팅."""
     next_node = state.get("next_node", "__end__")
     if next_node == "__end__":
@@ -28,7 +29,7 @@ def route_manager(state: GortexState) -> Literal["summarizer", "planner", "resea
     if len(messages) >= 12 or total_tokens >= 5000:
         return "summarizer"
         
-    return next_node
+    return "evolution" if next_node == "evolution" else next_node
 
 def route_after_summary(state: GortexState) -> str:
     """요약 후 원래 가려던 노드로 복귀"""
@@ -56,6 +57,7 @@ def compile_gortex_graph():
     workflow.add_node("trend_scout", trend_scout_node)
     workflow.add_node("summarizer", summarizer_node)
     workflow.add_node("optimizer", optimizer_node)
+    workflow.add_node("evolution", evolution_node)
 
     # 엣지 연결
     workflow.add_edge(START, "trend_scout")
@@ -72,6 +74,7 @@ def compile_gortex_graph():
             "analyst": "analyst",
             "optimizer": "optimizer",
             "swarm": "swarm",
+            "evolution": "evolution",
             "__end__": END
         }
     )
@@ -86,6 +89,7 @@ def compile_gortex_graph():
             "analyst": "analyst",
             "optimizer": "optimizer",
             "swarm": "swarm",
+            "evolution": "evolution",
             "manager": "manager"
         }
     )
@@ -109,9 +113,10 @@ def compile_gortex_graph():
     # Analyst 완료 후 Manager 복귀
     workflow.add_edge("analyst", "manager")
 
-    # Researcher & Optimizer 완료 후 Manager 복귀
+    # Researcher, Optimizer, Evolution 완료 후 Manager 복귀
     workflow.add_edge("researcher", "manager")
     workflow.add_edge("optimizer", "manager")
+    workflow.add_edge("evolution", "manager")
 
     # 그래프 컴파일 (체크포인터 추가)
     from langgraph.checkpoint.memory import MemorySaver

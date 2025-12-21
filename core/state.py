@@ -22,7 +22,7 @@ class GortexState(TypedDict):
     
     # 4. Control Flow & Safety (제어 흐름 및 안전장치)
     # 다음으로 실행할 노드 지정
-    next_node: Literal["manager", "planner", "coder", "researcher", "analyst", "trend_scout", "__end__", "swarm", "optimizer"]
+    next_node: Literal["manager", "planner", "coder", "researcher", "analyst", "trend_scout", "swarm", "optimizer", "summarizer", "evolution", "__end__"]
     assigned_model: str      # Manager가 할당한 모델 ID (예: gemini-1.5-pro)
     assigned_persona: str    # 현재 작업 맥락에 최적화된 에이전트 페르소나 (standard, innovation 등)
     coder_iteration: int     # Coder 무한 루프 방지용 카운터 (최대 30)
