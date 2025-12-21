@@ -38,6 +38,7 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
     from gortex.utils.prompt_loader import loader
     base_instruction = loader.get_prompt(
         "planner", 
+        persona_id=state.get("assigned_persona", "standard"),
         current_files=current_files, 
         context_info=context_info
     )

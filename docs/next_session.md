@@ -1,23 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 에이전트 페르소나 프로필 구축 및 동적 전환 (Dynamic Persona Switch v1)
+- 자율적 로그 압축 및 데이터 백업 시스템 (Autonomous Backup v1)
 
 ## Context
-- 현재 에이전트들은 정해진 지침(Instruction)만 따르고 있어, 문제 해결 방식이 다소 경직되어 있음.
-- `Innovation(혁신가)`, `Stability(안정주의자)`, `Security Expert(보안 전문가)`, `UX Specialist(사용자 경험 전문가)` 등 다양한 페르소나 프로필을 `docs/i18n/personas.json`에 정의하고, 작업의 성격에 따라 에이전트에게 주입해야 함.
+- `logs/` 디렉토리에 지식 샤드, 세션 파일, 인덱스 등 중요한 데이터가 산재해 있음.
+- `Analyst`가 세션 종료 시 주요 데이터들을 하나의 아카이브(`.zip` 또는 `.tar.gz`)로 압축하고, `logs/backups/full_session_XXXX.zip` 형태로 보관하는 로직이 필요함.
 
 ## Scope
 ### Do
-- `docs/i18n/personas.json` 생성 및 4종 이상의 핵심 페르소나 정의.
-- `agents/manager.py`에서 작업 분석 시 최적의 페르소나를 결정하여 `state["assigned_persona"]`로 전달하는 로직 추가.
-- `docs/prompts/core_agents.yaml`을 수정하여 전달받은 페르소나를 시스템 지침에 동적으로 합성.
+- `utils/tools.py`에 디렉토리 압축 및 해제 유틸리티 추가.
+- `agents/analyst.py`에 전체 세션 데이터를 패키징하는 `perform_full_backup` 메서드 추가.
+- `main.py` 종료 시점에 증분 정리가 아닌 '전체 백업' 옵션을 트리거 가능하게 연동.
 
 ### Do NOT
-- 모든 작업에 페르소나를 강제하지 말 것 (기본값: Standard).
+- `venv`나 `.git` 같이 불필요하게 거대한 폴더는 백업 대상에서 제외할 것.
 
 ## Expected Outputs
-- `docs/i18n/personas.json`, `agents/manager.py`, `docs/prompts/core_agents.yaml` 수정.
+- `utils/tools.py`, `agents/analyst.py`, `main.py` 수정.
 
 ## Completion Criteria
-- 보안 관련 요청 시 '보안 전문가' 페르소나가 주입되고, UI 관련 요청 시 'UX 전문가' 페르소나가 주입되어 사고 트리(`thought_tree`)의 내용이 해당 성격에 맞춰 변화하는 것이 확인되어야 함.
+- 세션 종료 후, `logs/backups/` 내에 현재 세션의 모든 정수가 담긴 압축 파일이 생성되는 것이 확인되어야 함.

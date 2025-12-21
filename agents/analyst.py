@@ -599,7 +599,7 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
     
     # [Dynamic Prompting] 외부 템플릿 로드
     from gortex.utils.prompt_loader import loader
-    base_instruction = loader.get_prompt("analyst")
+    base_instruction = loader.get_prompt("analyst", persona_id=state.get("assigned_persona", "standard"))
     
     last_msg_obj = state["messages"][-1]
     last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content

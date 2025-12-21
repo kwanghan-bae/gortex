@@ -69,6 +69,7 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
     from gortex.utils.prompt_loader import loader
     base_instruction = loader.get_prompt(
         "coder", 
+        persona_id=state.get("assigned_persona", "standard"),
         current_step_json=json.dumps(current_step, ensure_ascii=False, indent=2),
         tool_output=(tool_output if tool_output else "(Not executed yet)")
     )

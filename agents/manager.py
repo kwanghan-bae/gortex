@@ -189,6 +189,11 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
                     "enum": ["coding", "research", "analyst", "debugging", "standard"],
                     "description": "현재 작업 맥락에 가장 적합한 UI 레이아웃 모드"
                 },
+                "assigned_persona": {
+                    "type": "STRING",
+                    "enum": ["standard", "innovation", "stability", "security", "ux_specialist"],
+                    "description": "다음 작업의 성격에 가장 적합한 에이전트 페르소나"
+                },
                 "user_intent_projection": {
                     "type": "OBJECT",
                     "properties": {
@@ -284,7 +289,8 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
             "token_credits": credits,
             "knowledge_lineage": knowledge_lineage,
             "user_intent_projection": res_data.get("user_intent_projection"),
-            "pin_this": res_data.get("pin_this", False)
+            "pin_this": res_data.get("pin_this", False),
+            "assigned_persona": res_data.get("assigned_persona", "standard")
         }
         
         if res_data.get("parallel_tasks"):
