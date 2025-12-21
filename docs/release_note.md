@@ -3,15 +3,20 @@
 > 💡 **Versioning Policy**: 메이저 버전(v1.x, v2.x ...)이 변경될 때마다 이전 기록은 `docs/archive/`로 이동하며, 메인 릴리즈 노트는 항상 최신 상태를 유지합니다.
 
 ## 🚀 Backlog (Pending Tasks)
-- [x] **Intelligence**: 에이전트의 사고 트리에 멀티모달 데이터(Mermaid 등)를 포함하는 'Visual Reasoning' 도입
-- [ ] **Infrastructure**: 에이전트 생성물들을 자동 구조화하고 아카이빙하는 'Workspace Organizer' 구축
+- [x] **Infrastructure**: 에이전트 생성물들을 자동 구조화하고 아카이빙하는 'Workspace Organizer' 구축
 - [ ] **Interface**: 3D 그래프에서 영향 받는 노드들을 묶어 보여주는 'Dependency Clustering' 시각화
+- [ ] **Intelligence**: 에이전트의 사고 트리에 멀티모달 데이터를 포함하는 'Visual Reasoning' 도입
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.6.6 (Autonomous Workspace Organizer & Archiving)
+- [x] `utils/tools.py`: 프로젝트 부산물들을 명명 규칙에 따라 안전하게 격리 보관하는 아카이빙 엔진 구축
+- [x] `agents/analyst.py`: 세션 종료 시 작업 공간을 스캔하여 백업 및 임시 파일을 자동 정리하는 지능형 클리너 구현
+- [x] `Infrastructure`: 누적되는 작업 로그와 버전을 프로젝트별로 구조화하여 장기적인 유지보수성 확보
 
 ### v2.6.5 (Multimodal Thought Visualization & Diagrams)
 - [x] `agents/`: 사고 트리(`thought_tree`) 스키마에 `visual_payload` 필드를 추가하여 시각적 추론 기반 마련

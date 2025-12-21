@@ -243,3 +243,20 @@ def scan_security_risks(code: str) -> List[Dict[str, str]]:
             risks.append({"type": risk_type, "pattern": pattern})
             
     return risks
+
+def archive_project_artifacts(project_name: str, version: str, files: List[str]) -> str:
+    """프로젝트 생성물들을 버전별로 구조화하여 아카이빙"""
+    try:
+        archive_root = os.path.join("logs", "archives", project_name, version)
+        os.makedirs(archive_root, exist_ok=True)
+        
+        moved_count = 0
+        for f_path in files:
+            if os.path.exists(f_path):
+                dest = os.path.join(archive_root, os.path.basename(f_path))
+                shutil.move(f_path, dest)
+                moved_count += 1
+                
+        return f"✅ Archived {moved_count} artifacts to {archive_root}"
+    except Exception as e:
+        return f"❌ Archive failed: {e}"

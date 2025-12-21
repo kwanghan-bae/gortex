@@ -1,23 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 자율적 작업 공간 구조화 및 아카이빙 (Workspace Organizer v1)
+- 3D 의존성 군집화 및 클러스터 시각화 (Dependency Clustering v1)
 
 ## Context
-- 현재 `logs/backups`, `logs/versions`, `tests/` 등에 수많은 파일이 누적되고 있으나, 이를 프로젝트 맥락에 맞게 정리하는 로직이 없음.
-- `Analyst`가 세션 종료 시점에 생성된 파일들의 중요도를 판정하고, 불필요한 임시 파일은 삭제하며 중요한 버전은 `archive/project_name/vX.X.X/`로 이동시키는 자율 정리 지능이 필요함.
+- 시스템이 복잡해짐에 따라 3D 그래프의 노드 개수가 늘어나 가독성이 떨어짐.
+- 서로 밀접하게 연결된 노드(예: Auth 관련 파일들, UI 관련 노드들)를 하나의 시각적 그룹(Cluster)으로 묶어 표현하여 거시적인 아키텍처 조망을 지원해야 함.
 
 ## Scope
 ### Do
-- `agents/analyst.py`에 작업 공간을 분석하고 정리 계획을 세우는 `organize_workspace` 메서드 추가.
-- `utils/tools.py`에 파일 이동 및 구조화된 아카이빙을 위한 유틸리티 추가.
-- `main.py` 종료 시점에 자율 정리를 트리거.
+- `ui/three_js_bridge.py`에 노드들 간의 거리를 계산하여 그룹 ID를 부여하는 클러스터링 로직 추가.
+- 웹 대시보드 3D 뷰에서 그룹별로 배경 박스나 고유 색상을 입혀 시각적으로 구분.
+- 영향 범위 분석 시, 특정 클러스터 전체가 하이라이트되는 상위 레벨 시각화 지원.
 
 ### Do NOT
-- 사용자의 소스 코드를 동의 없이 삭제하지 말 것 (오직 생성된 부속물 위주로 정리).
+- 실시간 렌더링 성능을 저해할 정도의 복잡한 물리 계산은 지양할 것 (단순 거리/연결성 기반).
 
 ## Expected Outputs
-- `agents/analyst.py`, `utils/tools.py`, `main.py` 수정.
+- `ui/three_js_bridge.py`, `ui/web_server.py` 수정.
 
 ## Completion Criteria
-- 세션 종료 후, `logs/archives/` 폴더 내에 현재 작업 내용이 깔끔하게 구조화되어 보관되는 것이 확인되어야 함.
+- 웹 대시보드 실행 시, 흩어진 노드들이 특정 의미 단위로 묶여서(Clustered) 시각적으로 표시되는 것이 확인되어야 함.

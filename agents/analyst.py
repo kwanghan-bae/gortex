@@ -407,6 +407,13 @@ class AnalystAgent:
             with open(next_sess_path, "w", encoding='utf-8') as f:
                 f.write(next_sess_content)
             
+            # [WORKSPACE ORGANIZATION] 부산물 자율 정리 및 아카이빙
+            try:
+                project_name = os.path.basename(os.getcwd())
+                self.organize_workspace(project_name, res_data.get('version', 'v2.x.x'))
+            except Exception as org_e:
+                logger.warning(f"Workspace organization failed: {org_e}")
+
             logger.info(f"✅ Auto-finalized session: {session_file}")
             return res_data
         except Exception as e:
@@ -509,6 +516,38 @@ class AnalystAgent:
             ltm._save_store()
             logger.info(f"✅ Knowledge Map updated: {connections_made} connections formed.")
         return connections_made
+
+    def organize_workspace(self, project_name: str, version: str):
+        """작업 공간의 부산물들을 분석하여 구조적으로 정리 및 아카이빙"""
+        logger.info(f"🧹 Organizing workspace for project '{project_name}' (Version: {version})...")
+        from gortex.utils.tools import archive_project_artifacts
+        
+        # 정리 대상 후보군 수집
+        targets = []
+        
+        # 1. 백업 파일들
+        if os.path.exists("logs/backups"):
+            for f in os.listdir("logs/backups"):
+                targets.append(os.path.join("logs/backups", f))
+                
+        # 2. 버전 아카이브들
+        if os.path.exists("logs/versions"):
+            for root, dirs, files in os.walk("logs/versions"):
+                for f in files: targets.append(os.path.join(root, f))
+                
+        # 3. 이번 세션에 생성된 임시 데이터 파일 등 (추가 가능)
+        
+        if targets:
+            res = archive_project_artifacts(project_name, version, targets)
+            logger.info(res)
+            
+            # 정리 후 빈 폴더 삭제 시도
+            try:
+                for d in ["logs/backups", "logs/versions"]:
+                    if os.path.exists(d) and not os.listdir(d): os.rmdir(d)
+            except: pass
+            
+        return len(targets)
 
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""

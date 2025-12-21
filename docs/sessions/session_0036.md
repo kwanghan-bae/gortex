@@ -1,20 +1,21 @@
 # Session 0036
 
 ## Goal
-- 에이전트 사고 트리 시각화 고도화 (Multimodal Thought UI v1)
+- 자율적 작업 공간 구조화 및 아카이빙 (Workspace Organizer v1)
 
 ## What Was Done
-- **agents/planner.py & coder.py 수정**: 사고 트리(`thought_tree`)의 각 노드에 시각적 부가 정보를 담을 수 있는 `visual_payload` 필드 추가.
-- **ui/three_js_bridge.py 수정**: 사고 트리 데이터를 3D 좌표로 변환 시 `visual_payload` 정보를 포함하여 웹 UI로 브로드캐스팅하도록 개선.
-- **docs/prompts/core_agents.yaml 보강**: Planner가 복잡한 설계 노드에서 Mermaid 다이어그램을 생성하도록 지침(Rule: Visual Reasoning) 추가.
-- **연속성 확보**: 이제 시스템은 추상적인 사고 과정을 구체적인 설계도(Diagram)로 시각화하여 사용자에게 제시함.
+- **utils/tools.py 수정**: 프로젝트 부산물들을 버전별로 구조화하여 아카이빙하는 `archive_project_artifacts` 유틸리티 구현.
+- **agents/analyst.py 수정**: 
+    - 작업 공간 내의 백업, 버전 아카이브 등을 수집하여 정리하는 `organize_workspace` 메서드 구현.
+    - `auto_finalize_session` 종료 직전에 자율 정리를 수행하도록 연동하여 세션 종료 시마다 작업 공간의 청결성 유지.
+- **연속성 확보**: 이제 시스템은 수많은 작업을 거듭해도 `logs/` 하위가 어지럽혀지지 않으며, 모든 과거 기록이 프로젝트/버전별로 깔끔하게 보관됨.
 
 ## Decisions
-- 사고의 투명성을 위해 Mermaid 형식을 표준 시각화 언어로 채택함.
-- `visual_payload`는 nullable로 설정하여 시각 정보가 불필요한 단순 분석 노드의 오버헤드를 방지함.
+- 작업 부산물(백업, 이전 버전)은 `logs/archives/<project>/<version>/`으로 격리 이동시켜 소스 코드 디렉토리의 오염을 방지함.
+- 정리 중 오류 발생 시 경고 로그만 남기고 시스템 종료 프로세스는 계속 진행하여 세션 가용성 확보.
 
 ## Problems / Blockers
-- 현재 웹 UI 프론트엔드의 실제 Mermaid 렌더링 기능은 가상의 영역임. 향후 실제 대시보드 애플리케이션 개발 시 이 데이터를 파싱하여 렌더링하는 컴포넌트 구현이 필수적임.
+- 현재는 파일 이동 기반의 정리를 수행함. 향후 보관된 아카이브가 너무 많아질 경우 '오래된 아카이브 자동 압축' 또는 'N개 버전 이후 삭제'와 같은 보관 정책(Retention Policy) 도입 검토 필요.
 
 ## Notes for Next Session
-- 시스템의 '물리적 통합'을 위해, 현재 에이전트들이 생성한 수많은 테스트 파일과 로그들을 프로젝트 성격에 맞게 자동으로 구조화하고 아카이빙하는 'Autonomous Workspace Organizer' 기능이 필요함.
+- 시스템의 '사회적 지성'을 한 단계 더 높이기 위해, 현재 3D 인과 그래프에서 영향도가 높거나 자주 참조되는 노드들을 자동으로 군집화(Clustering)하여 보여주는 'Dependency Clustering Visualization'이 필요함.
