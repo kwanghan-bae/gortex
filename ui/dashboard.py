@@ -58,6 +58,7 @@ class DashboardUI:
         self.activity_stream = [] # 저널 스타일 활동 일지
         self.review_board = {} # 에이전트 승인 현황 관리
         self.debt_list = [] # 기술 부채(복잡도) 목록
+        self.active_debate = [] # 현재 진행 중인 토론 데이터
         
         # Progress bar for tools
         self.progress = Progress(
@@ -144,6 +145,7 @@ class DashboardUI:
             "activity": self.activity_stream, # 활동 일지 추가
             "review": self.review_board, # 리뷰 현황 추가
             "debt": self.debt_list, # 기술 부채 추가
+            "debate": self.active_debate, # 토론 데이터 추가
             "chat_history": [
                 (r, c if isinstance(c, str) else "[Rich Object]") 
                 for r, c in self.chat_history[-10:]
@@ -153,6 +155,28 @@ class DashboardUI:
             await self.web_manager.broadcast(json.dumps(state, ensure_ascii=False))
         except:
             pass
+
+    def update_debate_monitor(self, debate_data: list):
+        """에이전트 간 토론 현황 시각화"""
+        self.active_debate = debate_data
+        if not debate_data:
+            return
+
+        debate_group = []
+        debate_group.append(Text("⚔️ [bold red]MULTI-AGENT DEBATE IN PROGRESS[/bold red]", justify="center"))
+        
+        for entry in debate_data:
+            persona = entry.get("persona", "Neutral")
+            color = "magenta" if persona == "Innovation" else "cyan"
+            title = f"🎭 {persona.upper()}"
+            content = entry.get("report", "")[:500] + "..." if len(entry.get("report", "")) > 500 else entry.get("report", "")
+            debate_group.append(Panel(content, title=title, border_style=color, padding=(0, 1)))
+
+        # 터미널 메인 화면에 토론 내용을 일시적으로 주입 (채팅 기록 위에 표시)
+        self.layout["main"].update(Panel(Group(*debate_group), title="[bold red]⚖️ CONSENSUS DEBATE[/bold red]", border_style="red"))
+        
+        if self.web_manager:
+            asyncio.create_task(self._broadcast_to_web())
 
     def update_debt_panel(self, debt_list: list):
         """기술 부채(복잡도) 패널 업데이트"""

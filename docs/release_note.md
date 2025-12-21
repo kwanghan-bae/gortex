@@ -5,13 +5,19 @@
 ## 🚀 Backlog (Pending Tasks)
 - [x] **Intelligence**: 다중 에이전트 합의(토론) 프로토콜(Multi-Agent Consensus Protocol) 구현
 - [x] **Intelligence**: 에이전트 간의 관점 차이를 조율하는 합의 도출(Synthesis) 알고리즘 고도화
-- [ ] **Interface**: 에이전트 간의 가상 토론 과정을 시각화하는 'Debate Monitor' 웹 UI 구축
+- [x] **Interface**: 에이전트 간의 가상 토론 과정을 시각화하는 'Debate Monitor' 웹 UI 구축
+- [ ] **Intelligence**: 합의 결과의 유효성을 사후 평가하여 페르소나별 가중치를 동적으로 조절하는 'Consensus Learner' 도입
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.3.2 (Debate Monitor Visualization)
+- [x] `ui/dashboard.py`: 상반된 페르소나의 의견을 대조하여 보여주는 'Debate Monitor' 위젯 구현
+- [x] `main.py`: 실시간 토론 데이터를 터미널 및 웹 대시보드로 스트리밍하는 파이프라인 연동
+- [x] `ui/dashboard.py`: 토론 모드 시 시각적 집중도를 높이기 위한 메인 패널 동적 레이아웃 전환 로직 추가
 
 ### v2.3.1 (Enhanced Consensus Synthesis)
 - [x] `core/state.py`: 토론 데이터 전용 보관을 위한 `debate_context` 필드 도입

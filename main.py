@@ -856,6 +856,10 @@ async def run_gortex():
                                     if len(efficiency_history) > 10:
                                         efficiency_history.pop(0)
 
+                                # [DEBATE] 토론 데이터 UI 업데이트
+                                if "debate_context" in output:
+                                    ui.update_debate_monitor(output["debate_context"])
+
                                 # 정밀 프로파일링 및 인과 관계 기록
                                 last_event_id = observer.log_event(
                                     node_name, "node_complete", 

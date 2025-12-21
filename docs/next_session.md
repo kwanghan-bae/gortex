@@ -1,23 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 에이전트 간 가상 토론 과정 시각화 (Debate Monitor v1)
+- 합의 결과 사후 평가 및 페르소나 가중치 학습 (Consensus Learner v1)
 
 ## Context
-- 합의 프로토콜이 데이터 레벨에서 완성되었으나, 사용자 입장에서는 블랙박스 내에서 결과만 통보받는 느낌을 줄 수 있음.
-- `Swarm`에서의 관점 충돌과 `Analyst`의 종합 과정을 시각적 데이터로 변환하여 대시보드에 노출해야 함.
+- 토론 시스템이 완성되었으나, 모든 결정이 항상 최선은 아닐 수 있음.
+- 합의된 안을 실행한 후의 효율성 점수(`efficiency_score`)를 추적하여, 특정 상황에서 어떤 관점(Innovation vs Stability)이 더 성공적이었는지 기록해야 함.
 
 ## Scope
 ### Do
-- `ui/dashboard.py`에 토론 현황을 표시할 수 있는 `update_debate_monitor` 메서드 추가.
-- `main.py`에서 `debate_context` 데이터를 UI 및 웹 서버로 실시간 스트리밍하도록 연동.
-- 웹 대시보드에서 상반된 페르소나의 의견을 대조하여 보여주는 데이터 스키마 확장.
+- `core/state.py`에 `consensus_history` 필드 추가 (합의안 및 사후 점수 기록).
+- `agents/analyst.py`에서 이전 합의안의 실행 결과를 평가하여 '교훈(Lesson)'을 추출하는 로직 추가.
+- 추출된 교훈을 `EvolutionaryMemory`에 저장하여 향후 합의 시 가중치로 활용.
 
 ### Do NOT
-- 대시보드 레이아웃을 지나치게 복잡하게 만들지 말 것 (기존 패널 재활용 고려).
+- 복잡한 머신러닝 알고리즘 도입 금지 (단순한 점수 기반 통계 활용).
 
 ## Expected Outputs
-- `ui/dashboard.py`, `main.py` 수정.
+- `core/state.py`, `agents/analyst.py`, `core/evolutionary_memory.py` 수정.
 
 ## Completion Criteria
-- 터미널 또는 웹 대시보드에서 'Innovation'과 'Stability'의 상반된 리포트가 대조되어 표시되는 것이 확인되어야 함.
+- 합의안 실행 후의 효율성 점수가 합의 이력에 정상 기록되고, Analyst가 이를 분석하는 과정이 확인되어야 함.
