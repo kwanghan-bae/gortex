@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Neural Mindmap & 3D Thinking visualization Complete (v2.2.5)
+**Status:** Resource Profiler & Complexity Analysis Complete (v2.2.6)
 
 ## 🧠 Current Context
-3D 신경망 마인드맵 시스템이 가동되었습니다. 이제 Gortex의 추론 과정은 단순 텍스트를 넘어 역동적인 3D 공간의 노드 연결로 시각화됩니다. 이는 복잡한 의사결정의 계층 구조와 에이전트의 확신도를 한눈에 파악할 수 있게 해줍니다.
+코드 자원 프로파일러가 도입되어 이제 Gortex는 자신이 작성한 코드의 성능적 파급 효과를 정량적으로 파악할 수 있습니다. 이는 단순히 돌아가는 코드를 넘어, 대규모 데이터셋에서도 효율적으로 작동하는 '최적화된 코드'를 지향하는 기초가 됩니다.
 
 ## 🎯 Next Objective
-**Resource Profiler (Static Complexity Analysis)**
-1. **`Complexity Prediction`**: 에이전트가 코드를 작성하는 즉시, 해당 로직의 시간 복잡도(O-notation)와 예상 메모리 사용량을 정적으로 예측합니다.
-2. **`Performance Guard`**: 비효율적인 코드(예: 중첩 루프, 대규모 배열 복사)가 감지되면 실행 전 사용자에게 경고를 보내거나, 더 최적화된 알고리즘으로의 재작성을 스스로 제안하는 기능을 구축합니다.
+**Call Graph 3D (Topology Visualization)**
+1. **`Call Relationship Extraction`**: `Synaptic Index`를 확장하여 함수 간의 호출 관계(Call Graph)를 전수 추출합니다.
+2. **`3D Topology`**: 웹 대시보드에서 Three.js를 활용하여 프로젝트 전체의 함수 호출 흐름을 3D 위상 맵(Topology Map)으로 시각화합니다. 특정 함수를 클릭하면 해당 함수가 호출하는(Callee) 노드와 해당 함수를 호출하는(Caller) 노드들이 하이라이트되는 인터랙티브 기능을 구현합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 3D 사고 시각화 엔진 완료 (v2.2.5).
-- 다음 목표: 코드 자원 프로파일러(Resource Profiler) 구축.
+- 코드 자원 프로파일러 완료 (v2.2.6).
+- 다음 목표: 3D 함수 호출 관계도(Call Graph 3D) 시각화.
 
 작업 목표:
-1. `agents/analyst.py`에 코드의 시간/공간 복잡도를 분석하는 `profile_resource_usage` 메서드를 추가해줘.
-2. `coder` 노드 완료 후 상호 검증(Cross-Validation) 과정에서 성능 프로파일링 결과를 포함하도록 워크플로우를 보강해줘.
+1. `utils/indexer.py`를 확장하여 함수 본문 내의 호출 구문을 분석하고 `call_graph` 데이터를 생성하는 로직을 추가해줘.
+2. `ui/three_js_bridge.py`를 수정하여 추출된 호출 관계를 3D 공간의 유향 그래프(Directed Graph)로 변환하는 기능을 보강해줘.
 ```

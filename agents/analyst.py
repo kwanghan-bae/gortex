@@ -88,6 +88,29 @@ class AnalystAgent:
         """활동 저널링"""
         return f"{agent}가 {event} 작업을 성공적으로 마쳤습니다."
 
+    def profile_resource_usage(self, code: str) -> Dict[str, Any]:
+        """코드의 시간/공간 복잡도 정적 분석"""
+        prompt = f"""다음 파이썬 코드를 분석하여 예상되는 자원 효율성을 리포트하라.
+        
+        [Code]
+        {code}
+        
+        결과는 반드시 다음 JSON 형식을 따라라:
+        {{
+            "time_complexity": "O(n), O(1) 등",
+            "memory_footprint": "Low/Medium/High",
+            "potential_bottlenecks": ["병목 포인트 1", "2"],
+            "performance_score": 0~100,
+            "optimization_required": true/false
+        }}
+        """
+        try:
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
+            return json.loads(response.text)
+        except Exception as e:
+            logger.error(f"Resource profiling failed: {e}")
+            return {"time_complexity": "Unknown", "performance_score": 50, "optimization_required": False}
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""
     agent = AnalystAgent()
@@ -99,14 +122,24 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
         ai_outputs = [m for m in state["messages"] if (isinstance(m, tuple) and m[0] == "ai") or (hasattr(m, 'type') and m.type == "ai")]
         if ai_outputs:
             last_ai_msg = ai_outputs[-1][1] if isinstance(ai_outputs[-1], tuple) else ai_outputs[-1].content
+            
+            # 1. 무결성 검증
             val_res = agent.cross_validate("Current Task", last_ai_msg)
+            # 2. 자원 프로파일링
+            perf_res = agent.profile_resource_usage(last_ai_msg)
+            
             if not val_res.get("is_valid", True):
                 return {"messages": [("ai", f"🛡️ [Cross-Validation Alert] {val_res.get('critique')}")], "next_node": "planner"}
             else:
+                msg = f"🛡️ [Cross-Validation Passed] 무결성 검증 통과.\n"
+                msg += f"⚡ [Performance Profile] 예상 복잡도: {perf_res['time_complexity']} (점수: {perf_res['performance_score']}/100)"
+                if perf_res.get("optimization_required"):
+                    msg += "\n⚠️ 주의: 비효율적인 로직이 감지되었습니다. 최적화를 권장합니다."
+                
                 economy = state.get("agent_economy", {}).copy()
                 if "coder" not in economy: economy["coder"] = {"points": 0, "level": "Novice"}
                 economy["coder"]["points"] += 10
-                return {"messages": [("ai", "🛡️ [Cross-Validation Passed] 무결성 검증 통과.")], "agent_economy": economy, "next_node": "manager"}
+                return {"messages": [("ai", msg)], "agent_economy": economy, "next_node": "manager"}
 
     if "/explain" in last_msg_lower:
         return {"messages": [("ai", "Logic explanation complete.")], "next_node": "manager"}

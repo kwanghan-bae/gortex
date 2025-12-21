@@ -61,9 +61,16 @@
 - [x] **Infrastructure**: 에이전트의 작업 중 발생하는 모든 파일을 시간순으로 아카이빙하고 복구할 수 있는 'File Time Machine' 구축
 - [x] **Interface**: 인덱싱된 코드베이스 내에서 특정 비즈니스 기능의 구현 지점을 자연어로 검색하는 'Semantic Code Search' 고도화
 - [x] **Infrastructure**: 에이전트의 사고 과정을 브라우저에서 인터랙티브한 3D 마인드맵으로 시각화하는 'Neural Mindmap' 구현
-- [ ] **Intelligence**: 에이전트가 생성한 코드의 'Time Complexity'와 'Memory Footprint'를 예측하여 보고하는 'Resource Profiler' 노드 추가
+- [x] **Intelligence**: 에이전트가 생성한 코드의 'Time Complexity'와 'Memory Footprint'를 예측하여 보고하는 'Resource Profiler' 기능 구현
+- [ ] **Interface**: 인덱싱된 코드 내의 모든 함수 호출 관계를 3D 토폴로지 맵으로 시각화하는 'Call Graph 3D' 구현
 
 ## ✅ Completed
+### v2.2.6 (Resource Profiler & Complexity Analysis)
+- [x] `agents/analyst.py`: 생성된 파이썬 코드의 시간/공간 복잡도를 정적으로 분석하고 점수화하는 `profile_resource_usage` 엔진 구현
+- [x] `agents/analyst.py`: 상호 검증(Cross-Validation) 과정에 성능 프로파일링을 통합하여 기능적 무결성과 자원 효율성을 동시에 평가
+- [x] `agents/analyst.py`: O(n^2) 이상의 복잡도나 잠재적 메모리 병목 지점 발견 시 자동 경고를 발생시키는 로직 안착
+- [x] `agents/analyst.py`: 성능 분석 리포트를 대시보드 및 웹 UI로 실시간 스트리밍하여 개발자에게 최적화 통찰력 제공
+
 ### v2.2.5 (Neural Mindmap & 3D Thinking visualization)
 - [x] `ui/three_js_bridge.py`: 에이전트의 복합적인 사고 트리(`thought_tree`)를 3D 신경망 구조로 변환하는 `convert_thought_to_3d` 로직 구현
 - [x] `ui/dashboard.py`: 실시간으로 뻗어나가는 사고 노드와 연결선을 웹 대시보드로 브로드캐스팅하는 파이프라인 고도화
