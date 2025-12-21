@@ -28,9 +28,16 @@
 - [x] **Infrastructure**: 다중 언어 지원을 위한 'Synaptic Translator' 노드 및 다국어 UI 프레임워크 구축
 - [x] **Interface**: 웹 대시보드에 실시간 로그 스트리밍을 넘어서는 'Interactive Console' 기능 추가
 - [x] **Infrastructure**: 외부 깃허브 이슈(Issues)나 PR을 분석하여 작업을 자동 할당하는 'GitHub Agent' 기능 구축
-- [ ] **System**: 에이전트가 코드를 작성하기 전 최신 오픈소스 라이브러리 및 API 문서를 검색하여 참조하는 'Live Documentation' 노드 추가
+- [x] **System**: 에이전트가 코드를 작성하기 전 최신 오픈소스 라이브러리 및 API 문서를 검색하여 참조하는 'Live Documentation' 노드 추가
+- [ ] **Infrastructure**: 대시보드 UI 테마를 사용자의 취향에 맞게 동적으로 변경할 수 있는 'Theming Engine' 구축
 
 ## ✅ Completed
+### v1.8.6 (Live Documentation & Real-time API Search)
+- [x] `agents/researcher.py`: 특정 라이브러리의 공식 문서와 API 레퍼런스를 정밀하게 검색 및 추출하는 `fetch_api_docs` 구현
+- [x] `agents/researcher.py`: 사용자 요청으로부터 문서 검색 필요성을 자동 감지하고 최적의 기술 쿼리를 생성하는 인텔리전스 강화
+- [x] `agents/researcher.py`: 지능형 예외 처리 및 모델 스로틀링(Adaptive Throttling) 연동으로 시스템 안정성 확보
+- [x] `agents/researcher.py`: 검색된 API 시그니처와 예제 코드를 요약하여 Coder의 맥락 인지 능력을 높이는 기반 마련
+
 ### v1.8.5 (GitHub Agent & PR Automation)
 - [x] `utils/git_tool.py`: GitHub API(v3)를 연동하여 오픈된 이슈 목록 조회 및 Pull Request 자동 생성 기능 구현
 - [x] `main.py`: 현재 브랜치의 변경 사항을 원격에 푸시하고 PR을 즉시 생성하는 `/pr [owner/repo] [title]` 명령어 추가

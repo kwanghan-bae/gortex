@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** GitHub Agent & PR Automation Complete (v1.8.5)
+**Status:** Live Documentation & Real-time API Search Complete (v1.8.6)
 
 ## 🧠 Current Context
-GitHub API 연동이 완료되어 이제 Gortex는 이슈 분석부터 코드 수정, 그리고 최종 PR 생성까지 이어지는 전체 개발 사이클을 자동화할 수 있습니다. 이는 협업 환경에서 Gortex의 독립적인 기여 가능성을 열어줍니다.
+실시간 API 문서 검색 시스템이 완성되었습니다. 이제 Gortex는 생소한 라이브러리를 마주하더라도 할루시네이션에 의존하지 않고 최신 공식 문서를 직접 찾아 학습하며 정확한 코드를 작성할 수 있는 능력을 갖추게 되었습니다.
 
 ## 🎯 Next Objective
-**Live Documentation (Real-time API Search)**
-1. **`Documentation Retrieval`**: 새로운 라이브러리나 생소한 API를 사용해야 할 때, 에이전트가 코드를 작성하기 전 구글 검색이나 공식 문서를 실시간으로 크롤링하여 최신 사용법을 학습합니다.
-2. **`Context Enrichment`**: 검색된 최신 API 시그니처와 예제 코드를 Coder의 프롬프트에 주입하여, 할루시네이션(Hallucination)을 최소화하고 정확한 코드를 작성하도록 돕습니다.
+**Dynamic Theming Engine (Visual Customization)**
+1. **`Theme Engine`**: 대시보드의 색상, 테두리 스타일, 폰트 효과 등을 담은 테마 스키마를 정의합니다.
+2. **`Visual Switcher`**: `/theme [name]` 명령어를 통해 실시간으로 UI 테마를 변경하고, 이를 `DashboardUI`와 웹 대시보드에 즉시 반영하는 기능을 구현합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- GitHub 연동 및 자동 PR 기능 완료 (v1.8.5).
-- 다음 목표: 실시간 API 문서 검색 및 맥락 강화(Live Documentation).
+- 실시간 API 문서 검색 기능 완료 (v1.8.6).
+- 다음 목표: 동적 테마 엔진(Dynamic Theming Engine) 구축.
 
 작업 목표:
-1. `agents/researcher.py`의 검색 기능을 고도화하여 특정 라이브러리의 최신 API 문서를 정밀하게 추출하는 `fetch_api_docs` 메서드를 추가해줘.
-2. `coder`가 생소한 모듈을 다룰 때 자동으로 `researcher`를 호출하여 문서를 읽어오도록 워크플로우를 보강해줘.
+1. `ui/dashboard_theme.py`를 확장하여 여러 테마 설정(예: Matrix, Cyberpunk, Classic)을 포함하는 `ThemeManager` 클래스를 구현해줘.
+2. `main.py`에 `/theme` 명령어를 추가하여 실시간으로 UI 스타일을 변경하고 저장하는 기능을 작성해줘.
 ```
