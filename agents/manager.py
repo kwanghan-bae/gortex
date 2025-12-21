@@ -208,6 +208,10 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
                         }
                     }
                 },
+                "pin_this": {
+                    "type": "BOOLEAN",
+                    "description": "이 대화 내용이 시스템 아키텍처나 정책에 있어 매우 중요하여 영구 고정해야 하는 경우 true"
+                },
                 "parallel_tasks": {
                     "type": "ARRAY",
                     "items": {"type": "STRING"},
@@ -279,7 +283,8 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
             "ui_mode": res_data.get("ui_mode", "standard"),
             "token_credits": credits,
             "knowledge_lineage": knowledge_lineage,
-            "user_intent_projection": res_data.get("user_intent_projection")
+            "user_intent_projection": res_data.get("user_intent_projection"),
+            "pin_this": res_data.get("pin_this", False)
         }
         
         if res_data.get("parallel_tasks"):

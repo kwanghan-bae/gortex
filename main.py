@@ -678,6 +678,7 @@ async def run_gortex():
     efficiency_history = [] # 효율성 이력
     last_question = None # 직전 에이전트의 질문 저장
     cache_last_used = {} # 파일별 마지막 접근 노드 카운트 저장
+    pinned_messages = [] # 영구 고정된 핵심 메시지 리스트
 
     # 세션별 파일 캐시 관리 (Isolation)
     cache_path = "logs/file_cache.json"
@@ -759,6 +760,7 @@ async def run_gortex():
 
                     initial_state = {
                         "messages": [("user", actual_input)],
+                        "pinned_messages": pinned_messages,
                         "working_dir": os.getenv("WORKING_DIR", "./workspace"),
                         "coder_iteration": 0,
                         "file_cache": session_cache,
@@ -858,6 +860,12 @@ async def run_gortex():
                                             node_tokens += t
                                             total_tokens += t
                                             total_cost += estimate_cost(t)
+
+                                            # [PINNING] 에이전트가 고정을 요청한 중요한 메시지 저장
+                                            if output.get("pin_this") and role == "ai":
+                                                if (role, content) not in pinned_messages:
+                                                    pinned_messages.append((role, content))
+                                                    logger.info(f"📌 Message pinned to working memory: {content[:50]}...")
                                 
                                 # [PREDICTIVE ACTIONS] 실시간 행동 예측
                                 next_actions = []

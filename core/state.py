@@ -9,6 +9,8 @@ class GortexState(TypedDict):
     """
     # 1. Chat History (LangGraph가 자동으로 메시지를 병합/누적함)
     messages: Annotated[Sequence[BaseMessage], add_messages]
+    # 영구 고정된 핵심 컨텍스트 메시지 리스트
+    pinned_messages: List[BaseMessage]
     
     # 2. Planner Context (작업 계획 및 진행 상황)
     plan: List[str]          # Planner가 수립한 원자적 작업 단계들

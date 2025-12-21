@@ -1,23 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 핵심 설계 의사결정 및 컨텍스트 자동 고정 (Context Pinning v1)
+- 수정 파일 기반 증분 테스트 수행 (Selective Testing v1)
 
 ## Context
-- `Memory Pruning`을 통해 메시지가 요약되고 삭제되면서, 이전 세션에서 합의된 미세한 설계 결정이나 임시 규칙이 유실될 위험이 있음.
-- 사용자가 "이 결정은 중요해"라고 하거나 `Analyst`가 'Critical Decision'으로 분류한 내용은 `messages` 리스트의 삭제 대상에서 제외하고 항상 최상단에 배치(Pinning)해야 함.
+- `Autonomous Pre-Commit` 도입으로 매번 `pre_commit.sh`가 실행되면서, 프로젝트 규모가 커질수록 전체 테스트 실행 시간이 개발 생산성을 저해하는 요소가 됨.
+- `file_cache`의 해시 불일치를 감지하여 '변경된 파일'을 식별하고, `Dependency Impact Analyzer`를 통해 관련 모듈만 선별하여 테스트하는 스마트 테스트 스케줄링이 필요함.
 
 ## Scope
 ### Do
-- `core/state.py`에 `pinned_messages` 필드 추가.
-- `utils/memory.py`의 `prune_synapse` 로직을 수정하여 `pinned_messages`를 항상 보존하고 프롬프트 최상단에 주입하도록 개선.
-- 에이전트 응답 스키마에 `pin_this` (boolean) 필드를 추가하여 자율적인 정보 중요도 판정 유도.
+- `utils/tools.py`에 변경된 파일 리스트를 추출하는 `get_changed_files` 메서드 추가.
+- `scripts/pre_commit.sh`를 확장하여 선택적 테스트 실행 옵션(`--selective`) 지원.
+- `agents/coder.py`에서 자율 검증 시 전체 테스트 대신 영향 범위 내의 테스트만 실행하도록 최적화.
 
 ### Do NOT
-- 모든 메시지를 고정하지 말 것 (토큰 낭비 방지를 위해 진짜 핵심만 선별).
+- 위험도가 높은 'Master' 브랜치 배포 전 검증 시에는 여전히 전체 테스트를 수행할 것.
 
 ## Expected Outputs
-- `core/state.py`, `utils/memory.py`, `agents/manager.py` 수정.
+- `utils/tools.py`, `scripts/pre_commit.sh`, `agents/coder.py` 수정.
 
 ## Completion Criteria
-- 메시지 가지치기(Pruning)가 발생한 후에도, '고정된 메시지'들이 프롬프트 내에 온전히 남아있는 것이 확인되어야 함.
+- 특정 파일 수정 후 자율 검증 시, 수정된 파일과 관련된 테스트만 실행되어 전체 검증 시간이 50% 이상 단축되는 것이 확인되어야 함.

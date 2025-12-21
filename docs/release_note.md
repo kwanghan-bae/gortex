@@ -3,36 +3,20 @@
 > 💡 **Versioning Policy**: 메이저 버전(v1.x, v2.x ...)이 변경될 때마다 이전 기록은 `docs/archive/`로 이동하며, 메인 릴리즈 노트는 항상 최신 상태를 유지합니다.
 
 ## 🚀 Backlog (Pending Tasks)
-- [x] **Quality**: 핵심 에이전트(Manager, Planner) 로직의 엣지 케이스 테스트 보강
-- [x] **Interface**: 에이전트의 사고 인과 관계를 3D 그래프로 탐색하는 'Causal Graph Explorer' 구현
-- [x] **Interface**: 사용자가 정의한 복잡한 아키텍처 규칙을 실시간 검증하는 'Constraint Validator' 노드 추가
-- [x] **Intelligence**: 에이전트가 도구 호출 전후의 시스템 상태 전이를 시각적으로 모델링하는 'Visual Simulation' 고도화
-- [x] **Interface**: 에이전트가 의사결정 트레이드오프를 사용자에게 질문하고 답변을 학습하는 'Interactive Decision Learning' 구현
-- [x] **Intelligence**: 특정 파일 수정 시 영향을 받는 모듈 범위를 예측하는 'Dependency Impact Analyzer' 노드 추가
-- [x] **Interface**: 파일 수정 영향 범위를 3D 그래프에 시각적으로 강조하는 'Visual Impact Highlighter' 구현
-- [x] **Interface**: 모든 에이전트 출력과 문서를 실시간 다국어 번역하여 제공하는 'Omni-Translator' 구축
-- [x] **Interface**: 현재 판단의 근거가 된 지식의 출처를 시각화하는 'Knowledge Lineage UI' 구축
-- [x] **Intelligence**: 사용자의 다음 행동을 예측하여 선제적으로 제안하는 'Predictive Next-Action' 엔진 구축
-- [x] **Intelligence**: 흩어진 지식들 간의 상관관계를 분석하여 지식 지도를 만드는 'Knowledge Relation Mapper' 도입
-- [x] **Intelligence**: 사용자의 의도를 실시간으로 투영하여 워크플로우를 가이드하는 'User Intent Projection' 구축
-- [x] **Infrastructure**: 지식 저장소를 프로젝트 단위로 분할 관리하는 'Memory Sharding' 도입
-- [x] **Infrastructure**: 에이전트 프롬프트를 런타임에 수정 가능한 템플릿으로 분리하는 'Dynamic Prompting' 구축
-- [x] **Infrastructure**: 모든 에이전트 노드에 'Dynamic Prompting' 일괄 적용 및 런타임 최적화
-- [x] **Infrastructure**: 에이전트가 `pre_commit.sh` 검증을 직접 수행하고 자가 수정하는 'Autonomous Pre-Commit' 구현
-- [x] **Quality**: 테스트 없는 커밋을 원천 차단하는 'Strict QA & Pre-commit' 체계 구축
-- [x] **System**: 대규모 그래프 데이터 및 메시지의 효율적 관리를 위한 'Memory Pruning' 전략 도입
-- [x] **Interface**: 현재 작업 맥락에 따라 대시보드 구성을 최적화하는 'Context-Aware UI Layout' 구현
-- [x] **System**: 작업 완료 후 자동으로 결과물을 아카이빙하고 문서를 갱신하는 'Auto-Finalizer' 도입
-- [x] **Economy**: 에이전트 간 상호 평가를 통해 자원 할당 우선순위를 결정하는 'Peer Review Economy' 고도화
-- [x] **System**: 지식 검색 성능을 비약적으로 높이는 'Vector Embedding Search'로의 전환
-- [x] **Intelligence**: 에이전트의 모든 의미 있는 사고 과정을 스스로 요약하여 지식화하는 'Thought Memorization' 구현
+- [x] **System**: 핵심 설계 의사결정 및 컨텍스트 자동 고정 (Context Pinning) 구현
 - [ ] **Infrastructure**: 변경된 파일만 식별하여 증분 테스트를 수행하는 'Selective Testing' 노드 추가
+- [ ] **Interface**: 3D 그래프에서 영향 받는 노드들을 묶어 보여주는 'Dependency Clustering' 시각화
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.6.3 (Context Pinning & Immutable Decisions)
+- [x] `core/state.py`: 삭제 및 요약 로직으로부터 격리되어 항상 보존되는 `pinned_messages` 레이어 도입
+- [x] `agents/manager.py`: 중요한 판단 결과를 에이전트가 스스로 고정(Pin)할 수 있는 자율적 중요도 판정 기능 추가
+- [x] `utils/memory.py`: 메시지 가지치기(Pruning) 시 고정된 컨텍스트를 최상단에 재주입하여 인지 일관성 확보
 
 ### v2.6.2 (Edge Case Rigor & Error Resilience)
 - [x] `tests/`: Manager의 API 오류 대응 및 Analyst의 파싱 실패 등 예외 상황에 대한 단위 테스트 집중 보강

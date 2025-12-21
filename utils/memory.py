@@ -70,16 +70,24 @@ def compress_synapse(state: GortexState) -> GortexState:
 def prune_synapse(state: GortexState, limit: int = 50) -> GortexState:
     """메시지가 임계값을 넘을 경우 중간 메시지를 삭제하여 토큰 및 메모리 최적화"""
     messages = state.get("messages", [])
+    pinned = state.get("pinned_messages", [])
+    
     if len(messages) <= limit:
         return state
         
-    logger.info(f"✂️ Pruning synapse: {len(messages)} -> {limit} messages.")
+    logger.info(f"✂️ Pruning synapse: {len(messages)} -> {limit} messages. (Pinned: {len(pinned)})")
     
-    # 1. 요약본이 포함된 첫 번째 메시지 보존
-    pruned = [messages[0]]
+    # 1. 고정된 메시지(Pinned)를 최상단에 배치
+    pruned = list(pinned)
     
-    # 2. 중간 메시지 절삭 후 최근 10개 메시지만 보존 (컨텍스트 연속성 확보)
-    pruned.extend(messages[-10:])
+    # 2. 요약본이 포함된 첫 번째 시스템 메시지 보존 (Pinned와 중복 방지 체크 필요 시 추가)
+    if messages[0] not in pruned:
+        pruned.append(messages[0])
+    
+    # 3. 중간 메시지 절삭 후 최근 메시지들로 채움 (고정 메시지 제외한 나머지 공간 활용)
+    remaining_slots = limit - len(pruned)
+    if remaining_slots > 0:
+        pruned.extend(messages[-remaining_slots:])
     
     return {"messages": pruned}
 
