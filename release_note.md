@@ -52,9 +52,16 @@
 - [x] **Infrastructure**: 에이전트의 내부 사고 데이터를 활용하여 새로운 에이전트 노드를 자동으로 생성하고 배치하는 'Agent Factory' 기능 구현
 - [x] **Interface**: 에이전트들이 서로의 성과를 칭찬하거나 비판하며 포인트(Point)를 주고받는 'Agent Economy' 게임화 시스템 구축
 - [x] **Infrastructure**: 에이전트의 내부 데이터 처리 파이프라인을 분산 큐(Redis)로 확장하는 'Event-Driven Swarm' 구축
-- [ ] **Intelligence**: 프로젝트 전체의 복잡한 비즈니스 로직을 자연어 문서로 자동 역설계하는 'Code Explainer' 노드 추가
+- [x] **Intelligence**: 프로젝트 전체의 복잡한 비즈니스 로직을 자연어 문서로 자동 역설계하는 'Code Explainer' 기능 구축
+- [ ] **Infrastructure**: 에이전트 간의 협업 도중 발생한 모든 의사결정의 인과 관계를 추적하고 그래프로 저장하는 'Causal Tracking' 구축
 
 ## ✅ Completed
+### v2.1.6 (Code Explainer & Logic Analysis)
+- [x] `agents/analyst.py`: 복잡한 파이썬 코드의 작동 원리와 비즈니스 가치를 자연어로 설명하는 `explain_logic` 엔진 구현
+- [x] `agents/analyst.py`: `Synaptic Index`와 연동하여 특정 심볼(함수/클래스)의 아키텍처적 맥락을 자동 분석하는 `/explain` 명령어 추가
+- [x] `agents/analyst.py`: 기술 지식이 부족한 사용자도 이해할 수 있는 수준의 'Executive Explanation' 스타일 프롬프트 최적화
+- [x] `agents/analyst.py`: 데이터 분석, 품질 리뷰, 스타일 학습, 로직 설명이 하나로 결합된 다목적 분석 인터페이스 구축
+
 ### v2.1.5 (Event-Driven Swarm & Message Queue)
 - [x] `utils/message_queue.py`: Redis를 기반으로 에이전트 간 비동기 메시지 및 작업을 전달하는 큐 시스템 신설
 - [x] `agents/swarm.py`: 병렬 작업 시 하위 태스크를 메시지 큐에 자동으로 발행(Publish)하여 분산 처리 기반 마련

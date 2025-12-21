@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Event-Driven Swarm & Message Queue Complete (v2.1.5)
+**Status:** Code Explainer & Logic Analysis Complete (v2.1.6)
 
 ## 🧠 Current Context
-이벤트 기반의 분산 태스크 처리 인프라가 구축되었습니다. 이제 Gortex는 무거운 작업을 외부 메시지 큐(Redis)로 분산시켜 처리할 수 있으며, 이는 시스템의 확장성과 비동기 작업 효율을 크게 높여줍니다.
+비즈니스 로직 설명 엔진이 구축되었습니다. 이제 Gortex는 코드를 작성하는 기술적인 단계를 넘어, 작성된 코드의 의미와 파급 효과를 인간의 언어로 상세히 설명할 수 있습니다. 이는 특히 유지보수 과정에서 신규 투입 인력이나 비기술 이해관계자와의 소통을 획기적으로 돕습니다.
 
 ## 🎯 Next Objective
-**Code Explainer (Reverse Engineering Docs)**
-1. **`Logic Explanation`**: 복잡하게 얽힌 소스 코드의 흐름을 분석하여, 기술적인 지식이 없는 사용자도 이해할 수 있는 자연어 문서로 자동 변환합니다.
-2. **`Interactive Doc`**: 사용자가 특정 함수를 클릭하면 해당 로직의 비즈니스적 의미, 부작용(Side Effects), 그리고 관련 의존성을 대화형으로 설명해주는 지능형 문서화 도구를 웹 대시보드에 통합합니다.
+**Causal Tracking (Decision Lineage)**
+1. **`Decision Lineage`**: 시스템 내부에서 특정 결정(예: 모델 변경, 특정 파일 수정)이 내려진 근본적인 원인과 그 파생 효과를 추적하여 '인과 관계 그래프'로 기록합니다.
+2. **`Visual Causal Map`**: 웹 대시보드에서 특정 성과나 오류를 클릭하면, 해당 결과에 도달하기까지의 사고 체인(Decision Chain)을 역순으로 시각화하여 보여주는 'Root-Cause Analysis' 기능을 구현합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 이벤트 기반 분산 스웜 인프라 완료 (v2.1.5).
-- 다음 목표: 비즈니스 로직 자동 설명 엔진(Code Explainer) 구축.
+- 코드 로직 설명 엔진 완료 (v2.1.6).
+- 다음 목표: 의사결정 인과 관계 추적 시스템(Causal Tracking).
 
 작업 목표:
-1. `agents/analyst.py` 또는 신규 노드에 코드의 비즈니스 흐름을 분석하는 `explain_logic` 메서드를 추가해줘.
-2. `Synaptic Index`와 연동하여 특정 심볼의 아키텍처적 맥락을 요약하여 사용자에게 보고하는 기능을 구현해줘.
+1. `core/observer.py` 또는 `DashboardUI`를 확장하여 노드 간의 결정 인과 관계(parent_decision_id 등)를 저장하는 기능을 추가해줘.
+2. 특정 결과물의 '족보(Lineage)'를 추적하여 그래프 데이터로 반환하는 로직을 작성해줘.
 ```

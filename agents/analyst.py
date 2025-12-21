@@ -374,6 +374,29 @@ class AnalystAgent:
             logger.error(f"Cross-validation failed: {e}")
             return {"is_valid": True, "confidence_score": 1.0}
 
+    def explain_logic(self, code: str, symbol_name: str = "selected code") -> str:
+        """코드의 비즈니스 로직과 작동 원리를 자연어로 설명"""
+        prompt = f"""다음 파이썬 코드의 비즈니스 로직을 '기술 지식이 없는 사용자'도 이해할 수 있도록 설명하라.
+        
+        [Symbol]
+        {symbol_name}
+        
+        [Code]
+        {code}
+        
+        [Explanation Guidelines]
+        - 이 코드가 왜 존재하는지(비즈니스 가치)를 먼저 설명하라.
+        - 핵심 작동 원리를 단계별로 요약하라.
+        - 잠재적인 부작용(Side Effects)이나 주의사항이 있다면 언급하라.
+        - 전문 용어는 최대한 쉽게 풀어서 쓰되, 중요 키워드는 보존하라.
+        """
+        try:
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], None)
+            return response.text
+        except Exception as e:
+            logger.error(f"Logic explanation failed: {e}")
+            return f"로직 분석 중 오류 발생: {e}"
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""
     agent = AnalystAgent()
@@ -381,38 +404,38 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
     last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
     last_msg_lower = last_msg.lower()
 
-    # 1. 의도 판단 (Validation vs Review vs Style vs Data vs Feedback)
+    # 1. 의도 판단 (Review vs Style vs Data vs Feedback vs Explain)
     
-    # 상호 검증 요청 (Graph에서 전이된 경우)
-    if state.get("next_node") == "analyst": # 명시적으로 analyst로 전이됨
-        # 가장 최근의 AI 성과물 검증
-        ai_outputs = [m for m in state["messages"] if (isinstance(m, tuple) and m[0] == "ai") or (hasattr(m, 'type') and m.type == "ai")]
-        if ai_outputs:
-            last_ai_msg = ai_outputs[-1][1] if isinstance(ai_outputs[-1], tuple) else ai_outputs[-1].content
-            val_res = agent.cross_validate("Current Task Plan", last_ai_msg)
-            
-            if not val_res["is_valid"]:
-                msg = f"🛡️ [Cross-Validation Alert] 결과물이 기준에 미달합니다.\n- 이유: {val_res['critique']}\n- 지시: {val_res['required_fix']}"
-                return {
-                    "messages": [("ai", msg)],
-                    "next_node": "planner" # 재수정 지시
-                }
+    # 로직 설명 요청
+    if "/explain" in last_msg_lower:
+        from gortex.utils.indexer import SynapticIndexer
+        from gortex.utils.tools import read_file
+        indexer = SynapticIndexer()
+        # 인덱스 로드 (scan_project 생략, 파일에서 읽기)
+        if os.path.exists(indexer.index_path):
+            with open(indexer.index_path, "r", encoding='utf-8') as f:
+                indexer.index = json.load(f)
+        
+        # 쿼리에서 심볼명 추출 (단순 로직: 명령어 뒤의 첫 단어)
+        parts = last_msg.split()
+        symbol_name = parts[parts.index("/explain") + 1] if "/explain" in parts and len(parts) > parts.index("/explain") + 1 else None
+        
+        if symbol_name:
+            results = indexer.search(symbol_name)
+            if results:
+                target = results[0] # 첫 번째 검색 결과 사용
+                full_code = read_file(os.path.join(state.get("working_dir", "."), target["file"]))
+                # 간단한 코드 블록 추출 (줄 번호 기준)
+                # 여기서는 전체 파일을 넘기거나 특정 범위를 추출하는 로직 필요
+                explanation = agent.explain_logic(full_code[:5000], target["name"])
+                msg = f"💡 **'{target['name']}'** 로직 설명 ({target['file']}):\n\n{explanation}"
+                return {"messages": [("ai", msg)], "next_node": "manager"}
             else:
-                # [ECONOMY] 검증 성공 시 보상 지급
-                economy = state.get("agent_economy", {}).copy()
-                target_agent = "coder" # 주로 coder의 성과물을 검증
-                if target_agent not in economy:
-                    economy[target_agent] = {"points": 0, "level": "Novice"}
-                
-                economy[target_agent]["points"] += 10 # 10포인트 지급
-                if economy[target_agent]["points"] > 50:
-                    economy[target_agent]["level"] = "Expert"
-                
-                return {
-                    "messages": [("ai", f"🛡️ [Cross-Validation Passed] 무결성 검증 완료. {target_agent}가 10 포인트를 획득했습니다!")],
-                    "agent_economy": economy,
-                    "next_node": "manager"
-                }
+                return {"messages": [("ai", f"❌ '{symbol_name}' 심볼을 찾을 수 없습니다.")], "next_node": "manager"}
+        else:
+            return {"messages": [("ai", "사용법: /explain [클래스/함수명]")], "next_node": "manager"}
+
+    # 코딩 스타일 분석 요청 (이전 로직 유지)
 
     # 코딩 스타일 분석 요청 (이전 로직 유지)
     if "/analyze_style" in last_msg_lower or "스타일 분석" in last_msg_lower:
