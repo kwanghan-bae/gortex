@@ -46,34 +46,34 @@ class PromptLoader:
                     logger.error(f"Failed to load prompt file {file}: {e}")
         return all_templates
 
-    def get_prompt(self, agent_id: str, persona_id: str = None, **kwargs) -> str:
-        """지정된 에이전트의 프롬프트를 가져오고 페르소나 주입 및 변수 치환 수행"""
+    def get_prompt(self, agent_id: str, persona_id: str = None, context_text: str = "", **kwargs) -> str:
+        """지정된 에이전트의 프롬프트를 가져오고 페르소나 및 동적 규칙 주입"""
         template = self.templates.get(agent_id, {}).get("instruction", "")
         if not template:
             logger.warning(f"Prompt template for {agent_id} not found.")
             return ""
             
-        # 페르소나 지침 구성
+        # 1. 페르소나 지침 구성
         persona_header = ""
         if persona_id and persona_id in self.personas:
             p = self.personas[persona_id]
-            persona_header = f"""[ACTIVE PERSONA: {p['name']}]
-- Description: {p['description']}
-- Traits: {', '.join(p['traits'])}
-- Focus Areas: {', '.join(p['focus'])}
-- Instructions: 위 성격과 집중 분야를 반영하여 사고하고 행동하라.
+            persona_header = f"[ACTIVE PERSONA: {p['name']}]\n- Focus: {', '.join(p['focus'])}\n\n"
 
-"""
+        # 2. 동적 정책(Dynamic Policy) 주입 (자가 진화된 지식)
+        dynamic_policy = ""
+        try:
+            from gortex.core.evolutionary_memory import EvolutionaryMemory
+            evo_mem = EvolutionaryMemory()
+            rules = evo_mem.get_active_constraints(context_text or agent_id)
+            if rules:
+                dynamic_policy = "\n\n[USER-SPECIFIC EVOLVED POLICIES]\n" + "\n".join([f"- {r}" for r in rules])
+        except: pass
         
         try:
-            # 전달된 인자들을 템플릿에 적용
             body = template.format(**kwargs)
-            return persona_header + body
-        except KeyError as e:
-            logger.error(f"Missing required variable {e} for prompt {agent_id}")
-            return persona_header + template # 실패 시 원문 반환
-        except Exception as e:
-            return persona_header + template
+            return persona_header + body + dynamic_policy
+        except Exception:
+            return persona_header + template + dynamic_policy
 
 # 싱글톤 인스턴스 제공
 loader = PromptLoader()

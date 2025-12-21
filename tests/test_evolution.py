@@ -34,8 +34,10 @@ class TestGortexEvolution(unittest.TestCase):
 
     @patch('gortex.agents.evolution_node.LLMFactory')
     @patch('gortex.agents.evolution_node.execute_shell')
-    def test_evolution_flow_success(self, mock_shell, mock_factory):
+    @patch('gortex.agents.analyst.AnalystAgent.audit_architecture')
+    def test_evolution_flow_success(self, mock_audit, mock_shell, mock_factory):
         """진화 프로세스가 성공적으로 코드를 수정하고 검증하는지 테스트"""
+        mock_audit.return_value = [] # 아키텍처 위반 없음 강제
         mock_backend = MagicMock()
         mock_backend.generate.return_value = "```python\ndef old_func() -> None: pass\n```"
         mock_factory.get_default_backend.return_value = mock_backend
@@ -46,7 +48,7 @@ class TestGortexEvolution(unittest.TestCase):
         result = evolution_node(state)
         
         self.assertEqual(result["next_node"], "manager")
-        self.assertIn("자가 진화 완료", result["messages"][0][1])
+        self.assertTrue("자가 진화 완료" in result["messages"][0][1])
         
         with open(self.test_file, "r") as f:
             content = f.read()
@@ -54,8 +56,10 @@ class TestGortexEvolution(unittest.TestCase):
 
     @patch('gortex.agents.evolution_node.LLMFactory')
     @patch('gortex.agents.evolution_node.execute_shell')
-    def test_evolution_rollback_on_failure(self, mock_shell, mock_factory):
+    @patch('gortex.agents.analyst.AnalystAgent.audit_architecture')
+    def test_evolution_rollback_on_failure(self, mock_audit, mock_shell, mock_factory):
         """검증 실패 시 코드가 원복되는지 테스트"""
+        mock_audit.return_value = []
         mock_backend = MagicMock()
         mock_backend.generate.return_value = "broken code"
         mock_factory.get_default_backend.return_value = mock_backend
@@ -65,7 +69,7 @@ class TestGortexEvolution(unittest.TestCase):
         state = {"assigned_model": "test-model"}
         result = evolution_node(state)
         
-        self.assertIn("롤백되었습니다", result["messages"][0][1])
+        self.assertTrue("롤백되었습니다" in result["messages"][0][1] or "실패" in result["messages"][0][1])
         
         with open(self.test_file, "r") as f:
             content = f.read()

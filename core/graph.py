@@ -1,8 +1,7 @@
 import os
 from typing import Dict, Any, Literal
 from langgraph.graph import StateGraph, START, END
-from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
-import aiosqlite
+from langgraph.checkpoint.memory import MemorySaver
 
 from gortex.core.state import GortexState
 from gortex.utils.token_counter import count_tokens
@@ -36,14 +35,13 @@ def route_after_summary(state: GortexState) -> str:
     return state.get("next_node", "manager")
 
 def route_coder(state: GortexState) -> Literal["coder", "analyst", "__end__"]:
-    """Coder의 작업 완료 여부에 따라 라우팅 (Cross-Validation 단계 추가)"""
+    """Coder의 작업 완료 여부에 따라 라우팅"""
     next_node = state.get("next_node", "manager")
     if next_node == "__end__":
-        # 모든 step이 끝났다면 즉시 manager로 가지 않고 analyst 검증을 거침
         return "analyst"
     return "coder"
 
-def compile_gortex_graph():
+def compile_gortex_graph(checkpointer=None):
     """Gortex 시스템의 모든 에이전트를 연결하여 그래프 컴파일"""
     workflow = StateGraph(GortexState)
 
@@ -94,13 +92,16 @@ def compile_gortex_graph():
         }
     )
 
-    # Swarm 완료 후 Manager 복귀
+    # Swarm, Researcher, Optimizer, Evolution 완료 후 Manager 복귀
     workflow.add_edge("swarm", "manager")
+    workflow.add_edge("researcher", "manager")
+    workflow.add_edge("optimizer", "manager")
+    workflow.add_edge("evolution", "manager")
 
     # Planner -> Coder
     workflow.add_edge("planner", "coder")
 
-    # Coder 루프 및 완료 후 Analyst(Cross-Validation) 거쳐 Manager 복귀
+    # Coder 루프 및 완료 후 Analyst 검증
     workflow.add_conditional_edges(
         "coder",
         route_coder,
@@ -113,12 +114,9 @@ def compile_gortex_graph():
     # Analyst 완료 후 Manager 복귀
     workflow.add_edge("analyst", "manager")
 
-    # Researcher, Optimizer, Evolution 완료 후 Manager 복귀
-    workflow.add_edge("researcher", "manager")
-    workflow.add_edge("optimizer", "manager")
-    workflow.add_edge("evolution", "manager")
-
-    # 그래프 컴파일 (체크포인터 추가)
-    from langgraph.checkpoint.memory import MemorySaver
-    checkpointer = MemorySaver()
-    return workflow.compile(checkpointer=checkpointer)
+    # 그래프 컴파일
+    if checkpointer is not None:
+        return workflow.compile(checkpointer=checkpointer)
+    else:
+        from langgraph.checkpoint.memory import MemorySaver
+        return workflow.compile(checkpointer=MemorySaver())

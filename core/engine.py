@@ -1,103 +1,122 @@
+import logging
+import uuid
+import time
 import json
 import asyncio
-import logging
-from datetime import datetime
-from gortex.utils.token_counter import count_tokens, estimate_cost
-from gortex.utils.vocal_bridge import VocalBridge
-from gortex.utils.notifier import Notifier
+from typing import Dict, Any, List, Optional
+from gortex.core.graph import compile_gortex_graph
+from gortex.core.state import GortexState
 from gortex.core.config import GortexConfig
-from gortex.agents.analyst import AnalystAgent
-from gortex.ui.three_js_bridge import ThreeJsBridge
+from gortex.utils.tools import execute_shell
+from gortex.utils.token_counter import count_tokens
+from gortex.utils.notifier import Notifier
 from gortex.utils.healing_memory import SelfHealingMemory
+try:
+    from gortex.ui.three_js_bridge import ThreeJsBridge
+except ImportError:
+    ThreeJsBridge = None
 
 logger = logging.getLogger("GortexEngine")
 
 class GortexEngine:
-    """에이전트 실행 루프와 시스템 상태 조율 (유실 로직 전수 복구 버전)"""
-    def __init__(self, ui, observer, vocal: VocalBridge):
+    """
+    Gortex 시스템의 핵심 실행 엔진.
+    에이전트 그래프를 실행하고 상태를 관리합니다.
+    """
+    def __init__(self, ui=None, observer=None, vocal_bridge=None, thread_id: str = None):
         self.ui = ui
         self.observer = observer
-        self.vocal = vocal
-        self.notifier = Notifier()
-        self.bridge_3d = ThreeJsBridge()
+        self.vocal = vocal_bridge
+        self.graph = compile_gortex_graph()
+        self.thread_id = thread_id or str(uuid.uuid4())
+        self.config = {"configurable": {"thread_id": self.thread_id}}
         self.healer = SelfHealingMemory()
 
-    async def process_node_output(self, node_name: str, output: dict, state_vars: dict):
-        """노드 출력을 처리하고 시스템 상태(state_vars)를 실시간 업데이트 및 인과 관계 기록"""
-        node_tokens = 0
+    async def process_node_output(self, node_name: str, output: Dict[str, Any], state: Dict[str, Any]):
+        """노드 실행 결과를 처리하고 UI/관찰자에게 알림"""
         
-        # 1. 인과 관계 기록
-        state_vars["last_event_id"] = self.observer.log_event(
-            node_name, 
-            "node_complete", 
-            {"goal": output.get("goal", "Processing")},
-            cause_id=state_vars.get("last_event_id")
-        )
-
-        # 2. 메시지 처리
-        if "messages" in output:
-            for msg in output["messages"]:
-                role, content = (msg[0], msg[1]) if isinstance(msg, tuple) else (msg.type, msg.content)
-                self.ui.chat_history.append((role, content))
-                
-                # [VOICE/SECURITY/ACHIEVEMENT] 복구
-                if role == "ai":
-                    if GortexConfig().get("voice_enabled") and len(str(content)) < 500:
-                        self.vocal.text_to_speech(str(content))
-                        self.vocal.play_audio("logs/response.mp3")
-                    
-                    if "모든 계획된 작업을 완료했습니다" in str(content):
-                        self.ui.add_achievement("Goal Reached", icon="✅")
-                    
-                    if "❌ Security Alert" in str(content):
-                        self.ui.add_security_event("Forbidden Command", str(content))
-                        self.notifier.send_notification(str(content), title="🚨 Security Violation")
-
-                if isinstance(content, str):
-                    node_tokens += count_tokens(content)
-
-        # 3. [ADAPTIVE UI] 레이아웃 모드 전환
-        if "ui_mode" in output:
-            self.ui.set_layout_mode(output["ui_mode"])
-
-        # 4. [ECONOMY] 에이전트 평판 및 크레딧 업데이트 (유실 복구)
-        if "agent_economy" in output:
-            if "agent_economy" not in state_vars: state_vars["agent_economy"] = {}
-            state_vars["agent_economy"].update(output["agent_economy"])
-        if "token_credits" in output:
-            if "token_credits" not in state_vars: state_vars["token_credits"] = {}
-            state_vars["token_credits"].update(output["token_credits"])
-
-        # 5. [SELF-HEALING] 에러 발생 시 즉각적인 힌트 검색 (유실 복구)
-        if node_name == "coder" and output.get("status") == "failed":
-            hint = self.healer.get_solution_hint("Error in tool execution")
-            if hint:
-                self.ui.chat_history.append(("system", f"💡 **HINT**: {hint}"))
-
-        # 6. 상태 동기화
-        state_vars["agent_energy"] = output.get("agent_energy", state_vars.get("agent_energy", 100))
-        state_vars["last_efficiency"] = output.get("last_efficiency", state_vars.get("last_efficiency", 0.0))
-        if "file_cache" in output:
-            if "session_cache" not in state_vars: state_vars["session_cache"] = {}
-            state_vars["session_cache"].update(output["file_cache"])
-
-        # 7. [VISUAL STREAMING] 3D 데이터 실시간 전송
-        if self.ui.web_manager:
-            current_causal = self.observer.get_causal_graph()
-            causal_3d = self.bridge_3d.convert_causal_graph_to_3d(current_causal)
-            if output.get("impact_analysis"):
-                causal_3d = self.bridge_3d.apply_impact_highlight(causal_3d, output["impact_analysis"])
+        # 1. 토큰 계산
+        tokens = count_tokens(json.dumps(output))
+        
+        # 2. 인과 관계 및 관찰자 기록
+        event_id = str(uuid.uuid4())
+        if self.observer:
+            # state["last_event_id"]를 cause_id로 사용
+            cause_id = state.get("last_event_id")
+            res_id = self.observer.log_event(
+                agent=node_name, 
+                event="node_complete", 
+                payload=output, 
+                cause_id=cause_id
+            )
+            # 결과 ID를 다시 last_event_id에 저장 (연쇄)
+            state["last_event_id"] = res_id or event_id
+        
+        # 3. UI 업데이트 및 성과 기록
+        if self.ui:
+            self.ui.update_thought(output.get("thought", ""), agent_name=node_name)
             
-            payload_causal = json.dumps({"type": "causal_graph_3d", "data": causal_3d})
-            coro_causal = self.ui.web_manager.broadcast(payload_causal)
-            if asyncio.iscoroutine(coro_causal):
-                asyncio.create_task(coro_causal)
+            if "ui_mode" in output:
+                self.ui.set_layout_mode(output["ui_mode"])
+            
+            # 성과 기록 조건: 메시지에 "완료했습니다" 포함 시
+            msg_str = str(output.get("messages", ""))
+            if "완료했습니다" in msg_str:
+                self.ui.add_achievement("Goal Reached")
+            
+            # 보안 경고
+            if "❌" in msg_str or "security alert" in msg_str.lower():
+                self.ui.add_security_event("High", "Security issue detected")
+            
+            if hasattr(self.ui, 'web_manager') and self.ui.web_manager:
+                msg = json.dumps({"agent": node_name, "impact": output.get("impact_analysis")})
+                try:
+                    res = self.ui.web_manager.broadcast(msg)
+                    if asyncio.iscoroutine(res): await res
+                except: pass
+        
+        # 4. 음성 브릿지 연동
+        if self.vocal and output.get("messages"):
+            last_msg = str(output["messages"][-1][1] if isinstance(output["messages"][-1], tuple) else output["messages"][-1])
+            self.vocal.text_to_speech(last_msg)
+            self.vocal.play_audio()
+            
+        # 5. 자가 치유 (Healer)
+        if output.get("status") == "failed":
+            hint = self.healer.get_solution_hint("Error detected in node output")
+            if hint:
+                logger.info(f"🩹 Healing hint found: {hint}")
 
-            if output.get("user_intent_projection"):
-                intent_3d = self.bridge_3d.convert_intent_to_3d(output["user_intent_projection"])
-                payload_intent = json.dumps({"type": "user_intent_3d", "data": intent_3d})
-                coro_intent = self.ui.web_manager.broadcast(payload_intent)
-                if asyncio.iscoroutine(coro_intent):
-                    asyncio.create_task(coro_intent)
+        # 6. 상태 변수 병합 및 캐시 관리
+        if "file_cache" in output:
+            if "session_cache" not in state: state["session_cache"] = {}
+            state["session_cache"].update(output["file_cache"])
+            
+        state.update(output)
+        return tokens
 
-        return node_tokens
+    def run(self, user_input: str, initial_state: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+        """사용자 입력을 바탕으로 에이전트 루프 실행"""
+        state = initial_state or {
+            "messages": [("user", user_input)],
+            "pinned_messages": [],
+            "plan": [],
+            "current_step": 0,
+            "working_dir": ".",
+            "file_cache": {},
+            "agent_energy": 100,
+            "api_call_count": 0,
+            "token_credits": {},
+            "agent_economy": {}
+        }
+        
+        try:
+            final_state = self.graph.invoke(state, self.config)
+            return final_state
+        except Exception as e:
+            logger.error(f"Engine execution failed: {e}")
+            return {"error": str(e), "next_node": "__end__"}
+
+    async def run_async(self, user_input: str, initial_state: Optional[Dict[str, Any]] = None):
+        """비동기 실행 지원"""
+        return self.run(user_input, initial_state)

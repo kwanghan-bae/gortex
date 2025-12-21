@@ -30,6 +30,79 @@ class EvolutionNode:
                 pass
         return []
 
+    def heal_architecture(self, state: GortexState, violations: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """발견된 아키텍처 위반 사항(Layer Violation 등)을 자동으로 수정합니다."""
+        if not violations:
+            return {"thought": "수정할 아키텍처 위반 사항이 없습니다.", "next_node": "manager"}
+
+        # 가장 심각한 위반 또는 첫 번째 위반 선택
+        v = violations[0]
+        source_mod = v["source"]
+        target_mod = v["target"]
+        reason = v["reason"]
+        
+        # 실제 파일 경로 찾기
+        source_file = source_mod.replace(".", "/") + ".py"
+        if not os.path.exists(source_file):
+            # gortex prefix 제거 시도
+            source_file = source_file.replace("gortex/", "")
+            
+        if not os.path.exists(source_file):
+            return {"thought": f"수정 대상 파일 {source_file}을 찾을 수 없습니다.", "next_node": "manager"}
+
+        original_code = read_file(source_file)
+        
+        prompt = f"""너는 Gortex의 아키텍처 수호자다. 
+다음 아키텍처 위반 사항을 해결하기 위해 코드를 리팩토링하라.
+
+[위반 내용] {reason}
+[위반 경로] {source_mod} -> {target_mod}
+[수정 파일] {source_file}
+
+주로 상위 레이어의 기능을 하위 레이어에서 직접 참조할 때 발생한다.
+해결 전략: 
+1. 상위 레이어의 기능을 추상화(Interface/Base Class)하여 하위 레이어로 옮긴다.
+2. 또는 하위 레이어에서 상위 레이어 참조를 제거하고 콜백이나 DI를 사용한다.
+
+수정된 전체 코드를 반환하라. 코드 외의 설명은 배제하고 오직 코드만 출력하라.
+"""
+        logger.info(f"🛡️ Healing architecture in {source_file}...")
+        assigned_model = "gemini-1.5-pro" # 고수준 아키텍처 판단은 PRO 사용
+        
+        start_time = time.time()
+        try:
+            new_code = self.backend.generate(assigned_model, [{"role": "user", "content": prompt}])
+            new_code = re.sub(r'```python\n|```', '', new_code).strip()
+            
+            write_file(source_file, new_code)
+            check_res = execute_shell(f"./scripts/pre_commit.sh --selective {source_file}")
+            
+            latency_ms = int((time.time() - start_time) * 1000)
+            success = "Ready to commit" in check_res
+            
+            self.monitor.record_interaction("arch_healing", assigned_model, success, len(new_code)//4, latency_ms, metadata={"violation": reason})
+
+            if success:
+                return {
+                    "thought": f"아키텍처 치유 성공: {source_file}의 레이어 위반 해소.",
+                    "messages": [("ai", f"🛡️ **아키텍처 자가 치유 완료**\n- 대상: {source_file}\n- 결과: 레이어 위반 사항이 해소되었습니다.")],
+                    "next_node": "manager"
+                }
+            else:
+                write_file(source_file, original_code)
+                return {
+                    "thought": f"아키텍처 치유 실패: {check_res}", 
+                    "messages": [("system", f"⚠️ 아키텍처 치유 실패: {source_file} 리팩토링 중 검증 오류가 발생하여 롤백되었습니다.")],
+                    "next_node": "manager"
+                }
+        except Exception as e:
+            logger.error(f"Arch healing error: {e}")
+            return {
+                "thought": f"아키텍처 치유 중 오류: {e}", 
+                "messages": [("system", f"❌ 아키텍처 치유 중 치명적 오류 발생: {e}")],
+                "next_node": "manager"
+            }
+
     def evolve_system(self, state: GortexState) -> Dict[str, Any]:
         """시스템 진화 로직 실행"""
         candidates = self._get_radar_candidates()
@@ -109,4 +182,15 @@ import time
 
 def evolution_node(state: GortexState) -> Dict[str, Any]:
     """Evolution 노드 엔트리 포인트"""
-    return EvolutionNode().evolve_system(state)
+    node = EvolutionNode()
+    
+    # 1. 아키텍처 위반 사항 확인 (Analyst 기능 활용)
+    from gortex.agents.analyst import AnalystAgent
+    analyst = AnalystAgent()
+    violations = analyst.audit_architecture()
+    
+    if violations:
+        return node.heal_architecture(state, violations)
+        
+    # 2. 일반 시스템 진화
+    return node.evolve_system(state)
