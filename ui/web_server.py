@@ -9,42 +9,45 @@ app = FastAPI(title="Gortex Web Dashboard")
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
-        self.input_queue = asyncio.Queue() # 웹에서 들어오는 입력 큐
+        self.xr_connections: List[WebSocket] = [] # WebXR 기기 목록
+        self.input_queue = asyncio.Queue()
 
-    async def connect(self, websocket: WebSocket):
+    async def connect(self, websocket: WebSocket, is_xr: bool = False):
         await websocket.accept()
         self.active_connections.append(websocket)
+        if is_xr:
+            self.xr_connections.append(websocket)
+            logger.info("🥽 WebXR Device connected.")
 
     def disconnect(self, websocket: WebSocket):
-        self.active_connections.remove(websocket)
+        if websocket in self.active_connections:
+            self.active_connections.remove(websocket)
+        if websocket in self.xr_connections:
+            self.xr_connections.remove(websocket)
 
-    async def broadcast(self, message: str):
-        for connection in self.active_connections:
+    async def broadcast(self, message: str, xr_only: bool = False):
+        targets = self.xr_connections if xr_only else self.active_connections
+        for connection in targets:
             try:
                 await connection.send_text(message)
             except:
                 pass
 
-    async def push_input(self, text: str):
-        """웹에서 받은 입력을 큐에 저장"""
-        await self.input_queue.put(text)
-
 manager = ConnectionManager()
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
+    # 쿼리 파라미터나 헤더를 통해 XR 기기 여부 확인
+    is_xr = websocket.query_params.get("device") == "xr"
+    await manager.connect(websocket, is_xr=is_xr)
     try:
         while True:
             data = await websocket.receive_text()
-            # 클라이언트로부터 받은 메시지 처리 (JSON 형식 가정)
             try:
                 msg = json.loads(data)
                 if msg.get("type") == "user_input":
                     await manager.push_input(msg.get("text"))
                 elif msg.get("type") == "filter_thoughts":
-                    # 메인 루프와의 통신을 위한 큐 활용 또는 글로벌 참조 필요
-                    # 여기서는 단순화를 위해 큐에 특수 명령어로 주입
                     await manager.push_input(f"/filter_thoughts {msg.get('agent', '')} {msg.get('keyword', '')}")
             except:
                 await manager.push_input(data)

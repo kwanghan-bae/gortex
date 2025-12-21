@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Call Graph 3D & Topology Visualization Complete (v2.2.7)
+**Status:** Spatial Reasoning SDK & WebXR Foundation Complete (v2.2.8)
 
 ## 🧠 Current Context
-3D 함수 호출 관계도(Call Graph) 시스템이 가동되었습니다. 이제 Gortex는 코드의 정적인 구조뿐만 아니라, 실행 시점의 논리적 흐름(Call Flow)을 3D 위상 맵으로 파악할 수 있습니다. 이는 복잡한 비즈니스 로직의 추적 및 영향도 분석 시 핵심적인 도구가 됩니다.
+공간 추론을 위한 기초 SDK가 마련되었습니다. 이제 Gortex의 지식과 사고 과정은 VR/AR 기기에서 상호작용 가능한 3D 데이터로 변환되어 스트리밍되며, 이는 가상 공간에서의 지능형 협업을 위한 핵심 인프라가 됩니다.
 
 ## 🎯 Next Objective
-**Spatial Reasoning SDK (VR/AR Prep)**
-1. **`Spatial Data Schema`**: 3D 지식 그래프와 호출 관계도를 오큐러스나 애플 비전 프로와 같은 공간 컴퓨팅 기기에서 렌더링할 수 있는 '공간 추론 SDK' 규격을 정의합니다.
-2. **`WebXR Streaming`**: 웹 대시보드에서 WebXR API를 활용하여, 사용자가 브라우저를 넘어 가상 공간에서 Gortex의 사고 트리와 코드 위상을 직접 만지고 탐색할 수 있는 기초 스트리밍 인프라를 구축합니다.
+**Energy-Aware Tasking (Work-Life Balance for AI)**
+1. **`Energy Simulation`**: 에이전트에게 가상의 '에너지(Battery)' 상태를 부여합니다. 복잡한 추론이나 대규모 도구 호출은 에너지를 많이 소모하며, 에너지가 낮아지면 에이전트는 더 가벼운 모델을 사용하거나 '휴식(Sleep/Summarization)'을 스스로 결정합니다.
+2. **`Efficiency Scoring`**: 에너지 소모 대비 성과를 측정하여, 최소한의 자원으로 최대의 결과를 내는 '고효율 추론 경로'를 스스로 학습하도록 보상 로직을 강화합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 3D 함수 호출 관계 시각화 완료 (v2.2.7).
-- 다음 목표: 공간 추론 SDK 및 WebXR 연동 기초.
+- 공간 추론 SDK 및 WebXR 기초 완료 (v2.2.8).
+- 다음 목표: 에너지 인지형 작업 관리(Energy-Aware Tasking).
 
 작업 목표:
-1. `ui/three_js_bridge.py`를 확장하여 VR/AR 환경에 적합한 'Spatial Metadata' (노드 크기, 조명 가중치, 햅틱 피드백 트리거 등)를 생성하는 로직을 추가해줘.
-2. `ui/web_server.py`에서 WebXR 기기의 요청을 식별하고 전용 고주파 스트리밍 모드를 활성화하는 기능을 구상해줘.
+1. `core/state.py`에 에이전트의 현재 에너지 상태를 저장하는 `agent_energy` 필드를 추가해줘.
+2. `agents/manager.py`에서 에너지 수준에 따라 모델을 변경하거나 작업 강도를 조절하는 지능형 스케줄링 로직을 구현해줘.
 ```

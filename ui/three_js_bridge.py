@@ -38,7 +38,12 @@ class ThreeJsBridge:
                 "position": pos,
                 "type": info.get("type", "unknown"),
                 "label": node_id,
-                "color": self._get_color_by_type(info.get("type"))
+                "color": self._get_color_by_type(info.get("type")),
+                "spatial_metadata": {
+                    "glow": 0.5 if info.get("type") == "rule" else 0.2,
+                    "haptic_feedback": "light" if info.get("type") == "function" else "medium",
+                    "scale": 1.5 if info.get("type") == "class" else 1.0
+                }
             }
             converted_nodes.append(converted_node)
             node_map[node_id] = pos
