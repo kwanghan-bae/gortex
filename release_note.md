@@ -67,6 +67,10 @@
 - [x] **Intelligence**: 에이전트가 도구 호출 시 스스로의 '에너지 수준'을 관리하며 효율적으로 작업하는 'Energy-Aware Tasking' 구현
 
 ## ✅ Completed
+### v2.2.12 (Real-time Efficiency Visualization)
+- [x] `ui/dashboard.py`: 사이드바에 현재 에너지(%)와 효율성 점수를 시각적으로 표시하는 위젯 추가 (Color-coded)
+- [x] `main.py`: 메인 루프에서 매 턴마다 갱신된 에너지/효율성 정보를 UI 및 웹 대시보드로 실시간 전송하도록 파이프라인 확장
+
 ### v2.2.11 (Advanced Efficiency Integration)
 - [x] `agents/swarm.py`: 병렬 작업 결과 취합 시 효율성 점수를 반영하여 최적의 안(Winner) 선정
 - [x] `agents/manager.py`: 최근 효율성(`last_efficiency`)이 낮을 경우 상세 계획 수립을 지시하는 동적 프롬프트 적용

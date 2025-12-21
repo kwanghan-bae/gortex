@@ -658,7 +658,8 @@ async def run_gortex():
     total_latency_ms, node_count = 0, 0
     agent_economy = {} # 에이전트 평판 및 포인트 데이터
     agent_energy = 100 # 가상 에너지 (기본 100%)
-    
+    last_efficiency = 100.0 # 최근 효율성 점수
+
     # 세션별 파일 캐시 관리 (Isolation)
     cache_path = "logs/file_cache.json"
     all_sessions_cache = {} # {thread_id: {path: hash}}
@@ -803,7 +804,9 @@ async def run_gortex():
                                     len(initial_state["active_constraints"]),
                                     auth_engine.get_provider(),
                                     auth_engine.get_call_count(),
-                                    avg_latency
+                                    avg_latency,
+                                    energy=agent_energy,
+                                    efficiency=last_efficiency
                                 )
                                 ui.update_logs({"agent": node_name, "event": "node_complete"})
                                 
@@ -826,6 +829,10 @@ async def run_gortex():
                                 # [ENERGY] 에너지 상태 업데이트
                                 if "agent_energy" in output:
                                     agent_energy = output["agent_energy"]
+
+                                # [EFFICIENCY] 효율성 상태 업데이트
+                                if "last_efficiency" in output:
+                                    last_efficiency = output["last_efficiency"]
 
                                 # 정밀 프로파일링 및 인과 관계 기록
                                 last_event_id = observer.log_event(
@@ -867,7 +874,9 @@ async def run_gortex():
                         len(initial_state["active_constraints"]),
                         auth_engine.get_provider(),
                         auth_engine.get_call_count(),
-                        total_latency_ms // max(1, node_count)
+                        total_latency_ms // max(1, node_count),
+                        energy=agent_energy,
+                        efficiency=last_efficiency
                     )
                     
                     # 매 턴 종료 후 세션 캐시 영속화

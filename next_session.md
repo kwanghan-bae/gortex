@@ -1,24 +1,25 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-21
-**Status:** Advanced Efficiency Integration Complete (v2.2.11)
+**Status:** Real-time Efficiency Visualization Complete (v2.2.12)
 
 ## 🧠 Current Context
-Swarm과 Manager가 이제 효율성 점수(`efficiency_score`)와 에너지 상태를 의사결정에 반영합니다. 시스템은 비효율적인 상황에서 더 신중하게 행동하며, 효율적인 패턴은 스스로 강화합니다. 이제 이 핵심 지표를 사용자가 직관적으로 볼 수 있도록 시각화해야 합니다.
+효율성과 에너지가 시각화되어 시스템의 건강 상태를 한눈에 파악할 수 있습니다. 이제 시스템이 '아프다(낮은 효율성)'는 것을 알 수 있으므로, 이를 능동적으로 치료하는 '능동적 최적화 루프(Proactive Optimization Loop)'가 필요합니다.
 
 ## 🎯 Next Objective
-**Real-time Efficiency Visualization**
-1. **`Dashboard UI`**: Rich 터미널 대시보드에 현재 세션의 '평균 효율성'과 '에너지 잔량'을 보여주는 게이지(Gauge) 위젯을 추가합니다.
-2. **`Web Broadcast`**: 웹 대시보드에도 실시간 효율성 데이터를 전송하여 그래프로 렌더링할 수 있도록 데이터 파이프라인을 확장합니다.
+**Proactive Optimization Loop (Self-Healing v2)**
+1. **`Efficiency Trend Analysis`**: `agents/analyst.py` 또는 `core/state.py`에서 최근 3~5턴의 효율성 추세를 추적합니다.
+2. **`Optimizer Trigger`**: 효율성이 지속적으로 낮을 경우(예: 3회 연속 < 40점), 작업을 일시 중단하고 `agents/optimizer.py`를 강제 호출하여 원인 분석 및 전략 수정을 수행하도록 `manager` 또는 `graph` 로직을 개선합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 효율성 기반 의사결정 로직 통합 완료 (v2.2.11).
-- 다음 목표: 터미널 및 웹 대시보드에 효율성/에너지 시각화.
+- 효율성 시각화 완료 (v2.2.12).
+- 다음 목표: 지속적인 저효율 발생 시 Optimizer를 통한 능동적 개입 구현.
 
 작업 목표:
-1. `ui/dashboard.py`의 사이드바에 에너지와 효율성을 표시하는 새로운 패널 또는 기존 패널 확장을 구현해줘.
-2. `main.py`에서 매 턴마다 갱신된 에너지/효율성 정보를 UI로 전달하는 로직을 확인 및 보강해줘.
+1. `core/state.py`에 `efficiency_history` 리스트 필드를 추가해줘.
+2. `agents/manager.py`에서 최근 효율성 기록을 분석하여, 저효율이 지속될 경우 `next_node`를 'optimizer'로 강제 라우팅하는 로직을 추가해줘.
+3. `agents/optimizer.py`가 저효율 원인을 진단하고 해결책(규칙 추가, 계획 수정 등)을 제안하도록 기능을 확장해줘.
 ```

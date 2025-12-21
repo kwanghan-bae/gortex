@@ -49,6 +49,8 @@ class DashboardUI:
         self.recent_logs = []
         self.provider = "GEMINI"
         self.call_count = 0
+        self.energy = 100
+        self.efficiency = 100.0
         self.achievements = [] # 주요 마일스톤 성과 기록
         self.security_events = [] # 보안 이벤트 기록
         self.thought_timeline = [] # 타임라인 스냅샷 기록
@@ -128,6 +130,8 @@ class DashboardUI:
             "cost": self.total_cost,
             "provider": self.provider,
             "call_count": self.call_count,
+            "energy": self.energy,
+            "efficiency": self.efficiency,
             "thought": self.agent_thought,
             "thought_tree": self.thought_tree,
             "thought_tree_3d": bridge_3d.convert_thought_to_3d(self.thought_tree), # 3D 신경망 추가
@@ -291,8 +295,8 @@ class DashboardUI:
             self.progress.remove_task(self.tool_task)
             self.tool_task = None
 
-    def update_sidebar(self, agent: str, step: str, tokens: int, cost: float, rules: int, provider: str = "GEMINI", call_count: int = 0, avg_latency: int = 0):
-        """사이드바 정보 업데이트 (에이전트, LLM 및 성능 상태 시각화 강화)"""
+    def update_sidebar(self, agent: str, step: str, tokens: int, cost: float, rules: int, provider: str = "GEMINI", call_count: int = 0, avg_latency: int = 0, energy: int = 100, efficiency: float = 100.0):
+        """사이드바 정보 업데이트 (에이전트, LLM, 성능 상태 및 에너지/효율성 시각화)"""
         self.current_agent = agent
         self.current_step = step
         self.tokens_used = tokens
@@ -300,6 +304,8 @@ class DashboardUI:
         self.active_rules_count = rules
         self.provider = provider
         self.call_count = call_count
+        self.energy = energy
+        self.efficiency = efficiency
         
         if self.web_manager:
             asyncio.create_task(self._broadcast_to_web())
@@ -346,6 +352,13 @@ class DashboardUI:
         
         latency_color = "green" if avg_latency < 3000 else ("yellow" if avg_latency < 7000 else "red")
         stats_table.add_row("Avg Lat:", f"[{latency_color}]{avg_latency}ms[/{latency_color}]")
+        
+        # Energy & Efficiency Visualization
+        energy_color = "green" if energy > 70 else ("yellow" if energy > 30 else "red")
+        stats_table.add_row("Energy:", f"[{energy_color}]{'⚡' * (energy // 20)}{' ' * (5 - energy // 20)} {energy}%[/{energy_color}]")
+        
+        eff_color = "cyan" if efficiency >= 80 else ("yellow" if efficiency >= 50 else "red")
+        stats_table.add_row("Effic.:", f"[{eff_color}]{efficiency:.1f}[/{eff_color}]")
         
         stats_group = [stats_table]
         if self.tool_task is not None:
