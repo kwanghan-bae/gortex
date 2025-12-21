@@ -896,6 +896,12 @@ async def run_gortex():
                                     efficiency_history.append(last_efficiency)
                                     if len(efficiency_history) > 10:
                                         efficiency_history.pop(0)
+                                    
+                                    # [THOUGHT MEMORIZATION] 우수한 사고 과정 지식화
+                                    if last_efficiency >= 70 and thought and tree:
+                                        try:
+                                            AnalystAgent().memorize_valuable_thought(node_name, tree, True)
+                                        except: pass
 
                                 # [DEBATE] 토론 데이터 UI 업데이트
                                 if "debate_context" in output:

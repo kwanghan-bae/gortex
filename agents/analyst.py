@@ -413,6 +413,43 @@ class AnalystAgent:
             logger.error(f"Auto-finalization failed: {e}")
             return {}
 
+    def memorize_valuable_thought(self, agent_name: str, thought_tree: List[Dict[str, Any]], success: bool):
+        """의미 있는 사고 과정을 분석하여 장기 기억에 각인"""
+        if not success or not thought_tree:
+            return
+
+        logger.info(f"🧠 Extracting reasoning pattern from {agent_name}'s thought tree...")
+        
+        prompt = f"""다음은 {agent_name} 에이전트가 성공적으로 수행한 작업의 사고 과정 트리다.
+        이 사고 흐름에서 미래에 다른 에이전트가 참고할 만한 '최적의 추론 패턴'이나 '해결 전략'을 1~2문장으로 요약하라.
+        
+        [Thought Tree]
+        {json.dumps(thought_tree, ensure_ascii=False, indent=2)}
+        
+        결과 형식 (JSON):
+        {{
+            "strategy_summary": "핵심 추론 전략 요약",
+            "applicability": "이 전략이 유용한 상황 설명",
+            "keywords": ["검색용 키워드"]
+        }}
+        """
+        try:
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
+            res_data = json.loads(response.text)
+            
+            if res_data.get("strategy_summary"):
+                knowledge_text = f"추론 패턴 ({agent_name}): {res_data['strategy_summary']} (적용: {res_data['applicability']})"
+                # memory.ltm 대신 직접 LongTermMemory 인스턴스 사용
+                from gortex.utils.vector_store import LongTermMemory
+                ltm_store = LongTermMemory()
+                ltm_store.memorize(
+                    knowledge_text, 
+                    {"source": "ThoughtReflection", "type": "reasoning_pattern", "agent": agent_name}
+                )
+                logger.info(f"✨ New reasoning pattern memorized for {agent_name}.")
+        except Exception as e:
+            logger.error(f"Failed to memorize thought: {e}")
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""
     agent = AnalystAgent()
