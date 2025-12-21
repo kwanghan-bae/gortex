@@ -1,23 +1,24 @@
 # Next Session
 
 ## Session Goal
-- 에이전트 도구 호출 전후의 시스템 상태 전이 시각화 (Visual Simulation v2)
+- 인터랙티브 의사결정 학습 및 사용자 선호도 모델링 (Decision Learning v1)
 
 ## Context
-- v2.0.7에서 도입된 `visual_delta` 시뮬레이션이 현재는 텍스트 기반의 예상 결과에 머물러 있음.
-- 도구 호출 전 `Analyst` 또는 `Coder`가 변경될 것으로 예상되는 파일과 아키텍처 구조를 3D 그래프의 '미리보기(Preview)' 형태로 생성하고, 실제 결과와 비교하는 기능이 필요함.
+- 현재 에이전트들은 주로 과거 로그나 규칙에 의존하여 판단하고 있음.
+- 하지만 미묘한 설계 선택(A 기술 vs B 기술)이나 사용자의 주관적 취향이 개입되는 지점에서는 명시적인 질문이 필요함.
+- 에이전트가 "이런 이유로 A를 선택하려는데 괜찮으신가요?"라고 묻고, 사용자의 피드백을 `EvolutionaryMemory`에 즉시 기록하는 기능이 필요함.
 
 ## Scope
 ### Do
-- `agents/coder.py`의 `simulation` 필드를 확장하여 예상되는 그래프 변화(`expected_graph_delta`)를 JSON 구조로 생성.
-- `ui/three_js_bridge.py`에 시뮬레이션 데이터를 위한 고스트 노드(Ghost Nodes) 생성 로직 추가.
-- 웹 대시보드에서 도구 실행 전 예상 시나리오를 점선 등으로 시각화.
+- `agents/manager.py`에 불확실성이 높거나 트레이드오프가 뚜렷한 경우 '사용자 개입 요청(Request User Input)'을 생성하는 로직 추가.
+- 사용자의 응답을 분석하여 새로운 '사용자 선호도 규칙'을 생성하는 `AnalystAgent.learn_from_interaction` 메서드 추가.
+- 대시보드 UI에 질문 패널 하이라이트 기능 보강.
 
 ### Do NOT
-- 실제 파일 시스템을 건드리지 말 것 (철저히 가상 공간의 시뮬레이션).
+- 모든 사소한 단계에서 질문하지 말 것 (에너지/효율성 기반으로 꼭 필요한 경우만 질문).
 
 ## Expected Outputs
-- `agents/coder.py`, `ui/three_js_bridge.py`, `main.py` 수정.
+- `agents/manager.py`, `agents/analyst.py`, `ui/dashboard.py` 수정.
 
 ## Completion Criteria
-- 도구 실행 전, 웹 대시보드에 변경 예정인 파일이나 노드가 '예상 상태'로 시각화되는 것이 확인되어야 함.
+- 에이전트가 작업을 멈추고 사용자에게 질문을 던지는 상황이 발생하고, 답변 후 해당 내용이 새로운 규칙으로 저장되는 과정이 확인되어야 함.

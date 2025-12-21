@@ -167,6 +167,38 @@ class ThreeJsBridge:
         }
         return colors.get(agent_name.lower(), "#ffffff")
 
+    def convert_simulation_to_3d(self, current_graph: Dict[str, Any], delta: Dict[str, Any]) -> Dict[str, Any]:
+        """예상되는 상태 변화(Simulation)를 고스트 노드 데이터로 변환"""
+        ghost_nodes = []
+        ghost_edges = []
+        
+        # 마지막 노드의 위치를 기준으로 배치 (연속성 확보)
+        last_pos = current_graph["nodes"][-1]["position"] if current_graph.get("nodes") else {"x": 0, "y": 0, "z": 0}
+        
+        for i, node_name in enumerate(delta.get("added_nodes", [])):
+            pos = {
+                "x": last_pos["x"] + 20 + (i * 10),
+                "y": last_pos["y"] + 10,
+                "z": last_pos["z"] + random.randint(-10, 10)
+            }
+            ghost_nodes.append({
+                "id": f"ghost_{node_name}_{i}",
+                "label": f"[PREVIEW] {node_name}",
+                "position": pos,
+                "is_ghost": True,
+                "color": "#ffffff", # 흰색 고스트
+                "opacity": 0.4
+            })
+            # 마지막 실제 노드에서 고스트 노드로 점선 연결 (가정)
+            if current_graph.get("nodes"):
+                ghost_edges.append({
+                    "from": current_graph["nodes"][-1]["id"],
+                    "to": f"ghost_{node_name}_{i}",
+                    "is_dashed": True
+                })
+                
+        return {"nodes": ghost_nodes, "edges": ghost_edges}
+
     def _get_color_by_type(self, node_type: str) -> str:
         colors = {
             "class": "#00ff00", # Green

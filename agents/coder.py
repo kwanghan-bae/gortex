@@ -165,6 +165,14 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
                                 },
                                 "required": ["target", "change"]
                             }
+                        },
+                        "expected_graph_delta": {
+                            "type": "OBJECT",
+                            "properties": {
+                                "added_nodes": {"type": "ARRAY", "items": {"type": "STRING"}},
+                                "modified_nodes": {"type": "ARRAY", "items": {"type": "STRING"}},
+                                "deleted_nodes": {"type": "ARRAY", "items": {"type": "STRING"}}
+                            }
                         }
                     },
                     "required": ["expected_outcome", "risk_level", "safeguard_action", "visual_delta"]

@@ -780,6 +780,18 @@ async def run_gortex():
                                 tree = output.get("thought_tree")
                                 if output.get("diagram_code"):
                                     ui.current_diagram = output["diagram_code"]
+                                
+                                # [VISUAL SIMULATION] 도구 실행 전 미래 상태 시뮬레이션 스트리밍
+                                if output.get("simulation") and ui.web_manager:
+                                    sim_delta = output["simulation"].get("expected_graph_delta")
+                                    if sim_delta:
+                                        current_causal = observer.get_causal_graph()
+                                        sim_3d = ThreeJsBridge().convert_simulation_to_3d(current_causal, sim_delta)
+                                        asyncio.create_task(ui.web_manager.broadcast(json.dumps({
+                                            "type": "visual_simulation_3d",
+                                            "data": sim_3d
+                                        }, ensure_ascii=False)))
+
                                 if thought: ui.update_thought(thought, agent_name=node_name, tree=tree)
 
                                 node_tokens = 0

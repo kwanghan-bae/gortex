@@ -5,7 +5,8 @@
 ## 🚀 Backlog (Pending Tasks)
 - [x] **Interface**: 에이전트의 사고 인과 관계를 3D 그래프로 탐색하는 'Causal Graph Explorer' 구현
 - [x] **Interface**: 사용자가 정의한 복잡한 아키텍처 규칙을 실시간 검증하는 'Constraint Validator' 노드 추가
-- [ ] **Intelligence**: 에이전트가 도구 호출 전후의 시스템 상태 전이를 시각적으로 모델링하는 'Visual Simulation' 고도화
+- [x] **Intelligence**: 에이전트가 도구 호출 전후의 시스템 상태 전이를 시각적으로 모델 모델링하는 'Visual Simulation' 고도화
+- [ ] **Interface**: 에이전트가 의사결정 트레이드오프를 사용자에게 질문하고 답변을 학습하는 'Interactive Decision Learning' 구현
 - [ ] **System**: 대규모 그래프 데이터의 효율적 렌더링을 위한 'Rolling Window' 캐싱 전략 도입
 
 ---
@@ -13,6 +14,11 @@
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.4.2 (Visual Simulation & Predictive UI)
+- [x] `agents/coder.py`: 도구 실행 후 예상되는 시스템 상태 변화를 구조화된 델타 데이터로 예측하는 기능 강화
+- [x] `ui/three_js_bridge.py`: 예측된 미래 상태를 '고스트 노드'와 '점선 경로'로 시각화하는 미래 투영 엔진 구축
+- [x] `main.py`: 실제 행동 전 예상 시나리오를 웹 대시보드 3D 공간에 미리 렌더링하는 예측 UI 파이프라인 안착
 
 ### v2.4.1 (Constraint Validator & Compliance)
 - [x] `agents/analyst.py`: 활성화된 규칙과 도구 호출 정보를 실시간 대조하는 '준법 감시(Compliance)' 엔진 구축
