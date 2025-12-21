@@ -1,26 +1,28 @@
 # Next Session
 
 ## 세션 목표
-- 80% 커버리지를 유지하며 `core/evolutionary_memory.py`와 `utils/memory.py`의 회귀/캐시 복원 경로를 테스트로 확보한다.
+- TUI 우선 순위 전략에 따라 `ui/dashboard.py`, `ui/dashboard_theme.py`, `ui/terminal.py`의 테스트 커버리지를 80% 이상으로 확보한다.
 
 ## 컨텍스트
-- `tests/test_commands.py`/`tests/test_vector_store.py`를 통해 명령어 제어 및 벡터 기억 흐름을 확증했고, 전체 커버리지는 80%에 도달했습니다.
-- 자동 반복 사이클(`coverage run -m pytest` → `coverage report`)은 계속되며, 문서(릴리즈 노트/세션 로그/next_session)가 매 사이클 변화를 기록합니다.
+- `core/evolutionary_memory.py`와 `utils/memory.py`는 100% 커버리지를 달성하여 기억 계층의 안정성을 확보했습니다.
+- 현재 TUI(Terminal UI) 집중 전략에 따라 사용자와의 인터페이스인 Dashboard 및 Terminal 모듈의 신뢰성을 높여야 합니다.
 
 ## 범위 (Scope)
 ### 수행할 작업 (Do)
-- `core/evolutionary_memory.py`: 메모리 증식, 인과 기록, 실패 시 복원 로직을 Mock 기반으로 시뮬레이션하여 evolution 단계의 신뢰성을 검증한다.
-- `utils/memory.py`: 임시/장기 메모리 병합, pruning, threshold 초과 로깅 및 캐시 버전 충돌 감지 흐름을 테스트로 포착한다.
-- `coverage run -m pytest` → `coverage report` 사이클을 반복하고 문서(릴리즈 노트/세션 로그/next_session)를 갱신한다.
+- `ui/terminal.py`: 터미널 입력, 출력 렌더링 및 Rich 라이브러리 연동 로직을 Mock 기반으로 검증한다.
+- `ui/dashboard_theme.py`: 테마 설정, 색상 팔레트 및 레이아웃 구성 상수를 검증한다.
+- `ui/dashboard.py`: 대시보드 업데이트, 노드 상태 시각화 및 이벤트 루프 안정성을 테스트한다.
+- `coverage run -m pytest` → `coverage report` 사이클을 반복하여 80% 이상의 커버리지를 달성한다.
 
 ### 수행하지 않을 작업 (Do NOT)
-- Web UI(React/Three.js) 또는 `ui/three_js_bridge.py`의 시각 컴포넌트를 건드리지 않는다.
-- 외부 API 변경이나 대규모 아키텍처 리팩토링은 보류한다.
+- Web UI 관련 `ui/web_server.py` 및 `ui/three_js_bridge.py`의 복잡한 시각화 로직은 우선순위에서 제외한다.
+- 코어 엔진(`core/engine.py`)의 대규모 리팩토링은 수행하지 않는다.
 
 ## 기대 결과
-- `core/evolutionary_memory.py`/`utils/memory.py`의 주요 pathways를 테스트로 감싸 80% 이상 커버리지를 유지하고 안정성을 높인다.
-- 문서(작업 로그, 릴리즈 노트, next_session)가 자동 반복 사이클 결과를 실시간으로 반영한다.
+- TUI 핵심 모듈들의 커버리지가 80% 이상으로 상승하여 사용자 인터페이스의 안정성이 강화된다.
+- 문서(작업 로그, 릴리즈 노트, next_session)가 최신화된다.
 
 ## 완료 기준
-- `coverage run -m pytest` 및 `coverage report`에서 80% 이상 결과를 확보하고 테스트가 모두 통과.
-- `docs/sessions/session_0056.md`에 해당 세션 로그를 기록하여 자동화 흐름을 남긴다.
+- `ui/dashboard.py`, `ui/dashboard_theme.py`, `ui/terminal.py`의 커버리지가 각각 80% 이상 달성.
+- 모든 단위 테스트 통과.
+- `docs/sessions/session_0058.md` 기록 완료.

@@ -19,6 +19,12 @@
 - **안정성 강화**: 그래프 컴파일 로직 수정 및 런타임 에러(KeyError, TypeError) 해결.
 - **전략 업데이트**: Web UI 개발 잠정 중단 및 TUI 우선 순위 설정.
 
+### v2.7.5 (Evolutionary Memory & Synaptic Optimization Rigor)
+- **Quality**: `core/evolutionary_memory.py`의 규칙 강화, 충돌 감지, 매크로 및 GC 로직을 전수 검증하여 100% 커버리지를 달성했습니다.
+- **Quality**: `utils/memory.py`의 맥락 압축 및 가지치기 로직의 예외 경로와 조기 반환 조건을 확보하여 100% 커버리지를 달성했습니다.
+- **Refactoring**: `utils/memory.py` 내의 불필요한 중복 예외 처리 코드를 제거하여 구조를 단순화했습니다.
+- **Verification**: `tests/test_evolutionary_memory.py` 신설 및 `tests/test_memory.py` 보강을 통해 시스템 기억 계층의 안정성을 극대화했습니다.
+
 ### v2.7.4 (Test Coverage Enforcement)
 - **Quality**: `utils/tools.py`의 `list_files`, `execute_shell`, `archive_project_artifacts`, `compress_directory`가 경계 조건을 안전하게 처리하며 파일 및 압축 워크플로를 촘촘히 검증합니다.
 - **Quality**: `tests/test_message_queue.py`에서 Redis가 없는 더미 세션과 `publish`/`push_task`/`pop_task` 경로를 Mock 기반으로 보호합니다.

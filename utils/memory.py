@@ -63,9 +63,6 @@ def compress_synapse(state: GortexState) -> GortexState:
     except Exception as e:
         logger.error(f"Synaptic compression failed: {e}")
         return state
-    except Exception as e:
-        logger.error(f"Synaptic compression failed: {e}")
-        return state
 
 def prune_synapse(state: GortexState, limit: int = 50) -> GortexState:
     """메시지가 임계값을 넘을 경우 중간 메시지를 삭제하여 토큰 및 메모리 최적화"""
