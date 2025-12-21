@@ -32,15 +32,19 @@ Commit messages MUST be written in **Korean** and follow this format:
 
 ---
 
-## 2. Quality Assurance (Testing)
+## 2. Quality Assurance (High-Rigor Testing)
 
-### 2.1 Mandatory Unit Tests
-*   모든 신규 기능 구현(`write_file`) 또는 로직 수정 시, 반드시 이에 상응하는 **단위 테스트 코드**를 작성하거나 업데이트해야 한다.
-*   테스트는 Python 표준 `unittest` 프레임워크를 사용한다.
-*   **Test Location**: `tests/test_<파일명>.py`
+### 2.1 Test-First Principle (MANDATORY)
+*   모든 신규 기능 구현 및 로직 수정 시, 에이전트는 코드를 작성하기 전 또는 동시에 **테스트 시나리오를 먼저 설계**해야 한다.
+*   "테스트되지 않은 코드는 존재하지 않는 코드와 같다."
 
-### 2.2 Test-Driven Continuity
-*   테스트가 통과하지 않는 코드는 Repository에 반영할 수 없다. `pre_commit.sh`는 이 과정을 강제한다.
+### 2.2 Strict Test Existence (CRITICAL)
+*   `pre_commit.sh` v1.3에 따라, 수정된 모든 로직 파일(`.py`)은 반드시 대응하는 테스트 파일(`tests/test_*.py`)을 가져야 한다.
+*   **테스트 파일 누락 시 커밋은 강제로 차단된다.**
+
+### 2.3 Coverage & Edge Cases
+*   단순 통과를 넘어, **Edge Case(예외 상황, 경계값)**에 대한 테스트가 포함되어야 한다.
+*   `coverage report`를 통해 주요 로직의 실행 여부를 확인하며, 가급적 80% 이상의 커버리지를 유지한다.
 
 ---
 

@@ -231,11 +231,31 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
         }
 
     if status == "success":
-        return {
-            "thought": coder_thought, "thought_tree": coder_tree,
-            "current_step": current_step_idx + 1, "coder_iteration": 0,
-            "next_node": "coder", "messages": [("ai", f"Step {current_step_idx+1} 완료.")]
-        }
+        # [Autonomous Pre-Commit] 성공 보고 전 자율 검증 수행
+        logger.info("🧪 Running autonomous pre-commit check...")
+        check_res = execute_shell("./scripts/pre_commit.sh")
+        
+        if "Ready to commit" in check_res:
+            logger.info("✅ Autonomous check passed.")
+            return {
+                "thought": coder_thought, "thought_tree": coder_tree,
+                "current_step": current_step_idx + 1, "coder_iteration": 0,
+                "next_node": "coder", "messages": [("ai", f"Step {current_step_idx+1} 완료 및 검증 통과.")]
+            }
+        else:
+            logger.warning("❌ Autonomous check failed. Triggering self-correction...")
+            # 실패 로그와 함께 다시 Coder에게 기회 부여 (또는 Analyst로 라우팅)
+            return {
+                "thought": f"Pre-commit failed after success attempt. Needs correction. Log: {check_res[:200]}",
+                "thought_tree": coder_tree,
+                "coder_iteration": current_iteration + 1,
+                "messages": [
+                    ("ai", "❌ 자율 검증 실패로 인해 자가 수정을 시도합니다."),
+                    ("tool", check_res)
+                ],
+                "next_node": "coder"
+            }
+            
     elif status == "failed":
         # [Reflective Debugging] 실패 원인 분석 및 규칙 생성
         from gortex.agents.analyst import AnalystAgent

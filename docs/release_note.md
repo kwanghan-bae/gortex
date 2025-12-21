@@ -16,19 +16,32 @@
 - [x] **Intelligence**: 사용자의 의도를 실시간으로 투영하여 워크플로우를 가이드하는 'User Intent Projection' 구축
 - [x] **Infrastructure**: 지식 저장소를 프로젝트 단위로 분할 관리하는 'Memory Sharding' 도입
 - [x] **Infrastructure**: 에이전트 프롬프트를 런타임에 수정 가능한 템플릿으로 분리하는 'Dynamic Prompting' 구축
+- [x] **Infrastructure**: 모든 에이전트 노드에 'Dynamic Prompting' 일괄 적용 및 런타임 최적화
+- [x] **Infrastructure**: 에이전트가 `pre_commit.sh` 검증을 직접 수행하고 자가 수정하는 'Autonomous Pre-Commit' 구현
+- [x] **Quality**: 테스트 없는 커밋을 원천 차단하는 'Strict QA & Pre-commit' 체계 구축
 - [x] **System**: 대규모 그래프 데이터 및 메시지의 효율적 관리를 위한 'Memory Pruning' 전략 도입
 - [x] **Interface**: 현재 작업 맥락에 따라 대시보드 구성을 최적화하는 'Context-Aware UI Layout' 구현
 - [x] **System**: 작업 완료 후 자동으로 결과물을 아카이빙하고 문서를 갱신하는 'Auto-Finalizer' 도입
 - [x] **Economy**: 에이전트 간 상호 평가를 통해 자원 할당 우선순위를 결정하는 'Peer Review Economy' 고도화
 - [x] **System**: 지식 검색 성능을 비약적으로 높이는 'Vector Embedding Search'로의 전환
 - [x] **Intelligence**: 에이전트의 모든 의미 있는 사고 과정을 스스로 요약하여 지식화하는 'Thought Memorization' 구현
-- [x] **Infrastructure**: 모든 에이전트 노드에 'Dynamic Prompting' 일괄 적용 및 런타임 최적화
+- [ ] **Infrastructure**: 변경된 파일만 식별하여 증분 테스트를 수행하는 'Selective Testing' 노드 추가
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.6.1 (Strict QA & High-Rigor Pre-Commit)
+- [x] `scripts/pre_commit.sh`: 린팅(Ruff) 및 테스트 존재 여부 강제 검사 기능을 포함한 고도화 (v1.3)
+- [x] `docs/RULES.md`: 'Test-First' 원칙 및 테스트 없는 커밋 금지를 프로젝트 헌법으로 명문화
+- [x] `docs/prompts/core_agents.yaml`: Planner/Coder에게 테스트 주도 개발(TDD) 사고방식을 강제하는 지침 보강
+
+### v2.6.0 (Autonomous Pre-Commit & Self-Validation)
+- [x] `agents/coder.py`: 작업 완료 선언 전 자가 검증을 의무화하고 실패 시 즉각 수정 루프를 도는 자율 검증 로직 구현
+- [x] `docs/prompts/core_agents.yaml`: 검증 결과에 따른 행동 지침을 명문화하여 에이전트의 품질 책임 소재 강화
+- [x] `main.py`: 에이전트의 내부 검증 로그를 사용자에게 실시간 노출하여 개발 과정의 신뢰성과 투명성 확보
 
 ### v2.5.9 (Global Dynamic Prompting)
 - [x] `docs/prompts/core_agents.yaml`: 모든 에이전트의 지침을 통합 관리하는 외부 지능 저장소 완성
