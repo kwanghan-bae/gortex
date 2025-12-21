@@ -1,8 +1,44 @@
+import json
+import os
 import logging
 from typing import Dict, Any, Optional
 from gortex.core.auth import GortexAuth
 
-logger = logging.getLogger("GortexTranslator")
+logger = logging.getLogger("GortexSystemTranslator")
+
+class SystemTranslator:
+    """시스템 표준 메시지 다국어 지원 엔진 (i18n)"""
+    def __init__(self, default_lang: str = "ko"):
+        self.current_lang = default_lang
+        self.dictionaries: Dict[str, Dict[str, str]] = {}
+        self._load_all_dicts()
+
+    def _load_all_dicts(self):
+        i18n_dir = "docs/i18n"
+        if not os.path.exists(i18n_dir): return
+        
+        for file in os.listdir(i18n_dir):
+            if file.endswith(".json"):
+                lang = file.split(".")[0]
+                try:
+                    with open(os.path.join(i18n_dir, file), 'r', encoding='utf-8') as f:
+                        self.dictionaries[lang] = json.load(f)
+                except Exception as e:
+                    logger.error(f"Failed to load dictionary {file}: {e}")
+
+    def t(self, key: str, lang: str = None, **kwargs) -> str:
+        """키값에 해당하는 메시지 반환 및 변수 치환"""
+        target_lang = lang or self.current_lang
+        dictionary = self.dictionaries.get(target_lang, self.dictionaries.get("ko", {}))
+        
+        template = dictionary.get(key, key) 
+        try:
+            return template.format(**kwargs)
+        except Exception:
+            return template
+
+# 전역 싱글톤 인스턴스
+i18n = SystemTranslator()
 
 class SynapticTranslator:
     """

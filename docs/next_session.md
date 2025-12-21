@@ -1,23 +1,24 @@
 # Next Session
 
 ## Session Goal
-- 시스템 전역 텍스트 로컬라이징 엔진 구축 (System Localization v1)
+- 에이전트 도구 메시지 전면 i18n 마이그레이션 (Message Integration v1)
 
 ## Context
-- 현재 에이전트의 사고(`thought`), 도구 결과 메시지, 시스템 로그 등이 여러 언어로 혼재되어 출력됨.
-- `state["ui_language"]` 설정에 따라 시스템이 사용하는 모든 표준 메시지(예: "작업 완료", "오류 발생")를 해당 언어로 자동 치환해주는 중앙 집중식 번역 엔진이 필요함.
+- v2.6.8에서 로컬라이징 엔진의 기반이 마련됨.
+- 현재 `Planner`의 "계획을 수립했습니다", `Coder`의 "Step 완료" 등 파편화된 메시지들이 여전히 파이썬 코드 내부에 하드코딩되어 있음.
+- 모든 에이전트 노드 및 도구 호출 결과를 `i18n.t` 기반으로 전환하여 설정 언어에 따른 완벽한 일관성을 확보해야 함.
 
 ## Scope
 ### Do
-- `docs/i18n/` 디렉토리에 언어별 사전 파일(`ko.json`, `en.json` 등) 작성.
-- `utils/translator.py`에 싱글톤 `SystemTranslator` 클래스 추가 및 템플릿 치환 로직 구현.
-- `main.py`와 각 에이전트 노드에서 하드코딩된 한글/영어 메시지를 키값(Key) 기반의 호출로 교체.
+- `docs/i18n/*.json`에 에이전트별 도구 실행 관련 키값 대량 추가.
+- `agents/planner.py`, `agents/coder.py`, `agents/analyst.py`의 `messages.append` 부분 전수 조사 및 수정.
+- `/language` 명령어로 언어 전환 시 모든 대화 흐름이 자연스럽게 바뀌는지 테스트.
 
 ### Do NOT
-- 에이전트의 '자유로운 사고(LLM Output)' 자체를 강제 번역하지 말 것 (표준 시스템 메시지에 집중).
+- 에이전트의 '고유 사고(Thought)'는 LLM 원문 그대로 두되, 시스템이 덧붙이는 접두사나 결과 요약 위주로 작업.
 
 ## Expected Outputs
-- `docs/i18n/*.json`, `utils/translator.py`, `main.py` 수정.
+- `docs/i18n/*.json` 업데이트, 모든 에이전트 노드 파일 수정.
 
 ## Completion Criteria
-- `/language en` 명령어로 설정을 바꿨을 때, 시스템 표준 메시지들이 즉시 영어로 바뀌어 출력되는 것이 확인되어야 함.
+- 시스템의 모든 응답과 로그가 설정된 언어(ko/en)에 따라 100% 일관되게 출력되는 것이 확인되어야 함.

@@ -3,15 +3,20 @@
 > 💡 **Versioning Policy**: 메이저 버전(v1.x, v2.x ...)이 변경될 때마다 이전 기록은 `docs/archive/`로 이동하며, 메인 릴리즈 노트는 항상 최신 상태를 유지합니다.
 
 ## 🚀 Backlog (Pending Tasks)
-- [x] **Interface**: 3D 그래프에서 영향 받는 노드들을 묶어 보여주는 'Dependency Clustering' 시각화
-- [ ] **Infrastructure**: 시스템 내부의 모든 텍스트를 타겟 언어로 자동 로컬라이징하는 'System Localization' 구축
-- [ ] **Intelligence**: 에이전트의 사고 트리에 멀티모달 데이터를 포함하는 'Visual Reasoning' 도입 (v2.6.5에서 기반 마련)
+- [x] **Infrastructure**: 시스템 내부의 모든 텍스트를 타겟 언어로 자동 로컬라이징하는 'System Localization' 구축
+- [ ] **Infrastructure**: 에이전트 도구 메시지를 i18n 키값으로 전면 마이그레이션
+- [ ] **Intelligence**: 에이전트의 사고 트리에 멀티모달 데이터를 포함하는 'Visual Reasoning' 도입 (v2.6.5 기반)
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.6.8 (System-wide Localization Framework)
+- [x] `docs/i18n/`: 다국어 지원을 위한 키-밸류 기반 메시지 사전(ko, en) 구축 및 데이터 인프라 안착
+- [x] `utils/translator.py`: 런타임 변수 치환이 가능한 싱글톤 로컬라이징 엔진 `SystemTranslator` 구현
+- [x] `main.py`: 하드코딩된 시스템 메시지를 제거하고 설정 언어에 맞춰 실시간으로 텍스트를 치환하는 연동 완료
 
 ### v2.6.7 (Dependency Clustering & Structural Insight)
 - [x] `ui/three_js_bridge.py`: 파일 경로 및 심볼 명명 규칙을 분석하여 복잡한 노드들을 논리적 그룹(Cluster)으로 자동 묶는 엔진 구현

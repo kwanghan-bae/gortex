@@ -1,0 +1,10 @@
+{
+  "system.initialized": "Gortex v1.0 초기화 완료. (ID: {thread_id})",
+  "task.plan_established": "계획을 수립했습니다: {goal} ({steps} 단계)",
+  "task.all_completed": "모든 계획된 작업을 완료했습니다.",
+  "task.step_completed": "{step} 단계 완료 및 검증 통과.",
+  "error.general": "죄송합니다. 요청을 분석하는 중에 오류가 발생했습니다: {error}",
+  "error.api_quota": "API 할당량이 모두 소진되었습니다. 잠시 후 재시도하거나 키를 교체하세요.",
+  "ui.mode_changed": "UI 레이아웃이 {mode} 모드로 전환되었습니다.",
+  "archive.success": "{count}개의 부산물이 {path}에 보관되었습니다."
+}

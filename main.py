@@ -723,10 +723,11 @@ async def run_gortex():
             logger.info(f"🔍 Deep integrity check found {len(changed)} changes. Cache updated.")
             ui.chat_history.append(("system", f"파일 시스템 정밀 검사 완료: {len(changed)}개의 변경 사항이 캐시에 반영되었습니다."))
 
-        auth_engine = GortexAuth()
-        evo_mem = EvolutionaryMemory()
+        from gortex.utils.translator import i18n
+        # [I18N] 언어 설정 로드 (기본 ko)
+        i18n.current_lang = state.get("ui_language", "ko")
         
-        console.print(f"[bold cyan]🚀 Gortex v1.0 Initialized. (ID: {thread_id})[/bold cyan]")
+        console.print(f"[bold cyan]🚀 {i18n.t('system.initialized', thread_id=thread_id)}[/bold cyan]")
         with Live(ui.layout, console=console, refresh_per_second=4) as live:
             interrupted_last_time = False
             while True:
