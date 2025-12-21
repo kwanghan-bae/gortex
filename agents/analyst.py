@@ -185,6 +185,56 @@ class AnalystAgent:
             logger.error(f"Self-correction analysis failed: {e}")
             return None
 
+    def generate_performance_report(self, log_path: str = "logs/trace.jsonl") -> str:
+        """로그를 분석하여 세션 성과 및 통계 리포트 생성"""
+        if not os.path.exists(log_path):
+            return "리포트를 생성할 로그 데이터가 없습니다."
+
+        try:
+            with open(log_path, "r", encoding='utf-8') as f:
+                lines = f.readlines()
+            
+            logs = [json.loads(l) for l in lines]
+            total_events = len(logs)
+            nodes = [l.get("agent") for l in logs if l.get("agent")]
+            node_counts = pd.Series(nodes).value_counts().to_dict()
+            
+            # 지연 시간 및 토큰 분석
+            latencies = [l.get("latency_ms") for l in logs if l.get("latency_ms")]
+            avg_latency = sum(latencies) / len(latencies) if latencies else 0
+            
+            total_tokens = 0
+            for l in logs:
+                tokens = l.get("tokens", {})
+                if isinstance(tokens, dict):
+                    total_tokens += tokens.get("input", 0) + tokens.get("output", 0)
+
+            # 성과 요약 (LLM)
+            recent_goals = [l.get("payload", {}).get("goal") for l in logs if l.get("event") == "node_complete" and l.get("payload", {}).get("goal")]
+            
+            prompt = f"""다음 통계와 작업 목표들을 바탕으로 Gortex 시스템의 성과 리포트를 '임원 보고용(Executive Report)'으로 작성하라.
+            
+            [Statistics]
+            - Total Events: {total_events}
+            - Node Usage: {json.dumps(node_counts)}
+            - Avg Latency: {avg_latency:.0f}ms
+            - Total Tokens Used: {total_tokens}
+            
+            [Recent Accomplishments]
+            {json.dumps(recent_goals[-10:], ensure_ascii=False)}
+            
+            [Report Guidelines]
+            - 마크다운 형식을 사용하라.
+            - 주요 성과를 강조하고, 시스템 효율성(비용/시간)을 평가하라.
+            - 향후 개선 제안(Next Actions)을 포함하라.
+            """
+            
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], None)
+            return response.text
+        except Exception as e:
+            logger.error(f"Report generation failed: {e}")
+            return f"리포트 생성 중 오류 발생: {e}"
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""
     agent = AnalystAgent()

@@ -22,6 +22,7 @@ from gortex.core.observer import GortexObserver
 from gortex.utils.token_counter import count_tokens, estimate_cost
 from gortex.core.auth import GortexAuth
 from gortex.core.evolutionary_memory import EvolutionaryMemory
+from gortex.agents.analyst import AnalystAgent
 from gortex.utils.tools import get_file_hash, deep_integrity_check
 from gortex.utils.indexer import SynapticIndexer
 from gortex.utils.docker_gen import DockerGenerator
@@ -169,6 +170,27 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
                     ui.chat_history.append(("system", f"✅ 배포 완료! ({branch} 브랜치로 푸시됨)"))
             except Exception as e:
                 ui.chat_history.append(("system", f"❌ 배포 실패: {str(e)}"))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/report":
+        ui.chat_history.append(("system", "📊 성과 리포트를 생성 중입니다..."))
+        ui.update_main(ui.chat_history)
+        
+        analyst = AnalystAgent()
+        report = analyst.generate_performance_report()
+        
+        # 화면 출력용 패널 구성
+        from rich.markdown import Markdown
+        report_panel = Panel(Markdown(report), title="🚀 GORTEX PERFORMANCE REPORT", border_style="magenta", padding=(1, 2))
+        ui.chat_history.append(("system", report_panel))
+        
+        # 외부 알림 전송 (옵션)
+        if "--notify" in cmd_parts:
+            notifier = Notifier()
+            notifier.send_notification(report, title="📊 Gortex Executive Report")
+            ui.chat_history.append(("system", "🔔 리포트가 외부 채널로 전송되었습니다."))
+            
         ui.update_main(ui.chat_history)
         return "skip"
 

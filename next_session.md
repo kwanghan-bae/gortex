@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Semantic Log Search & Case-Based Reasoning Complete (v1.7.9)
+**Status:** Executive Performance Reporter Complete (v1.8.0)
 
 ## 🧠 Current Context
-사례 기반 추론(CBR)의 기초가 되는 로그 검색 엔진이 구축되었습니다. 이제 Gortex는 새로운 문제를 마주했을 때 과거의 경험을 들춰보며 가장 효과적인 해결책을 스스로 찾아낼 수 있는 '경험적 지능'을 갖추게 되었습니다.
+성과 리포팅 시스템이 구축되어 이제 시스템의 가치를 정량적/정성적으로 증명할 수 있습니다. 지연 시간, 비용, 성공한 작업들이 일목요연하게 정리되어 사용자에게 제공됩니다.
 
 ## 🎯 Next Objective
-**Executive Reporter (Automated Performance Report)**
-1. **`Performance Summarization`**: 지정된 기간 동안의 작업 성과, 토큰 사용량, 절감된 비용, 해결된 주요 이슈들을 요약합니다.
-2. **`Report Delivery`**: `/report` 명령어를 통해 마크다운 형식의 정교한 리포트를 생성하거나, 외부 알림 채널(Slack/Discord)로 전송하여 사용자에게 시스템 가치를 입증합니다.
+**Achievement Timeline Widget**
+1. **`Achievement Tracking`**: 에이전트가 주요 마일스톤(예: 파일 생성 성공, 테스트 통과, 배포 완료)을 달성할 때마다 이를 별도의 'Achievement' 리스트에 기록합니다.
+2. **`Visual Timeline`**: 대시보드 하단 또는 별도 패널에 시간순으로 달성한 성과들을 아이콘과 함께 표시하는 타임라인 위젯을 구현합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 로그 기반 유사 사례 검색 엔진 완료 (v1.7.9).
-- 다음 목표: 성과 자동 리포팅 시스템(Executive Reporter) 구축.
+- 성과 리포팅 시스템 구현 완료 (v1.8.0).
+- 다음 목표: 성과 타임라인(Achievement Timeline) 위젯 추가.
 
 작업 목표:
-1. `agents/analyst.py` 또는 신규 노드에서 로그를 분석하여 주간/세션 성과를 요약하는 `generate_report` 메서드를 작성해줘.
-2. `main.py`에 `/report` 명령어를 추가하여 요약된 리포트를 화면에 출력하고 외부 채널로 전송하도록 연동해줘.
+1. `ui/dashboard.py`에 주요 성과를 시간순으로 저장하고 표시하는 `achievements` 필드와 관련 UI 로직을 추가해줘.
+2. `main.py`에서 에이전트의 성공 메시지를 감지하여 `ui.add_achievement`를 호출하는 로직을 보강해줘.
 ```

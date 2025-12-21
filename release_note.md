@@ -24,9 +24,16 @@
 - [x] **Infrastructure**: 에이전트의 도구 호출 로그를 분석하여 비용과 지연 시간을 최적화하는 'Performance Profiler' 노드 구현
 - [x] **Interface**: 사용자의 복잡한 요구사항을 시각적 다이어그램으로 변환하여 보여주는 'Architecture Sketcher' 기능 추가
 - [x] **System**: 대규모 로그 데이터를 벡터화하여 유사한 오류 해결 사례를 검색하는 'Semantic Log Search' 엔진 추가
-- [ ] **Infrastructure**: 에이전트의 작업 성과를 주간/월간 리포트로 자동 요약하여 이메일로 전송하는 'Executive Reporter' 노드 구현
+- [x] **Infrastructure**: 에이전트의 작업 성과를 리포트로 자동 요약하여 제공하는 'Executive Reporter' 기능 구현
+- [ ] **Interface**: 대시보드에 현재 세션의 주요 성과를 시각적으로 보여주는 'Achievement Timeline' 위젯 추가
 
 ## ✅ Completed
+### v1.8.0 (Executive Performance Reporter)
+- [x] `agents/analyst.py`: 로그 데이터를 분석하여 성공률, 비용, 지연 시간, 주요 성과를 요약하는 `generate_performance_report` 구현
+- [x] `main.py`: 분석된 성과를 마크다운 형식으로 출력하는 `/report` 명령어 추가
+- [x] `main.py`: `/report --notify` 옵션을 통해 생성된 리포트를 Slack/Discord 외부 채널로 즉시 전송하는 기능 연동
+- [x] `agents/analyst.py`: 임원 보고용(Executive Report) 스타일의 LLM 요약 프롬프트 최적화로 가독성 및 비즈니스 가치 강조
+
 ### v1.7.9 (Semantic Log Search & Case-Based Reasoning)
 - [x] `utils/log_vectorizer.py`: `trace.jsonl` 로그 파일의 주요 이벤트를 인덱싱하고 키워드 기반 유사 사례를 검색하는 엔진 구현
 - [x] `agents/manager.py`: 사용자 요청 처리 전 과거의 유사한 해결 사례를 검색하여 프롬프트에 참조(Reference) 맥락으로 자동 주입
