@@ -5,6 +5,7 @@ from gortex.core.auth import GortexAuth
 from gortex.core.state import GortexState
 from gortex.utils.log_vectorizer import SemanticLogSearch
 from gortex.utils.translator import SynapticTranslator
+from gortex.utils.vector_store import LongTermMemory
 
 logger = logging.getLogger("GortexManager")
 
@@ -16,6 +17,7 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     auth = GortexAuth()
     log_search = SemanticLogSearch()
     translator = SynapticTranslator()
+    ltm = LongTermMemory()
     
     # 1. 언어 감지 및 번역 (다국어 지원)
     last_msg_obj = state["messages"][-1]
@@ -25,7 +27,13 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     # 내부 처리는 한국어 맥락을 포함한 원문 활용
     internal_input = lang_info.get("translated_text", raw_input) if not lang_info.get("is_korean") else raw_input
 
-    # 2. 과거 유사 사례 검색 (CBR)
+    # 2. 장기 기억 소환 (Recall)
+    long_term_knowledge = ltm.recall(internal_input)
+    ltm_context = ""
+    if long_term_knowledge:
+        ltm_context = "\n[RECALLED LONG-TERM KNOWLEDGE]\n" + "\n".join([f"- {k}" for k in long_term_knowledge])
+
+    # 3. 과거 유사 사례 검색 (CBR)
     past_cases = log_search.search_similar_cases(internal_input)
     
     case_context = ""
@@ -34,9 +42,10 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         for i, case in enumerate(past_cases):
             case_context += f"Case {i+1}: {case.get('agent')} encountered {case.get('event')}. Payload: {json.dumps(case.get('payload'))}\n"
 
-    # 3. 시스템 프롬프트 구성
+    # 4. 시스템 프롬프트 구성
     base_instruction = f"""너는 Gortex v1.0 시스템의 수석 매니저(Manager)다.
 사용자의 요청을 분석하여 다음 중 가장 적합한 에이전트에게 작업을 배분하라.
+{ltm_context}
 {case_context}
 
 [Speculative Reasoning Rules]

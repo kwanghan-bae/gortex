@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Independent Cross-Validation Loop Complete (v2.0.4)
+**Status:** Long-term Memory & Knowledge Retrieval Complete (v2.0.5)
 
 ## 🧠 Current Context
-제3자 관점의 상호 검증 시스템이 구축되었습니다. 이제 Gortex는 한 에이전트의 실수를 다른 에이전트(또는 다른 관점의 모델)가 즉시 잡아낼 수 있는 견제와 균형 시스템을 갖추게 되었으며, 이는 최종 출력물의 신뢰성을 극대화합니다.
+장기 기억 시스템이 가동되었습니다. 이제 Gortex는 세션을 넘어 과거의 지식을 소환하고 이를 현재 작업에 반영할 수 있는 '지속적 지능'을 갖추게 되었습니다. 이는 반복되는 설명의 필요성을 줄이고 시스템의 컨텍스트 인식 능력을 극대화합니다.
 
 ## 🎯 Next Objective
-**Long-term Memory (Vector Store Extension)**
-1. **`Context Persistence`**: 대화가 압축되거나 세션이 종료되더라도 사라지지 않는 '장기 기억' 저장소를 구축합니다. (ChromaDB 또는 단순 벡터 파일 활용)
-2. **`Semantic Retrieval`**: 현재 작업과 관련된 과거의 모든 지식(코드, 대화, 오류 해결 사례)을 의미 기반으로 검색하여 에이전트의 단기 기억(Context Window)을 보강합니다.
+**Auto-Chart & Data Visualization**
+1. **`Visual Data Analysis`**: `Analyst` 노드가 데이터(CSV 등)를 분석한 결과를 단순 텍스트로 내놓는 대신, Plotly 또는 Matplotlib 코드를 생성하여 시각적 차트로 변환합니다.
+2. **`Web Chart Rendering`**: 생성된 차트 데이터를 웹 대시보드로 전송하여 브라우저에서 인터랙티브한 그래프로 렌더링함으로써 데이터 통찰력을 직관적으로 제공합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 상호 검증 시스템 완료 (v2.0.4).
-- 다음 목표: 외부 벡터 저장소를 활용한 장기 기억(Long-term Memory) 구축.
+- 장기 기억 저장 및 인출 시스템 완료 (v2.0.5).
+- 다음 목표: 데이터 분석 결과 자동 시각화(Auto-Chart).
 
 작업 목표:
-1. `utils/memory.py` 또는 신규 `utils/vector_store.py`를 통해 지식을 임베딩하고 저장하는 기초 인프라를 작성해줘.
-2. 에이전트가 답변을 생성하기 전, 장기 기억 저장소에서 관련 정보를 인출(Retrieve)하는 워크플로우를 보강해줘.
+1. `agents/analyst.py`의 데이터 분석 로직을 확장하여 시각화 코드(Plotly JSON 등)를 생성하는 기능을 추가해줘.
+2. `ui/dashboard.py` 및 웹 대시보드 연동 로직을 수정하여 차트 데이터를 실시간 브로드캐스팅하도록 보강해줘.
 ```

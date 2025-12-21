@@ -42,9 +42,16 @@
 - [x] **Intelligence**: 여러 가상의 실행 시나리오를 병렬로 검토하여 최적의 경로를 선택하는 'Speculative Reasoning' 엔진 구축
 - [x] **Infrastructure**: 에이전트의 내부 지식 베이스를 그래프 DB 형식으로 시각화하고 관리하는 'Synaptic Knowledge Graph' 구축
 - [x] **Intelligence**: 에이전트가 도구 호출 결과의 정확성을 제3의 관점에서 검증하는 'Cross-Validation' 노드 추가
-- [ ] **Infrastructure**: 에이전트의 단기 기억을 외부 벡터 저장소로 확장하여 지식 보존력을 높이는 'Long-term Memory' 구축
+- [x] **Infrastructure**: 에이전트의 단기 기억을 외부 벡터 저장소로 확장하여 지식 보존력을 높이는 'Long-term Memory' 구축
+- [ ] **Interface**: 사용자의 복잡한 데이터 분석 요청을 시각적 차트로 자동 변환하는 'Auto-Chart' 노드 추가
 
 ## ✅ Completed
+### v2.0.5 (Long-term Memory & Knowledge Retrieval)
+- [x] `utils/vector_store.py`: 세션 종료 후에도 지식을 보존하고 의미 기반으로 소환(Recall)할 수 있는 `LongTermMemory` 엔진 구축
+- [x] `agents/manager.py`: 사용자 요청 처리 전 장기 기억 저장소에서 관련 과거 지식을 검색하여 프롬프트 맥락으로 자동 주입
+- [x] `utils/vector_store.py`: 지식 축적(`memorize`) 및 소환 로직을 설계하여 에이전트의 경험적 학습 능력 강화
+- [x] `agents/manager.py`: 다국어 지원, 사례 기반 추론(CBR), 장기 기억(LTM)이 유기적으로 결합된 통합 매니저 워크플로우 안착
+
 ### v2.0.4 (Independent Cross-Validation Loop)
 - [x] `agents/analyst.py`: 다른 에이전트의 성과물을 독립적인 관점에서 평가하고 비판하는 `cross_validate` 로직 구현
 - [x] `core/graph.py`: Coder 완료 후 반드시 Analyst의 검증을 거치도록 워크플로우 라우팅 및 조건부 엣지 고도화
