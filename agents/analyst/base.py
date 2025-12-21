@@ -2,6 +2,7 @@ import logging
 import json
 import os
 import re
+import math
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from gortex.core.state import GortexState
@@ -25,8 +26,6 @@ class AnalystAgent:
         # 비용 함수: 토큰 1개 = 0.01, 레이턴시 1ms = 0.01, 에너지 1 = 1.0 (가중치 적용)
         cost = (tokens * 0.01) + (latency_ms * 0.005) + (energy_cost * 2.0)
         # 효율성 = 기본 보상(100) / (비용 + 1)
-        # 로그 스케일을 적용하여 비용 증가에 따른 점수 감소폭을 완화
-        import math
         score = 100.0 / (1.0 + math.log1p(cost / 5.0))
         return round(min(100.0, score), 1)
 
@@ -45,7 +44,7 @@ class AnalystAgent:
                             content = file.read()
                             lines = content.splitlines()
                             
-                            # 정밀 복잡도 추정 (Proxy for Cyclomatic Complexity)
+                            # 정밀 복잡도 추정
                             score = len(re.findall(r"\b(if|elif|for|while|except|def|class|with|async)\b", content))
                             score += len(lines) // 20
                             
@@ -100,3 +99,35 @@ class AnalystAgent:
         except Exception as e:
             logger.error(f"Failed to identify missing tests: {e}")
         return []
+
+    def audit_architecture(self) -> List[Dict[str, Any]]:
+        """프로젝트의 의존성 구조가 아키텍처 원칙을 준수하는지 감사"""
+        from gortex.utils.indexer import SynapticIndexer
+        indexer = SynapticIndexer()
+        deps = indexer.generate_dependency_graph()
+        
+        violations = []
+        layers = {
+            "utils": 0,
+            "core": 1,
+            "ui": 2,
+            "agents": 3,
+            "tests": 4
+        }
+        
+        for dep in deps:
+            source = dep["source"]
+            target = dep["target"]
+            
+            src_layer = next((l for l in layers if f"gortex.{l}" in source or source.startswith(l)), None)
+            tgt_layer = next((l for l in layers if f"gortex.{l}" in target or target.startswith(l)), None)
+            
+            if src_layer and tgt_layer:
+                if layers[src_layer] < layers[tgt_layer]:
+                    violations.append({
+                        "type": "Layer Violation",
+                        "source": source,
+                        "target": target,
+                        "reason": f"하위 레이어 '{src_layer}'가 상위 레이어 '{tgt_layer}'를 참조하고 있습니다."
+                    })
+        return violations

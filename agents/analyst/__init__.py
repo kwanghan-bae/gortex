@@ -18,7 +18,7 @@ class AnalystAgent(ReflectionAnalyst, WorkspaceOrganizer):
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """
     Analyst 노드 엔트리 포인트.
-    코드 검증, 합의 도출, 데이터 분석 및 자가 진화 로직을 총괄합니다. (전수 복구 완료)
+    코드 검증, 합의 도출, 데이터 분석 및 자가 진화 로직을 총괄합니다.
     """
     agent = AnalystAgent()
     
@@ -26,6 +26,13 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
     agent.garbage_collect_knowledge()
     agent.map_knowledge_relations()
     
+    # 2. 아키텍처 감사 (Architecture Drift Guard)
+    violations = agent.audit_architecture()
+    if violations:
+        for v in violations:
+            logger.warning(f"🛡️ [Architecture Drift] {v['reason']} ({v['source']} -> {v['target']})")
+            # 로그에만 기록하고 messages에는 직접 주입하지 않음 (응답 일관성 유지)
+
     last_msg_obj = state["messages"][-1]
     last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
     last_msg_lower = last_msg.lower()
@@ -37,7 +44,6 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
         msg = f"🤝 **{i18n.t('analyst.consensus_reached', decision=res.get('final_decision', '')[:50])}**\n"
         msg += f"💡 Rationale: {res.get('rationale', 'N/A')}"
         
-        # 합의 성과 기록 준비
         history = state.get("consensus_history", [])
         history.append({
             "timestamp": datetime.now().isoformat(),
@@ -48,7 +54,7 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             "messages": [("ai", msg)],
             "next_node": "manager",
             "consensus_history": history,
-            "debate_context": [] # 처리 완료 후 비움
+            "debate_context": []
         }
 
     # [Cross-Validation] Coder의 작업 결과 검증 요청인 경우
@@ -57,22 +63,18 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
         if ai_outputs:
             last_ai_msg = ai_outputs[-1][1] if isinstance(ai_outputs[-1], tuple) else ai_outputs[-1].content
             
-            # 1. 무결성 및 보안 검증
             val_res = agent.validate_constraints(state.get("active_constraints", []), {"content": last_ai_msg})
-            # 2. 자원 프로파일링
-            # (base.py의 로직 활용)
             
             if not val_res.get("is_valid", True):
                 return {"messages": [("ai", f"🛡️ [Validation Alert] {val_res.get('reason')}")], "next_node": "planner"}
             
-            # 검증 통과 시 보상 지급 (경제 시스템 연동)
             economy = state.get("agent_economy", {}).copy()
             credits = state.get("token_credits", {}).copy()
             if "coder" not in economy: economy["coder"] = {"points": 0, "level": "Novice"}
             if "coder" not in credits: credits["coder"] = 100.0
             
             economy["coder"]["points"] += 10
-            credits["coder"] += 10.0 # 검증 통과 보상
+            credits["coder"] += 10.0
             
             return {
                 "messages": [("ai", i18n.t("analyst.review_complete", risk_count=0))], 
@@ -91,10 +93,14 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
         res = agent.analyze_data(data_files[0])
         return {"messages": [("ai", i18n.t("analyst.data_analyzed", file=data_files[0]))], "next_node": "manager"}
 
-    # [Self-Evolution: Auto-Test Proliferation]
-    # 에너지가 충분하고 다른 작업이 없을 때 누락된 테스트 생성 시도
+    # [Self-Evolution: Auto-Test Proliferation & Memory Pruning]
+    # 에너지가 충분하고 다른 명시적 작업이 없을 때 수행
     energy = state.get("agent_energy", 100)
-    if energy > 70 and not debate_data and state.get("next_node") != "analyst":
+    if energy > 70 and not debate_data and not data_files:
+        # 기억 정제 (주기적 수행)
+        if len(agent.memory.memory) > 20:
+            agent.memory.prune_memory()
+            
         proposals = agent.propose_test_generation()
         if proposals:
             updates = {"messages": [], "agent_energy": energy - 10}
@@ -106,7 +112,8 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
                 if "Ready to commit" in check_res:
                     updates["messages"].append(("ai", f"🧪 **테스트 자가 증식**: {p['target_file']} 생성 완료 ({p['reason']})"))
                 else:
-                    os.remove(p["target_file"]) # 실패 시 삭제
+                    if os.path.exists(p["target_file"]):
+                        os.remove(p["target_file"])
             
             if updates["messages"]:
                 updates["next_node"] = "manager"

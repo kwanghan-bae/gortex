@@ -184,6 +184,25 @@ class SynapticIndexer:
         results.sort(key=lambda x: x["score"], reverse=True)
         return results
 
+    def generate_dependency_graph(self) -> List[Dict[str, str]]:
+        """모듈 간의 임포트 의존성 리스트 반환 (A -> B)"""
+        if not self.index:
+            self.scan_project()
+            
+        dependencies = []
+        for file_path, defs in self.index.items():
+            source_mod = file_path.replace("/", ".").replace(".py", "")
+            for d in defs:
+                target_mod = None
+                if d["type"] == "import":
+                    target_mod = d["name"]
+                elif d["type"] == "import_from":
+                    target_mod = d["module"]
+                
+                if target_mod and "gortex" in target_mod:
+                    dependencies.append({"source": source_mod, "target": target_mod})
+        return dependencies
+
     def get_impact_radius(self, target_file: str) -> Dict[str, List[str]]:
         """특정 파일 수정 시 영향을 받는 직접/간접 모듈 분석"""
         if not self.index:

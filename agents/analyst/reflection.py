@@ -3,6 +3,7 @@ import logging
 import re
 from typing import Dict, Any, List, Optional
 from gortex.agents.analyst.base import AnalystAgent
+from gortex.utils.tools import read_file
 
 logger = logging.getLogger("GortexAnalystReflection")
 
@@ -15,7 +16,7 @@ class ReflectionAnalyst(AnalystAgent):
         try:
             response_text = self.backend.generate("gemini-1.5-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
             import re
-            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            json_match = re.search(r'\{{.*\}}', response_text, re.DOTALL)
             return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
         except Exception as e:
             logger.error(f"Rule generation failed: {e}")
@@ -27,7 +28,7 @@ class ReflectionAnalyst(AnalystAgent):
         try:
             response_text = self.backend.generate("gemini-1.5-pro", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
             import re
-            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            json_match = re.search(r'\{{.*\}}', response_text, re.DOTALL)
             return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
         except Exception as e:
             return {"final_decision": "Decision failed", "rationale": str(e)}
@@ -39,7 +40,7 @@ class ReflectionAnalyst(AnalystAgent):
         try:
             response_text = self.backend.generate("gemini-1.5-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
             import re
-            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            json_match = re.search(r'\{{.*\}}', response_text, re.DOTALL)
             return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
         except: return {"is_valid": True}
 
@@ -67,72 +68,38 @@ class ReflectionAnalyst(AnalystAgent):
             LongTermMemory().memorize(f"User Knowledge: {response_text}", {"source": "Interaction"})
         except: pass
 
-        def predict_next_actions(self, state: Any) -> List[Dict[str, str]]:
+    def predict_next_actions(self, state: Any) -> List[Dict[str, str]]:
+        """다음 사용자 행동 예측"""
+        # 단순화된 예측 로직
+        return [{"label": "테스트 실행", "command": "/test"}]
 
-            """다음 사용자 행동 예측"""
+    def propose_test_generation(self) -> List[Dict[str, Any]]:
+        """누락된 테스트에 대한 구체적인 시나리오 제안"""
+        missing = self.identify_missing_tests()
+        proposals = []
+        
+        for item in missing[:2]: # 한 번에 최대 2개씩만 진행
 
-            # 단순화된 예측 로직
-
-            return [{"label": "테스트 실행", "command": "/test"}]
-
-    
-
-        def propose_test_generation(self) -> List[Dict[str, Any]]:
-
-            """누락된 테스트에 대한 구체적인 시나리오 제안"""
-
-            missing = self.identify_missing_tests()
-
-            proposals = []
-
+            file = item["file"]
+            lines = item["missing_lines"]
+            code_context = read_file(file)
             
-
-            for item in missing[:2]: # 한 번에 최대 2개씩만 진행
-
-                file = item["file"]
-
-                lines = item["missing_lines"]
-
-                code_context = read_file(file)
-
-                
-
-                prompt = f"""다음 파이썬 파일의 누락된 라인({lines})을 테스트하는 unittest 코드를 작성하라.
-
-                
-
-                [File] {file}
-
-                [Code]
-
-                {code_context}
-
-                
-
-                기존 테스트 관례를 따르며, MagicMock을 적극 활용하여 독립적인 테스트를 구성하라. 
-
-                오직 코드만 반환하라.
-
-                """
-
-                try:
-
-                    test_code = self.backend.generate("gemini-1.5-pro", [{"role": "user", "content": prompt}])
-
-                    test_code = re.sub(r'```python\n|```', '', test_code).strip()
-
-                    proposals.append({
-
-                        "target_file": f"tests/test_auto_{os.path.basename(file)}",
-
-                        "content": test_code,
-
-                        "reason": f"Low coverage ({item['coverage']}%)"
-
-                    })
-
-                except: pass
-
-            return proposals
-
-    
+            prompt = f"""다음 파이썬 파일의 누락된 라인({lines})을 테스트하는 unittest 코드를 작성하라.
+            
+            [File] {file}
+            [Code]
+            {code_context}
+            
+            기존 테스트 관례를 따르며, MagicMock을 적극 활용하여 독립적인 테스트를 구성하라. 
+            오직 코드만 반환하라.
+            """
+            try:
+                response_text = self.backend.generate("gemini-1.5-pro", [{"role": "user", "content": prompt}])
+                test_code = re.sub(r'```python\n|```', '', response_text).strip()
+                proposals.append({
+                    "target_file": f"tests/test_auto_{os.path.basename(file)}",
+                    "content": test_code,
+                    "reason": f"Low coverage ({item['coverage']}%)"
+                })
+            except: pass
+        return proposals

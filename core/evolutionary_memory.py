@@ -170,3 +170,51 @@ class EvolutionaryMemory:
             logger.info(f"Evolutionary Memory GC: Removed {original_count - len(self.memory)} rules.")
             self._persist()
 
+    def prune_memory(self, model_id: str = "gemini-1.5-flash"):
+        """LLM을 활용하여 중복되거나 상충되는 규칙 통합 (Semantic Consolidation)"""
+        if len(self.memory) < 2: return
+        
+        from gortex.core.llm.factory import LLMFactory
+        backend = LLMFactory.get_default_backend()
+        
+        # 규칙 목록 텍스트화
+        rules_text = ""
+        for i, r in enumerate(self.memory):
+            rules_text += f"[{i}] {r['learned_instruction']} (Patterns: {r['trigger_patterns']})\n"
+            
+        prompt = f"""다음은 자가 진화 시스템이 학습한 규칙들이다. 
+        1. 내용이 중복되거나 매우 유사한 규칙은 하나로 통합하라.
+        2. 서로 모순되는 규칙은 더 합리적인 쪽으로 수정하라.
+        
+        [규칙 리스트]
+        {rules_text}
+        
+        결과는 반드시 통합된 최종 규칙 리스트만 JSON 형식으로 반환하라.
+        [{{ "instruction": "...", "trigger_patterns": ["...", "..."], "severity": 3 }}]
+        """
+        
+        try:
+            response_text = backend.generate(model_id, [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+            new_rules_data = json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+            
+            if isinstance(new_rules_data, list) and len(new_rules_data) > 0:
+                # 메모리 갱신
+                updated_memory = []
+                for idx, r_data in enumerate(new_rules_data):
+                    updated_memory.append({
+                        "id": f"RULE_PRUNED_{datetime.now().strftime('%Y%m%d')}_{idx}",
+                        "learned_instruction": r_data["instruction"],
+                        "trigger_patterns": r_data["trigger_patterns"],
+                        "severity": r_data.get("severity", 3),
+                        "reinforcement_count": 1,
+                        "created_at": datetime.now().isoformat(),
+                        "usage_count": 0
+                    })
+                self.memory = updated_memory
+                self._persist()
+                logger.info(f"✨ Evolutionary Memory pruned: {len(updated_memory)} rules remains.")
+        except Exception as e:
+            logger.error(f"Failed to prune memory: {e}")
+
