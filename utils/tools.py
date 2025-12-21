@@ -39,7 +39,8 @@ def write_file(path: str, content: str) -> str:
             # 2. 타임머신 버전 아카이빙
             version_dir = os.path.join("logs/versions", path.replace("/", "_"))
             os.makedirs(version_dir, exist_ok=True)
-            version_path = os.path.join(version_dir, f"v_{timestamp}.py")
+            ext = os.path.splitext(path)[1]
+            version_path = os.path.join(version_dir, f"v_{timestamp}{ext}")
             shutil.copy2(path, version_path)
             logger.info(f"🕰️ File version archived: {version_path}")
         

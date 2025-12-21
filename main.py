@@ -133,32 +133,35 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
 
     elif cmd == "/search":
         if len(cmd_parts) < 2:
-            ui.chat_history.append(("system", "사용법: /search [symbol_name]"))
+            ui.chat_history.append(("system", "사용법: /search [symbol_name_or_natural_language]"))
         else:
-            query = cmd_parts[1]
+            query = " ".join(cmd_parts[1:])
+            ui.chat_history.append(("system", f"🔍 '{query}'에 대한 의미 검색을 수행 중입니다..."))
+            ui.update_main(ui.chat_history)
+            
             indexer = SynapticIndexer()
-            # 파일에서 인덱스 로드 로직이 indexer.__init__에 없으므로 수동 로드 또는 scan 필요
             if os.path.exists(indexer.index_path):
                 with open(indexer.index_path, "r", encoding='utf-8') as f:
                     indexer.index = json.load(f)
             
-            results = indexer.search(query)
+            # normalize=True로 지능형 검색 수행
+            results = indexer.search(query, normalize=True)
             if not results:
                 ui.chat_history.append(("system", f"❌ '{query}'에 대한 검색 결과가 없습니다."))
             else:
-                table = Table(title=f"🔍 Synaptic Search: '{query}'", show_header=True, header_style="bold magenta")
+                table = Table(title=f"🔍 Synaptic Search Results (Sorted by Relevance)", show_header=True, header_style="bold magenta")
+                table.add_column("Score", style="dim")
                 table.add_column("Type", style="cyan")
                 table.add_column("Symbol", style="bold yellow")
                 table.add_column("Location", style="green")
-                table.add_column("Description", style="dim", overflow="ellipsis")
                 
-                for r in results[:15]: # 최대 15개 표시
+                for r in results[:10]: # 상위 10개 표시
                     type_style = "bold blue" if r["type"] == "class" else "bold green"
                     table.add_row(
+                        str(r["score"]),
                         Text(r["type"].upper(), style=type_style),
                         r["name"],
-                        f"{r['file']}:{r['line']}",
-                        (r.get("docstring") or "N/A").split("\n")[0]
+                        f"{r['file']}:{r['line']}"
                     )
                 ui.chat_history.append(("system", table))
         ui.update_main(ui.chat_history)

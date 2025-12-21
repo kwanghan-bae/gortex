@@ -132,18 +132,38 @@ class SynapticIndexer:
         with open(self.index_path, "w", encoding='utf-8') as f:
             json.dump(self.index, f, ensure_ascii=False, indent=2)
 
-    def search(self, query: str) -> List[Dict[str, Any]]:
-        """인덱스 내에서 검색 쿼리와 일치하는 정의를 검색"""
-        results = []
-        query = query.lower()
+    def search(self, query: str, normalize: bool = False) -> List[Dict[str, Any]]:
+        """인덱스 내에서 검색 (지능형 쿼리 정규화 및 점수화 지원)"""
+        search_query = query.lower()
         
+        if normalize:
+            from gortex.core.auth import GortexAuth
+            auth = GortexAuth()
+            prompt = f"다음 자연어 질문을 코드 검색을 위한 핵심 기술 키워드(함수명, 클래스명 등)로 변환하라: {query}"
+            try:
+                response = auth.generate("gemini-1.5-flash", [("user", prompt)], None)
+                search_query = response.text.strip().lower()
+                logger.info(f"🔍 Normalized query: '{query}' -> '{search_query}'")
+            except:
+                pass
+
+        results = []
         for file_path, defs in self.index.items():
             for d in defs:
-                if query in d["name"].lower() or (d.get("docstring") and query in d["docstring"].lower()):
+                # 1. 심볼명 매칭 (가중치 100)
+                name_match = search_query in d["name"].lower()
+                # 2. 독스트링 매칭 (가중치 50)
+                doc_match = d.get("docstring") and search_query in d["docstring"].lower()
+                
+                if name_match or doc_match:
                     results.append({
                         "file": file_path,
+                        "score": 100 if name_match else 50,
                         **d
                     })
+        
+        # 점수 순 정렬
+        results.sort(key=lambda x: x["score"], reverse=True)
         return results
 
 if __name__ == "__main__":
