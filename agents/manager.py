@@ -36,6 +36,8 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     ltm_context = ""
     if long_term_knowledge:
         ltm_context = "\n[RECALLED LONG-TERM KNOWLEDGE]\n" + "\n".join([f"- {k}" for k in long_term_knowledge])
+        if any("최신" in k or "신규" in k for k in long_term_knowledge):
+            ltm_context += "\n(참고: 위 정보에는 최신 기술 트렌드가 포함되어 있습니다. 이를 계획 수립에 적극 반영하십시오.)"
 
     # 3. 과거 유사 사례 검색 (CBR)
     past_cases = log_search.search_similar_cases(internal_input)

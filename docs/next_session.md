@@ -1,23 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 외부 기술 트렌드의 지식 베이스화 (Synaptic Knowledge Base v1)
+- 지식 베이스 최적화 및 가비지 컬렉션 (Knowledge GC v1)
 
 ## Context
-- `TrendScout`이 매일 새로운 기술을 스캔하고 있으나, 그 데이터가 `tech_radar.json`에만 머물러 있어 실제 추론 시 깊이 있게 활용되지 못함.
-- 스캔된 내용을 지식 단위(Snippets)로 분절하고, 이를 장기 기억(Vector Store)에 통합하여 모든 에이전트가 최신 기술 정보를 바탕으로 대화할 수 있게 해야 함.
+- `LongTermMemory`에 트렌드와 합의 교훈이 계속 쌓이면서, 유사한 지식이 중복 저장되거나 과거의 잘못된 정보가 남을 우려가 있음.
+- 지식의 사용 빈도(`usage_count`)와 최신성(`timestamp`)을 기준으로 지식 베이스를 정기적으로 청소하는 메커니즘이 필요함.
 
 ## Scope
 ### Do
-- `agents/trend_scout.py`에서 스캔된 트렌드를 `LongTermMemory`에 저장하는 로직 추가.
-- `utils/vector_store.py` (또는 관련 유틸)를 확장하여 지식의 출처(Source: TrendScout)를 명시함.
-- `agents/manager.py`가 사용자 요청 시 최신 트렌드 지식을 우선적으로 검색하도록 검색 가중치 조정.
+- `utils/vector_store.py`에 지식 항목별 `usage_count` 필드 추가 및 `recall` 시 카운트 증가 로직 추가.
+- `AnalystAgent`에 `garbage_collect_knowledge` 메서드를 추가하여 불필요한 지식 삭제.
+- `main.py` 부팅 시 또는 매 턴마다 자동으로 GC가 수행되도록 연동.
 
 ### Do NOT
-- 대규모 웹 크롤링 금지 (기존 TrendScout 검색 결과만 활용).
+- 중요한 아키텍처 결정이나 사용자가 명시적으로 저장한 매크로 삭제 금지.
 
 ## Expected Outputs
-- `agents/trend_scout.py`, `agents/manager.py` 수정.
+- `utils/vector_store.py`, `agents/analyst.py`, `main.py` 수정.
 
 ## Completion Criteria
-- TrendScout 실행 후, 새로운 기술 키워드에 대해 Manager가 "최신 트렌드에 따르면..."이라고 답변하는 것이 확인되어야 함.
+- 중복되거나 오랫동안 사용되지 않은 지식이 자동으로 제거되고, 지식 베이스 파일 크기가 최적화되는 것이 확인되어야 함.

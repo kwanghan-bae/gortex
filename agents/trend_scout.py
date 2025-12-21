@@ -6,6 +6,7 @@ from typing import Dict, Any, List, Optional
 from gortex.core.auth import GortexAuth
 from gortex.core.state import GortexState
 from gortex.agents.researcher import ResearcherAgent
+from gortex.utils.vector_store import LongTermMemory
 
 logger = logging.getLogger("GortexTrendScout")
 
@@ -17,6 +18,7 @@ class TrendScoutAgent:
         self.radar_path = radar_path
         self.auth = GortexAuth()
         self.researcher = ResearcherAgent()
+        self.ltm = LongTermMemory()
         self.radar_data = self._load_radar()
 
     def _load_radar(self) -> Dict[str, Any]:
@@ -151,6 +153,15 @@ class TrendScoutAgent:
                 self.radar_data["patterns"] = extracted.get("patterns", [])
                 self._save_radar()
                 
+                # [Knowledge Base Integration] 최신 트렌드를 장기 기억 저장소에 통합
+                for m in extracted.get("models", []):
+                    knowledge_text = f"최신 모델 정보: {m['name']}는 {m['status']} 상태이며, 특징은 다음과 같다: {m.get('note')}"
+                    self.ltm.memorize(knowledge_text, {"source": "TrendScout", "type": "model", "topic": m['name']})
+                
+                for p in extracted.get("patterns", []):
+                    knowledge_text = f"신규 에이전트 패턴: {p['topic']} - {p.get('summary')}"
+                    self.ltm.memorize(knowledge_text, {"source": "TrendScout", "type": "pattern", "topic": p['topic']})
+
                 # 알림용 요약 메시지 생성
                 notifications = []
                 for m in extracted.get("models", []):

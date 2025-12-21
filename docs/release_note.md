@@ -7,13 +7,19 @@
 - [x] **Intelligence**: 에이전트 간의 관점 차이를 조율하는 합의 도출(Synthesis) 알고리즘 고도화
 - [x] **Interface**: 에이전트 간의 가상 토론 과정을 시각화하는 'Debate Monitor' 웹 UI 구축
 - [x] **Intelligence**: 합의 결과의 유효성을 사후 평가하여 페르소나별 가중치를 동적으로 조절하는 'Consensus Learner' 도입
-- [ ] **Intelligence**: 외부 트렌드 및 기술 뉴스를 주기적으로 요약하여 'Synaptic Knowledge Base'로 통합하는 로직 구축
+- [x] **Intelligence**: 외부 트렌드 및 기술 뉴스를 주기적으로 요약하여 'Synaptic Knowledge Base'로 통합하는 로직 구축
+- [ ] **Infrastructure**: 축적된 지식 중 유효하지 않거나 중복된 정보를 정리하는 'Knowledge GC' 노드 추가
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.3.4 (Synaptic Knowledge Base Integration)
+- [x] `agents/trend_scout.py`: 발견된 외부 기술 트렌드를 `LongTermMemory`에 자동 각인하는 지식 습득 파이프라인 구축
+- [x] `agents/manager.py`: 최신 기술 트렌드 지식을 추론 과정에 우선적으로 반영하는 'Trend-Aware Reasoning' 구현
+- [x] `utils/vector_store.py`: 지식의 출처(Source)와 유형(Type) 메타데이터를 통합 관리하여 정보 신뢰도 향상
 
 ### v2.3.3 (Consensus Performance Learner)
 - [x] `core/state.py`: 합의안과 그 실행 성과(Performance)를 기록하는 `consensus_history` 구조 도입
