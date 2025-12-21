@@ -29,6 +29,7 @@ from gortex.utils.indexer import SynapticIndexer
 from gortex.utils.docker_gen import DockerGenerator
 from gortex.utils.git_tool import GitTool
 from gortex.utils.notifier import Notifier
+from gortex.utils.resource_monitor import ResourceMonitor
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO)
@@ -503,6 +504,19 @@ async def run_gortex():
     theme_manager = ThemeManager()
     ui = DashboardUI(console)
     observer = GortexObserver()
+    res_monitor = ResourceMonitor()
+    
+    # [MONITOR] 리소스 모니터링 백그라운드 루프
+    async def monitor_loop():
+        while True:
+            stats = res_monitor.get_stats()
+            # 웹 대시보드 브로드캐스팅용 상태 주입 (필요시 ui 메서드 확장 가능)
+            if ui.web_manager:
+                await ui.web_manager.broadcast(json.dumps({"type": "resource_stats", "data": stats}))
+            await asyncio.sleep(2)
+            
+    asyncio.create_task(monitor_loop())
+
     total_tokens, total_cost = 0, 0.0
     total_latency_ms, node_count = 0, 0
     

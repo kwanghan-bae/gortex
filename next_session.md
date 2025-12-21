@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** State Merger & Conflict Resolution Complete (v1.9.1)
+**Status:** Real-time Resource Monitoring Complete (v1.9.2)
 
 ## 🧠 Current Context
-병렬 작업(Swarm) 결과의 상태 병합 로직이 안착되었습니다. 이제 여러 에이전트가 동시에 지식을 수집하거나 파일을 분석하더라도, 그 결과물이 유실 없이 메인 시스템의 맥락으로 통합됩니다.
+실시간 리소스 모니터링 시스템이 가동되었습니다. 이제 Gortex가 현재 하드웨어 자원을 얼마나 효율적으로 사용하고 있는지 파악할 수 있으며, 이는 특히 병렬 작업(Swarm) 시의 부하 제어 전략 수립에 중요한 지표가 됩니다.
 
 ## 🎯 Next Objective
-**Resource Monitor & Dashboard Polish**
-1. **`Resource Monitoring`**: 시스템의 실시간 리소스 사용량(CPU, RAM)과 현재 활성화된 에이전트들의 부하를 측정하는 백그라운드 태스크를 구현합니다.
-2. **`Visual Monitor`**: 웹 대시보드에 실시간 그래프 위젯을 추가하여, Gortex가 현재 얼마나 많은 연산 자원을 사용하고 있는지 시각적으로 모니터링할 수 있게 합니다.
+**Mental Reboot (Stuck State Detection)**
+1. **`Stuck State Detection`**: 에이전트가 동일한 행동을 무의미하게 반복하거나, 논리적 모순에 빠져 진전이 없는 '교착 상태'를 감지합니다.
+2. **`Self-Reset Workflow`**: 교착 상태 감지 시, 현재의 컨텍스트를 강제로 요약하고 에이전트의 내부 상태를 재초기화(Reboot)하여 새로운 관점에서 문제를 바라보도록 유도하는 기능을 구현합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 병렬 작업 결과 병합 및 충돌 해결 완료 (v1.9.1).
-- 다음 목표: 실시간 리소스 모니터링 시스템 구축.
+- 실시간 리소스 모니터링 기능 완료 (v1.9.2).
+- 다음 목표: 에이전트 교착 상태 감지 및 자가 재부팅(Mental Reboot).
 
 작업 목표:
-1. `utils/resource_monitor.py`를 신설하여 시스템 자원(psutil 활용 등)을 측정하는 기초 로직을 작성해줘.
-2. `ui/web_server.py`를 통해 측정된 리소스 데이터를 웹 대시보드로 실시간 브로드캐스팅하도록 연동해줘.
+1. `agents/optimizer.py` 또는 신규 노드에서 에이전트의 반복 패턴을 분석하여 교착 상태를 판별하는 `detect_stuck_state` 로직을 작성해줘.
+2. 교착 상태 확인 시 현재 대화 내역을 압축하고 에이전트에게 'Mental Reboot' 명령을 내려 새로운 해결책을 강제하는 워크플로우를 보강해줘.
 ```

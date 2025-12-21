@@ -34,9 +34,16 @@
 - [x] **Infrastructure**: 시스템 내부의 모든 전역 설정을 중앙에서 관리하는 'Dynamic Config Manager' 구축
 - [x] **Infrastructure**: 에이전트의 작업 부하를 분산하기 위해 여러 LLM을 동시에 호출하는 'Agent Swarm' 프레임워크 기초 설계
 - [x] **Infrastructure**: 병렬 작업 간의 데이터 충돌을 방지하고 상태를 안전하게 병합하는 'State Merger' 로직 고도화
-- [ ] **Interface**: 대시보드에 실시간으로 시스템 리소스(CPU, Memory) 및 에이전트 부하를 그래프로 보여주는 'Resource Monitor' 추가
+- [x] **Interface**: 대시보드에 실시간으로 시스템 리소스(CPU, Memory) 및 에이전트 부하를 모니터링하는 기능 추가
+- [ ] **Intelligence**: 에이전트가 작업 중 발생한 감정적/논리적 교착 상태를 감지하여 스스로 재설정(Reset)하는 'Mental Reboot' 기능 구현
 
 ## ✅ Completed
+### v1.9.2 (Real-time Resource Monitoring)
+- [x] `utils/resource_monitor.py`: `psutil`을 활용하여 시스템 및 Gortex 프로세스의 CPU, RAM 사용량을 정밀 측정하는 엔진 신설
+- [x] `main.py`: 백그라운드 비동기 루프를 통해 실시간 리소스 통계를 주기적으로 수집하고 관리하는 인프라 구축
+- [x] `ui/web_server.py`: 수집된 리소스 데이터를 웹 대시보드로 실시간 브로드캐스팅하여 시각적 모니터링 지원
+- [x] `utils/resource_monitor.py`: 외부 라이브러리 부재 시에도 예외 처리를 통해 안정적인 시스템 실행 보장
+
 ### v1.9.1 (State Merger & Conflict Resolution)
 - [x] `agents/swarm.py`: 병렬로 실행된 하위 작업들의 결과(`file_cache` 델타)를 메인 상태에 안전하게 통합하는 병합 로직 구현
 - [x] `agents/swarm.py`: 동일 파일에 대한 서로 다른 변경 사항을 감지하고 사용자에게 경고하는 충돌 해결 전략 도입
