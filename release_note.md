@@ -31,9 +31,16 @@
 - [x] **System**: 에이전트가 코드를 작성하기 전 최신 오픈소스 라이브러리 및 API 문서를 검색하여 참조하는 'Live Documentation' 노드 추가
 - [x] **Infrastructure**: 대시보드 UI 테마를 사용자의 취향에 맞게 동적으로 변경할 수 있는 'Theming Engine' 구축
 - [x] **Intelligence**: 에이전트의 복합적인 사고 과정을 구조화하여 보여주는 'Thought Mindmap' 시각화 로직 구현
-- [ ] **Infrastructure**: 시스템 내부의 모든 전역 설정을 중앙에서 관리하는 'Dynamic Config Manager' 구축
+- [x] **Infrastructure**: 시스템 내부의 모든 전역 설정을 중앙에서 관리하는 'Dynamic Config Manager' 구축
+- [ ] **Infrastructure**: 에이전트의 작업 부하를 분산하기 위해 여러 LLM을 동시에 호출하는 'Agent Swarm' 프레임워크 기초 설계
 
 ## ✅ Completed
+### v1.8.9 (Dynamic Config Manager & Global Settings)
+- [x] `core/config.py`: 로그 레벨, 모델 선택, 임계치 등 전역 설정을 싱글톤으로 관리하는 `GortexConfig` 클래스 신설
+- [x] `main.py`: 현재 시스템 설정을 실시간으로 조회하고 수정할 수 있는 `/config [key] [value]` 명령어 구현
+- [x] `core/config.py`: 설정 변경 시 `gortex_config.json` 파일에 즉시 영속화하여 재부팅 후에도 설정 유지 지원
+- [x] `main.py`: 동적 테마 엔진과 설정 매니저를 통합하여 중앙 집중식 시스템 제어 인터페이스 강화
+
 ### v1.8.8 (Thought Mindmap & Graph Visualization)
 - [x] `ui/dashboard.py`: 선형적인 사고 트리를 노드와 엣지로 구성된 그래프 구조로 자동 변환하는 `_generate_thought_graph` 구현
 - [x] `agents/manager.py` & `agents/planner.py`: 사고 노드에 우선순위(`priority`)와 확신도(`certainty`) 메타데이터를 포함하도록 스키마 확장

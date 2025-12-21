@@ -1,24 +1,24 @@
 # ⏭️ Gortex Next Session Context
 
 **Date:** 2024-12-20
-**Status:** Thought Mindmap & Graph Visualization Complete (v1.8.8)
+**Status:** Dynamic Config Manager & Global Settings Complete (v1.8.9)
 
 ## 🧠 Current Context
-사고 과정 마인드맵 시각화 로직이 완성되었습니다. 이제 Gortex의 복합적인 판단 근거와 논리적 흐름을 그래프 형태로 파악할 수 있으며, 이는 특히 복잡한 설계나 디버깅 과정에서 시스템의 투명성을 크게 높여줍니다.
+중앙 집중식 설정 매니저가 구축되었습니다. 이제 Gortex의 동작 파라미터를 소스 코드 수정 없이 실시간으로 튜닝할 수 있으며, 이는 다양한 운영 환경에서의 유연성을 극대화합니다.
 
 ## 🎯 Next Objective
-**Dynamic Config Manager (Global Settings)**
-1. **`Centralized Config`**: `.env` 파일뿐만 아니라, 실행 중에 동적으로 변경 가능한 설정(예: 로그 레벨, 임계치, 테마, 알림 여부)을 관리하는 중앙 설정 매니저를 구현합니다.
-2. **`Config API`**: `/config` 명령어를 통해 현재 설정을 조회하고 실시간으로 수정하며, 이를 영구적으로 저장(`gortex_config.json`)하는 기능을 구축합니다.
+**Agent Swarm (Parallel Tasking)**
+1. **`Swarm Orchestrator`**: 하나의 복잡한 목표를 여러 하위 작업으로 분리한 뒤, 여러 에이전트(또는 모델 인스턴스)가 병렬로 작업을 수행하도록 관리하는 오케스트레이터를 설계합니다.
+2. **`Parallel Execution`**: `Researcher`가 여러 주제를 동시에 검색하거나, `Coder`가 여러 파일을 동시에 수정하는 등의 병렬 처리 로직을 구현하여 전체 작업 속도를 혁신적으로 단축합니다.
 
 ## 💬 Prompt for Next Agent
 ```text
 @docs/gortex/SPEC.md 를 읽고 다음 작업을 이어나가.
 현재 상태:
-- 사고 과정 마인드맵 데이터화 완료 (v1.8.8).
-- 다음 목표: 중앙 집중식 동적 설정 매니저 구축.
+- 중앙 설정 매니저 구현 완료 (v1.8.9).
+- 다음 목표: 병렬 에이전트 협업(Agent Swarm) 프레임워크 설계.
 
 작업 목표:
-1. `core/config.py`를 신설하여 `GortexConfig` 클래스를 구현해줘. (Singleton 패턴 및 JSON 영속화 지원)
-2. `main.py`에 `/config` 명령어를 추가하여 현재 시스템 설정을 조회하고 변경할 수 있게 해줘.
+1. `agents/manager.py`의 라우팅 로직을 확장하여, 여러 에이전트를 리스트 형태로 반환할 경우 이를 `asyncio.gather` 등으로 병렬 실행하는 기초 구조를 구상해줘.
+2. 병렬 작업 간의 데이터 충돌을 방지하기 위한 'State Locking' 또는 'Branching' 전략을 검토해줘.
 ```

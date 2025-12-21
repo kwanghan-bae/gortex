@@ -22,6 +22,7 @@ from gortex.core.observer import GortexObserver
 from gortex.utils.token_counter import count_tokens, estimate_cost
 from gortex.core.auth import GortexAuth
 from gortex.core.evolutionary_memory import EvolutionaryMemory
+from gortex.core.config import GortexConfig
 from gortex.agents.analyst import AnalystAgent
 from gortex.utils.tools import get_file_hash, deep_integrity_check
 from gortex.utils.indexer import SynapticIndexer
@@ -86,6 +87,25 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
                 ui.chat_history.append(("system", f"✅ 테마가 '{new_theme}'(으)로 변경되었습니다."))
             else:
                 ui.chat_history.append(("system", f"❌ 알 수 없는 테마: {new_theme}"))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/config":
+        config = GortexConfig()
+        if len(cmd_parts) < 2:
+            settings_json = json.dumps(config.list_all(), indent=2, ensure_ascii=False)
+            ui.chat_history.append(("system", f"⚙️ 현재 설정:\n{settings_json}"))
+        elif len(cmd_parts) >= 3:
+            key, val = cmd_parts[1], cmd_parts[2]
+            # 타입 추론 (간단히)
+            if val.lower() == "true": val = True
+            elif val.lower() == "false": val = False
+            elif val.isdigit(): val = int(val)
+            
+            config.set(key, val)
+            ui.chat_history.append(("system", f"✅ 설정 변경됨: {key} = {val}"))
+        else:
+            ui.chat_history.append(("system", "사용법: /config [key] [value] 또는 /config (조회)"))
         ui.update_main(ui.chat_history)
         return "skip"
     
