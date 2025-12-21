@@ -38,9 +38,16 @@
 - [x] **System**: 에이전트가 코드를 작성할 때 사용자의 스타일을 학습하여 반영하는 'Style Mimicry' 엔진 추가
 - [x] **Infrastructure**: 시스템 내부의 모든 노드 간 통신 및 상태 보호를 위한 'Secure Node Transport' 구축
 - [x] **Intelligence**: 에이전트가 작업 중 스스로의 논리적 모순을 검증하는 'Self-Consistency' 체크 엔진 도입
-- [ ] **Infrastructure**: 에이전트의 사고 과정을 주기적으로 아카이빙하여 성능 개선 데이터셋으로 변환하는 'Dataset Generator' 추가
+- [x] **Infrastructure**: 에이전트의 사고 과정을 주기적으로 아카이빙하여 성능 개선 데이터셋으로 변환하는 'Dataset Generator' 추가
+- [ ] **System**: 에이전트가 도구 호출 시 '가상 커서(Virtual Cursor)'를 사용하여 코드의 특정 위치를 정확히 수정하는 지능형 편집 모드 도입
 
 ## ✅ Completed
+### v1.9.9 (Dataset Generator & Learning Loop)
+- [x] `agents/analyst.py`: 세션 로그를 분석하여 성공적인 추론 케이스를 추출하고 파인튜닝용 데이터셋 형식으로 변환하는 `curate_session_data` 구현
+- [x] `main.py`: 세션 종료 시 고품질 데이터를 선별하여 `logs/datasets/` 디렉토리에 JSONL 형식으로 자동 아카이빙하는 파이프라인 구축
+- [x] `agents/analyst.py`: 응답 지연 시간, 성공 여부, 작업 목표의 명확성을 기준으로 한 지능형 데이터 큐레이션 로직 적용
+- [x] `main.py`: 세션 종료 시 예외 처리를 강화하여 비정상 종료 시에도 데이터 아카이빙의 안전성 확보
+
 ### v1.9.8 (Self-Consistency & Internal Critique)
 - [x] `agents/manager.py` & `agents/planner.py`: 최종 결정 전 자신의 논리를 스스로 비판하고 재검토하는 'Internal Critique' 프로세스 의무화
 - [x] `agents/manager.py`: 응답 스키마에 `internal_critique` 필드를 추가하여 에이전트의 성찰적 사고 과정을 투명하게 기록

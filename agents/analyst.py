@@ -296,6 +296,43 @@ class AnalystAgent:
             logger.error(f"Style analysis failed: {e}")
             return {"instruction": "PEP8 표준 스타일을 준수하라.", "trigger_patterns": ["coding"]}
 
+    def curate_session_data(self, log_path: str = "logs/trace.jsonl") -> List[Dict[str, Any]]:
+        """성공적인 세션 로그를 학습용 데이터셋으로 변환"""
+        if not os.path.exists(log_path):
+            return []
+
+        try:
+            with open(log_path, "r", encoding='utf-8') as f:
+                lines = f.readlines()
+            
+            logs = [json.loads(l) for l in lines]
+            # 큐레이션 기준: 성공한 node_complete 이벤트가 많은 세션
+            # 여기서는 단순화하여 모든 성공 케이스를 Prompt-Response 쌍으로 변환
+            dataset = []
+            for l in logs:
+                if l.get("event") == "node_complete" and l.get("latency_ms", 0) < 30000:
+                    payload = l.get("payload", {})
+                    if payload.get("goal"):
+                        dataset.append({
+                            "prompt": f"Task: {payload.get('goal')}\nContext: {l.get('agent')}",
+                            "completion": json.dumps(payload, ensure_ascii=False)
+                        })
+            
+            # 파일로 저장
+            if dataset:
+                ds_dir = "logs/datasets"
+                os.makedirs(ds_dir, exist_ok=True)
+                ds_path = os.path.join(ds_dir, f"dataset_{datetime.now().strftime('%Y%m%d')}.jsonl")
+                with open(ds_path, "a", encoding='utf-8') as f:
+                    for entry in dataset:
+                        f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+                logger.info(f"✅ Curated {len(dataset)} items into dataset.")
+            
+            return dataset
+        except Exception as e:
+            logger.error(f"Dataset curation failed: {e}")
+            return []
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""
     agent = AnalystAgent()

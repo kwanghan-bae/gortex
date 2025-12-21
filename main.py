@@ -723,7 +723,11 @@ async def run_gortex():
         if os.path.exists("tech_radar.json"): shutil.copy2("tech_radar.json", f"{archive_dir}/tech_radar_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
         all_sessions_cache[thread_id] = session_cache
         with open("logs/file_cache.json", "w") as f: json.dump(all_sessions_cache, f, ensure_ascii=False, indent=2)
-    except: pass
+        
+        # [DATASET] 세션 종료 시 고품질 데이터 큐레이션 및 아카이빙
+        AnalystAgent().curate_session_data()
+    except Exception as e:
+        logger.error(f"Post-session cleanup failed: {e}")
     console.print("\n[bold cyan]👋 Gortex session ended.[/bold cyan]")
 
 if __name__ == "__main__":
