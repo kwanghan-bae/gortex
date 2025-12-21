@@ -1,0 +1,76 @@
+# 📝 Gortex Release Notes & Work Log
+
+> 💡 **Versioning Policy**: 메이저 버전(v1.x, v2.x ...)이 변경될 때마다 이전 기록은 `docs/archive/`로 이동하며, 메인 릴리즈 노트는 항상 최신 상태를 유지합니다.
+
+## 🚀 Backlog (Pending Tasks)
+- [ ] **Intelligence**: 다중 에이전트 합의(토론) 프로토콜(Multi-Agent Consensus Protocol) 구현
+- [ ] **Intelligence**: 에이전트 간의 관점 차이를 조율하는 합의 도출(Synthesis) 알고리즘 고도화
+- [ ] **Interface**: 에이전트 간의 가상 토론 과정을 시각화하는 'Debate Monitor' 웹 UI 구축
+
+---
+
+## ✅ Completed (Recent Milestones)
+
+> 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.2.19 (Code Complexity Heatmap)
+- [x] `agents/analyst.py`: 프로젝트 전체의 코드 복잡도를 스캔하여 점수화하는 `scan_project_complexity` 구현
+- [x] `ui/dashboard.py`: 사이드바에 기술 부채(Technical Debt) 상위 파일을 시각화하는 패널 추가
+- [x] `main.py`: `/scan_debt` 명령어로 수동 복잡도 분석 및 UI 업데이트 트리거 기능 추가
+
+### v2.2.18 (Natural Language Macro)
+- [x] `core/evolutionary_memory.py`: 매크로(Skill) 저장(`save_macro`) 및 조회(`get_macros`) 기능 구현
+- [x] `agents/manager.py`: 사용자가 정의한 매크로를 학습하거나 실행하도록 지시하는 시스템 프롬프트 로직 추가
+
+### v2.2.17 (Automated Test Generation)
+- [x] `agents/planner.py`: 코드 수정 시 반드시 단위 테스트(`tests/test_*.py`) 작성 단계를 포함하도록 계획 수립 로직 강화
+- [x] `agents/coder.py`: `unittest` 기반의 테스트 코드 작성 가이드라인을 시스템 프롬프트에 추가하여 품질 표준화
+
+### v2.2.16 (Active Refactoring Proposal)
+- [x] `agents/manager.py`: Tech Radar의 `adoption_candidates`를 확인하고 리팩토링 제안을 시스템 프롬프트에 자동 주입하는 로직 구현
+- [x] `agents/manager.py`: `tech_radar.json` 파일 읽기 및 예외 처리를 위한 `json`, `os` 임포트 추가
+
+### v2.2.15 (Tech Radar Auto-Adoption)
+- [x] `agents/trend_scout.py`: 발견된 신기술이 프로젝트에 적용 가능한지 분석하는 `analyze_adoption_opportunity` 구현
+- [x] `tech_radar.json`: 기술 도입 후보(`adoption_candidates`)를 영구 기록하도록 데이터 구조 확장
+
+### v2.2.14 (Reputation-Based Model Allocation)
+- [x] `core/state.py`: 에이전트에게 할당된 모델 ID를 저장하는 `assigned_model` 필드 추가
+- [x] `agents/manager.py`: 에이전트 평판(Level)과 에너지 상태를 기반으로 모델(Flash vs Pro)을 차등 지급하는 로직 구현
+- [x] `agents/coder.py`: Manager로부터 할당받은 `assigned_model`을 사용하여 작업을 수행하도록 업데이트
+
+### v2.2.13 (Proactive Optimization Loop)
+- [x] `core/state.py`: 효율성 이력을 추적하는 `efficiency_history` 필드 추가
+- [x] `agents/manager.py`: 지속적인 저효율 발생 시 `optimizer`로 강제 라우팅하는 자가 치유(Self-Healing) 로직 구현
+- [x] `agents/optimizer.py`: 저효율 원인을 진단하고 개선 작업을 제안하는 `diagnose_efficiency` 컨텍스트 분석 로직 추가
+
+### v2.2.12 (Real-time Efficiency Visualization)
+- [x] `ui/dashboard.py`: 사이드바에 현재 에너지(%)와 효율성 점수를 시각적으로 표시하는 위젯 추가 (Color-coded)
+- [x] `main.py`: 메인 루프에서 매 턴마다 갱신된 에너지/효율성 정보를 UI 및 웹 대시보드로 실시간 전송하도록 파이프라인 확장
+
+### v2.2.11 (Advanced Efficiency Integration)
+- [x] `agents/swarm.py`: 병렬 작업 결과 취합 시 효율성 점수를 반영하여 최적의 안(Winner) 선정
+- [x] `agents/manager.py`: 최근 효율성(`last_efficiency`)이 낮을 경우 상세 계획 수립을 지시하는 동적 프롬프트 적용
+
+### v2.2.10 (Efficiency Scoring & Self-Optimization)
+- [x] `agents/analyst.py`: 비용(토큰, 레이턴시, 에너지) 대비 성과를 측정하는 `calculate_efficiency_score` 메서드 구현
+- [x] `core/evolutionary_memory.py`: 높은 효율성 점수를 기록한 작업 패턴을 영구 규칙으로 승격시키는 `promote_efficient_pattern` 로직 추가
+
+### v2.2.9 (Energy-Aware Tasking & Work-Life Balance)
+- [x] `core/state.py`: 에이전트의 가상 에너지 상태를 나타내는 `agent_energy` 필드 추가 (0~100)
+- [x] `agents/manager.py`: 에너지 수준이 낮거나 API 호출이 빈번할 경우 자동으로 경량 모델(`flash-lite`)로 전환하는 지능형 스케줄링 구현
+- [x] `main.py`: 에이전트의 작업 결과에 따라 에너지 소모가 세션 간 지속되도록 상태 업데이트 로직 강화
+- [x] `agents/manager.py`: 에너지가 부족할 경우 복잡한 도구 호출을 자제하고 단순한 계획을 수립하도록 시스템 프롬프트 동적 주입
+
+### v2.2.8 (Spatial Reasoning SDK & WebXR Foundation)
+- [x] `ui/three_js_bridge.py`: VR/AR 기기와의 상호작용을 위한 공간 메타데이터(Glow, Haptic, Scale) 생성 로직 추가
+- [x] `ui/web_server.py`: WebXR 기기를 식별하고 전용 고주파 스트리밍을 지원하는 멀티 기기 WebSocket 관리 시스템 구축
+- [x] `ui/three_js_bridge.py`: 사고 트리를 3D 공간에 신경망 구조로 배치하는 시각화 알고리즘 고도화
+- [x] `ui/web_server.py`: 기기별 맞춤형 데이터 브로드캐스팅(XR 전용 모드 등) 인터페이스 안착
+
+### v2.1.0 ~ v2.2.7 요약
+- [x] **v2.2.7**: AST 분석 기반의 3D Call Graph 시각화 엔진 구축
+- [x] **v2.2.6**: 파이썬 코드 자원 효율성(Complexity) 정적 분석기 도입
+- [x] **v2.2.0**: 실시간 보안 취약점 스캔(Shielded Generation) 엔진 안착
+- [x] **v2.1.0**: 과거 오류 해결 패턴 기반의 자가 수복 메모리(Healing Memory) 구축
+- [x] **v2.0.0**: 정밀 코드 편집을 위한 Virtual Cursor 및 Patch 도구 도입

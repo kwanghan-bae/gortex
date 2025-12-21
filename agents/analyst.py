@@ -126,6 +126,39 @@ class AnalystAgent:
             logger.error(f"Resource profiling failed: {e}")
             return {"time_complexity": "Unknown", "performance_score": 50, "optimization_required": False}
 
+    def scan_project_complexity(self, working_dir: str = ".") -> List[Dict[str, Any]]:
+        """프로젝트 전체의 코드 복잡도(Technical Debt) 스캔"""
+        complexity_scores = []
+        ignore_dirs = {'.git', 'venv', '__pycache__', 'logs', 'node_modules', '.idea', '.vscode'}
+        
+        for root, dirs, files in os.walk(working_dir):
+            dirs[:] = [d for d in dirs if d not in ignore_dirs]
+            
+            for file in files:
+                if file.endswith(".py"):
+                    file_path = os.path.join(root, file)
+                    try:
+                        with open(file_path, 'r', encoding='utf-8') as f:
+                            content = f.read()
+                            
+                        # 간단한 키워드 카운팅으로 복잡도 추정 (Proxy for Cyclomatic Complexity)
+                        # 분기문, 반복문, 예외처리, 함수/클래스 정의 등을 포인트로 계산
+                        keywords = ['if ', 'elif ', 'for ', 'while ', 'except ', 'with ', 'def ', 'class ', 'return ']
+                        score = sum(content.count(k) for k in keywords)
+                        
+                        # 라인 수 가중치 (긴 파일은 복잡할 가능성 높음)
+                        lines = len(content.splitlines())
+                        score += lines // 10
+                        
+                        if score > 10: # 의미 있는 복잡도만 기록
+                            complexity_scores.append({"file": file_path, "score": score})
+                    except Exception as e:
+                        logger.warning(f"Failed to scan {file_path}: {e}")
+                        
+        # 점수 높은 순 정렬
+        complexity_scores.sort(key=lambda x: x["score"], reverse=True)
+        return complexity_scores[:10]
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""
     agent = AnalystAgent()

@@ -25,7 +25,8 @@ def create_layout() -> Layout:
     layout["sidebar"].split_column(
         Layout(name="status", size=10),
         Layout(name="stats", size=10),
-        Layout(name="evolution", size=10),
+        Layout(name="evolution", size=8),
+        Layout(name="debt", size=10), # Technical Debt Panel
         Layout(name="logs")
     )
     return layout
@@ -56,6 +57,7 @@ class DashboardUI:
         self.thought_timeline = [] # 타임라인 스냅샷 기록
         self.activity_stream = [] # 저널 스타일 활동 일지
         self.review_board = {} # 에이전트 승인 현황 관리
+        self.debt_list = [] # 기술 부채(복잡도) 목록
         
         # Progress bar for tools
         self.progress = Progress(
@@ -141,6 +143,7 @@ class DashboardUI:
             "security": self.security_events, # 보안 이벤트 추가
             "activity": self.activity_stream, # 활동 일지 추가
             "review": self.review_board, # 리뷰 현황 추가
+            "debt": self.debt_list, # 기술 부채 추가
             "chat_history": [
                 (r, c if isinstance(c, str) else "[Rich Object]") 
                 for r, c in self.chat_history[-10:]
@@ -150,6 +153,22 @@ class DashboardUI:
             await self.web_manager.broadcast(json.dumps(state, ensure_ascii=False))
         except:
             pass
+
+    def update_debt_panel(self, debt_list: list):
+        """기술 부채(복잡도) 패널 업데이트"""
+        self.debt_list = debt_list
+        if not debt_list:
+            self.layout["debt"].update(Panel("No debt scanned.", title="📉 TECHNICAL DEBT", border_style="dim"))
+            return
+
+        table = Table.grid(expand=True)
+        for item in debt_list[:5]: # 상위 5개만 표시
+            file_name = item.get("file", "").split("/")[-1]
+            score = item.get("score", 0)
+            color = "red" if score > 50 else ("yellow" if score > 20 else "green")
+            table.add_row(f"{file_name}", f"[{color}]{score}[/{color}]")
+            
+        self.layout["debt"].update(Panel(table, title="📉 [bold red]TECHNICAL DEBT[/]", border_style="red"))
 
     def update_main(self, messages: list):
         """메인 채팅 패널 업데이트 (역할별 구분 및 자동 요약 표시)"""

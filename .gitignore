@@ -25,3 +25,8 @@ workspace/
 # OS
 .DS_Store
 Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.iml

@@ -121,7 +121,23 @@ async def handle_command(user_input: str, ui: DashboardUI, observer: GortexObser
         ui.chat_history.append(("system", f"🔊 음성 인터랙션이 {status}되었습니다."))
         ui.update_main(ui.chat_history)
         return "skip"
-    
+
+    elif cmd == "/scan_debt":
+        ui.chat_history.append(("system", "📉 코드 복잡도(Technical Debt)를 스캔 중입니다..."))
+        ui.update_main(ui.chat_history)
+        
+        analyst = AnalystAgent()
+        # 현재 작업 디렉토리 기준 스캔
+        debt_list = analyst.scan_project_complexity()
+        
+        ui.update_debt_panel(debt_list)
+        
+        count = len(debt_list)
+        msg = f"✅ 스캔 완료. {count}개의 복잡한 파일이 감지되었습니다." if count > 0 else "✅ 스캔 완료. 복잡한 파일이 없습니다."
+        ui.chat_history.append(("system", msg))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
     elif cmd == "/index":
         ui.chat_history.append(("system", "🔍 프로젝트 코드 인덱싱을 시작합니다..."))
         ui.update_main(ui.chat_history)
