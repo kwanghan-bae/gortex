@@ -96,11 +96,13 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
                             "text": {"type": "STRING"},
                             "type": {"type": "STRING", "enum": ["analysis", "action", "verification", "simulation"]},
                             "priority": {"type": "INTEGER"},
-                            "certainty": {"type": "NUMBER"}
+                            "certainty": {"type": "NUMBER"},
+                            "visual_payload": {"type": "STRING", "nullable": True}
                         },
                         "required": ["id", "text", "type", "priority", "certainty"]
                     }
                 },
+
                 "simulation": {
                     "type": "OBJECT",
                     "properties": {

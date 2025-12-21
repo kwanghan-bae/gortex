@@ -3,15 +3,20 @@
 > 💡 **Versioning Policy**: 메이저 버전(v1.x, v2.x ...)이 변경될 때마다 이전 기록은 `docs/archive/`로 이동하며, 메인 릴리즈 노트는 항상 최신 상태를 유지합니다.
 
 ## 🚀 Backlog (Pending Tasks)
-- [x] **Infrastructure**: 변경된 파일만 식별하여 증분 테스트를 수행하는 'Selective Testing' 구현
+- [x] **Intelligence**: 에이전트의 사고 트리에 멀티모달 데이터(Mermaid 등)를 포함하는 'Visual Reasoning' 도입
+- [ ] **Infrastructure**: 에이전트 생성물들을 자동 구조화하고 아카이빙하는 'Workspace Organizer' 구축
 - [ ] **Interface**: 3D 그래프에서 영향 받는 노드들을 묶어 보여주는 'Dependency Clustering' 시각화
-- [ ] **Intelligence**: 에이전트의 사고 트리에 멀티모달 데이터를 포함하는 'Visual Reasoning' 도입
 
 ---
 
 ## ✅ Completed (Recent Milestones)
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
+
+### v2.6.5 (Multimodal Thought Visualization & Diagrams)
+- [x] `agents/`: 사고 트리(`thought_tree`) 스키마에 `visual_payload` 필드를 추가하여 시각적 추론 기반 마련
+- [x] `docs/prompts/`: Planner에게 복잡한 설계 시 Mermaid 다이어그램 작성을 강제하는 'Visual Reasoning' 규칙 도입
+- [x] `ui/three_js_bridge.py`: 사고 노드와 다이어그램 코드를 결합하여 웹 대시보드로 실시간 전송하는 데이터 파이프라인 안착
 
 ### v2.6.4 (Selective Incremental Testing)
 - [x] `utils/tools.py`: 캐시 해시 비교를 통해 현재 수정된 파일들만 기민하게 식별하는 엔진 구현

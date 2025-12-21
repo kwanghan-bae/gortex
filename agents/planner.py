@@ -76,7 +76,8 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
                             "text": {"type": "STRING"},
                             "type": {"type": "STRING", "enum": ["analysis", "design", "verification"]},
                             "priority": {"type": "INTEGER"},
-                            "certainty": {"type": "NUMBER"}
+                            "certainty": {"type": "NUMBER"},
+                            "visual_payload": {"type": "STRING", "nullable": True, "description": "노드와 관련된 시각적 데이터 (예: Mermaid 다이어그램 코드)"}
                         },
                         "required": ["id", "text", "type", "priority", "certainty"]
                     }

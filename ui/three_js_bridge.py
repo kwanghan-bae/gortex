@@ -111,7 +111,8 @@ class ThreeJsBridge:
                 "certainty": certainty,
                 "size": size,
                 "type": item.get("type", "analysis"),
-                "color": "#ffaa00" if item.get("type") == "decision" else "#00aaff"
+                "color": "#ffaa00" if item.get("type") == "decision" else "#00aaff",
+                "visual_payload": item.get("visual_payload") # 시각적 데이터 주입
             }
             converted_nodes.append(converted_node)
             node_map[node_id] = pos

@@ -1,23 +1,23 @@
 # Next Session
 
 ## Session Goal
-- 에이전트 사고 트리 시각화 고도화 (Multimodal Thought UI v1)
+- 자율적 작업 공간 구조화 및 아카이빙 (Workspace Organizer v1)
 
 ## Context
-- 현재 웹 대시보드에서 사고 트리(`thought_tree`)는 텍스트 위주로 노출됨.
-- 에이전트가 복잡한 아키텍처를 설계할 때 Mermaid 코드를 사고 노드에 포함시키면, 웹 UI가 이를 실시간 다이어그램으로 렌더링하여 '시각적 추론'을 지원해야 함.
+- 현재 `logs/backups`, `logs/versions`, `tests/` 등에 수많은 파일이 누적되고 있으나, 이를 프로젝트 맥락에 맞게 정리하는 로직이 없음.
+- `Analyst`가 세션 종료 시점에 생성된 파일들의 중요도를 판정하고, 불필요한 임시 파일은 삭제하며 중요한 버전은 `archive/project_name/vX.X.X/`로 이동시키는 자율 정리 지능이 필요함.
 
 ## Scope
 ### Do
-- `agents/planner.py` 및 `agents/coder.py`의 `thought_tree` 스키마에 `visual_payload` 필드 추가.
-- 에이전트가 중요 노드에 다이어그램 코드를 삽입하도록 지침 보강.
-- 웹 UI(프론트엔드 가정)에서 해당 페이로드를 감지하여 다이어그램 팝업 또는 임베디드 뷰 제공.
+- `agents/analyst.py`에 작업 공간을 분석하고 정리 계획을 세우는 `organize_workspace` 메서드 추가.
+- `utils/tools.py`에 파일 이동 및 구조화된 아카이빙을 위한 유틸리티 추가.
+- `main.py` 종료 시점에 자율 정리를 트리거.
 
 ### Do NOT
-- 모든 노드에 강제로 시각 자료를 넣지 말 것 (복잡도가 높은 노드만 선별).
+- 사용자의 소스 코드를 동의 없이 삭제하지 말 것 (오직 생성된 부속물 위주로 정리).
 
 ## Expected Outputs
-- `docs/prompts/core_agents.yaml`, `agents/planner.py`, `ui/three_js_bridge.py` 수정.
+- `agents/analyst.py`, `utils/tools.py`, `main.py` 수정.
 
 ## Completion Criteria
-- 에이전트가 계획 수립 시 "설계 구조" 노드에 다이어그램 데이터를 포함하고, 이것이 대시보드 데이터 패킷에 정상적으로 포함되어 전송되는 것이 확인되어야 함.
+- 세션 종료 후, `logs/archives/` 폴더 내에 현재 작업 내용이 깔끔하게 구조화되어 보관되는 것이 확인되어야 함.
