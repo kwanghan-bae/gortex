@@ -67,6 +67,10 @@
 - [x] **Intelligence**: 에이전트가 도구 호출 시 스스로의 '에너지 수준'을 관리하며 효율적으로 작업하는 'Energy-Aware Tasking' 구현
 
 ## ✅ Completed
+### v2.2.15 (Tech Radar Auto-Adoption)
+- [x] `agents/trend_scout.py`: 발견된 신기술이 프로젝트에 적용 가능한지 분석하는 `analyze_adoption_opportunity` 구현
+- [x] `tech_radar.json`: 기술 도입 후보(`adoption_candidates`)를 영구 기록하도록 데이터 구조 확장
+
 ### v2.2.14 (Reputation-Based Model Allocation)
 - [x] `core/state.py`: 에이전트에게 할당된 모델 ID를 저장하는 `assigned_model` 필드 추가
 - [x] `agents/manager.py`: 에이전트 평판(Level)과 에너지 상태를 기반으로 모델(Flash vs Pro)을 차등 지급하는 로직 구현

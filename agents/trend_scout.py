@@ -161,6 +161,52 @@ class TrendScoutAgent:
             
         return ["트렌드 분석 중 오류가 발생했으나, 스캔은 완료되었습니다."]
 
+    async def analyze_adoption_opportunity(self, file_list: List[str]) -> List[str]:
+        """신기술 도입 기회 분석"""
+        if not self.radar_data.get("models") and not self.radar_data.get("patterns"):
+            return []
+            
+        logger.info("🕵️ Analyzing code adoption opportunities...")
+        
+        # 프로젝트 파일 구조 요약 (토큰 절약)
+        file_summary = "\n".join(file_list[:50]) # 최대 50개 파일명만
+        
+        radar_summary = json.dumps({
+            "models": self.radar_data.get("models", []),
+            "patterns": self.radar_data.get("patterns", [])
+        }, ensure_ascii=False)
+        
+        prompt = f"""
+        다음은 현재 프로젝트의 파일 구조와 Tech Radar에서 발견된 신기술 목록이다.
+        프로젝트에 도입할 만한 기술이나 패턴이 있는지 분석하고, 적용 대상 파일과 이유를 제안하라.
+        
+        [Project Files]
+        {file_summary}
+        
+        [Tech Radar]
+        {radar_summary}
+        
+        결과는 JSON으로:
+        {{
+            "candidates": [
+                {{ "tech": "이름", "target_file": "경로", "reason": "이유", "effort": "High/Medium/Low" }}
+            ]
+        }}
+        """
+        try:
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
+            res_data = json.loads(response.text)
+            candidates = res_data.get("candidates", [])
+            
+            if candidates:
+                self.radar_data["adoption_candidates"] = candidates
+                self._save_radar()
+                return [f"💡 기술 도입 제안: {c['tech']} -> {c['target_file']} ({c['reason']})" for c in candidates]
+        except Exception as e:
+            logger.error(f"Adoption analysis failed: {e}")
+            
+        return []
+
 import asyncio
 import re
 
@@ -177,6 +223,8 @@ def trend_scout_node(state: GortexState) -> Dict[str, Any]:
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
+            
+        file_list = list(state.get("file_cache", {}).keys())
 
         if loop.is_running():
             import concurrent.futures
@@ -185,10 +233,15 @@ def trend_scout_node(state: GortexState) -> Dict[str, Any]:
                 f1 = executor.submit(lambda: asyncio.run(scout.scan_trends()))
                 f2 = executor.submit(lambda: asyncio.run(scout.check_vulnerabilities()))
                 notifications = f1.result() + f2.result()
+                
+                # 도입 기회 분석은 위 결과 반영 후 순차 실행
+                f3 = executor.submit(lambda: asyncio.run(scout.analyze_adoption_opportunity(file_list)))
+                notifications += f3.result()
         else:
             n1 = loop.run_until_complete(scout.scan_trends())
             n2 = loop.run_until_complete(scout.check_vulnerabilities())
-            notifications = n1 + n2
+            n3 = loop.run_until_complete(scout.analyze_adoption_opportunity(file_list))
+            notifications = n1 + n2 + n3
             
         return {
             "messages": [("ai", "\n".join(notifications))],
