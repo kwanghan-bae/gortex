@@ -10,13 +10,14 @@
 - [x] **Intelligence**: 특정 파일 수정 시 영향을 받는 모듈 범위를 예측하는 'Dependency Impact Analyzer' 노드 추가
 - [x] **Interface**: 파일 수정 영향 범위를 3D 그래프에 시각적으로 강조하는 'Visual Impact Highlighter' 구현
 - [x] **Interface**: 모든 에이전트 출력과 문서를 실시간 다국어 번역하여 제공하는 'Omni-Translator' 구축
+- [x] **Interface**: 현재 판단의 근거가 된 지식의 출처를 시각화하는 'Knowledge Lineage UI' 구축
 - [x] **System**: 대규모 그래프 데이터 및 메시지의 효율적 관리를 위한 'Memory Pruning' 전략 도입
 - [x] **Interface**: 현재 작업 맥락에 따라 대시보드 구성을 최적화하는 'Context-Aware UI Layout' 구현
 - [x] **System**: 작업 완료 후 자동으로 결과물을 아카이빙하고 문서를 갱신하는 'Auto-Finalizer' 도입
 - [x] **Economy**: 에이전트 간 상호 평가를 통해 자원 할당 우선순위를 결정하는 'Peer Review Economy' 고도화
 - [x] **System**: 지식 검색 성능을 비약적으로 높이는 'Vector Embedding Search'로의 전환
 - [x] **Intelligence**: 에이전트의 모든 의미 있는 사고 과정을 스스로 요약하여 지식화하는 'Thought Memorization' 구현
-- [ ] **Interface**: 현재 판단의 근거가 된 지식의 출처를 시각화하는 'Knowledge Lineage UI' 구축
+- [ ] **Intelligence**: 사용자의 다음 행동을 예측하여 선제적으로 제안하는 'Predictive Next-Action' 엔진 구축
 
 ---
 
@@ -24,10 +25,14 @@
 
 > 📦 **v1.x 대의 초기 개발 기록은 [release_note_v1.md](./archive/release_note_v1.md)에서 확인하실 수 있습니다.**
 
+### v2.5.3 (Knowledge Lineage & Reasoning Transparency)
+- [x] `utils/vector_store.py`: 지식 소환 시 메타데이터와 유사도 점수를 함께 반환하도록 구조화 고도화
+- [x] `agents/manager.py`: 판단의 근거가 된 지식의 출처(Source)를 추적하여 UI 계보 데이터로 변환하는 로직 구현
+- [x] `ui/dashboard.py`: 실시간 추론 근거를 사이드바에 노출하여 에이전트의 지능적 '설명 가능성(Explainability)' 확보
+
 ### v2.5.2 (Autonomous Thought Memorization)
 - [x] `agents/analyst.py`: 우수한 성과를 낸 사고 과정을 추론 패턴(Reasoning Pattern)으로 요약하여 장기 기억에 각인하는 엔진 구축
 - [x] `main.py`: 에이전트 작업 완료 시 효율성 점수를 기반으로 가치 있는 생각을 자동 선별하여 저장하는 루프 안착
-- [x] `utils/vector_store.py`: 시스템 내적 성찰 데이터(ThoughtReflection)를 벡터 지식 베이스로 통합하여 '자기 참조' 기능 강화
 
 ### v2.5.1 (Vectorized Long-term Memory)
 - [x] `utils/vector_store.py`: Gemini Embedding API를 활용하여 지식 저장 시 자동으로 벡터화하는 엔진 도입

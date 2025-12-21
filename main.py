@@ -862,7 +862,8 @@ async def run_gortex():
                                     auth_engine.get_call_count(),
                                     avg_latency,
                                     energy=agent_energy,
-                                    efficiency=last_efficiency
+                                    efficiency=last_efficiency,
+                                    knowledge_lineage=output.get("knowledge_lineage")
                                 )
                                 ui.update_logs({"agent": node_name, "event": "node_complete"})
                                 

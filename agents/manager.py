@@ -44,12 +44,23 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     persona_context = f"현재 요청의 성격에 따라 다음 페르소나 중 2개 이상을 선택하여 토론을 구성하라: {', '.join(recommended_personas)}"
 
     # 2. 장기 기억 소환 (Recall)
-    long_term_knowledge = ltm.recall(internal_input)
+    recalled_items = ltm.recall(internal_input)
     ltm_context = ""
-    if long_term_knowledge:
-        ltm_context = "\n[RECALLED LONG-TERM KNOWLEDGE]\n" + "\n".join([f"- {k}" for k in long_term_knowledge])
-        if any("최신" in k or "신규" in k for k in long_term_knowledge):
+    knowledge_lineage = []
+    
+    if recalled_items:
+        texts = [item["content"] for item in recalled_items]
+        ltm_context = "\n[RECALLED LONG-TERM KNOWLEDGE]\n" + "\n".join([f"- {t}" for t in texts])
+        if any("최신" in k or "신규" in k for k in texts):
             ltm_context += "\n(참고: 위 정보에는 최신 기술 트렌드가 포함되어 있습니다. 이를 계획 수립에 적극 반영하십시오.)"
+        
+        # 지식 계보 데이터 구성
+        for item in recalled_items:
+            knowledge_lineage.append({
+                "source": item["metadata"].get("source", "Unknown"),
+                "score": item["score"],
+                "content_preview": item["content"][:50] + "..."
+            })
 
     # 3. 과거 유사 사례 검색 (CBR)
     past_cases = log_search.search_similar_cases(internal_input)
@@ -269,7 +280,8 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
             "assigned_model": assigned_model,
             "agent_energy": new_energy,
             "ui_mode": res_data.get("ui_mode", "standard"),
-            "token_credits": credits
+            "token_credits": credits,
+            "knowledge_lineage": knowledge_lineage
         }
         
         if res_data.get("parallel_tasks"):

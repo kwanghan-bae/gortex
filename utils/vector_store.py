@@ -61,8 +61,8 @@ class LongTermMemory:
         self._save_store()
         logger.info(f"🧠 Knowledge vectorized and memorized.")
 
-    def recall(self, query: str, limit: int = 3) -> List[str]:
-        """의미론적 유사도(Cosine Similarity) 기반 지식 소환"""
+    def recall(self, query: str, limit: int = 3) -> List[Dict[str, Any]]:
+        """의미론적 유사도(Cosine Similarity) 기반 지식 소환 (메타데이터 포함)"""
         if not self.memory:
             return []
             
@@ -79,22 +79,30 @@ class LongTermMemory:
                 
                 scored_results.append((similarity, item))
             else:
-                # 벡터가 없는 경우 키워드 매칭으로 폴백 (0.1 ~ 0.3 점수 부여)
+                # 벡터가 없는 경우 키워드 매칭으로 폴백
                 match_score = 0.1 if any(p in item["content"].lower() for p in query.lower().split()) else 0
                 scored_results.append((match_score, item))
         
         scored_results.sort(key=lambda x: x[0], reverse=True)
         
         # 검색된 지식의 사용량 증가 및 결과 반환
+        final_results = []
         top_results = scored_results[:limit]
         for score, item in top_results:
-            if score > 0.5: # 일정 유사도 이상일 때만 카운트
-                item["usage_count"] = item.get("usage_count", 0) + 1
+            if score > 0.3: # 임계값 적용
+                if score > 0.5:
+                    item["usage_count"] = item.get("usage_count", 0) + 1
+                
+                final_results.append({
+                    "content": item["content"],
+                    "metadata": item.get("metadata", {}),
+                    "score": round(score, 2)
+                })
             
-        if top_results:
+        if final_results:
             self._save_store()
             
-        return [r[1]["content"] for r in top_results if r[0] > 0.3] # 임계값 적용
+        return final_results
 
 from datetime import datetime
 

@@ -60,6 +60,7 @@ class DashboardUI:
         self.debt_list = [] # 기술 부채(복잡도) 목록
         self.active_debate = [] # 현재 진행 중인 토론 데이터
         self.target_language = "ko" # 웹 UI 타겟 언어
+        self.knowledge_lineage = [] # 지식 출처 계보
         
         # Progress bar for tools
         self.progress = Progress(
@@ -349,8 +350,8 @@ class DashboardUI:
             self.progress.remove_task(self.tool_task)
             self.tool_task = None
 
-    def update_sidebar(self, agent: str, step: str, tokens: int, cost: float, rules: int, provider: str = "GEMINI", call_count: int = 0, avg_latency: int = 0, energy: int = 100, efficiency: float = 100.0):
-        """사이드바 정보 업데이트 (에이전트, LLM, 성능 상태 및 에너지/효율성 시각화)"""
+    def update_sidebar(self, agent: str, step: str, tokens: int, cost: float, rules: int, provider: str = "GEMINI", call_count: int = 0, avg_latency: int = 0, energy: int = 100, efficiency: float = 100.0, knowledge_lineage: list = None):
+        """사이드바 정보 업데이트 (에이전트, LLM, 성능 상태 및 지식 계보 시각화)"""
         self.current_agent = agent
         self.current_step = step
         self.tokens_used = tokens
@@ -360,6 +361,8 @@ class DashboardUI:
         self.call_count = call_count
         self.energy = energy
         self.efficiency = efficiency
+        if knowledge_lineage is not None:
+            self.knowledge_lineage = knowledge_lineage
         
         if self.web_manager:
             asyncio.create_task(self._broadcast_to_web())
@@ -380,6 +383,15 @@ class DashboardUI:
         provider_style = "bold blue" if provider == "GEMINI" else "bold green"
         status_text.append(f"{provider}\n", style=provider_style)
         
+        # 지식 계보(Lineage) 노출
+        if self.knowledge_lineage:
+            status_text.append(f"Source: ", style="bold")
+            for item in self.knowledge_lineage[:2]: # 상위 2개만 요약 노출
+                source = item.get("source", "N/A")
+                score = item.get("score", 0)
+                status_text.append(f"{source}({score}) ", style="italic magenta")
+            status_text.append("\n")
+
         # 호출 빈도 시각화
         status_text.append(f"Load : ", style="bold")
         bars = min(10, (call_count + 1) // 2)
