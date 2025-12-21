@@ -5,6 +5,7 @@ from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 import aiosqlite
 
 from gortex.core.state import GortexState
+from gortex.utils.token_counter import count_tokens
 from gortex.agents.manager import manager_node
 from gortex.agents.planner import planner_node
 from gortex.agents.coder import coder_node
