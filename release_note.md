@@ -54,10 +54,16 @@
 - [x] **Infrastructure**: 에이전트의 내부 데이터 처리 파이프라인을 분산 큐(Redis)로 확장하는 'Event-Driven Swarm' 구축
 - [x] **Intelligence**: 프로젝트 전체의 복잡한 비즈니스 로직을 자연어 문서로 자동 역설계하는 'Code Explainer' 기능 구축
 - [x] **Infrastructure**: 에이전트 간의 협업 도중 발생한 모든 의사결정의 인과 관계를 추적하고 그래프로 저장하는 'Causal Tracking' 구축
-- [x] **Interface**: 인과 관계 데이터를 바탕으로 특정 결과의 근본 원인을 역추적하는 'Root Cause Tree' 시각화 기능 구현
-- [ ] **Intelligence**: 시스템의 모든 도구 호출 및 의사결정 내역을 인간이 읽기 쉬운 'Activity Stream'으로 실시간 변환하는 'Journalist' 노드 추가
+- [x] **Intelligence**: 시스템의 모든 도구 호출 및 의사결정 내역을 인간이 읽기 쉬운 'Activity Stream'으로 실시간 변환하는 'Journalist' 노드 구현
+- [ ] **System**: 에이전트가 코드를 작성할 때 보안 위협(Injection, XSS 등)을 실시간으로 스캔하고 차단하는 'Shielded Code Generation' 엔진 추가
 
 ## ✅ Completed
+### v2.1.9 (Journalist Node & Activity Stream)
+- [x] `agents/analyst.py`: 기술적인 로그를 친근하고 명확한 자연어 문장으로 변환하는 `journalize_activity` 엔진 구현
+- [x] `ui/dashboard.py`: 실시간으로 생성된 활동 저널을 저장하고 관리하는 `activity_stream` 데이터 구조 및 인터페이스 추가
+- [x] `main.py`: 에이전트 노드 완료 시 자동으로 저널 문장을 생성하여 UI 및 웹 대시보드로 브로드캐스팅하는 워크플로우 통합
+- [x] `agents/analyst.py`: 'Executive Journaling' 스타일의 프롬프트 최적화를 통해 시스템의 가시성과 친근함 확보
+
 ### v2.1.8 (Root Cause Tree & Visual RCA)
 - [x] `core/observer.py`: 특정 이벤트 ID로부터 시작하여 인과 관계(`cause_id`)를 따라 루트까지 역추적하는 `get_causal_chain` 로직 구현
 - [x] `main.py`: 특정 이벤트의 발생 근거를 트리 구조로 시각화하여 보여주는 `/rca [event_id]` 명령어 추가

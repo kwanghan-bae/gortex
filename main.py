@@ -754,6 +754,14 @@ async def run_gortex():
                                     avg_latency
                                 )
                                 ui.update_logs({"agent": node_name, "event": "node_complete"})
+                                
+                                # [JOURNAL] 활동 일지 생성
+                                try:
+                                    journal_entry = AnalystAgent().journalize_activity(node_name, "node_complete", {"goal": output.get("goal")})
+                                    ui.add_journal_entry(journal_entry)
+                                except:
+                                    pass
+
                                 # 에이전트 경제 상태 업데이트
                                 if "agent_economy" in output:
                                     agent_economy.update(output["agent_economy"])

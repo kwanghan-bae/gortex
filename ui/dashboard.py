@@ -52,6 +52,7 @@ class DashboardUI:
         self.achievements = [] # 주요 마일스톤 성과 기록
         self.security_events = [] # 보안 이벤트 기록
         self.thought_timeline = [] # 타임라인 스냅샷 기록
+        self.activity_stream = [] # 저널 스타일 활동 일지
         
         # Progress bar for tools
         self.progress = Progress(
@@ -129,6 +130,7 @@ class DashboardUI:
             "diagram": self.current_diagram,
             "achievements": self.achievements,
             "security": self.security_events, # 보안 이벤트 추가
+            "activity": self.activity_stream, # 활동 일지 추가
             "chat_history": [
                 (r, c if isinstance(c, str) else "[Rich Object]") 
                 for r, c in self.chat_history[-10:]
@@ -377,6 +379,17 @@ class DashboardUI:
             "type": event_type,
             "details": details
         })
+        if self.web_manager:
+            asyncio.create_task(self._broadcast_to_web())
+
+    def add_journal_entry(self, entry: str):
+        """저널 스타일 활동 항목 추가"""
+        self.activity_stream.append({
+            "time": datetime.now().strftime("%H:%M:%S"),
+            "content": entry
+        })
+        if len(self.activity_stream) > 20:
+            self.activity_stream.pop(0)
         if self.web_manager:
             asyncio.create_task(self._broadcast_to_web())
 

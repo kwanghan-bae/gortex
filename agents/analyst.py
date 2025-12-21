@@ -397,6 +397,26 @@ class AnalystAgent:
             logger.error(f"Logic explanation failed: {e}")
             return f"로직 분석 중 오류 발생: {e}"
 
+    def journalize_activity(self, agent: str, event: str, payload: Any) -> str:
+        """기술적인 로그를 친근한 자연어 문장으로 변환 (Journalist Mode)"""
+        prompt = f"""다음 기술 로그를 보고, 시스템이 현재 무엇을 하고 있는지 '활동 일지' 스타일의 한 문장으로 친근하게 설명하라.
+        
+        [Log]
+        Agent: {agent}
+        Event: {event}
+        Payload: {json.dumps(payload, ensure_ascii=False)}
+        
+        [Style]
+        - 전문 용어는 적절히 섞되, 전체적으로는 부드럽고 긍정적인 톤을 유지하라.
+        - "Gortex가 ~를 수행했습니다"와 같은 존칭을 사용하라.
+        """
+        try:
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], None)
+            return response.text.strip()
+        except Exception as e:
+            logger.error(f"Journalizing failed: {e}")
+            return f"{agent}가 {event} 작업을 수행 중입니다."
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """Analyst 노드 엔트리 포인트"""
     agent = AnalystAgent()
