@@ -21,6 +21,21 @@ try:
 except ImportError:
     ThreeJsBridge = None
 
+def render_sparkline(data: list[float]) -> str:
+    """Renders a simple unicode sparkline."""
+    if not data: return ""
+    min_val, max_val = min(data), max(data)
+    if min_val == max_val: return "█" * len(data)
+    
+    chars = "  ▂▃▄▅▆▇█"
+    steps = len(chars) - 1
+    result = ""
+    for val in data:
+        normalized = (val - min_val) / (max_val - min_val)
+        idx = int(normalized * steps)
+        result += chars[idx]
+    return result
+
 def create_layout() -> Layout:
     """대시보드 레이아웃 생성: 채팅(Main), 사고(Thought), 사이드바(Sidebar)"""
     layout = Layout()
@@ -496,6 +511,28 @@ class DashboardUI:
         stats_table.add_row("Effic.:", f"[{eff_color}]{efficiency:.1f}[/{eff_color}]")
         
         stats_group = [stats_table]
+        
+        # [NEW] Health Trend
+        try:
+            from gortex.utils.efficiency_monitor import EfficiencyMonitor
+            health_hist = EfficiencyMonitor().get_health_history(limit=10)
+            if health_hist:
+                scores = [h.get("score", 0) for h in reversed(health_hist)] # Oldest to newest
+                spark = render_sparkline(scores)
+                current_health = scores[-1] if scores else 0
+                
+                # Determine trend color
+                trend_color = "green"
+                if len(scores) > 1:
+                    if scores[-1] < scores[-2]: trend_color = "red"
+                    elif scores[-1] == scores[-2]: trend_color = "yellow"
+                    
+                stats_group.append(Text("\nHealth: ", style="bold"))
+                stats_group.append(Text(f"{current_health:.1f} ", style=trend_color))
+                stats_group.append(Text(f"{spark}", style=f"bold {trend_color}"))
+        except Exception as e:
+            logger.error(f"Failed to render health sparkline: {e}")
+
         if self.tool_task is not None:
             stats_group.append(Text("\n"))
             stats_group.append(self.progress)

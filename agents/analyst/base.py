@@ -219,6 +219,50 @@ class AnalystAgent:
             logger.error(f"Persona evolution failed: {e}")
             return f"❌ 실패: {e}"
 
+    def curate_evolution_data(self, output_path: str = "logs/datasets/evolution.jsonl") -> str:
+        """
+        성공적인 자가 진화 사례(Experience Rules)를 선별하여 
+        LLM Fine-tuning을 위한 JSONL 포맷으로 큐레이션합니다.
+        """
+        memories = self.memory.memory
+        if not memories:
+            return "No evolutionary data found."
+            
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+        
+        curated_count = 0
+        try:
+            with open(output_path, "w", encoding="utf-8") as f:
+                for mem in memories:
+                    # 데이터 품질 필터링 (심각도가 높거나 명확한 교정 지시가 있는 경우)
+                    if not mem.get("learned_instruction") or not mem.get("trigger_context"):
+                        continue
+                        
+                    # Fine-tuning Format (Chat-style)
+                    entry = {
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "You are Gortex, an evolving AI agent. Analyze the failure and provide a corrected rule."
+                            },
+                            {
+                                "role": "user", 
+                                "content": f"Context/Failure:\n{mem['trigger_context']}\n\nFailed Attempt:\n{mem.get('failed_solution', 'N/A')}"
+                            },
+                            {
+                                "role": "assistant",
+                                "content": f"Evolutionary Rule:\n{mem['learned_instruction']}"
+                            }
+                        ]
+                    }
+                    f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+                    curated_count += 1
+                    
+            return f"✅ Curated {curated_count} items to {output_path}"
+        except Exception as e:
+            logger.error(f"Failed to curate evolution data: {e}")
+            return f"❌ Failed: {e}"
+
     def generate_evolution_roadmap(self) -> List[Dict[str, Any]]:
         """지능 지수가 낮은 모듈을 식별하여 진화 우선순위 로드맵 생성"""
         from gortex.utils.indexer import SynapticIndexer

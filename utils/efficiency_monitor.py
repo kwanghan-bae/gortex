@@ -14,6 +14,7 @@ class EfficiencyMonitor:
     """
     def __init__(self, stats_path: str = "logs/efficiency_stats.jsonl"):
         self.stats_path = stats_path
+        self.health_path = os.path.join(os.path.dirname(stats_path), "health_history.jsonl")
         os.makedirs(os.path.dirname(self.stats_path), exist_ok=True)
 
     def record_interaction(self, 
@@ -186,3 +187,32 @@ class EfficiencyMonitor:
             latency_ms=10000 if not success else 0,
             metadata={"type": "immediate_feedback"}
         )
+
+    def record_session_health(self, score: float, session_id: str = None):
+        """Records the session health score."""
+        data = {
+            "timestamp": datetime.now().isoformat(),
+            "score": score,
+            "session_id": session_id or "unknown"
+        }
+        try:
+            with open(self.health_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps(data, ensure_ascii=False) + "\n")
+        except Exception as e:
+            logger.error(f"Failed to record health data: {e}")
+
+    def get_health_history(self, limit: int = 10) -> List[Dict[str, Any]]:
+        """Returns the history of health scores."""
+        if not os.path.exists(self.health_path):
+            return []
+        
+        history = []
+        try:
+            with open(self.health_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    history.append(json.loads(line))
+            # Sort by timestamp descending
+            return sorted(history, key=lambda x: x["timestamp"], reverse=True)[:limit]
+        except Exception as e:
+            logger.error(f"Failed to get health history: {e}")
+            return []

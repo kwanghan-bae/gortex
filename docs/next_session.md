@@ -1,27 +1,27 @@
 # Next Session
 
 ## 세션 목표
-- **Architecture Change Simulation**: `EvolutionNode`가 코드를 수정하기 전, 임시 메모리 상에서 `Analyst`와 함께 '가상 건강도 점수'를 산출하여, 점수가 향상되는 경우에만 실제 수정을 단행하는 '시뮬레이션 기반 진화' 기능을 구현한다.
-- **Agent Council Mode (Consensus 2.0)**: 복잡한 아키텍처 결정 시, `Manager`가 3개 이상의 페르소나를 호출하여 각각 독립적인 제안을 받고, `Analyst`가 이를 투표 및 종합하여 최적의 단일안을 도출하는 위원회 기반 거버넌스를 구축한다.
+- **Evolutionary Dataset Curation**: `Analyst`가 성공한 자가 진화 및 리팩토링 사례(Before/After 코드 쌍)를 선별하여 `logs/datasets/evolution.jsonl` 형식으로 큐레이션하고, 이를 미래의 모델 미세 조정(Fine-tuning) 데이터로 활용할 수 있도록 정비한다.
+- **TUI Health Score Visualization**: Rich 라이브러리를 활용하여, 터미널 대시보드 우측 하단에 최근 10세션의 `Health Score` 추이를 보여주는 스파크라인(Sparkline) 또는 소형 그래프를 구현한다.
 
 ## 컨텍스트
-- 시스템이 이제 미래를 예측할 수 있게 되었으므로, 실제 행동 전에 그 결과를 '시뮬레이션'하는 신중함이 필요합니다.
-- 단일 모델의 성향에 치우치지 않는, 더 민주적이고 객관적인 결론 도출 체계가 요구됩니다.
+- 시스템이 이제 '검증된 진화'를 수행하므로, 이 성공 사례들은 시스템의 소중한 자산입니다.
+- 건강도 점수를 단순 텍스트가 아닌 '흐름'으로 보여줌으로써 진화의 방향성을 시각적으로 즉시 파악할 수 있게 합니다.
 
 ## 범위 (Scope)
 ### 수행할 작업 (Do)
-- `agents/evolution_node.py`: 수정 전후의 건강도를 가상으로 비교하는 `simulate_evolution` 로직 추가.
-- `agents/manager.py`: 중요도가 높을 때 여러 페르소나를 동시 호출하는 `Council Mode` 트리거 구현.
-- `agents/analyst/__init__.py`: 여러 제안 중 최적안을 선택하는 `adjudicate_council_proposals` 메서드 추가.
+- `agents/analyst/base.py`: 성공적인 진화 사례를 구조화하여 저장하는 `curate_evolution_data` 메서드 추가.
+- `ui/dashboard.py`: 건강도 히스토리 데이터를 시각화하는 `render_health_chart` 로직 보강.
+- `utils/efficiency_monitor.py`: 세션별 건강도 점수를 영구 기록하는 필드 추가.
 
 ### 수행하지 않을 작업 (Do NOT)
-- 모든 단순 작업에 위원회 모드를 사용하여 리소스를 낭비하지 않는다. (중요도에 따라 선별 적용)
+- 단순 버그 수정이나 사소한 변경 사항까지 데이터셋에 포함하여 노이즈를 늘리지 않는다.
 
 ## 기대 결과
-- '실패 없는 진화'를 향한 시뮬레이션 기반의 정밀 리팩토링 달성.
-- 다각도의 시각을 종합한 가장 균형 잡힌 아키텍처 결정 실현.
+- 자가 진화 데이터를 스스로 자산화하는 '학습하는 시스템'으로 진화.
+- 아키텍처 건강 상태를 직관적으로 관측할 수 있는 고성능 TUI 대시보드 완성.
 
 ## 완료 기준
-- 시뮬레이션 결과 점수가 낮아진 진화 시도가 자동으로 차단되는지 확인.
-- 위원회 모드에서 여러 페르소나의 의견이 종합된 합의문이 생성되는지 검증.
-- `docs/sessions/session_0078.md` 기록.
+- `evolution.jsonl` 파일에 정제된 데이터가 누적되는지 확인.
+- TUI 화면에 건강도 추이 그래프가 정상적으로 렌더링되는지 검증.
+- `docs/sessions/session_0079.md` 기록.
