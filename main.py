@@ -51,7 +51,7 @@ async def energy_recovery_loop(state_vars: dict, ui: DashboardUI):
             if ui.current_agent == "Idle":
                 ui.update_sidebar("Idle", "Recovering...", state_vars["total_tokens"], state_vars["total_cost"], 0, 
                                   energy=state_vars["agent_energy"], efficiency=state_vars["last_efficiency"], 
-                                  agent_economy=state_vars.get("agent_economy"))
+                                  agent_economy=state_vars.get("agent_economy"), capability="N/A")
 
 async def run_gortex():
     theme_manager = ThemeManager()
@@ -132,13 +132,23 @@ async def run_gortex():
                             state_vars["last_question"] = output["question_to_user"]
 
                         ui.update_main(ui.chat_history)
-                        ui.update_sidebar(node_name, "Active", state_vars["total_tokens"], state_vars["total_cost"], 0, energy=state_vars["agent_energy"], efficiency=state_vars["last_efficiency"], agent_economy=state_vars.get("agent_economy"))
+                        ui.update_sidebar(
+                            node_name, 
+                            "Active", 
+                            state_vars["total_tokens"], 
+                            state_vars["total_cost"], 
+                            0, 
+                            energy=state_vars["agent_energy"], 
+                            efficiency=state_vars["last_efficiency"], 
+                            agent_economy=state_vars.get("agent_economy"),
+                            capability=output.get("required_capability", "N/A")
+                        )
 
                 # 매 턴 종료 후 세션 캐시 영속화
                 all_sessions_cache[thread_id] = state_vars["session_cache"]
                 save_sessions_cache(all_sessions_cache)
 
-                ui.update_sidebar("Idle", "N/A", state_vars["total_tokens"], state_vars["total_cost"], 0, energy=state_vars["agent_energy"], efficiency=state_vars["last_efficiency"], agent_economy=state_vars.get("agent_economy"))
+                ui.update_sidebar("Idle", "N/A", state_vars["total_tokens"], state_vars["total_cost"], 0, energy=state_vars["agent_energy"], efficiency=state_vars["last_efficiency"], agent_economy=state_vars.get("agent_economy"), capability="N/A")
 
             except KeyboardInterrupt:
                 break

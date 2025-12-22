@@ -15,6 +15,7 @@ from gortex.core.observer import GortexObserver
 from gortex.utils.notifier import Notifier
 from gortex.utils.indexer import SynapticIndexer
 from gortex.agents.analyst import AnalystAgent
+from gortex.core.registry import registry
 
 logger = logging.getLogger("GortexCommands")
 
@@ -27,6 +28,7 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
         help_msg = """
 📚 **Gortex 완전 명령어 가이드**
 - `/status`: 시스템 성능, 토큰 사용량 및 자원 상태 보고
+- `/agents`: 레지스트리에 등록된 모든 에이전트 목록 및 명세 출력
 - `/rca [id]`: 특정 이벤트의 인과 관계(Root Cause) 역추적
 - `/search [query]`: 프로젝트 내 의미 기반(Semantic) 심볼 검색
 - `/map`: 프로젝트 전체 구조(파일/클래스/함수) 트리 출력
@@ -41,6 +43,29 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
 - `/clear`: 화면 초기화
 """
         ui.chat_history.append(("system", Panel(Markdown(help_msg), title="HELP CENTER", border_style="cyan")))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/agents":
+        agents = registry.list_agents()
+        if not agents:
+            ui.chat_history.append(("system", "❌ 등록된 에이전트가 없습니다."))
+        else:
+            table = Table(title="🤖 Gortex Active Agents (v3.0)", show_header=True, header_style="bold magenta")
+            table.add_column("Name", style="bold cyan")
+            table.add_column("Role", style="yellow")
+            table.add_column("Version", style="dim")
+            table.add_column("Capabilities (Tools)", style="green")
+            
+            for name in sorted(agents):
+                meta = registry.get_metadata(name)
+                table.add_row(
+                    name.capitalize(),
+                    meta.role,
+                    f"v{meta.version}",
+                    ", ".join(meta.tools)
+                )
+            ui.chat_history.append(("system", table))
         ui.update_main(ui.chat_history)
         return "skip"
 

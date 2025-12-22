@@ -1,28 +1,28 @@
 # Next Session
 
 ## Session Goal
-- **v3.0 Interactive Dashboard Upgrade**: `AgentRegistry`에 등록된 에이전트 목록과 그들이 제공하는 기능(Capabilities)을 TUI 대시보드에 시각화하고, 명령어를 통해 실시간으로 레지스트리 상태를 확인할 수 있도록 고도화한다.
+- **Automated Agent Generation Loop**: 시스템이 자신의 능력 밖의 과제(예: 특정 라이브러리 전문 지식 필요)를 감지하면, `Analyst`와 `Coder`가 협력하여 해당 작업에 특화된 새로운 에이전트 클래스를 스스로 설계/작성하고 `AgentRegistry`에 자동으로 등록하는 '지능 증식' 메커니즘을 구축한다.
 
 ## Context
-- v3.0 아키텍처 도입으로 에이전트가 동적으로 관리되기 시작함.
-- 현재 대시보드는 하드코딩된 에이전트들만 인지하고 있어, 새롭게 등록된 에이전트(예: `Deployer`)를 보여주지 못함.
-- 시스템의 '확장성'을 사용자에게 시각적으로 전달하여 v3.0의 정체성을 강화함.
+- v3.0의 플러그인 구조가 완성됨에 따라 에이전트 추가가 매우 간소화됨.
+- 이제는 사람이 에이전트를 만들어주는 것이 아니라, 시스템이 자신의 결핍을 인지하고 스스로 새로운 '전문가'를 채용(생성)할 수 있어야 함.
+- 이는 진정한 의미의 자율 진화(Self-Evolution)의 정점임.
 
 ## Scope
 ### Do
-- `ui/dashboard.py`: 사이드바 하단에 `Registry` 패널을 추가하여 현재 등록된 모든 에이전트와 그들의 역할을 리스트업.
-- `ui/dashboard.py`: `update_sidebar`에서 `current_agent`뿐만 아니라 해당 에이전트가 현재 사용 중인 '능력(Capability)'을 강조 표시.
-- `core/commands.py`: `/agents` 명령어를 추가하여 레지스트리에 등록된 에이전트들의 상세 메타데이터(버전, 도구 등)를 출력.
+- `agents/analyst/base.py`: 새로운 에이전트 필요성을 판단하는 `identify_capability_gap` 메서드 추가.
+- `agents/coder.py`: `BaseAgent` 템플릿을 기반으로 에이전트 소스 코드를 생성하는 `generate_new_agent` 로직 보강.
+- `core/registry.py`: 런타임에 소스 파일로부터 에이전트를 동적으로 로드하는 `load_agent_from_file` 기능 구현.
 
 ### Do NOT
-- 대시보드의 전체 레이아웃을 크게 바꾸지 않음 (기존 사이드바 활용).
+- 실제 그래프 노드 구성을 런타임에 변경하는 복잡한 작업은 다음 단계로 (우선 레지스트리 등록에 집중).
 
 ## Expected Outputs
-- `ui/dashboard.py` (Registry Visualization)
-- `core/commands.py` (New /agents command)
-- `tests/test_dashboard_v3.py` (New)
+- `agents/analyst/base.py` (Gap Analysis)
+- `core/registry.py` (Dynamic Loader)
+- `tests/test_agent_generation.py` (New)
 
 ## Completion Criteria
-- 새로운 에이전트를 등록했을 때, 별도의 코드 수정 없이 대시보드 리스트에 즉시 나타나야 함.
-- `/agents` 명령 시 모든 등록된 에이전트의 메타데이터가 표(Table) 형식으로 예쁘게 출력되어야 함.
-- `docs/sessions/session_0104.md` 기록.
+- 특정 과제 수행 실패 로그가 쌓였을 때, Analyst가 새로운 에이전트 명세를 제안해야 함.
+- 제안된 명세를 바탕으로 생성된 파일이 레지스트리에 에러 없이 등록되어야 함.
+- `docs/sessions/session_0105.md` 기록.

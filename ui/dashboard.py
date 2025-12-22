@@ -45,7 +45,8 @@ def create_layout() -> Layout:
     layout["sidebar"].split_column(
         Layout(name="status", size=10),
         Layout(name="stats", size=12),
-        Layout(name="economy", size=8), # Reputation Leaderboard
+        Layout(name="economy", size=10), # Expanded for skill tree
+        Layout(name="registry", size=8), # [NEW] Active Agents & Capabilities
         Layout(name="evolution", size=8),
         Layout(name="debt", size=10),
         Layout(name="logs")
@@ -65,6 +66,7 @@ class DashboardUI:
         self.current_agent = "Idle"
         self.last_agent = "Idle"
         self.current_step = "N/A"
+        self.current_capability = "N/A" # [NEW] 현재 수행 중인 능력
         self.tokens_used = 0
         self.total_cost = 0.0
         self.active_rules_count = 0
@@ -284,10 +286,29 @@ class DashboardUI:
             self.progress.remove_task(self.tool_task)
             self.tool_task = None
 
-    def update_sidebar(self, agent: str = "Idle", step: str = "N/A", tokens: int = 0, cost: float = 0.0, rules: int = 0, provider: str = "GEMINI", call_count: int = 0, avg_latency: int = 0, energy: int = 100, efficiency: float = 100.0, knowledge_lineage: list = None, suggested_actions: list = None, agent_economy: dict = None):
-        """사이드바 정보 업데이트 (에이전트, 성능, 경제 상태 시각화)"""
+    def update_registry_panel(self):
+        """레지스트리에 등록된 에이전트 목록 시각화"""
+        from gortex.core.registry import registry
+        agents = registry.list_agents()
+        
+        if not agents:
+            self.layout["registry"].update(Panel("Empty registry.", title="🔌 REGISTRY", border_style="dim"))
+            return
+
+        table = Table.grid(expand=True)
+        for name in sorted(agents):
+            meta = registry.get_metadata(name)
+            is_active = (name.lower() == self.current_agent.lower())
+            style = "bold green" if is_active else "dim white"
+            table.add_row(f"[{style}]● {name.capitalize()}[/]", f"[dim]{meta.version}[/]")
+            
+        self.layout["registry"].update(Panel(table, title="🔌 [bold cyan]AGENT REGISTRY[/]", border_style="cyan"))
+
+    def update_sidebar(self, agent: str = "Idle", step: str = "N/A", tokens: int = 0, cost: float = 0.0, rules: int = 0, provider: str = "GEMINI", call_count: int = 0, avg_latency: int = 0, energy: int = 100, efficiency: float = 100.0, knowledge_lineage: list = None, suggested_actions: list = None, agent_economy: dict = None, capability: str = "N/A"):
+        """사이드바 정보 업데이트 (에이전트, 성능, 경제, 레지스트리 시각화)"""
         self.current_agent = agent
         self.current_step = step
+        self.current_capability = capability
         self.tokens_used = tokens
         self.total_cost = cost
         self.active_rules_count = rules
@@ -298,6 +319,9 @@ class DashboardUI:
         if knowledge_lineage is not None: self.knowledge_lineage = knowledge_lineage
         if suggested_actions is not None: self.suggested_actions = suggested_actions
         
+        # 레지스트리 패널 실시간 갱신
+        self.update_registry_panel()
+
         agent_style_name = self.agent_colors.get(agent.lower(), "dim white")
         try:
             border_color = self.console.get_style(agent_style_name).color.name
@@ -321,6 +345,11 @@ class DashboardUI:
         if rep_text: status_text.append(rep_text, style="italic yellow")
         status_text.append("\n")
         
+        # [CAPABILITY] 현재 사용 중인 능력 표시
+        if agent != "Idle":
+            status_text.append(f"Skill: ", style="bold")
+            status_text.append(f"{capability}\n", style="italic cyan")
+
         status_text.append(f"LLM  : ", style="bold")
         provider_style = "bold blue" if provider == "GEMINI" else "bold green"
         status_text.append(f"{provider}\n", style=provider_style)
