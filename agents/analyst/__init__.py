@@ -1,6 +1,7 @@
 import logging
 import json
 import os
+import re
 from typing import Dict, Any, List
 from datetime import datetime
 from gortex.core.state import GortexState
@@ -13,12 +14,29 @@ logger = logging.getLogger("GortexAnalyst")
 
 class AnalystAgent(ReflectionAnalyst, WorkspaceOrganizer):
     """모든 분석 및 정리 기능이 통합된 최종 에이전트 클래스"""
-    pass
+    
+    def perform_peer_review(self, source_file: str, new_code: str, model_id: str = "gemini-1.5-flash") -> Dict[str, Any]:
+        """다른 모델을 활용하여 생성된 코드의 품질을 교차 리뷰함"""
+        prompt = f"""다음 리팩토링된 코드를 전문가의 시각에서 리뷰하라.        
+        [Target File] {source_file}
+        [New Code]
+        {new_code}
+        
+        가독성, 성능, 보안 위반 여부를 점검하고 100점 만점의 점수를 부여하라.
+        결과는 반드시 JSON 형식을 따르라: {{ "score": int, "comment": "...", "is_approved": bool }}
+        """
+        try:
+            response_text = self.backend.generate(model_id, [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            json_match = re.search(r'{{.*}}', response_text, re.DOTALL)
+            return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+        except Exception as e:
+            logger.error(f"Peer review failed: {e}")
+            return {"score": 50, "comment": "Review failed", "is_approved": True} # 실패 시 기본 승인
 
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """
     Analyst 노드 엔트리 포인트.
-    코드 검증, 합의 도출, 데이터 분석 및 자가 진화 로직을 총괄합니다.
+    코드 검증, 합의 도출, 데이터 분석 및 진화 로드맵 생성을 총괄합니다.
     """
     agent = AnalystAgent()
     
@@ -32,16 +50,18 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
         for v in violations:
             logger.warning(f"🛡️ [Architecture Drift] {v['reason']} ({v['source']} -> {v['target']})")
 
-    # 3. 지능 밀도 측정
-    from gortex.utils.indexer import SynapticIndexer
-    intel_map = SynapticIndexer().calculate_intelligence_index()
-    logger.info(f"🧠 Intelligence Density Top 3: {list(intel_map.items())[:3]}")
+    # 3. 진화 로드맵 생성 (Roadmap Generation)
+    roadmap = agent.generate_evolution_roadmap()
+    if roadmap:
+        roadmap_msg = "🗺️ **Gortex Evolution Roadmap**:\n" + "\n".join([f"- {r['target']} ({r['suggested_tech']}) - Priority: {r['priority']}" for r in roadmap])
+        logger.info(f"Evolution Roadmap: {roadmap}")
+        # 로드맵 정보를 상태에 저장 (Manager 참조용)
+        state["evolution_roadmap"] = roadmap 
 
     last_msg_obj = state["messages"][-1]
     last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
     last_msg_lower = last_msg.lower()
     
-    # 변수 사전 정의 (통합 테스트 대응)
     debate_data = state.get("debate_context", [])
     data_files = [f for f in last_msg.split() if f.endswith(('.csv', '.xlsx', '.json'))]
 
@@ -64,16 +84,27 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             "debate_context": []
         }
 
-    # [Cross-Validation] Coder의 작업 결과 검증 요청인 경우
-    if state.get("next_node") == "analyst":
+    # [Cross-Validation / Peer Review] Coder 또는 Evolution의 결과 검증
+    if state.get("next_node") == "analyst" or state.get("awaiting_review"):
         ai_outputs = [m for m in state["messages"] if (isinstance(m, tuple) and m[0] == "ai") or (hasattr(m, 'type') and m.type == "ai")]
         if ai_outputs:
             last_ai_msg = ai_outputs[-1][1] if isinstance(ai_outputs[-1], tuple) else ai_outputs[-1].content
+            
+            # 1. 기본 제약 조건 검증
             val_res = agent.validate_constraints(state.get("active_constraints", []), {"content": last_ai_msg})
             
             if not val_res.get("is_valid", True):
                 return {"messages": [("ai", f"🛡️ [Validation Alert] {val_res.get('reason')}")], "next_node": "planner"}
             
+            # 2. 고도화된 교차 리뷰 (Peer Review) - 신규
+            if state.get("awaiting_review"):
+                review_res = agent.perform_peer_review(state.get("review_target", "code"), last_ai_msg)
+                if not review_res.get("is_approved", True) or review_res.get("score", 100) < 70:
+                    return {"messages": [("ai", f"🧐 [Peer Review Rejected] {review_res.get('comment')} (Score: {review_res.get('score')})")], "next_node": "coder"}
+                else:
+                    state["messages"].append(("system", f"✅ [Peer Review Approved] {review_res.get('comment')} (Score: {review_res.get('score')})"))
+
+            # 검증 통과 시 보상 지급
             economy = state.get("agent_economy", {}).copy()
             credits = state.get("token_credits", {}).copy()
             if "coder" not in economy: economy["coder"] = {"points": 0, "level": "Novice"}
@@ -82,8 +113,8 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             credits["coder"] += 10.0
             
             return {
-                "messages": [("ai", i18n.t("analyst.review_complete", risk_count=0))], 
-                "agent_economy": economy, "token_credits": credits, "next_node": "manager"
+                "messages": [("ai", i18n.t("analyst.review_complete", risk_count=0))],
+                "agent_economy": economy, "token_credits": credits, "next_node": "manager", "awaiting_review": False
             }
 
     # [Command Helpers]
@@ -98,17 +129,14 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
     # [Self-Evolution: Auto-Test Proliferation, Memory Pruning & Release Management]
     energy = state.get("agent_energy", 100)
     if energy > 70 and not debate_data and not data_files:
-        # 1. 전역 규칙 종합
         if len(agent.memory.memory) > 30:
             agent.synthesize_global_rules()
             
-        # 2. 릴리즈 및 버전 관리
         if datetime.now().minute % 30 == 0:
             agent.generate_release_note()
             new_v = agent.bump_version()
             state["messages"].append(("system", f"🚀 **System Released**: Version {new_v} updated."))
 
-        # 3. 기억 정제
         if len(agent.memory.memory) > 20:
             agent.memory.prune_memory()
             

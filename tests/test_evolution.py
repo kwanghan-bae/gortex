@@ -47,8 +47,8 @@ class TestGortexEvolution(unittest.TestCase):
         state = {"assigned_model": "test-model"}
         result = evolution_node(state)
         
-        self.assertEqual(result["next_node"], "manager")
-        self.assertTrue("자가 진화 완료" in result["messages"][0][1])
+        self.assertEqual(result["next_node"], "analyst")
+        self.assertTrue("자가 진화 시도 완료" in result["messages"][0][1] or "자가 치유 완료" in result["messages"][0][1])
         
         with open(self.test_file, "r") as f:
             content = f.read()

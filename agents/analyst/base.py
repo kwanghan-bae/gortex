@@ -133,3 +133,34 @@ class AnalystAgent:
             with open(v_path, "w") as f: f.write(new_v)
             return new_v
         except: return "Error"
+
+    def generate_evolution_roadmap(self) -> List[Dict[str, Any]]:
+        """지능 지수가 낮은 모듈을 식별하여 진화 우선순위 로드맵 생성"""
+        from gortex.utils.indexer import SynapticIndexer
+        intel_map = SynapticIndexer().calculate_intelligence_index()
+        
+        # 지능 지수가 낮은 순으로 정렬 (보완이 필요한 모듈)
+        weak_modules = sorted(intel_map.items(), key=lambda x: x[1])
+        
+        # Tech Radar 후보군 획득
+        adoption_candidates = []
+        if os.path.exists("tech_radar.json"):
+            try:
+                with open("tech_radar.json", "r") as f:
+                    radar_data = json.load(f)
+                    adoption_candidates = radar_data.get("adoption_candidates", [])
+            except: pass
+
+        roadmap = []
+        for file_path, score in weak_modules[:5]: # 가장 취약한 5개 모듈 대상
+            # 해당 파일에 적용 가능한 신기술 제안 매칭
+            suggested_tech = next((c["tech"] for c in adoption_candidates if c["target_file"] == file_path), "Refactoring Required")
+            
+            roadmap.append({
+                "target": file_path,
+                "current_maturity": score,
+                "suggested_tech": suggested_tech,
+                "priority": "High" if score < 10 else "Medium"
+            })
+            
+        return roadmap

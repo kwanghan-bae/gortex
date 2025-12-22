@@ -160,9 +160,11 @@ class EvolutionNode:
             if success:
                 logger.info(f"✅ Evolution successful: {target_file} updated with {tech_name}")
                 return {
-                    "thought": f"시스템 진화 성공: {target_file}에 {tech_name}을(를) 적용했습니다.",
-                    "messages": [("ai", f"🧬 **시스템 자가 진화 완료**\n- 기술: {tech_name}\n- 대상: {target_file}\n- 결과: 성공적으로 리팩토링되었습니다.")],
-                    "next_node": "manager"
+                    "thought": f"시스템 진화 성공: {target_file}에 {tech_name}을(를) 적용했습니다. 교차 리뷰를 요청합니다.",
+                    "messages": [("ai", f"🧬 **시스템 자가 진화 시도 완료**\n- 기술: {tech_name}\n- 대상: {target_file}\n- 상태: 검증 통과, 교차 리뷰 중...")],
+                    "next_node": "analyst", # Analyst에게 넘겨 리뷰 받음
+                    "awaiting_review": True,
+                    "review_target": target_file
                 }
             else:
                 # 실패 시 롤백 (write_file의 백업 기능을 활용하거나 직접 복구)

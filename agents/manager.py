@@ -55,13 +55,16 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     case_context = "\n".join([f"Case: {c.get('agent')} - {c.get('event')}" for c in past_cases]) if past_cases else ""
 
     # 3. 시스템 프롬프트 구성
+    roadmap = state.get("evolution_roadmap", [])
+    roadmap_context = "\n".join([f"- {r['target']} ({r['suggested_tech']}) [Priority: {r['priority']}]" for r in roadmap]) if roadmap else ""
+    
     from gortex.utils.prompt_loader import loader
     base_instruction = loader.get_prompt(
         "manager", 
         persona_id=state.get("assigned_persona", "standard"),
         ltm_context=ltm_context, 
         case_context=case_context, 
-        macro_context="",
+        macro_context=f"\n[CURRENT EVOLUTION ROADMAP]\n{roadmap_context}",
         persona_context=persona_context,
         context_text=internal_input
     )

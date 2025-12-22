@@ -46,8 +46,14 @@ class GortexState(TypedDict):
     last_efficiency: float
     # 최근 효율성 점수 이력 (최대 10개 유지)
     efficiency_history: List[float]
-    # 에이전트 간 토론 시나리오 데이터 (Consensus용)
+    # 에너짓 간 토론 시나리오 데이터 (Consensus용)
     debate_context: List[Dict[str, Any]]
     # 합의 결과 및 사후 성과 데이터 이력
     consensus_history: List[Dict[str, Any]]
+    # 교차 리뷰 관련 상태
+    awaiting_review: bool
+    review_target: str
+    # 자가 진화 로드맵
+    evolution_roadmap: List[Dict[str, Any]]
+
 
