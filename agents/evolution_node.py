@@ -2,6 +2,7 @@ import json
 import os
 import logging
 import re
+from datetime import datetime
 from typing import Dict, Any, List, Optional
 from gortex.core.state import GortexState
 from gortex.core.llm.factory import LLMFactory
@@ -29,6 +30,75 @@ class EvolutionNode:
             except:
                 pass
         return []
+
+    def prepare_fine_tuning_job(self, dataset_path: str = "logs/datasets/evolution.jsonl") -> Dict[str, Any]:
+        """
+        수집된 진화 데이터를 기반으로 Fine-tuning 작업(Job)을 패키징합니다.
+        데이터 검증, 변환, 설정 파일 생성을 포함합니다.
+        """
+        if not os.path.exists(dataset_path):
+            return {"status": "failed", "reason": f"Dataset not found: {dataset_path}"}
+            
+        try:
+            # 1. Load and Validate Data
+            valid_data = []
+            with open(dataset_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    try:
+                        entry = json.loads(line)
+                        if "messages" in entry and isinstance(entry["messages"], list):
+                            valid_data.append(entry)
+                    except: continue
+            
+            if not valid_data:
+                return {"status": "failed", "reason": "No valid data found in dataset"}
+                
+            # 2. Create Job Directory
+            job_id = datetime.now().strftime("%Y%m%d_%H%M%S")
+            job_dir = f"training_jobs/job_{job_id}"
+            os.makedirs(job_dir, exist_ok=True)
+            
+            # 3. Save Processed Dataset (ShareGPT/Chat format)
+            # 여기서는 JSONL을 그대로 유지하되, 하나의 JSON 배열로 변환하여 저장
+            output_dataset = os.path.join(job_dir, "dataset.json")
+            with open(output_dataset, "w", encoding="utf-8") as f:
+                json.dump(valid_data, f, indent=2, ensure_ascii=False)
+                
+            # 4. Copy/Template Config
+            config_template = "config/training.yaml"
+            job_config = os.path.join(job_dir, "config.yaml")
+            
+            if os.path.exists(config_template):
+                with open(config_template, "r", encoding="utf-8") as f:
+                    config_content = f.read()
+            else:
+                # Fallback config
+                config_content = "model: unsloth/llama-3-8b-bnb-4bit\nlora_r: 16\n"
+            
+            with open(job_config, "w", encoding="utf-8") as f:
+                f.write(f"# Job ID: {job_id}\n# Source: {dataset_path}\n\n{config_content}")
+                
+            # 5. Create Metadata
+            meta = {
+                "job_id": job_id,
+                "created_at": datetime.now().isoformat(),
+                "data_count": len(valid_data),
+                "source_file": dataset_path,
+                "status": "ready"
+            }
+            with open(os.path.join(job_dir, "meta.json"), "w", encoding="utf-8") as f:
+                json.dump(meta, f, indent=2)
+                
+            logger.info(f"📦 Fine-tuning job prepared: {job_dir} ({len(valid_data)} items)")
+            return {
+                "status": "success", 
+                "job_dir": job_dir, 
+                "item_count": len(valid_data)
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to prepare fine-tuning job: {e}")
+            return {"status": "error", "reason": str(e)}
 
     def heal_architecture(self, state: GortexState, violations: List[Dict[str, Any]]) -> Dict[str, Any]:
         """발견된 아키텍처 위반 사항(Layer Violation 등)을 자동으로 수정합니다."""

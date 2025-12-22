@@ -1,0 +1,34 @@
+# Job ID: 20251222_230901
+# Source: logs/datasets/evolution.jsonl
+
+# Gortex Local Fine-Tuning Configuration (LoRA)
+# Target: Ollama (Llama 3 / Mistral) via Unsloth or similar frameworks
+
+model:
+  base_model: "unsloth/llama-3-8b-Instruct-bnb-4bit"
+  load_in_4bit: true
+
+lora:
+  r: 16
+  lora_alpha: 16
+  lora_dropout: 0.05
+  bias: "none"
+  task_type: "CAUSAL_LM"
+  target_modules: ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]
+
+training:
+  per_device_train_batch_size: 2
+  gradient_accumulation_steps: 4
+  warmup_steps: 5
+  max_steps: 60  # For quick demo, increase for real training
+  learning_rate: 2.0e-4
+  fp16: true
+  logging_steps: 1
+  optim: "adamw_8bit"
+  weight_decay: 0.01
+  lr_scheduler_type: "linear"
+  seed: 3407
+
+dataset:
+  train_file: "dataset.json"
+  format: "chat_template" # sharegpt/alpaca/chatml

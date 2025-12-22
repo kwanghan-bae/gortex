@@ -1,32 +1,25 @@
 # Next Session
 
 ## Session Goal
-- **Local LLM Fine-Tuning Pipeline**: 구축된 진화 데이터(`evolution.jsonl`)를 기반으로 로컬 모델(Ollama/Llama-3 등)을 미세 조정(Fine-tuning)하기 위한 **전처리 및 설정 자동화 파이프라인**을 구축한다.
+- **Automated Dependency Analysis & Clustering Visualization**: 3D Bridge(`ui/three_js_bridge.py`)를 고도화하여, 시스템의 모듈 간 의존성을 분석하고 이를 시각적으로 군집화(Clustering)하여 보여주는 기능을 구현한다.
 
 ## Context
-- `logs/datasets/evolution.jsonl`에 양질의 자가 교정 데이터가 쌓이고 있음.
-- 이를 실제 모델 학습에 활용하려면 '데이터 검증 -> 포맷 변환(Alpaca/ShareGPT) -> LoRA 설정 -> 학습 잡 패키징'의 과정이 자동화되어야 함.
-- 직접적인 GPU 학습은 환경에 따라 불가능할 수 있으므로, **"Ready-to-Train"** 상태로 패키징하는 것이 목표임.
+- 현재 TUI/Web Bridge는 노드와 엣지를 보여주지만, 모듈 간의 "강한 결합"이나 "논리적 그룹"을 시각적으로 구분해주지는 못함.
+- `AnalystAgent`의 `audit_architecture` 결과를 시각화 레이어에 반영하여, 의존성이 복잡한 곳을 한눈에 파악할 수 있게 해야 함.
 
 ## Scope
 ### Do
-- `agents/evolution_node.py`: `prepare_fine_tuning_job` 메서드 구현.
-    - 데이터 유효성 검사 (JSONL 파싱 확인).
-    - 학습용 프롬프트 포맷 변환 (System/User/Assistant).
-    - `training_jobs/job_{TIMESTAMP}/` 디렉토리 생성 및 데이터 이동.
-- `config/training.yaml`: LoRA Rank, Epoch, Learning Rate 등 학습 하이퍼파라미터 템플릿 정의.
-- `scripts/prepare_training.sh`: 파이썬 스크립트를 호출하여 가장 최신 데이터를 패키징하는 셸 유틸리티.
+- `ui/three_js_bridge.py`: `convert_dependency_graph` 메서드를 확장하여 Louvain 또는 간단한 군집 알고리즘을 적용, `group` 속성을 노드에 부여.
+- `agents/analyst/base.py`: 의존성 그래프 추출 시 모듈 간 가중치(호출 빈도 등)를 계산하여 그래프 데이터에 포함.
+- `ui/dashboard.py`: 클러스터링된 데이터를 웹 브릿지로 전송하는 파이프라인 연결.
 
 ### Do NOT
-- 실제 GPU 학습(Train Loop)을 이 세션에서 강제로 실행하지 않는다. (리소스 과부하 방지)
-- 외부 클라우드(Colab 등) 연동까지 고려하지 않는다. (로컬 우선)
+- 복잡한 3D 렌더링 엔진 자체를 수정하지 않음 (데이터 구조 변경에 집중).
 
 ## Expected Outputs
-- `agents/evolution_node.py` (Update)
-- `config/training.yaml` (New)
-- `scripts/prepare_training.sh` (New)
-- `training_jobs/` (New Directory Structure)
+- `ui/three_js_bridge.py` (Update)
+- `agents/analyst/base.py` (Update)
 
 ## Completion Criteria
-- `evolution.jsonl` 파일이 존재할 때, `scripts/prepare_training.sh`를 실행하면 `training_jobs/` 하위에 설정 파일(`config.yaml`)과 데이터(`dataset.json`)가 생성되어야 한다.
-- `docs/sessions/session_0080.md` 기록.
+- 웹 대시보드로 전송되는 JSON 데이터에 `nodes` 배열의 각 요소가 `group` 또는 `cluster_id`를 포함해야 함.
+- `docs/sessions/session_0081.md` 기록.
