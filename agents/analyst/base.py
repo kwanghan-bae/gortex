@@ -87,6 +87,34 @@ class AnalystAgent:
                 violations.append({"type": "Layer Violation", "source": s, "target": t, "reason": f"하위 레이어 '{sl}'가 상위 레이어 '{tl}'를 참조함"})
         return violations
 
+    def generate_dependency_graph_with_weights(self) -> Dict[str, Any]:
+        """
+        프로젝트 내 모듈 의존성 그래프를 생성합니다.
+        가중치(연결 수)와 노드 메타데이터를 포함하여 시각화에 적합한 형태를 반환합니다.
+        """
+        from gortex.utils.indexer import SynapticIndexer
+        raw_deps = SynapticIndexer().generate_dependency_graph()
+        
+        nodes = {}
+        edges = []
+        
+        # 1. 노드 및 엣지 가중치 계산
+        for dep in raw_deps:
+            s, t = dep["source"], dep["target"]
+            
+            # 노드 등록 (없으면 초기화)
+            if s not in nodes: nodes[s] = {"id": s, "value": 0, "connections": 0}
+            if t not in nodes: nodes[t] = {"id": t, "value": 0, "connections": 0}
+            
+            # 연결 수 증가 (중요도)
+            nodes[s]["value"] += 1
+            nodes[t]["connections"] += 1
+            
+            # 엣지 추가
+            edges.append({"from": s, "to": t, "weight": 1})
+            
+        return {"nodes": list(nodes.values()), "edges": edges}
+
     def synthesize_global_rules(self, model_id: str = "gemini-1.5-pro") -> str:
         rules = self.memory.memory
         if not rules: return "정리할 규칙이 없습니다."

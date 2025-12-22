@@ -170,6 +170,51 @@ class ThreeJsBridge:
                 
         return self.apply_clustering({"nodes": converted_nodes, "edges": converted_edges})
 
+    def convert_dependency_graph(self, dep_data: Dict[str, Any]) -> Dict[str, Any]:
+        """의존성 그래프 데이터를 3D 시각화 데이터로 변환 (군집화 적용)"""
+        raw_nodes = dep_data.get("nodes", [])
+        raw_edges = dep_data.get("edges", [])
+        
+        converted_nodes = []
+        node_map = {}
+        import math
+        
+        # 간단한 원형 배치 또는 Force-directed Layout (여기선 원형+높이 변형)
+        count = len(raw_nodes)
+        for i, node in enumerate(raw_nodes):
+            theta = (i / count) * 2 * math.pi
+            radius = 30 + (node.get("connections", 0) * 2) # 연결 많을수록 바깥쪽? 아니면 안쪽? 여기선 바깥
+            
+            pos = {
+                "x": math.cos(theta) * radius,
+                "y": math.sin(theta) * radius,
+                "z": (i % 5) * 10
+            }
+            
+            converted_nodes.append({
+                "id": node["id"],
+                "label": node["id"],
+                "value": node.get("value", 1), # 크기용
+                "position": pos,
+                "type": "module"
+            })
+            node_map[node["id"]] = pos
+            
+        converted_edges = []
+        for edge in raw_edges:
+            if edge["from"] in node_map and edge["to"] in node_map:
+                converted_edges.append({
+                    "from": edge["from"],
+                    "to": edge["to"],
+                    "start": node_map[edge["from"]],
+                    "end": node_map[edge["to"]],
+                    "weight": edge.get("weight", 1)
+                })
+
+        # 군집화 적용
+        graph_3d = {"nodes": converted_nodes, "edges": converted_edges}
+        return self.apply_clustering(graph_3d)
+
     def convert_kg_to_3d(self, nodes: Dict[str, Any], edges: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Synaptic Index 기반 지식 그래프를 3D 공간 데이터로 변환"""
         converted_nodes = []
