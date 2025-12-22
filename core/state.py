@@ -55,5 +55,8 @@ class GortexState(TypedDict):
     review_target: str
     # 자가 진화 로드맵
     evolution_roadmap: List[Dict[str, Any]]
+    # 8. Intelligent Handoff (에이전트 간 직접 지침 전달)
+    handoff_instruction: str # 직전 에이전트가 다음 에이전트에게 남기는 귓속말/팁
+
 
 

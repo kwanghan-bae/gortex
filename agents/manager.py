@@ -173,7 +173,8 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
             "assigned_model": final_assigned_model,
             "agent_energy": max(0, energy - 5),
             "ui_mode": res_data.get("ui_mode", "standard"),
-            "assigned_persona": res_data.get("assigned_persona", "standard")
+            "assigned_persona": res_data.get("assigned_persona", "standard"),
+            "handoff_instruction": "" # Manager resets handoff
         }
         
         if res_data.get("response_to_user"):

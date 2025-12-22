@@ -11,13 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.12.6 (2025-12-22)
+- **Agent Coordination**: `Intelligent Handoff System` 도입. 에이전트 간 전환 시 '인수인계 지침(Handoff Instruction)'을 생성하여 직전 단계의 핵심 통찰과 주의사항을 유실 없이 전달.
+- **Prompt Engineering**: 시스템 프롬프트에 동적 지침 주입 레이어를 추가하여 협업의 정밀도와 연속성 강화.
+
 ### v2.12.5 (2025-12-22)
 - **Intelligence**: `Autonomous Session Reflection` 구현. 매 세션 종료 시 활동 기록에서 핵심 통찰을 추출하여 시스템 규칙(`Experience Rules`)으로 자동 승격.
 - **Learning Loop**: 비정형 문서 데이터를 정형화된 지능으로 변환하는 자기 학습 파이프라인 안착.
-
-### v2.12.4 (2025-12-22)
-- **Infrastructure**: `Autonomous Backup` 시스템 구축. 핵심 지식 파일의 10단계 회전 백업(Rotation) 및 로그 아카이빙 자동화.
-- **Maintenance**: 시스템 스스로 작업 공간을 정리하고 최적화하는 관리 기능 탑재.
 
 ### v2.11.9 (2025-12-22)
 - **Self-Healing**: `Automated Bug Patching Loop` 구현. 시스템 에러 로그를 분석하여 원인을 특정하고, 코드 수정 후 무결성을 검증하는 자율 수리 프로세스 안착.

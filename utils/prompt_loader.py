@@ -50,8 +50,8 @@ class PromptLoader:
         """YAML 템플릿 값 직접 조회 (단순 문자열 반환)"""
         return self.templates.get(key, default)
 
-    def get_prompt(self, agent_id: str, persona_id: str = None, context_text: str = "", **kwargs) -> str:
-        """지정된 에이전트의 프롬프트를 가져오고 페르소나 및 동적 규칙 주입"""
+    def get_prompt(self, agent_id: str, persona_id: str = None, context_text: str = "", handoff_instruction: str = "", **kwargs) -> str:
+        """지정된 에이전트의 프롬프트를 가져오고 페르소나, 동적 규칙, 핸드오프 지침 주입"""
         template = self.templates.get(agent_id, {}).get("instruction", "")
         if not template:
             logger.warning(f"Prompt template for {agent_id} not found.")
@@ -63,7 +63,12 @@ class PromptLoader:
             p = self.personas[persona_id]
             persona_header = f"[ACTIVE PERSONA: {p['name']}]\n- Focus: {', '.join(p['focus'])}\n\n"
 
-        # 2. 동적 정책(Dynamic Policy) 주입 (자가 진화된 지식)
+        # 2. 핸드오프 지침(Handoff Instruction) 주입
+        handoff_section = ""
+        if handoff_instruction:
+            handoff_section = f"\n\n[DIRECTIVE FROM PREVIOUS AGENT]\n!!! {handoff_instruction} !!!\n\n"
+
+        # 3. 동적 정책(Dynamic Policy) 주입 (자가 진화된 지식)
         dynamic_policy = ""
         try:
             from gortex.core.evolutionary_memory import EvolutionaryMemory
@@ -75,9 +80,9 @@ class PromptLoader:
         
         try:
             body = template.format(**kwargs)
-            return persona_header + body + dynamic_policy
+            return persona_header + handoff_section + body + dynamic_policy
         except Exception:
-            return persona_header + template + dynamic_policy
+            return persona_header + handoff_section + template + dynamic_policy
 
 # 싱글톤 인스턴스 제공
 loader = PromptLoader()

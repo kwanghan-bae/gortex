@@ -74,7 +74,8 @@ def coder_node(state: GortexState) -> Dict[str, Any]:
         "coder", 
         persona_id=state.get("assigned_persona", "standard"),
         current_step_json=json.dumps(current_step, ensure_ascii=False, indent=2),
-        tool_output=(tool_output if tool_output else "(Not executed yet)")
+        tool_output=(tool_output if tool_output else "(Not executed yet)"),
+        handoff_instruction=state.get("handoff_instruction", "")
     )
     
     if state.get("active_constraints"):

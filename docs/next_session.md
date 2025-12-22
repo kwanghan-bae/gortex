@@ -1,29 +1,27 @@
 # Next Session
 
 ## Session Goal
-- **Intelligent Task Chaining & Handoff**: 에이전트 간 노드 전환 시, 단순히 다음 순서로 넘어가는 것이 아니라 이전 에이전트가 다음 주자에게 전달하는 구체적인 '인수인계 지침(Handoff Instruction)'을 생성하여 작업의 맥락과 정밀도를 극대화한다.
+- **Intelligent Resource Scaling & Token Budgeting**: 일일 API 사용 예산(토큰 및 비용)을 관리하고, 예산 소진 속도에 따라 시스템이 스스로 사용하는 모델의 지능 수준(Pro -> Flash -> Lite -> Ollama)을 하향 조정하는 '자율 경제 방어' 시스템을 구축한다.
 
 ## Context
-- 현재 에이전트들은 `messages`와 `plan`을 공유하지만, 직전 단계에서 발견한 미묘한 뉘앙스나 주의사항을 명시적으로 전달하는 통로가 부족함.
-- 예: `Planner`가 계획을 짤 때 "A 파일을 수정할 때는 B 함수의 부수 효과를 꼭 확인하라"는 메시지를 `Coder`에게 직접 귓속말 하듯 전달해야 함.
-- 이는 다중 에이전트 협업의 '지능적 연결성'을 강화함.
+- 현재 모델 선택은 에이전트 등급에만 의존함.
+- API 할당량이 부족하거나 하루 목표 비용을 초과할 위험이 있을 때, 고평판 에이전트라도 강제로 경량 모델을 쓰게 하여 전체 가용성을 유지해야 함.
+- 이는 장기적인 운영 안정성을 보장하기 위함임.
 
 ## Scope
 ### Do
-- `core/state.py`: `handoff_instruction` 필드 추가.
-- `agents/planner.py` & `agents/coder.py`: 작업 완료 시 다음 에이전트를 위한 지침을 작성하도록 로직 보강.
-- `utils/prompt_loader.py`: `handoff_instruction`이 있을 경우 시스템 프롬프트 최상단에 강조하여 주입.
+- `core/config.py`: `DAILY_COST_BUDGET` 설정 추가.
+- `utils/efficiency_monitor.py`: 당일 누적 비용(`daily_cumulative_cost`) 계산 기능 추가.
+- `core/llm/factory.py`: `get_model_for_grade` 메서드에 '예산 가중치(Budget Scale)'를 반영하여 모델을 하향(Downgrade)하는 로직 구현.
 
 ### Do NOT
-- 모든 노드 조합에 대해 복잡한 핸드오프 로직을 짜지 않음 (우선 Planner -> Coder, Coder -> Analyst 위주).
+- 실제 카드 결제나 외부 청구 데이터와 연동하지 않음 (시스템 내 추정치 기준).
 
 ## Expected Outputs
-- `core/state.py` (Update)
-- `agents/planner.py` (Update)
-- `utils/prompt_loader.py` (Update)
-- `tests/test_handoff_instruction.py` (New)
+- `utils/efficiency_monitor.py` (Update)
+- `core/llm/factory.py` (Update)
+- `tests/test_budget_scaling.py` (New)
 
 ## Completion Criteria
-- `Planner` 실행 후 `GortexState`에 `handoff_instruction`이 생성되어야 함.
-- `Coder`가 해당 지침을 인식하고 작업에 반영하는지 로그로 확인.
-- `docs/sessions/session_0098.md` 기록.
+- 하루 예산이 $0.10 인데 이미 $0.09를 썼을 경우, 다이아몬드 등급 에이전트에게도 Pro가 아닌 Flash 또는 Lite 모델이 할당되어야 함.
+- `docs/sessions/session_0099.md` 기록.

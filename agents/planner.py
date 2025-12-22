@@ -98,9 +98,10 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
                     },
                     "required": ["id", "action", "target", "reason", "priority", "is_essential"]
                 }
-            }
+            },
+            "handoff_instruction": {"type": "STRING"}
         },
-        "required": ["thought_process", "internal_critique", "thought_tree", "goal", "steps"]
+        "required": ["thought_process", "internal_critique", "thought_tree", "goal", "steps", "handoff_instruction"]
     }
 
     # 백엔드 능력에 따른 설정 분기
@@ -108,7 +109,7 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
     config = {"temperature": 0.0}
     
     if not backend.supports_structured_output():
-        base_instruction += "\n\n[IMPORTANT: OUTPUT FORMAT]\nYou must respond in JSON format ONLY. Required fields: thought_process, internal_critique, thought_tree, goal, steps (list of {id, action, target, reason}), impact_analysis."
+        base_instruction += "\n\n[IMPORTANT: OUTPUT FORMAT]\nYou must respond in JSON format ONLY. Required fields: thought_process, internal_critique, thought_tree, goal, steps (list of {id, action, target, reason}), impact_analysis, handoff_instruction."
     else:
         from google.genai import types
         config = types.GenerateContentConfig(
@@ -178,6 +179,7 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
             "plan": plan_steps,
             "current_step": 0,
             "next_node": "coder",
+            "handoff_instruction": plan_data.get("handoff_instruction", ""),
             "messages": [("ai", msg)]
         }
         
