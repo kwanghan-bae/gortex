@@ -11,14 +11,14 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.11.8 (2025-12-22)
+- **Model Intelligence**: `Multi-Model Strategy Selection` 구축. 에이전트 평판 등급에 따라 `Gemini-Pro`(다이아몬드)부터 `Ollama`(브론즈 미만)까지 최적의 모델을 차등 할당.
+- **Resource Management**: 작업의 성격과 에이전트 숙련도를 결합하여 비용 대비 효율을 극대화하는 지능형 라우팅 구현.
+
 ### v2.11.7 (2025-12-22)
 - **Purification**: Web UI 관련 모든 기능 및 파일 전수 폐기. `three_js_bridge.py`, `web_server.py` 등을 제거하고 TUI(`rich`) 전용 대시보드로 시스템 경량화 및 최적화.
 - **Interface**: `Real-time Reputation Dashboard` 안착. 사이드바에 에이전트별 평판 등급(`Bronze`~`Diamond`) 및 실시간 리더보드 시각화 연동.
 - **Policy**: `RULES.md`에 Web UI 개발 금지 및 TUI 집중 원칙 명문화.
-
-### v2.11.6 (2025-12-22)
-- **Economy**: `Cross-Agent Reputation System` 도입. 에이전트 간 상호 평가를 통해 포인트와 등급을 관리하는 내부 경제 엔진 구축.
-- **QA**: `ReflectionAnalyst`에 LLM 기반 작업 품질 평가(`evaluate_work_quality`) 기능 탑재.
 
 ### v2.11.2 (2025-12-22)
 - **Infrastructure**: `ReflectionAnalyst`에 자가 치유 문서 시스템(`Self-Healing Documentation`) 탑재. 코드와 문서 간의 불일치(Drift)를 AI가 감지하고 자동 치유 가능.

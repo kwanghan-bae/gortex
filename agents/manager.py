@@ -141,8 +141,20 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
             res_data = json.loads(response_text)
         
         target_node = res_data.get("next_node", "__end__")
+        
+        # [Intelligent Model Allocation] 에이전트 등급별 모델 할당
+        agent_eco = state.get("agent_economy", {})
+        target_grade = agent_eco.get(target_node, {}).get("level", "Bronze")
+        
+        # 평판 기반 모델 결정
+        final_assigned_model = LLMFactory.get_model_for_grade(target_grade)
+        
+        # 특정 작업(진화 등)이나 과거 성과가 좋은 모델이 있다면 우선순위 부여
         expert_model = monitor.get_best_model_for_task(target_node)
-        final_assigned_model = expert_model if expert_model and expert_model.startswith("gemini") else "gemini-1.5-flash"
+        if expert_model and expert_model.startswith("gemini"):
+            # 전문가 모델이 존재하고 등급이 충분하다면 교체 (최소 Silver 이상)
+            if target_grade in ["Silver", "Gold", "Diamond"]:
+                final_assigned_model = expert_model
 
         # [Council Mode Trigger]
         is_council_needed = target_node == "evolution" or any(k in res_data.get("thought", "").lower() for k in ["risk", "danger", "critical"])

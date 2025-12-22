@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from typing import Dict, Any, List, Optional
 from gortex.core.state import GortexState
 
@@ -35,9 +36,19 @@ class EconomyManager:
         
         # 레벨 업 로직 (단순화)
         points = economy[agent_name]["points"]
-        if points > 2000: economy[agent_name]["level"] = "Diamond"
-        elif points > 1000: economy[agent_name]["level"] = "Gold"
-        elif points > 500: economy[agent_name]["level"] = "Silver"
+        old_level = economy[agent_name]["level"]
+        new_level = old_level
+        
+        if points > 2000: new_level = "Diamond"
+        elif points > 1000: new_level = "Gold"
+        elif points > 500: new_level = "Silver"
+        
+        if new_level != old_level:
+            economy[agent_name]["level"] = new_level
+            achievement = f"🌟 Agent {agent_name} promoted to {new_level}!"
+            if "achievements" not in state: state["achievements"] = []
+            state["achievements"].append({"time": datetime.now().strftime("%H:%M:%S"), "text": achievement})
+            logger.info(f"🏆 ACHIEVEMENT UNLOCKED: {achievement}")
         
         logger.info(f"💰 Agent {agent_name} rewarded {reward} points. (Total: {points})")
         return reward

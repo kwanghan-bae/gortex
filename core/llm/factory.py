@@ -44,6 +44,17 @@ class LLMFactory:
     _instances = {}
 
     @staticmethod
+    def get_model_for_grade(grade: str) -> str:
+        """에이전트 등급에 최적화된 모델 할당"""
+        grade_map = {
+            "Diamond": "gemini-2.0-flash", # 최고 존엄
+            "Gold": "gemini-pro-latest",   # 고수준 분석
+            "Silver": "gemini-1.5-flash",  # 표준 실행
+            "Bronze": "gemini-2.5-flash-lite" # 경량 보조
+        }
+        return grade_map.get(grade, "ollama/llama3") # 기본/초보자는 로컬 모델
+
+    @staticmethod
     def get_backend(backend_type: Literal["gemini", "ollama", "hybrid"] = "hybrid") -> LLMBackend:
         """
         요청된 타입에 맞는 싱글톤 백엔드 인스턴스를 반환한다.
