@@ -1,27 +1,27 @@
 # Next Session
 
 ## Session Goal
-- **Dynamic Context Pruning**: 대화가 길어질 때 핵심 컨텍스트는 유지하면서 불필요한 메시지를 지능적으로 삭제하거나 요약하여, 모델의 인지 효율을 극대화하고 토큰 비용을 절감한다.
+- **Autonomous Task Prioritization**: 시스템 리소스(에너지, 토큰 예산) 상황에 따라 플래너가 수립한 작업의 우선순위를 동적으로 평가하고, 저가치 작업을 자동으로 연기하거나 생략하는 의사결정 지능을 구현한다.
 
 ## Context
-- `Session 0085`에서 로컬 모델 폴백을 구축했으나, 로컬 모델은 클라우드 모델보다 컨텍스트 크기에 더 민감함.
-- 현재 메시지가 무한정 쌓이는 구조는 성능 저하와 비용 증가를 초래함.
-- `GortexState`의 `history_summary` 필드를 적극 활용하여 과거 대화를 압축할 필요가 있음.
+- 현재 플래너는 모든 작업을 동일한 비중으로 처리하려 함.
+- 에너지가 낮거나 API 비용이 임계치에 도달했을 때, 핵심 기능 구현에만 집중하고 '문서 정리'나 '부가 기능'은 뒤로 미룰 수 있어야 함.
+- 에이전트 경제 시스템(`agent_economy`)과의 연동이 필요함.
 
 ## Scope
 ### Do
-- `utils/memory.py`: 메시지 중요도 평가 및 가지치기(Pruning) 알고리즘 구현.
-- `core/llm/summarizer.py` (New): 하위 호환성을 유지하며 대화 이력을 요약하는 전용 모듈 신설.
-- `core/graph.py`: 매 노드 실행 후 컨텍스트 크기를 체크하고 필요시 요약을 트리거하는 로직 연동.
+- `agents/planner.py`: 작업별 '가치 점수(Value Score)' 부여 로직 추가.
+- `agents/manager.py`: 현재 리소스 상태를 기반으로 플랜을 재구성(Pruning Tasks)하는 필터링 로직 구현.
+- `core/state.py`: `GortexState`에 작업 우선순위 관련 메타데이터 필드 추가 고려.
 
 ### Do NOT
-- 사용자가 명시적으로 `pinned_messages`에 넣은 내용은 절대 삭제하지 않음.
+- 사용자의 명시적 요청 작업은 절대 생략하지 않음 (자동 생성된 부가 작업만 대상).
 
 ## Expected Outputs
-- `utils/memory.py` (Update)
-- `core/llm/summarizer.py` (New)
-- `tests/test_context_pruning.py` (New)
+- `agents/planner.py` (Update)
+- `agents/manager.py` (Update)
+- `tests/test_task_prioritization.py` (New)
 
 ## Completion Criteria
-- 메시지가 20개 이상 쌓였을 때, 자동으로 상위 10개를 요약본으로 변환하고 전체 메시지 수를 절반 이하로 줄여야 함.
-- `docs/sessions/session_0086.md` 기록.
+- 에너지가 20 이하일 때, '문서 생성' 작업이 플랜에서 자동으로 제외되는지 검증.
+- `docs/sessions/session_0087.md` 기록.

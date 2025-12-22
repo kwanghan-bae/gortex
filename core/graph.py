@@ -25,7 +25,13 @@ def route_manager(state: GortexState) -> Literal["summarizer", "planner", "resea
     messages = state.get("messages", [])
     total_tokens = sum(count_tokens(m.content if hasattr(m, 'content') else str(m)) for m in messages)
     
-    if len(messages) >= 12 or total_tokens >= 5000:
+    # [Dynamic Threshold] 백엔드 타입에 따른 동적 임계값 적용
+    backend_type = os.getenv("LLM_BACKEND", "hybrid").lower()
+    msg_threshold = 8 if backend_type == "ollama" else 15
+    token_threshold = 3000 if backend_type == "ollama" else 10000
+    
+    if len(messages) >= msg_threshold or total_tokens >= token_threshold:
+        logger.info(f"Triggering summarizer (Messages: {len(messages)}, Tokens: {total_tokens})")
         return "summarizer"
         
     return "evolution" if next_node == "evolution" else next_node
