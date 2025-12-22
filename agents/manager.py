@@ -3,8 +3,6 @@ import json
 import os
 import time
 from typing import Dict, List, Any
-from google.genai import types
-from gortex.core.auth import GortexAuth
 from gortex.core.state import GortexState
 from gortex.core.llm.factory import LLMFactory
 from gortex.core.evolutionary_memory import EvolutionaryMemory
@@ -12,20 +10,19 @@ from gortex.utils.log_vectorizer import SemanticLogSearch
 from gortex.utils.translator import SynapticTranslator
 from gortex.utils.vector_store import LongTermMemory
 from gortex.utils.efficiency_monitor import EfficiencyMonitor
+from gortex.core.registry import registry
 
 logger = logging.getLogger("GortexManager")
 
 def manager_node(state: GortexState) -> Dict[str, Any]:
     """
     Gortex 시스템의 중앙 관제소(Manager) 노드.
-    사용자의 의도를 분석하고 적절한 에이전트로 라우팅합니다.
-    (Ollama/Gemini 하이브리드 지원)
+    사용자의 의도를 분석하고 레지스트리를 조회하여 가장 적합한 에이전트로 라우팅합니다.
     """
     backend = LLMFactory.get_default_backend()
     log_search = SemanticLogSearch()
     translator = SynapticTranslator()
     ltm = LongTermMemory()
-    evo_mem = EvolutionaryMemory()
     monitor = EfficiencyMonitor()
     start_time = time.time()
     
@@ -39,157 +36,90 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     call_count = state.get("api_call_count", 0)
     roadmap = state.get("evolution_roadmap", [])
 
-    # [Persona Lab]
-    recommended_personas = ["Innovation", "Stability"]
-    virtual_persona_instruction = ""
-    
-    # 특수 상황 감지: 보안 위반 또는 대규모 리팩토링 필요 시
-    is_critical_security = any(k in internal_input.lower() for k in ["보안", "security", "취약점", "auth"])
-    major_roadmap = [r for r in roadmap if r.get("priority") == "High"]
-    
-    if is_critical_security:
-        recommended_personas = ["Security Expert"]
-        virtual_persona_instruction = "너는 지금부터 'Gortex Security Sentinel'이다. 모든 아키텍처 변경을 보안적 관점에서 검열하고, 최소 권한 원칙을 강제하라."
-    elif major_roadmap:
-        recommended_personas = ["Innovation"]
-        virtual_persona_instruction = f"너는 지금부터 'Evolution Architect'이다. 로드맵의 {major_roadmap[0]['target']} 진화를 최우선으로 고려하여 과감한 구조 개선을 설계하라."
-    
-    persona_context = f"선택 가능 페르소나: {', '.join(recommended_personas)}"
-    if virtual_persona_instruction:
-        persona_context += f"\n[VIRTUAL PERSONA OVERRIDE] {virtual_persona_instruction}"
-    
-    # 2. 장기 기억 및 과거 사례 검색
+    # 2. 맥락 정보 수집 (장기 기억, 과거 사례, 가용 에이전트)
     namespace = os.path.basename(state.get("working_dir", "global"))
     recalled_items = ltm.recall(internal_input, namespace=namespace)
-    ltm_context = "\n".join([f"- {item['content']}" for item in recalled_items]) if recalled_items else ""
+    ltm_context = "\n".join([f"- {item['content']}" for item in recalled_items])
     
     past_cases = log_search.search_similar_cases(internal_input)
-    case_context = "\n".join([f"Case: {c.get('agent')} - {c.get('event')}" for c in past_cases]) if past_cases else ""
+    case_context = "\n".join([f"Case: {c.get('agent')} - {c.get('event')}" for c in past_cases])
+    
+    available_agents = "\n".join([f"- {name}: {registry.get_metadata(name).description} (Tools: {registry.get_metadata(name).tools})" for name in registry.list_agents()])
 
     # 3. 시스템 프롬프트 구성
-    roadmap_context = "\n".join([f"- {r['target']} ({r['suggested_tech']}) [Priority: {r['priority']}]" for r in roadmap]) if roadmap else ""
-    
     from gortex.utils.prompt_loader import loader
     base_instruction = loader.get_prompt(
         "manager", 
         persona_id=state.get("assigned_persona", "standard"),
         ltm_context=ltm_context, 
         case_context=case_context, 
-        macro_context=f"\n[CURRENT EVOLUTION ROADMAP]\n{roadmap_context}",
-        persona_context=persona_context,
+        persona_context=f"[AVAILABLE AGENTS]\n{available_agents}",
         context_text=internal_input
     )
 
-    # 4. 모델 결정 (Initial Selection for Intent Analysis)
-    scores = monitor.calculate_model_scores()
+    # 4. 모델 결정 (분석용 모델)
     from gortex.core.config import GortexConfig
-    config_obj = GortexConfig()
-    cloud_model = config_obj.get("default_model", "gemini-1.5-flash")
-    local_model = "ollama/llama3"
+    budget_limit = GortexConfig().get("daily_budget", 0.5)
+    daily_cost = monitor.get_daily_cumulative_cost()
+    
+    # 분석은 기본적으로 Flash 사용하되 예산 부족 시 Lite/Ollama
+    model_id = LLMFactory.get_model_for_grade("Silver", daily_cost, budget_limit)
 
-    if energy < 30 or scores.get(local_model, 0) > 70:
-        model_id = local_model
-    elif call_count > 10:
-        model_id = "gemini-2.5-flash-lite"
-    else:
-        model_id = cloud_model
-
-    if any(k in internal_input.lower() for k in ["진화", "evolve", "architecture", "refactor"]):
-        model_id = "gemini-1.5-pro"
-
-    # 5. LLM 호출 준비
+    # 5. LLM 호출
     schema = {
         "type": "OBJECT",
         "properties": {
             "thought": {"type": "STRING"},
             "internal_critique": {"type": "STRING"},
-            "thought_tree": {"type": "ARRAY", "items": {"type": "OBJECT", "properties": {"id": {"type": "STRING"}, "text": {"type": "STRING"}, "type": {"type": "STRING"}, "priority": {"type": "INTEGER"}, "certainty": {"type": "NUMBER"}}, "required": ["id", "text", "type", "priority", "certainty"]}},
-            "next_node": {"type": "STRING"},
+            "thought_tree": {"type": "ARRAY", "items": {"type": "OBJECT", "properties": {"id": {"type": "STRING"}, "text": {"type": "STRING"}, "type": {"type": "STRING"}, "priority": {"type": "INTEGER"}, "certainty": {"type": "NUMBER"}}}},
+            "required_capability": {"type": "STRING"},
             "response_to_user": {"type": "STRING"},
-            "ui_mode": {"type": "STRING"},
-            "assigned_persona": {"type": "STRING"}
+            "ui_mode": {"type": "STRING"}
         },
-        "required": ["thought", "internal_critique", "thought_tree", "next_node"]
+        "required": ["thought", "required_capability"]
     }
 
     config = {"temperature": 0.0}
-    if backend.supports_structured_output():
-        config = types.GenerateContentConfig(system_instruction=base_instruction, temperature=0.0, response_mime_type="application/json", response_schema=schema)
-
     formatted_messages = [{"role": "system", "content": base_instruction}]
     for m in state["messages"]:
         role = m[0] if isinstance(m, tuple) else "user"
         content = m[1] if isinstance(m, tuple) else (m.content if hasattr(m, 'content') else str(m))
         formatted_messages.append({"role": role, "content": content})
 
-    # 6. LLM 호출 및 결과 처리
-    success = False
-    tokens = 0
-    target_node = "__end__"
-    res_data = {}
-    
     try:
         response_text = backend.generate(model=model_id, messages=formatted_messages, config=config)
-        success = True
-        tokens = len(base_instruction) // 4 + len(response_text) // 4
-        
         import re
         json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
-        if json_match:
-            res_data = json.loads(json_match.group(0))
+        res_data = json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+        
+        # 6. 동적 에이전트 탐색 (Capability Discovery)
+        req_cap = res_data.get("required_capability", "").lower()
+        candidates = registry.get_agents_by_tool(req_cap) or registry.get_agents_by_role(req_cap)
+        
+        if candidates:
+            agent_eco = state.get("agent_economy", {})
+            candidates.sort(key=lambda x: agent_eco.get(x, {}).get("points", 0), reverse=True)
+            target_node = candidates[0]
         else:
-            res_data = json.loads(response_text)
-        
-        target_node = res_data.get("next_node", "__end__")
-        
-        # [Intelligent Model Allocation] 에이전트 등급 및 예산 기반 모델 할당
-        agent_eco = state.get("agent_economy", {})
-        target_grade = agent_eco.get(target_node, {}).get("level", "Bronze")
-        
-        # 일일 누적 비용 및 예산 한도 확인
-        daily_cost = monitor.get_daily_cumulative_cost()
-        from gortex.core.config import GortexConfig
-        budget_limit = GortexConfig().get("daily_budget", 0.5)
-        
-        final_assigned_model = LLMFactory.get_model_for_grade(
-            target_grade, 
-            daily_cost=daily_cost, 
-            budget_limit=budget_limit
-        )
-        
-        # 특정 작업(진화 등)이나 과거 성과가 좋은 모델이 있다면 우선순위 부여
-        expert_model = monitor.get_best_model_for_task(target_node)
-        if expert_model and expert_model.startswith("gemini"):
-            # 전문가 모델이 존재하고 등급이 충분하다면 교체 (최소 Silver 이상)
-            if target_grade in ["Silver", "Gold", "Diamond"]:
-                final_assigned_model = expert_model
+            target_node = "planner" # 기본값
 
-        # [Council Mode Trigger]
-        is_council_needed = target_node == "evolution" or any(k in res_data.get("thought", "").lower() for k in ["risk", "danger", "critical"])
-        if is_council_needed:
-            target_node = "swarm"
-            logger.info("⚖️ Council Mode Activated")
+        # 7. 타겟 에이전트에 최적화된 모델 할당
+        target_grade = state.get("agent_economy", {}).get(target_node, {}).get("level", "Bronze")
+        final_assigned_model = LLMFactory.get_model_for_grade(target_grade, daily_cost, budget_limit)
 
         latency_ms = int((time.time() - start_time) * 1000)
-        monitor.record_interaction("manager", model_id, success, tokens, latency_ms, metadata={"next_node": target_node})
+        monitor.record_interaction("manager", model_id, True, len(response_text)//4, latency_ms)
 
-        updates = {
+        return {
             "thought": res_data.get("thought"),
-            "internal_critique": res_data.get("internal_critique"),
             "thought_tree": res_data.get("thought_tree"),
             "next_node": target_node,
             "assigned_model": final_assigned_model,
             "agent_energy": max(0, energy - 5),
-            "ui_mode": res_data.get("ui_mode", "standard"),
-            "assigned_persona": res_data.get("assigned_persona", "standard"),
-            "handoff_instruction": "" # Manager resets handoff
+            "handoff_instruction": "",
+            "messages": [("ai", res_data.get("response_to_user", "분석을 완료했습니다."))] if res_data.get("response_to_user") else []
         }
-        
-        if res_data.get("response_to_user"):
-            updates["messages"] = [("ai", res_data["response_to_user"])]
-            
-        return updates
 
     except Exception as e:
-        logger.error(f"Error in manager node: {e}")
-        return {"next_node": "__end__", "messages": [("ai", f"❌ 분석 실패: {e}")]}
+        logger.error(f"Manager failed: {e}")
+        return {"next_node": "__end__", "messages": [("ai", f"❌ 분석 오류: {e}")]}

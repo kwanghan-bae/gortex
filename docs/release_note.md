@@ -11,13 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.13.3 (2025-12-23)
+- **Orchestration**: `Dynamic Capability Discovery` 구현. 하드코딩된 노드 이름을 제거하고, 사용자 의도에 필요한 '도구'와 '역할'을 기반으로 레지스트리에서 에이전트를 자율 탐색.
+- **Selection Strategy**: 동일 능력 후보군 중 평판 점수가 가장 높은 에이전트를 선발하는 경쟁형 할당 로직 안착.
+- **Integration**: 일일 예산 관리 시스템과 평판 기반 모델 할당 로직을 `Manager` 노드에 통합 완료.
+
 ### v2.13.2 (2025-12-23)
 - **Migration**: 핵심 에이전트 3종(`Planner`, `Coder`, `Analyst`)의 v3.0 표준 마이그레이션 완료. 클래스 기반 구조로 전면 리팩토링 및 중앙 레지스트리 공식 등록.
-- **Modularity**: 에이전트 간 결합도를 낮추고 자가 기술 메타데이터를 활용한 동적 협업 기반 마련.
-
-### v2.13.1 (2025-12-23)
-- **Architecture**: `Gortex v3.0` 설계 및 기초 구현. 중앙 레지스트리(`AgentRegistry`) 기반의 플러그인 아키텍처 도입.
-- **Modularity**: 모든 에이전트의 표준 인터페이스인 `BaseAgent` 추상 클래스 신설 및 에이전트 메타데이터 정형화.
 
 ### v2.11.9 (2025-12-22)
 - **Self-Healing**: `Automated Bug Patching Loop` 구현. 시스템 에러 로그를 분석하여 원인을 특정하고, 코드 수정 후 무결성을 검증하는 자율 수리 프로세스 안착.

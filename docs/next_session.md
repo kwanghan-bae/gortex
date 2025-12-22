@@ -1,27 +1,28 @@
 # Next Session
 
 ## Session Goal
-- **Dynamic Agent Orchestration & Capability Discovery**: `Manager`가 하드코딩된 에이전트 목록이 아닌, `AgentRegistry`를 실시간 조회하여 사용자 요청(또는 작업 단계)을 처리하기 위해 가장 적합한 도구와 역할을 가진 에이전트를 자율적으로 탐색하고 선택하는 로직을 구현한다.
+- **v3.0 Interactive Dashboard Upgrade**: `AgentRegistry`에 등록된 에이전트 목록과 그들이 제공하는 기능(Capabilities)을 TUI 대시보드에 시각화하고, 명령어를 통해 실시간으로 레지스트리 상태를 확인할 수 있도록 고도화한다.
 
 ## Context
-- 102세션을 통해 핵심 에이전트들이 레지스트리에 등록됨.
-- 현재 `Manager`는 여전히 "다음은 coder야"라고 하드코딩된 이름을 리턴하고 있음.
-- v3.0의 진정한 가치는 "이 작업에는 A 도구가 필요한데, 누가 쓸 줄 알아?"라고 물으면 레지스트리가 "Planner가 그 도구를 갖고 있어"라고 대답해주는 동적 매칭에 있음.
+- v3.0 아키텍처 도입으로 에이전트가 동적으로 관리되기 시작함.
+- 현재 대시보드는 하드코딩된 에이전트들만 인지하고 있어, 새롭게 등록된 에이전트(예: `Deployer`)를 보여주지 못함.
+- 시스템의 '확장성'을 사용자에게 시각적으로 전달하여 v3.0의 정체성을 강화함.
 
 ## Scope
 ### Do
-- `core/registry.py`: `get_agents_by_role(role)` 및 `get_agents_by_tool(tool)` 유틸리티 메서드 추가.
-- `agents/manager.py`: 의도 분석 결과 도출 시, 필요한 '능력(Capability)'을 추출하고 레지스트리에서 에이전트를 조회하여 `next_node`를 결정하는 로직 도입.
-- `agents/manager.py`: 여러 후보 에이전트가 있을 경우 평판 점수(`agent_economy`)가 가장 높은 에이전트를 우선 선택.
+- `ui/dashboard.py`: 사이드바 하단에 `Registry` 패널을 추가하여 현재 등록된 모든 에이전트와 그들의 역할을 리스트업.
+- `ui/dashboard.py`: `update_sidebar`에서 `current_agent`뿐만 아니라 해당 에이전트가 현재 사용 중인 '능력(Capability)'을 강조 표시.
+- `core/commands.py`: `/agents` 명령어를 추가하여 레지스트리에 등록된 에이전트들의 상세 메타데이터(버전, 도구 등)를 출력.
 
 ### Do NOT
-- 모든 라우팅을 한 번에 동적화하지 않음 (단계적 전환).
+- 대시보드의 전체 레이아웃을 크게 바꾸지 않음 (기존 사이드바 활용).
 
 ## Expected Outputs
-- `core/registry.py` (Extended)
-- `agents/manager.py` (Refined with discovery logic)
-- `tests/test_dynamic_orchestration.py` (New)
+- `ui/dashboard.py` (Registry Visualization)
+- `core/commands.py` (New /agents command)
+- `tests/test_dashboard_v3.py` (New)
 
 ## Completion Criteria
-- 새로운 에이전트(예: `CloudDeployer`)를 레지스트리에 등록만 해도, `Manager`가 관련 요청 시 해당 에이전트를 `next_node`로 지목해야 함.
-- `docs/sessions/session_0103.md` 기록.
+- 새로운 에이전트를 등록했을 때, 별도의 코드 수정 없이 대시보드 리스트에 즉시 나타나야 함.
+- `/agents` 명령 시 모든 등록된 에이전트의 메타데이터가 표(Table) 형식으로 예쁘게 출력되어야 함.
+- `docs/sessions/session_0104.md` 기록.

@@ -41,6 +41,14 @@ class AgentRegistry:
         """에이전트 메타데이터 조회"""
         return self._agents.get(agent_name.lower(), {}).get("metadata")
 
+    def get_agents_by_role(self, role: str) -> List[str]:
+        """특정 역할을 수행할 수 있는 모든 에이전트 목록 반환"""
+        return [name for name, info in self._agents.items() if info["metadata"].role.lower() == role.lower()]
+
+    def get_agents_by_tool(self, tool_name: str) -> List[str]:
+        """특정 도구를 사용할 수 있는 모든 에이전트 목록 반환 (discover_capability 별칭)"""
+        return self.discover_capability(tool_name)
+
     def list_agents(self) -> List[str]:
         """등록된 모든 에이전트 목록 반환"""
         return list(self._agents.keys())
