@@ -11,13 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.14.0 (2025-12-23)
+- **Observability**: `Agent Collaboration Heatmap` 탑재. 에이전트 간 호출 빈도와 상호작용 강도를 매트릭스 형태로 대시보드에 실시간 시각화.
+- **Trace Analysis**: 인과 관계 기반의 협업 데이터 집계 엔진(`get_collaboration_matrix`) 구축.
+- **Dashboard**: 사이드바 레이아웃 최적화 및 새로운 협업 통계 패널 안착.
+
 ### v2.13.9 (2025-12-23)
 - **Interface**: `Real-time System Energy Visualizer` 탑재. 대시보드 최상단에 고해상도 그래픽 게이지 패널을 배치하여 에너지 상태를 실시간 시각화.
-- **Monitoring**: 에너지 수준에 따른 동적 색상 변화(Green/Yellow/Red) 및 충전/방전 상태 아이콘 피드백 연동.
-- **Infrastructure**: 대시보드 레이아웃 개편을 통한 핵심 지표 가독성 강화.
-
-### v2.13.8 (2025-12-23)
-- **Foresight**: `Predictive Performance Guardrails` 시스템 구축. 과거 작업 통계를 기반으로 실행 전 예상 비용과 시간을 예측하여 고부하 작업에 대한 선제적 경고 수행.
 
 ### v2.13.2 (2025-12-23)
 - **Migration**: 핵심 에이전트 3종(`Planner`, `Coder`, `Analyst`)의 v3.0 표준 마이그레이션 완료. 클래스 기반 구조로 전면 리팩토링 및 중앙 레지스트리 공식 등록.

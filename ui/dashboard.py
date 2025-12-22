@@ -51,14 +51,16 @@ def create_layout() -> Layout:
         Layout(name="stats", size=12),
         Layout(name="economy", size=10),
         Layout(name="registry", size=8),
-        Layout(name="evolution", size=8),
-        Layout(name="debt", size=10),
+        Layout(name="collab", size=8), # [NEW] Collaboration Heatmap
+        Layout(name="evolution", size=6),
+        Layout(name="debt", size=8),
         Layout(name="logs")
     )
     return layout
 
 class DashboardUI:
     def __init__(self, console: Console):
+        # ... (기존 초기화 코드 유지)
         self.console = console
         self.assets = SynapticAssetManager()
         self.theme = ThemeManager()
@@ -84,6 +86,7 @@ class DashboardUI:
         self.active_debate = []
         self.knowledge_lineage = []
         self.suggested_actions = []
+        self.collab_matrix = {} # [NEW] 협업 통계 데이터
         
         self.progress = Progress(
             SpinnerColumn(),
@@ -117,8 +120,38 @@ class DashboardUI:
             "optimizer": "runner"
         }
         
-        # 초기 에너지 비주얼라이저 렌더링
+        # 초기 렌더링
         self.update_energy_visualizer(100)
+        self.update_collaboration_heatmap({})
+
+    def update_collaboration_heatmap(self, matrix: Dict[str, Dict[str, int]]):
+        """에이전트 간 협업 히트맵을 매트릭스 형태로 시각화"""
+        self.collab_matrix = matrix
+        if not matrix:
+            self.layout["collab"].update(Panel("No interactions yet.", title="🌡️ COLLAB HEATMAP", border_style="dim"))
+            return
+
+        # 모든 에이전트 목록 추출 (가로/세로축)
+        agents = sorted(list(set(matrix.keys()) | set([callee for callers in matrix.values() for callee in callers])))
+        
+        table = Table(box=None, padding=(0, 0), show_header=True, header_style="bold dim")
+        table.add_column("Agent", style="bold cyan", width=8)
+        for a in agents:
+            table.add_column(a[0].upper(), justify="center") # 이니셜만 표시
+
+        for caller in agents:
+            row = [caller[:8]]
+            for callee in agents:
+                count = matrix.get(caller, {}).get(callee, 0)
+                if count == 0:
+                    row.append("[dim]·[/]")
+                else:
+                    # 빈도에 따른 색상 농도 조절
+                    intensity = "bold white" if count > 5 else ("cyan" if count > 2 else "blue")
+                    row.append(f"[{intensity}]{count}[/]")
+            table.add_row(*row)
+
+        self.layout["collab"].update(Panel(table, title="🌡️ [bold white]COLLAB HEATMAP[/]", border_style="blue"))
 
     def update_energy_visualizer(self, energy: int):
         """상단 헤더에 시스템 에너지 상태를 그래픽으로 렌더링"""

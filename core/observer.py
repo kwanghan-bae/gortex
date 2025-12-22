@@ -80,6 +80,39 @@ class GortexObserver:
             logger.error(f"Failed to trace causal chain: {e}")
             return []
 
+    def get_collaboration_matrix(self, limit: int = 500) -> Dict[str, Dict[str, int]]:
+        """로그를 분석하여 에이전트 간 호출 빈도(Collaboration Matrix) 산출"""
+        if not os.path.exists(self.log_path):
+            return {}
+            
+        try:
+            with open(self.log_path, "r", encoding="utf-8") as f:
+                logs = [json.loads(line) for line in f][-limit:]
+            
+            # ID 기반 검색 맵 (최적화)
+            event_agent_map = {l["id"]: l["agent"] for l in logs if "id" in l}
+            
+            matrix = {} # {caller: {callee: count}}
+            
+            for l in logs:
+                callee = l["agent"]
+                cause_id = l.get("cause_id")
+                
+                if cause_id and cause_id in event_agent_map:
+                    caller = event_agent_map[cause_id]
+                    
+                    # 자기 자신 호출 제외
+                    if caller == callee:
+                        continue
+                        
+                    if caller not in matrix: matrix[caller] = {}
+                    matrix[caller][callee] = matrix[caller].get(callee, 0) + 1
+                    
+            return matrix
+        except Exception as e:
+            logger.error(f"Failed to generate collaboration matrix: {e}")
+            return {}
+
     def get_causal_graph(self, limit: int = 200) -> Dict[str, Any]:
         """전체 로그를 바탕으로 인과 관계 그래프(Nodes/Edges) 생성"""
         if not os.path.exists(self.log_path):

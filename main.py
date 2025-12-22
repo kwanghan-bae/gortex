@@ -159,6 +159,11 @@ async def run_gortex():
                 all_sessions_cache[thread_id] = state_vars["session_cache"]
                 save_sessions_cache(all_sessions_cache)
 
+                # 협업 히트맵 업데이트
+                if observer:
+                    collab_matrix = observer.get_collaboration_matrix()
+                    ui.update_collaboration_heatmap(collab_matrix)
+
                 ui.update_sidebar("Idle", "N/A", state_vars["total_tokens"], state_vars["total_cost"], 0, energy=state_vars["agent_energy"], efficiency=state_vars["last_efficiency"], agent_economy=state_vars.get("agent_economy"), capability="N/A", predicted_usage=state_vars.get("current_predicted_usage"))
 
             except KeyboardInterrupt:

@@ -1,27 +1,28 @@
 # Next Session
 
 ## Session Goal
-- **Agent Collaboration Heatmap**: 에이전트들 간의 데이터 교환, 호출 빈도, 성공적인 협업 횟수를 분석하여 대시보드 내에 히트맵(Heatmap) 또는 관계 매트릭스 형태로 시각화하고, 시스템의 병목 구간이나 가장 활발한 협업 시너지를 파악한다.
+- **Autonomous Log Summarization & Archiving**: 세션이 반복되면서 비대해진 `trace.jsonl` 로그 파일에서 시스템 진화에 기여한 핵심 사건(교훈, 패턴, 주요 오류 해결)만 지능적으로 추출하여 `logs/trace_summary.md`에 보존하고, 원본 로그는 주기적으로 압축 아카이빙하여 시스템 성능을 유지한다.
 
 ## Context
-- v3.0 도입 이후 에이전트들이 동적으로 오케스트레이션되고 있으나, 그들 사이의 '관계'는 여전히 블랙박스 상태임.
-- 어떤 에이전트가 어떤 에이전트와 자주 협력하는지, 그 과정에서 에러가 자주 발생하는지 시각화하여 최적화 근거로 활용함.
+- 현재 로그는 `GortexObserver`에 의해 지속적으로 누적되지만, 데이터 양이 많아질수록 조회 속도가 느려지고 모델의 인지 범위를 초과함.
+- `Analyst`가 정기적으로 로그를 스캔하여 미래에 도움이 될 '압축된 역사'를 남기도록 함.
+- 이는 단순한 백업을 넘어, 시스템의 과거를 자산화하는 과정임.
 
 ## Scope
 ### Do
-- `core/observer.py`: 에이전트 간 'Caller-Callee' 관계 및 성공 여부를 기록하는 `log_collaboration` 메서드 보강.
-- `ui/dashboard.py`: 사이드바 또는 `thought` 패널 하단에 `Collaboration Matrix` 시각화 컴포넌트 추가.
-- `agents/analyst/base.py`: 협업 데이터를 분석하여 비효율적인 연결 고리를 찾는 지능 로직 추가.
+- `agents/analyst/base.py`: 로그 파일을 분석하여 핵심 타임라인과 통찰을 추출하는 `summarize_system_trace` 구현.
+- `core/observer.py`: 로그 아카이빙(ZIP 압축 및 순환)을 담당하는 `archive_and_reset_logs` 메서드 보강.
+- `utils/tools.py`: 로그 요약본을 마크다운 형식으로 미려하게 생성하는 템플릿 지원.
 
 ### Do NOT
-- 외부 그래픽 라이브러리 없이 Rich의 `Table` 및 색상 팔레트만 활용하여 구현.
+- 모든 로그 엔트리를 요약하지 않음 (중요도 점수가 높은 이벤트 위주).
 
 ## Expected Outputs
-- `core/observer.py` (Collaboration Tracking)
-- `ui/dashboard.py` (Heatmap Rendering)
-- `tests/test_collaboration_viz.py` (New)
+- `agents/analyst/base.py` (Trace Summarizer)
+- `logs/trace_summary.md` (New Historical Artifact)
+- `tests/test_log_summarization.py` (New)
 
 ## Completion Criteria
-- Coder가 Analyst에게 리뷰를 맡길 때, 두 에이전트 사이의 연결 강도(Score)가 대시보드 매트릭스에 즉각 반영되어야 함.
-- 협업 횟수가 많을수록 히트맵의 색상이 더 진하게(예: Blue -> Cyan -> White) 표시되어야 함.
-- `docs/sessions/session_0110.md` 기록.
+- `/history` 명령 시, 거대한 원본 로그 대신 정제된 `trace_summary.md`의 내용을 우선적으로 보여주어야 함.
+- 10MB 이상의 로그 파일이 존재할 때, 아카이빙 후 원본 파일 크기가 0으로 리셋되어야 함.
+- `docs/sessions/session_0111.md` 기록.
