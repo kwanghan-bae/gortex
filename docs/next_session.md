@@ -1,27 +1,32 @@
 # Next Session
 
-## 세션 목표
-- **Evolutionary Dataset Curation**: `Analyst`가 성공한 자가 진화 및 리팩토링 사례(Before/After 코드 쌍)를 선별하여 `logs/datasets/evolution.jsonl` 형식으로 큐레이션하고, 이를 미래의 모델 미세 조정(Fine-tuning) 데이터로 활용할 수 있도록 정비한다.
-- **TUI Health Score Visualization**: Rich 라이브러리를 활용하여, 터미널 대시보드 우측 하단에 최근 10세션의 `Health Score` 추이를 보여주는 스파크라인(Sparkline) 또는 소형 그래프를 구현한다.
+## Session Goal
+- **Local LLM Fine-Tuning Pipeline**: 구축된 진화 데이터(`evolution.jsonl`)를 기반으로 로컬 모델(Ollama/Llama-3 등)을 미세 조정(Fine-tuning)하기 위한 **전처리 및 설정 자동화 파이프라인**을 구축한다.
 
-## 컨텍스트
-- 시스템이 이제 '검증된 진화'를 수행하므로, 이 성공 사례들은 시스템의 소중한 자산입니다.
-- 건강도 점수를 단순 텍스트가 아닌 '흐름'으로 보여줌으로써 진화의 방향성을 시각적으로 즉시 파악할 수 있게 합니다.
+## Context
+- `logs/datasets/evolution.jsonl`에 양질의 자가 교정 데이터가 쌓이고 있음.
+- 이를 실제 모델 학습에 활용하려면 '데이터 검증 -> 포맷 변환(Alpaca/ShareGPT) -> LoRA 설정 -> 학습 잡 패키징'의 과정이 자동화되어야 함.
+- 직접적인 GPU 학습은 환경에 따라 불가능할 수 있으므로, **"Ready-to-Train"** 상태로 패키징하는 것이 목표임.
 
-## 범위 (Scope)
-### 수행할 작업 (Do)
-- `agents/analyst/base.py`: 성공적인 진화 사례를 구조화하여 저장하는 `curate_evolution_data` 메서드 추가.
-- `ui/dashboard.py`: 건강도 히스토리 데이터를 시각화하는 `render_health_chart` 로직 보강.
-- `utils/efficiency_monitor.py`: 세션별 건강도 점수를 영구 기록하는 필드 추가.
+## Scope
+### Do
+- `agents/evolution_node.py`: `prepare_fine_tuning_job` 메서드 구현.
+    - 데이터 유효성 검사 (JSONL 파싱 확인).
+    - 학습용 프롬프트 포맷 변환 (System/User/Assistant).
+    - `training_jobs/job_{TIMESTAMP}/` 디렉토리 생성 및 데이터 이동.
+- `config/training.yaml`: LoRA Rank, Epoch, Learning Rate 등 학습 하이퍼파라미터 템플릿 정의.
+- `scripts/prepare_training.sh`: 파이썬 스크립트를 호출하여 가장 최신 데이터를 패키징하는 셸 유틸리티.
 
-### 수행하지 않을 작업 (Do NOT)
-- 단순 버그 수정이나 사소한 변경 사항까지 데이터셋에 포함하여 노이즈를 늘리지 않는다.
+### Do NOT
+- 실제 GPU 학습(Train Loop)을 이 세션에서 강제로 실행하지 않는다. (리소스 과부하 방지)
+- 외부 클라우드(Colab 등) 연동까지 고려하지 않는다. (로컬 우선)
 
-## 기대 결과
-- 자가 진화 데이터를 스스로 자산화하는 '학습하는 시스템'으로 진화.
-- 아키텍처 건강 상태를 직관적으로 관측할 수 있는 고성능 TUI 대시보드 완성.
+## Expected Outputs
+- `agents/evolution_node.py` (Update)
+- `config/training.yaml` (New)
+- `scripts/prepare_training.sh` (New)
+- `training_jobs/` (New Directory Structure)
 
-## 완료 기준
-- `evolution.jsonl` 파일에 정제된 데이터가 누적되는지 확인.
-- TUI 화면에 건강도 추이 그래프가 정상적으로 렌더링되는지 검증.
-- `docs/sessions/session_0079.md` 기록.
+## Completion Criteria
+- `evolution.jsonl` 파일이 존재할 때, `scripts/prepare_training.sh`를 실행하면 `training_jobs/` 하위에 설정 파일(`config.yaml`)과 데이터(`dataset.json`)가 생성되어야 한다.
+- `docs/sessions/session_0080.md` 기록.
