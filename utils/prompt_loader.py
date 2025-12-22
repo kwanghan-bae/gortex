@@ -46,6 +46,10 @@ class PromptLoader:
                     logger.error(f"Failed to load prompt file {file}: {e}")
         return all_templates
 
+    def get(self, key: str, default: str = "") -> str:
+        """YAML 템플릿 값 직접 조회 (단순 문자열 반환)"""
+        return self.templates.get(key, default)
+
     def get_prompt(self, agent_id: str, persona_id: str = None, context_text: str = "", **kwargs) -> str:
         """지정된 에이전트의 프롬프트를 가져오고 페르소나 및 동적 규칙 주입"""
         template = self.templates.get(agent_id, {}).get("instruction", "")
