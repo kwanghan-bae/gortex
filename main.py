@@ -51,7 +51,8 @@ async def energy_recovery_loop(state_vars: dict, ui: DashboardUI):
             if ui.current_agent == "Idle":
                 ui.update_sidebar("Idle", "Recovering...", state_vars["total_tokens"], state_vars["total_cost"], 0, 
                                   energy=state_vars["agent_energy"], efficiency=state_vars["last_efficiency"], 
-                                  agent_economy=state_vars.get("agent_economy"), capability="N/A")
+                                  agent_economy=state_vars.get("agent_economy"), capability="N/A",
+                                  predicted_usage=state_vars.get("current_predicted_usage"))
 
 async def run_gortex():
     theme_manager = ThemeManager()
@@ -78,7 +79,8 @@ async def run_gortex():
         "pinned_messages": [],
         "last_event_id": None,
         "last_question": None,
-        "agent_economy": {} # 초기 경제 데이터 빈값 설정
+        "agent_economy": {},
+        "current_predicted_usage": None # [NEW] 현재 계획의 예측 리소스 데이터
     }
     
     working_dir = os.getenv("WORKING_DIR", "./workspace")
@@ -127,6 +129,10 @@ async def run_gortex():
                         state_vars["total_tokens"] += node_tokens
                         state_vars["total_cost"] += estimate_cost(node_tokens)
                         
+                        # [PREDICTION] 예측 데이터 캡처 (Planner 결과물)
+                        if "predicted_usage" in output:
+                            state_vars["current_predicted_usage"] = output["predicted_usage"]
+
                         # 질문 캡처 (다음 턴 대화형 학습용)
                         if node_name == "manager" and output.get("question_to_user"):
                             state_vars["last_question"] = output["question_to_user"]
@@ -141,14 +147,15 @@ async def run_gortex():
                             energy=state_vars["agent_energy"], 
                             efficiency=state_vars["last_efficiency"], 
                             agent_economy=state_vars.get("agent_economy"),
-                            capability=output.get("required_capability", "N/A")
+                            capability=output.get("required_capability", "N/A"),
+                            predicted_usage=state_vars.get("current_predicted_usage")
                         )
 
                 # 매 턴 종료 후 세션 캐시 영속화
                 all_sessions_cache[thread_id] = state_vars["session_cache"]
                 save_sessions_cache(all_sessions_cache)
 
-                ui.update_sidebar("Idle", "N/A", state_vars["total_tokens"], state_vars["total_cost"], 0, energy=state_vars["agent_energy"], efficiency=state_vars["last_efficiency"], agent_economy=state_vars.get("agent_economy"), capability="N/A")
+                ui.update_sidebar("Idle", "N/A", state_vars["total_tokens"], state_vars["total_cost"], 0, energy=state_vars["agent_energy"], efficiency=state_vars["last_efficiency"], agent_economy=state_vars.get("agent_economy"), capability="N/A", predicted_usage=state_vars.get("current_predicted_usage"))
 
             except KeyboardInterrupt:
                 break

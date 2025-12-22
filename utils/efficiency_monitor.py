@@ -211,6 +211,35 @@ class EfficiencyMonitor:
             metadata={"type": "immediate_feedback"}
         )
 
+    def predict_resource_usage(self, agent_name: str) -> Dict[str, Any]:
+        """과거 데이터를 기반으로 특정 에이전트의 예상 리소스 사용량 산출"""
+        if not os.path.exists(self.stats_path):
+            return {"avg_tokens": 1000, "avg_latency_ms": 5000} # 기본값
+
+        total_tokens = 0
+        total_latency = 0
+        count = 0
+        
+        try:
+            with open(self.stats_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    data = json.loads(line)
+                    if data.get("agent") == agent_name and data.get("success"):
+                        total_tokens += data.get("tokens", 0)
+                        total_latency += data.get("latency_ms", 0)
+                        count += 1
+            
+            if count > 0:
+                return {
+                    "avg_tokens": int(total_tokens / count),
+                    "avg_latency_ms": int(total_latency / count),
+                    "data_points": count
+                }
+        except Exception as e:
+            logger.error(f"Prediction calculation failed: {e}")
+            
+        return {"avg_tokens": 1000, "avg_latency_ms": 5000}
+
     def record_session_health(self, score: float, session_id: str = None):
         """Records the session health score."""
         data = {

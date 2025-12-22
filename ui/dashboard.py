@@ -304,8 +304,8 @@ class DashboardUI:
             
         self.layout["registry"].update(Panel(table, title="🔌 [bold cyan]AGENT REGISTRY[/]", border_style="cyan"))
 
-    def update_sidebar(self, agent: str = "Idle", step: str = "N/A", tokens: int = 0, cost: float = 0.0, rules: int = 0, provider: str = "GEMINI", call_count: int = 0, avg_latency: int = 0, energy: int = 100, efficiency: float = 100.0, knowledge_lineage: list = None, suggested_actions: list = None, agent_economy: dict = None, capability: str = "N/A"):
-        """사이드바 정보 업데이트 (에이전트, 성능, 경제, 레지스트리 시각화)"""
+    def update_sidebar(self, agent: str = "Idle", step: str = "N/A", tokens: int = 0, cost: float = 0.0, rules: int = 0, provider: str = "GEMINI", call_count: int = 0, avg_latency: int = 0, energy: int = 100, efficiency: float = 100.0, knowledge_lineage: list = None, suggested_actions: list = None, agent_economy: dict = None, capability: str = "N/A", predicted_usage: dict = None):
+        """사이드바 정보 업데이트 (에이전트, 성능, 경제, 레지스트리, 예측 시각화)"""
         self.current_agent = agent
         self.current_step = step
         self.current_capability = capability
@@ -405,6 +405,14 @@ class DashboardUI:
         
         stats_group = [stats_table]
         
+        # [PREDICTION] 예상 소모량 표시
+        if predicted_usage:
+            stats_group.append(Text("\n[ PREDICTION ]", style="bold dim"))
+            p_cost = predicted_usage.get("cost", 0.0)
+            p_time = predicted_usage.get("latency_ms", 0) / 1000
+            stats_group.append(Text(f"Exp. Cost: ${p_cost:.4f}", style="yellow" if p_cost > 0.01 else "green"))
+            stats_group.append(Text(f"Est. Time: {p_time:.1f}s", style="dim"))
+
         try:
             from gortex.utils.efficiency_monitor import EfficiencyMonitor
             health_hist = EfficiencyMonitor().get_health_history(limit=10)

@@ -11,12 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.13.8 (2025-12-23)
+- **Foresight**: `Predictive Performance Guardrails` 시스템 구축. 과거 작업 통계를 기반으로 실행 전 예상 비용과 시간을 예측하여 고부하 작업에 대한 선제적 경고 수행.
+- **Monitoring**: TUI 대시보드에 `PREDICTION` 섹션 추가. 작업 완료 예상 시간 및 합계 비용 실시간 노출.
+- **Intelligence**: 플래너의 리소스 인지 능력 강화 및 예산 초과 방지 가드레일 안착.
+
 ### v2.13.7 (2025-12-23)
 - **Collaboration**: `Collaborative Multi-Agent Debugging` 구현. 단일 에이전트 실패 시 `Swarm` 토론과 `Analyst` 종합을 통해 집단 지성으로 버그를 해결하는 에스컬레이션 워크플로우 안착.
-- **Resilience**: `route_coder` 고도화를 통해 반복 실패 상황을 자동으로 감지하고 최적의 전문가 그룹을 소집하는 대응 체계 구축.
-
-### v2.13.6 (2025-12-23)
-- **Strategy**: `Proactive Self-Expansion` 지능 탑재. 외부 기술 트렌드를 감지하여 필요한 전문가 에이전트를 선제적으로 설계하고 영입하는 전략적 확장 워크플로우 안착.
 
 ### v2.13.2 (2025-12-23)
 - **Migration**: 핵심 에이전트 3종(`Planner`, `Coder`, `Analyst`)의 v3.0 표준 마이그레이션 완료. 클래스 기반 구조로 전면 리팩토링 및 중앙 레지스트리 공식 등록.

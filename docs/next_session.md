@@ -1,28 +1,27 @@
 # Next Session
 
 ## Session Goal
-- **Predictive Performance Guardrails**: 에이전트가 고부하 작업(예: 대규모 리팩토링, 광범위한 웹 검색)을 수행하기 전, 과거 데이터를 기반으로 예상 토큰 사용량과 실행 시간을 예측하고, 임계치 초과가 예상될 경우 사용자에게 경고하거나 스스로 계획을 최적화하는 '선제적 방어선'을 구축한다.
+- **Real-time System Energy Visualizer**: 대시보드 레이아웃을 조정하여, 시스템의 현재 에너지 상태와 충전율을 시각적으로 강조하는 전용 패널을 중앙 상단에 배치하고, 실시간 애니메이션(Progress Bar Pulse)을 통해 시스템의 활력도를 직관적으로 전달한다.
 
 ## Context
-- 현재 시스템은 작업을 일단 실행한 뒤에 비용과 효율을 측정함.
-- 복잡도가 높은 작업의 경우 실행 중간에 API 할당량이 소진되거나 에너지가 바닥나 작업이 중단되는 리스크가 있음.
-- `EfficiencyMonitor`의 누적 데이터를 활용하여 '실행 전 예측' 지능을 강화함.
+- `Session 0095`에서 에너지 회복 루프를 구축했으나, 현재는 사이드바의 텍스트와 작은 아이콘으로만 표시되어 시인성이 낮음.
+- Gortex v3.0의 '살아있는 시스템' 컨셉을 강화하기 위해, 에너지 상태를 시스템의 가장 핵심적인 지표로 시각적 격상시킴.
 
 ## Scope
 ### Do
-- `utils/efficiency_monitor.py`: 작업 유형별 평균 토큰/시간 데이터를 기반으로 한 `predict_resource_usage` 메서드 추가.
-- `agents/planner.py`: 계획 수립 직후 각 단계의 예상 비용을 산출하고, 총합이 위험 수준일 때 `thought_process`에 경고 주입.
-- `ui/dashboard.py`: 예측된 비용을 대시보드 상단에 '예상 비용'으로 미리 표시.
+- `ui/dashboard.py`: `create_layout` 수정. 중앙 상단에 `header` 또는 `energy` 전용 수평 패널 공간 확보.
+- `ui/dashboard.py`: `update_energy_visualizer` 메서드 추가. 현재 에너지에 따라 색상이 변하는(Green -> Yellow -> Red) 대형 게이지 구현.
+- `main.py`: 에너지 회복 루프와 대시보드 전용 패널의 실시간 동기화 강화.
 
 ### Do NOT
-- 복잡한 머신러닝 모델 도입은 배제 (통계적 가중치 평균 방식 우선).
+- 대화창(`main`)의 가독성을 해칠 정도로 거대한 그래픽은 지양 (터미널의 깔끔함 유지).
 
 ## Expected Outputs
-- `utils/efficiency_monitor.py` (Update)
-- `agents/planner.py` (Predictive mode)
-- `tests/test_performance_prediction.py` (New)
+- `ui/dashboard.py` (Layout & Gauge Refinement)
+- `main.py` (Visual Trigger integration)
+- `tests/test_energy_ui.py` (New)
 
 ## Completion Criteria
-- 특정 작업에 대해 과거 평균보다 2배 이상의 리소스가 필요할 것으로 예측될 때, 플래너가 "Resource Alert"를 발생시켜야 함.
-- 대시보드에 현재 작업의 '예상 완료 시간'이 실시간으로 노출되어야 함.
-- `docs/sessions/session_0108.md` 기록.
+- 시스템 상단에 현재 에너지를 보여주는 게이지 패널이 실시간으로 렌더링되어야 함.
+- 에너지가 10% 미만일 때 게이지가 빨간색으로 깜빡이며 유지보수 모드임을 시각적으로 강력히 경고해야 함.
+- `docs/sessions/session_0109.md` 기록.

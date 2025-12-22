@@ -92,6 +92,28 @@ class PlannerAgent(BaseAgent):
             raw_steps = plan_data.get("steps", [])
             final_steps = []
             pruned_count = 0
+            
+            # [Prediction] 전체 계획의 리소스 소모 예측
+            total_predicted_tokens = 0
+            total_predicted_ms = 0
+            for step in raw_steps:
+                # 작업 유형별 에이전트 추측 (단순화: action 이름 활용)
+                target_agent = "coder" if step.get("action") in ["write_file", "apply_patch"] else "researcher"
+                prediction = monitor.predict_resource_usage(target_agent)
+                total_predicted_tokens += prediction["avg_tokens"]
+                total_predicted_ms += prediction["avg_latency_ms"]
+
+            # 리소스 임계치 체크 및 경고
+            from gortex.core.config import GortexConfig
+            budget_limit = GortexConfig().get("daily_budget", 0.5)
+            from gortex.utils.token_counter import estimate_cost
+            expected_cost = estimate_cost(total_predicted_tokens)
+            
+            resource_alert = False
+            if expected_cost > (budget_limit * 0.2): # 일일 예산의 20% 초과 시
+                resource_alert = True
+                logger.warning(f"🚨 Resource Alert: Expected cost ${expected_cost:.4f} is high.")
+
             for step in raw_steps:
                 if energy < 30 and not step.get("is_essential", True) and step.get("priority", 5) < 8:
                     pruned_count += 1
@@ -104,6 +126,7 @@ class PlannerAgent(BaseAgent):
 
             msg = i18n.t("task.plan_established", goal=plan_data.get('goal'), steps=len(plan_steps))
             if pruned_count > 0: msg += f" (⚠️ {pruned_count} steps pruned for energy)"
+            if resource_alert: msg += f"\n⚠️ **High Resource Usage Predicted**: ${expected_cost:.4f} expected."
 
             return {
                 "thought_process": plan_data.get("thought_process"),
@@ -113,6 +136,11 @@ class PlannerAgent(BaseAgent):
                 "current_step": 0,
                 "next_node": "coder",
                 "handoff_instruction": plan_data.get("handoff_instruction", ""),
+                "predicted_usage": {
+                    "tokens": total_predicted_tokens,
+                    "cost": expected_cost,
+                    "latency_ms": total_predicted_ms
+                },
                 "messages": [("ai", msg)]
             }
         except Exception as e:
