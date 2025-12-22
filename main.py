@@ -47,7 +47,11 @@ async def energy_recovery_loop(state_vars: dict, ui: DashboardUI):
         if state_vars["agent_energy"] < 100:
             # 2초당 1포인트 회복
             state_vars["agent_energy"] = min(100, state_vars["agent_energy"] + 1)
-            # UI 실시간 반영 (Idle 상태일 때만)
+            
+            # 상단 에너지 비주얼라이저 실시간 갱신
+            ui.update_energy_visualizer(state_vars["agent_energy"])
+            
+            # 사이드바 실시간 반영 (Idle 상태일 때만)
             if ui.current_agent == "Idle":
                 ui.update_sidebar("Idle", "Recovering...", state_vars["total_tokens"], state_vars["total_cost"], 0, 
                                   energy=state_vars["agent_energy"], efficiency=state_vars["last_efficiency"], 

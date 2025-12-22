@@ -32,9 +32,13 @@ def render_sparkline(data: list[float]) -> str:
     return result
 
 def create_layout() -> Layout:
-    """대시보드 레이아웃 생성: 채팅(Main), 사고(Thought), 사이드바(Sidebar)"""
+    """대시보드 레이아웃 생성: 헤더(Header), 콘텐츠(Content), 사이드바(Sidebar)"""
     layout = Layout()
-    layout.split_row(
+    layout.split_column(
+        Layout(name="header", size=3),
+        Layout(name="body")
+    )
+    layout["body"].split_row(
         Layout(name="content", ratio=7),
         Layout(name="sidebar", ratio=3)
     )
@@ -45,8 +49,8 @@ def create_layout() -> Layout:
     layout["sidebar"].split_column(
         Layout(name="status", size=10),
         Layout(name="stats", size=12),
-        Layout(name="economy", size=10), # Expanded for skill tree
-        Layout(name="registry", size=8), # [NEW] Active Agents & Capabilities
+        Layout(name="economy", size=10),
+        Layout(name="registry", size=8),
         Layout(name="evolution", size=8),
         Layout(name="debt", size=10),
         Layout(name="logs")
@@ -66,7 +70,7 @@ class DashboardUI:
         self.current_agent = "Idle"
         self.last_agent = "Idle"
         self.current_step = "N/A"
-        self.current_capability = "N/A" # [NEW] 현재 수행 중인 능력
+        self.current_capability = "N/A"
         self.tokens_used = 0
         self.total_cost = 0.0
         self.active_rules_count = 0
@@ -98,7 +102,8 @@ class DashboardUI:
             "analyst": "agent.analyst",
             "trend_scout": "agent.trend_scout",
             "summarizer": "agent.summarizer",
-            "optimizer": "agent.optimizer"
+            "optimizer": "agent.optimizer",
+            "deployer": "agent.researcher"
         }
         
         self.agent_spinners = {
@@ -111,6 +116,33 @@ class DashboardUI:
             "summarizer": "aesthetic",
             "optimizer": "runner"
         }
+        
+        # 초기 에너지 비주얼라이저 렌더링
+        self.update_energy_visualizer(100)
+
+    def update_energy_visualizer(self, energy: int):
+        """상단 헤더에 시스템 에너지 상태를 그래픽으로 렌더링"""
+        self.energy = energy
+        
+        # 에너지 수치에 따른 색상 결정
+        color = "green" if energy > 70 else ("yellow" if energy > 30 else "red")
+        
+        # 게이지 문자열 생성 (30칸 기준)
+        filled = int(energy / 100 * 30)
+        gauge = "█" * filled + "░" * (30 - filled)
+        
+        # 아이콘 결정 (충전 중/방전 중)
+        is_recovering = self.current_step == "Recovering..."
+        icon = "[blink]⚡[/]" if is_recovering else "🔋"
+        
+        energy_text = Text.assemble(
+            (f" {icon} GORTEX CORE ENERGY  ", "bold white"),
+            (f"[{gauge}]", f"bold {color}"),
+            (f" {energy}% ", f"bold {color}"),
+            (f"| STATUS: {'MAINTENANCE' if energy < 10 else 'ACTIVE'}", "dim white")
+        )
+        
+        self.layout["header"].update(Panel(energy_text, style=f"on black", border_style=color))
 
     def update_debate_monitor(self, debate_data: list):
         self.active_debate = debate_data
@@ -321,6 +353,9 @@ class DashboardUI:
         
         # 레지스트리 패널 실시간 갱신
         self.update_registry_panel()
+        
+        # 상단 에너지 비주얼라이저 동기화
+        self.update_energy_visualizer(energy)
 
         agent_style_name = self.agent_colors.get(agent.lower(), "dim white")
         try:
