@@ -1,27 +1,27 @@
 # Next Session
 
 ## Session Goal
-- **Local LLM Performance Optimization (Ollama Integration)**: 클라우드 API 할당량 소진 시에도 시스템이 원활하게 동작할 수 있도록, 로컬 모델(Ollama)의 추론 속도와 파싱 정확도를 최적화한다.
+- **Dynamic Context Pruning**: 대화가 길어질 때 핵심 컨텍스트는 유지하면서 불필요한 메시지를 지능적으로 삭제하거나 요약하여, 모델의 인지 효율을 극대화하고 토큰 비용을 절감한다.
 
 ## Context
-- `Session 0084`에서 클라우드 API 429 에러로 인해 실제 문서 치유가 지연됨.
-- Gortex의 지속 가능성을 위해 로컬 모델은 단순한 백업이 아닌 '대등한 동료'로 성장해야 함.
-- 현재 Ollama 연동은 되어 있으나, Structured Output(JSON) 파싱 안정성 및 복잡한 작업 수행 능력이 클라우드 모델 대비 낮음.
+- `Session 0085`에서 로컬 모델 폴백을 구축했으나, 로컬 모델은 클라우드 모델보다 컨텍스트 크기에 더 민감함.
+- 현재 메시지가 무한정 쌓이는 구조는 성능 저하와 비용 증가를 초래함.
+- `GortexState`의 `history_summary` 필드를 적극 활용하여 과거 대화를 압축할 필요가 있음.
 
 ## Scope
 ### Do
-- `core/llm/ollama_client.py`: Ollama 모델의 프롬프트 템플릿 최적화 (ChatML 포맷 등 적용).
-- `core/llm/factory.py`: 할당량 소진 감지 시 즉시 로컬 모델로 전환하는 스마트 폴백 로직 강화.
-- `utils/tools.py`: 로컬 모델의 출력을 위한 전용 JSON 복구(Healing) 알고리즘 구현.
+- `utils/memory.py`: 메시지 중요도 평가 및 가지치기(Pruning) 알고리즘 구현.
+- `core/llm/summarizer.py` (New): 하위 호환성을 유지하며 대화 이력을 요약하는 전용 모듈 신설.
+- `core/graph.py`: 매 노드 실행 후 컨텍스트 크기를 체크하고 필요시 요약을 트리거하는 로직 연동.
 
 ### Do NOT
-- 대규모 모델 학습(Fine-tuning)은 진행하지 않음 (기존 모델의 효율적 사용에 집중).
+- 사용자가 명시적으로 `pinned_messages`에 넣은 내용은 절대 삭제하지 않음.
 
 ## Expected Outputs
-- `core/llm/ollama_client.py` (Update)
-- `core/llm/factory.py` (Update)
-- `utils/tools.py` (Update)
+- `utils/memory.py` (Update)
+- `core/llm/summarizer.py` (New)
+- `tests/test_context_pruning.py` (New)
 
 ## Completion Criteria
-- 클라우드 API를 강제로 차단했을 때, Ollama를 통해 `GortexState` 구조 분석 및 JSON 파싱이 100% 성공해야 함.
-- `docs/sessions/session_0085.md` 기록.
+- 메시지가 20개 이상 쌓였을 때, 자동으로 상위 10개를 요약본으로 변환하고 전체 메시지 수를 절반 이하로 줄여야 함.
+- `docs/sessions/session_0086.md` 기록.

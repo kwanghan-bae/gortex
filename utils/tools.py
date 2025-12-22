@@ -4,6 +4,7 @@ import subprocess
 import logging
 import hashlib
 import re
+import json
 import zipfile
 from datetime import datetime
 from typing import Dict, Union, Tuple, Optional, List
@@ -242,6 +243,53 @@ def archive_project_artifacts(project_name: str, version: str, files: List[str])
                 moved_count += 1
         return f"✅ Archived {moved_count} artifacts to {archive_root}"
     except Exception as e: return f"❌ Archive failed: {e}"
+
+def repair_and_load_json(text: str) -> Dict[str, Any]:
+    """
+    로컬 LLM이 생성한 비정형 텍스트에서 JSON을 추출하고 흔한 오류를 복구합니다.
+    """
+    if not text: return {}
+    
+    # 1. Markdown 코드 블록 제거
+    clean_text = re.sub(r"```json\n?|```\n?", "", text).strip()
+    
+    # 2. 추출 시도: 최대한 JSON처럼 보이는 구간을 찾음
+    # { 또는 [ 로 시작하는 지점부터 끝까지 추출 (닫는 괄호가 없을 수도 있으므로)
+    match = re.search(r"(\{.*\}|\[.*\])", clean_text, re.DOTALL)
+    if match:
+        json_str = match.group(0)
+    else:
+        # 괄호가 쌍으로 안 맞아도 일단 시작점부터 끝까지 시도
+        match_start = re.search(r"(\{|\[).*", clean_text, re.DOTALL)
+        json_str = match_start.group(0) if match_start else clean_text
+
+    # 3. 홑따옴표를 쌍따옴표로 먼저 변환 (흔한 오류)
+    json_str = json_str.replace("'", '"')
+
+    try:
+        return json.loads(json_str)
+    except json.JSONDecodeError:
+        # 4. 구조적 오류 복구 시도
+        try:
+            # 불완전한 종료 중괄호 보정
+            open_braces = json_str.count("{")
+            close_braces = json_str.count("}")
+            if open_braces > close_braces:
+                json_str += "}" * (open_braces - close_braces)
+            
+            # 불완전한 종료 대괄호 보정
+            open_brackets = json_str.count("[")
+            close_brackets = json_str.count("]")
+            if open_brackets > close_brackets:
+                json_str += "]" * (open_brackets - close_brackets)
+                
+            # 마지막 쉼표 제거 (Trailing comma)
+            json_str = re.sub(r",\s*(\}|\])", r"\1", json_str)
+            
+            return json.loads(json_str)
+        except Exception as e:
+            logger.error(f"JSON Recovery failed: {e}")
+            return {}
 
 def compress_directory(source_dir: str, output_path: str, ignore_patterns: List[str] = None) -> str:
     """디렉토리 전체를 ZIP 아카이브로 압축 (특정 패턴 제외)"""

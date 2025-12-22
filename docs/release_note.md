@@ -11,6 +11,11 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.11.3 (2025-12-22)
+- **Architecture**: `HybridBackend` 도입을 통한 클라우드-로컬 멀티 모델 전략 수립. API 할당량 소진 시 로컬 Ollama 모델로 자동 폴백.
+- **Resilience**: 비정형 응답 복구 엔진(`repair_and_load_json`) 탑재. 로컬 모델의 불안정한 JSON 출력을 실시간으로 교정.
+- **Optimization**: `OllamaBackend` 프롬프트 지침 강화 및 JSON 모드 최적화.
+
 ### v2.11.2 (2025-12-22)
 - **Infrastructure**: `ReflectionAnalyst`에 자가 치유 문서 시스템(`Self-Healing Documentation`) 탑재. 코드와 문서 간의 불일치(Drift)를 AI가 감지하고 자동 치유 가능.
 - **Onboarding**: `README.md` 전면 개편 및 `setup.sh` 안정성 강화 (PM/기획자 친화적인 원클릭 설치 경험 제공).

@@ -17,6 +17,15 @@ class OllamaBackend(LLMBackend):
     def generate(self, model: str, messages: List[Dict[str, str]], config: Optional[Dict[str, Any]] = None) -> str:
         url = f"{self.base_url}/api/chat"
         
+        # [Optimization] 로컬 모델을 위한 시스템 프롬프트 보강
+        # JSON 출력이 필요한 경우를 감지하여 지침 강화
+        is_json_requested = False
+        if config and config.get("response_mime_type") == "application/json":
+            is_json_requested = True
+            # 시스템 메시지 끝에 강제 지침 삽입
+            if messages and messages[0]["role"] == "system":
+                messages[0]["content"] += "\nIMPORTANT: Return ONLY valid JSON. No conversational text."
+
         # config 처리
         options = {}
         if config:
@@ -30,12 +39,25 @@ class OllamaBackend(LLMBackend):
             "stream": False,
             "options": options
         }
+        
+        # Ollama 자체 JSON 모드 지원 활용
+        if is_json_requested:
+            payload["format"] = "json"
 
         try:
             response = requests.post(url, json=payload, timeout=self.timeout)
             response.raise_for_status()
             data = response.json()
-            return data.get("message", {}).get("content", "")
+            content = data.get("message", {}).get("content", "")
+            
+            # [Healing] JSON 요청 시 파싱 검증 및 복구
+            if is_json_requested:
+                from gortex.utils.tools import repair_and_load_json
+                repaired = repair_and_load_json(content)
+                if repaired:
+                    return json.dumps(repaired, ensure_ascii=False)
+            
+            return content
             
         except requests.exceptions.RequestException as e:
             logger.error(f"Ollama generation failed: {e}")
