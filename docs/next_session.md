@@ -1,27 +1,30 @@
 # Next Session
 
 ## Session Goal
-- **Gortex v3.0 Architecture Design: Decoupled Agent Registry**: 100회의 경험을 바탕으로, 현재의 하드코딩된 에이전트 구조를 탈피하여 에이전트를 독립적인 플러그인처럼 등록하고 관리할 수 있는 '중앙 레지스트리' 중심의 v3.0 아키텍처를 설계하고 기초를 구현한다.
+- **Migration of Core Agents to v3.0 Standard**: `Planner`, `Coder`, `Analyst` 등 핵심 에이전트들을 v3.0 표준인 `BaseAgent` 기반 클래스 구조로 리팩토링하고 `AgentRegistry`에 등록한다.
 
 ## Context
-- 현재 새로운 에이전트를 추가하려면 `graph.py`와 여러 유틸리티를 수정해야 함.
-- 확장이 용이한 시스템을 위해, 에이전트가 자신의 명세(Persona, Tools, Capacity)를 레지스트리에 등록하면 `Manager`가 이를 자율적으로 탐색하여 활용하는 구조가 필요함.
-- 이는 Gortex의 '모듈형 진화'를 위한 필수 단계임.
+- `Session 0101`에서 새로운 아키텍처의 기반(Registry, BaseAgent)을 마련함.
+- 이제 실제 에이전트들을 이 구조로 마이그레이션하여, 플러그인 스타일의 에이전트 관리가 실제로 작동함을 증명해야 함.
+- 기존의 함수 기반 노드(`planner_node`, `coder_node` 등)는 클래스 인스턴스 호출 방식으로 대체됨.
 
 ## Scope
 ### Do
-- `core/registry.py` (New): `AgentRegistry` 클래스 구현.
-- `agents/base.py` (Update): 모든 에이전트의 공통 인터페이스 및 자기 기술(Self-Description) 기능 추가.
-- `docs/TECHNICAL_SPEC.md`: v3.0 아키텍처 청사진(Blueprints) 업데이트.
+- `agents/planner.py`: `PlannerAgent(BaseAgent)` 클래스로 리팩토링.
+- `agents/coder.py`: `CoderAgent(BaseAgent)` 클래스로 리팩토링.
+- `agents/analyst/base.py`: `AnalystAgent`를 `BaseAgent` 상속 구조로 업데이트.
+- `core/graph.py`: 레지스트리에서 에이전트를 가져와 워크플로우에 등록하는 방식으로 점진적 전환.
 
 ### Do NOT
-- 기존의 작동하는 그래프를 즉시 파괴하지 않음 (병행 운영 및 점진적 마이그레이션).
+- 모든 에이전트(Swarm, TrendScout 등)를 한 번에 옮기지 않음 (핵심 3종 우선).
 
 ## Expected Outputs
-- `core/registry.py` (New)
-- `agents/base.py` (Refined)
-- `docs/TECHNICAL_SPEC.md` (Updated)
+- `agents/planner.py` (Class-based)
+- `agents/coder.py` (Class-based)
+- `core/graph.py` (Updated registration)
+- `tests/test_v3_migration.py` (New)
 
 ## Completion Criteria
-- 에이전트 클래스를 작성하고 레지스트리에 등록했을 때, 해당 에이전트의 메타데이터를 레지스트리에서 조회할 수 있어야 함.
-- `docs/sessions/session_0101.md` 기록.
+- 마이그레이션된 에이전트들이 레지스트리에 정상 등록되어야 함.
+- 기존의 LangGraph 실행 흐름이 깨지지 않고 동일하게 작동해야 함 (하위 호환성 유지).
+- `docs/sessions/session_0102.md` 기록.

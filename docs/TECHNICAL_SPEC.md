@@ -101,14 +101,26 @@ class GortexState(TypedDict):
 ### 7.2 Consensus Synthesis Schema (`analyst`)
 토론 결과는 반드시 다음 JSON 형식을 따라 종합되어야 한다.
 ```json
-{
-  "final_decision": "선택된 경로 또는 절충안",
-  "rationale": "합의에 도달한 핵심 근거",
-  "tradeoffs": [
-    { "aspect": "분야", "gain": "이득", "loss": "포기한 점" }
-  ],
-  "residual_risk": "최종 결정 후에도 남은 위험 요소",
-  "action_plan": ["수행해야 할 구체적 단계"]
-}
+## 8. Plugin-style Agent Registry (v3.0 Architecture)
+
+Gortex v3.0은 에이전트 간의 결합도를 낮추고 확장을 용이하게 하기 위해 **중앙 레지스트리** 기반의 플러그인 아키텍처를 채택한다.
+
+### 8.1 Agent Decoupling
+*   모든 에이전트는 `BaseAgent`를 상속받으며, 자신의 능력(Tools)과 역할(Role)을 담은 `AgentMetadata`를 가진다.
+*   에이전트는 실행 시점에 `AgentRegistry`에 등록되며, `Manager`는 하드코딩된 노드 이름 대신 레지스트리를 조회하여 작업을 할당한다.
+
+### 8.2 Registry Schema (`core/registry.py`)
+```python
+class AgentMetadata:
+    name: str        # 에이전트 식별자
+    role: str        # 담당 역할 (예: 'coder', 'analyst')
+    description: str # 상세 설명
+    tools: List[str] # 사용 가능한 도구 목록
+    version: str     # 에이전트 버전
 ```
+
+### 8.3 Dynamic Capability Discovery
+*   **Capability Discovery**: 특정 도구(예: `git_push`)가 필요한 경우, `Registry`는 해당 도구를 지원하는 가장 적합한 에이전트를 추천할 수 있다.
+*   **Version Control**: 동일한 역할의 에이전트라도 버전에 따라 성능이 다를 수 있으며, 평판 데이터와 결합하여 최적의 에이전트를 동적으로 선택한다.
+
 
