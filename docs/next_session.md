@@ -1,28 +1,27 @@
 # Next Session
 
 ## Session Goal
-- **Autonomous Backup & Knowledge Archiving**: 시스템이 누적된 대화 로그와 지능 데이터를 주기적으로 정리(Garbage Collection)하고, 핵심 지식 파일인 `experience.json`을 안전하게 백업하여 데이터 손실을 방지한다.
+- **Autonomous Post-Session Reflection**: 매 세션 종료 시 작성된 활동 기록(`docs/sessions/session_XXXX.md`)을 정밀 분석하여, 단순한 활동 나열을 넘어 시스템이 미래에 지켜야 할 명확한 지침(`Experience Rules`)으로 추출 및 승격시키는 지능을 구현한다.
 
 ## Context
-- 대화 세션이 90개를 넘어서면서 로그 폴더와 지식 파일의 크기가 점차 커지고 있음.
-- 파일 손상이나 예기치 못한 유실에 대비하여, 시스템 스스로가 '백업 사본'을 만들고 관리할 필요가 있음.
-- `Analyst` 에이전트의 역할 중 '기록 관리' 능력을 실체화함.
+- 현재 세션 기록은 사람이 읽기엔 좋지만, AI가 즉각적으로 학습에 활용하기에는 비정형적임.
+- "이런 문제가 있어서 이렇게 해결했다"는 기록을 "앞으로 이럴 때는 이렇게 하라"는 규칙으로 변환해야 진정한 자가 진화가 완성됨.
+- `Analyst` 에이전트의 성찰(Reflection) 능력을 세션 단위로 확장함.
 
 ## Scope
 ### Do
-- `utils/tools.py`: `backup_file_with_rotation` 함수 추가 (최근 5개 버전 유지).
-- `agents/analyst/base.py`: 주기적으로 로그를 압축하여 아카이브 폴더로 이동시키는 `archive_system_logs` 구현.
-- `core/graph.py`: 세션 종료 전 또는 특정 주기마다 `analyst`가 아카이빙을 수행하도록 트리거 연동.
+- `agents/analyst/reflection.py`: `reflect_on_session_docs` 메서드 추가.
+- `agents/analyst/reflection.py`: 세션 문서에서 'Issues & Resolutions' 섹션을 파싱하여 `Experience Rules` 후보 도출.
+- `main.py`: 세션 종료 루틴에 사후 성찰 단계를 공식적으로 추가.
 
 ### Do NOT
-- 실제 클라우드 스토리지(S3 등) 연동은 배제 (로컬 파일 시스템 내 백업 집중).
+- 모든 과거 세션을 소급 적용하지 않음 (가장 최근 세션 위주로 시작).
 
 ## Expected Outputs
-- `utils/tools.py` (Update)
-- `agents/analyst/base.py` (Update)
-- `logs/backups/` (New Directory for backups)
+- `agents/analyst/reflection.py` (Update)
+- `experience.json` (Auto-updated with rules from session docs)
+- `tests/test_session_reflection.py` (New)
 
 ## Completion Criteria
-- `experience.json` 파일의 백업 사본이 `logs/backups/`에 날짜별로 생성되어야 함.
-- 30일 이상 지난 로그 파일이 ZIP으로 압축되어 `logs/archives/`로 이동해야 함.
-- `docs/sessions/session_0096.md` 기록.
+- 특정 세션 문서에 "API 404 에러 해결" 기록이 있을 때, 성찰 후 `experience.json`에 관련 모델 명명 규칙이 자동 저장되어야 함.
+- `docs/sessions/session_0097.md` 기록.

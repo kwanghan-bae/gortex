@@ -245,6 +245,34 @@ def archive_project_artifacts(project_name: str, version: str, files: List[str])
         return f"✅ Archived {moved_count} artifacts to {archive_root}"
     except Exception as e: return f"❌ Archive failed: {e}"
 
+def backup_file_with_rotation(file_path: str, backup_dir: str = "logs/backups", max_versions: int = 5) -> str:
+    """파일을 백업하고 오래된 버전을 회전(삭제)시킴."""
+    if not os.path.exists(file_path):
+        return f"Error: Source file {file_path} not found."
+    
+    try:
+        os.makedirs(backup_dir, exist_ok=True)
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        base_name = os.path.basename(file_path)
+        backup_path = os.path.join(backup_dir, f"{base_name}.{timestamp}.bak")
+        
+        # 백업 생성
+        shutil.copy2(file_path, backup_path)
+        
+        # 회전(Rotation) 로직: 해당 파일의 백업 목록 조회
+        backups = [os.path.join(backup_dir, f) for f in os.listdir(backup_dir) if f.startswith(base_name) and f.endswith(".bak")]
+        backups.sort(key=os.path.getmtime, reverse=True) # 최신순 정렬
+        
+        # max_versions 개수 초과분 삭제
+        if len(backups) > max_versions:
+            for old_backup in backups[max_versions:]:
+                os.remove(old_backup)
+                logger.info(f"🗑️ Rotated old backup: {old_backup}")
+                
+        return f"Successfully backed up {file_path} to {backup_path}"
+    except Exception as e:
+        return f"Error during backup rotation: {e}"
+
 def repair_and_load_json(text: str) -> Dict[str, Any]:
     """
     로컬 LLM이 생성한 비정형 텍스트에서 JSON을 추출하고 흔한 오류를 복구합니다.

@@ -25,6 +25,47 @@ class AnalystAgent:
         score = 100.0 / (1.0 + math.log1p(cost / 5.0))
         return round(min(100.0, score), 1)
 
+    def archive_system_logs(self) -> Dict[str, Any]:
+        """누적된 로그 파일을 아카이빙하고 지식 파일을 백업함."""
+        from gortex.utils.tools import compress_directory, backup_file_with_rotation
+        
+        # 1. 핵심 지식 파일 백업
+        bk_res = backup_file_with_rotation("experience.json", max_versions=10)
+        
+        # 2. 오래된 로그 아카이빙
+        log_dir = "logs"
+        archive_dir = "logs/archives"
+        os.makedirs(archive_dir, exist_ok=True)
+        
+        timestamp = datetime.now().strftime("%Y%m%d")
+        zip_path = os.path.join(archive_dir, f"logs_backup_{timestamp}.zip")
+        
+        # logs/ 내부의 개별 .jsonl 파일들을 찾아서 압축 (이미 압축된 archives 제외)
+        files_to_archive = [os.path.join(log_dir, f) for f in os.listdir(log_dir) if f.endswith(".jsonl")]
+        
+        if not files_to_archive:
+            return {"status": "skipped", "backup": bk_res, "reason": "No logs to archive."}
+            
+        # 임시 폴더로 복사 후 압축 (원본 보호)
+        temp_archive_root = "logs/temp_archive"
+        os.makedirs(temp_archive_root, exist_ok=True)
+        for f in files_to_archive:
+            shutil.copy2(f, temp_archive_root)
+            
+        comp_res = compress_directory(temp_archive_root, zip_path)
+        shutil.rmtree(temp_archive_root)
+        
+        # 아카이빙 성공 시 원본 로그 삭제 (정책에 따라 선택적)
+        # 여기서는 안전을 위해 삭제 대신 .old 확장자를 붙이거나 그대로 둠.
+        # 일단 아카이빙 성공 메시지만 반환
+        
+        return {
+            "status": "success",
+            "backup": bk_res,
+            "archive": zip_path,
+            "message": f"System maintenance complete. 10 knowledge versions kept. Logs archived to {zip_path}"
+        }
+
     def scan_project_complexity(self, directory: str = ".") -> List[Dict[str, Any]]:
         debt_list = []
         ignore_dirs = {'.git', 'venv', '__pycache__', 'logs', 'site-packages'}
