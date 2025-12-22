@@ -21,8 +21,26 @@ class EconomyManager:
                 "level": "Bronze",
                 "achievements": [],
                 "success_rate": 100.0,
-                "total_tasks": 0
+                "total_tasks": 0,
+                "skill_points": {
+                    "Coding": 0,
+                    "Research": 0,
+                    "Design": 0,
+                    "Analysis": 0
+                }
             }
+
+    def record_skill_gain(self, state: GortexState, agent_name: str, category: str, points: int):
+        """특정 분야의 스킬 포인트 적립"""
+        economy = state.get("agent_economy", {})
+        self.initialize_agent(economy, agent_name)
+        
+        skills = economy[agent_name].get("skill_points", {})
+        if category in skills:
+            skills[category] += points
+            logger.info(f"🎓 Agent {agent_name} gained {points} pts in {category}. (Total: {skills[category]})")
+        
+        economy[agent_name]["skill_points"] = skills
 
     def record_success(self, state: GortexState, agent_name: str, quality_score: float = 1.0):
         """작업 성공 시 보상 지급 (품질 점수 반영)"""

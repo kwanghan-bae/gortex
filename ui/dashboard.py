@@ -401,11 +401,12 @@ class DashboardUI:
             self.update_economy_panel(agent_economy)
 
     def update_economy_panel(self, agent_economy: dict):
-        """에이전트 평판 리더보드 업데이트"""
+        """에이전트 평판 및 스킬 트리 업데이트"""
         if not agent_economy:
             self.layout["economy"].update(Panel("No data.", title="🏆 REPUTATION", border_style="dim"))
             return
 
+        # 1. Leaderboard Table
         table = Table.grid(expand=True)
         sorted_agents = sorted(agent_economy.items(), key=lambda x: x[1].get("points", 0), reverse=True)
         
@@ -413,9 +414,23 @@ class DashboardUI:
             lvl = data.get("level", "B")
             pts = data.get("points", 0)
             color = "yellow" if lvl == "Gold" else ("white" if lvl == "Silver" else "magenta")
-            table.add_row(f"{name[:8]}", f"[{color}]{lvl}[/]", f"{pts}")
+            table.add_row(f"{name[:8]}", f"[{color}]{lvl}[/]", f"{pts}p")
             
-        self.layout["economy"].update(Panel(table, title="🏆 [bold yellow]REPUTATION[/]", border_style="yellow"))
+        # 2. Skill Tree for Current Agent
+        skill_group = []
+        target = self.current_agent.lower()
+        if target != "idle" and target in agent_economy:
+            skills = agent_economy[target].get("skill_points", {})
+            if skills:
+                skill_group.append(Text(f"\n[ {target.upper()} SKILLS ]", style="bold cyan"))
+                for cat, val in skills.items():
+                    # 100점당 █ 하나 (최대 5개)
+                    bars = min(5, (val // 100) + 1) if val > 0 else 0
+                    bar_str = "█" * bars + "░" * (5 - bars)
+                    skill_group.append(Text(f"{cat:8} {bar_str} {val}", style="dim"))
+
+        economy_content = Group(table, *skill_group)
+        self.layout["economy"].update(Panel(economy_content, title="🏆 [bold yellow]REPUTATION[/]", border_style="yellow"))
 
     def render(self):
         return self.layout

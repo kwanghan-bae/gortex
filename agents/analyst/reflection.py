@@ -58,6 +58,7 @@ class ReflectionAnalyst(AnalystAgent):
         Return JSON ONLY:
         {{
             "quality_score": 0.0 ~ 2.0 (1.0 is standard),
+            "category": "Coding/Research/Design/Analysis",
             "rationale": "Brief reason for score",
             "feedback": "Feedback for the agent to improve"
         }}
@@ -68,7 +69,7 @@ class ReflectionAnalyst(AnalystAgent):
             return res_data
         except Exception as e:
             logger.error(f"Work quality evaluation failed: {e}")
-            return {"quality_score": 1.0, "rationale": "Fallback score due to error", "feedback": str(e)}
+            return {"quality_score": 1.0, "category": "Analysis", "rationale": "Fallback score due to error", "feedback": str(e)}
 
     def check_documentation_drift(self, file_path: str, doc_path: str, target_symbol: str) -> Dict[str, Any]:
         """
