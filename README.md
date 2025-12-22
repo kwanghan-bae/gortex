@@ -1,90 +1,99 @@
 # 🧠 GORTEX: The Self-Evolving AI Partner
 
 > **"잊지 않는 지능, 스스로를 고치는 시스템"**
-> Gortex는 개발자와 기획자 모두를 위한 차세대 AI 운영 파트너입니다. 로컬 환경에서 동작하며, 사용자의 피드백과 스스로의 데이터를 바탕으로 끊임없이 아키텍처를 치유하고 기능을 진화시킵니다.
-
-[![Gortex Version](https://img.shields.io/badge/version-2.8.4-blue.svg)](./VERSION)
-[![Quality: High-Rigor TDD](https://img.shields.io/badge/Quality-High--Rigor%20TDD-green.svg)](./docs/RULES.md)
-[![Interface: Terminal UI](https://img.shields.io/badge/Interface-Rich%20TUI-orange.svg)](#-강력한-터미널-관측성-tui-dashboard)
+> Gortex는 개발자와 기획자가 함께 사용하는 AI 운영 파트너입니다. 사용자의 피드백을 학습하여 코드를 스스로 고치고 아키텍처를 진화시키는 살아있는 시스템입니다.
 
 ---
 
-## 🚀 "딸깍" 한 번으로 시작하기 (Quick Start)
+## 🛠️ 1. 설치 및 시작 가이드 (초보자용)
 
-Gortex는 복잡한 설정을 자동화하여 누구나 쉽게 시작할 수 있는 **One-Click 환경**을 제공합니다.
+Gortex는 복잡한 설정 없이 **`start.sh`** 하나로 모든 준비를 마칩니다.
 
-### 1. 시스템 기동
-터미널에서 아래 단 한 줄의 명령어를 입력하십시오.
+### 1단계: 준비물
+*   **Python 3.10 이상**: [python.org](https://www.python.org/)에서 설치 가능합니다.
+*   **Gemini API Key**: [Google AI Studio](https://aistudio.google.com/)에서 무료로 발급받을 수 있습니다.
+
+### 2단계: "딸깍" 실행
+터미널(Terminal 또는 CMD)을 열고 아래 명령어를 순서대로 입력하세요.
 ```bash
+# 1. 저장소 복제 (최초 1회)
+git clone <repository-url>
+cd gortex
+
+# 2. 통합 실행 스크립트 가동
 ./start.sh
 ```
-*   **자동 설정**: 가상환경(venv) 구축, 필수 패키지 설치, 브라우저 엔진(Playwright) 설정이 자동으로 진행됩니다.
-*   **대화형 구성**: 설정 도중 **Gemini API 키**를 물어보면 입력해주시면 됩니다. (키가 이미 `.env`에 있다면 바로 실행됩니다.)
+
+### 3단계: 자동 설정 진행
+`./start.sh`를 입력하면 시스템이 다음 작업을 **자동으로 수행**합니다.
+1.  **가상환경 구축**: 다른 프로그램과 충돌하지 않도록 독립된 방(venv)을 만듭니다.
+2.  **패키지 설치**: Gortex 구동에 필요한 AI 도구들을 알아서 다운로드합니다.
+3.  **API 키 입력**: 화면에 `첫 번째 Gemini API 키를 입력하세요:` 문구가 나오면 발급받은 키를 붙여넣으세요.
+4.  **브라우저 설치**: 웹 검색(Researcher)을 위한 엔진을 설치합니다.
 
 ---
 
-## 🌟 직군별 활용 시나리오
+## 🎮 2. 화면 읽는 법 (TUI 대시보드)
 
-### 👨‍💼 기획자 & PM (Product Manager)
-*   **기술 부채 진단**: `/scan_debt` 명령으로 서비스의 건강 상태를 점수화하여 리팩토링 시점을 판단합니다.
-*   **영향 범위 분석**: "신규 기능을 추가하면 기존 코드의 어디가 수정되나요?"라고 물어보세요. `Planner`가 리스크를 분석해줍니다.
-*   **규칙 준수 확인**: 우리가 과거에 정한 비즈니스/기술 규칙들이 코드에 잘 반영되고 있는지 실시간으로 모니터링합니다.
+실행 후 나타나는 터미널 화면은 다음과 같이 구성되어 있습니다.
 
-### 👨‍💻 개발자 & 엔지니어 (Engineer)
-*   **자가 진화(Evolution)**: 에너지가 충분할 때 시스템이 스스로 코드를 리팩토링하고 신기술을 도입합니다.
-*   **아키텍처 수호(Drift Guard)**: 레이어 원칙 위반이나 순환 참조를 감시하고 자동으로 치유(Self-Healing)합니다.
-*   **하이브리드 LLM**: 설계는 **Gemini 1.5 Pro**, 반복 코딩은 **Ollama(로컬)**가 담당하여 비용과 성능을 최적화합니다.
-*   **철저한 TDD**: 모든 코드는 `pre_commit.sh`를 통해 테스트 통과가 검증된 후 병합됩니다.
+*   **LEFT (대화창)**: 사용자님과 에이전트가 채팅하는 공간입니다. 작업 결과도 여기서 확인합니다.
+*   **RIGHT TOP (시스템 상태)**: 현재 어떤 에이전트가 일하고 있는지, 돈(토큰 비용)을 얼마나 썼는지 보여줍니다.
+*   **RIGHT MID (사고 과정)**: 에이전트가 왜 그런 결론을 내렸는지 논리 트리(**Thought Tree**)를 시각화합니다.
+*   **RIGHT BOTTOM (자가 진화)**: 시스템이 스스로 배운 규칙과 **아키텍처 건강도(Health Score)**를 표시합니다.
 
 ---
 
-## 📚 상세 명령어 가이드 (User Guide)
+## 💬 3. 에이전트와 대화하는 법
 
-Gortex TUI 대시보드 내에서 다음 슬래시 명령어를 사용할 수 있습니다.
+Gortex는 자연어를 이해합니다. 다음과 같이 요청해보세요.
 
-| 명령어 | 설명 | 활용 팁 |
+### 💡 기획자용 요청 예시
+*   "우리 프로젝트에서 가장 복잡한 코드가 어디야? 점수로 알려줘."
+*   "회원가입 기능을 수정하면 다른 파일 어디가 망가질 수 있는지 분석해줘."
+*   "내가 아까 snake_case 쓰라고 했던 규칙 기억하고 있어? 리스트 보여줘."
+
+### ⚙️ 개발자용 요청 예시
+*   "utils/tools.py에 파일 압축 기능을 추가하고 테스트 코드도 짜줘."
+*   "지금 우리 아키텍처에서 레이어 원칙을 어긴 곳이 있다면 전부 고쳐줘."
+*   "최신 LLM 트렌드를 검색해서 우리 프로젝트에 도입할만한 거 추천해줘."
+
+---
+
+## ⌨️ 4. 필수 명령어 (Slash Commands)
+
+대화창에 `/`로 시작하는 명령어를 입력하여 시스템을 직접 제어하세요.
+
+| 명령어 | 용도 | 설명 |
 | :--- | :--- | :--- |
-| `/help` | 모든 명령어 사용법 안내 | 기능이 기억나지 않을 때 가장 먼저 입력하세요. |
-| `/status` | 토큰 사용량, 가상 에너지, 효율 보고 | 시스템의 리소스 소비 상태를 점검합니다. |
-| `/search [어]` | 의미 기반(Semantic) 코드 검색 | "로그인 로직 어디 있어?"와 같이 자연어로 검색하세요. |
-| `/map` | 전체 프로젝트 구조 트리 출력 | 프로젝트의 전체적인 클래스/함수 지도를 확인합니다. |
-| `/scan_debt` | 기술 부채 및 코드 복잡도 분석 | 아키텍처 건강도(Health Score)의 근거를 확인합니다. |
-| `/mode [mode]` | 화면 레이아웃 변경 | `coding`, `research`, `analyst` 등 상황에 맞게 전환하세요. |
-| `/rca [id]` | 인과 관계(Root Cause) 역추적 | "왜 이런 판단을 내렸지?"에 대한 근거를 확인합니다. |
-| `/language` | 언어 즉시 변경 (`ko` / `en`) | 에이전트의 응답 언어를 바꿉니다. |
+| **`/help`** | **도움말** | 사용 가능한 모든 기능을 확인합니다. |
+| **`/scan_debt`** | **건강 검진** | 시스템의 복잡도와 기술 부채를 정밀 측정합니다. |
+| **`/map`** | **지도 보기** | 프로젝트의 전체 구조를 한눈에 파악합니다. |
+| **`/status`** | **리소스 확인** | 에너지 잔량과 누적 비용을 확인합니다. |
+| **`/rca [id]`** | **원인 분석** | 특정 에러나 판단의 근거를 역추적합니다. |
+| **`/mode [mode]`** | **레이아웃** | 상황에 맞게 화면 구성을 바꿉니다 (예: `/mode coding`) |
 
 ---
 
-## 🛠️ 시스템 아키텍처
+## 🛡️ 5. 시스템의 철학 및 규칙
 
-```mermaid
-graph TD
-    User((User)) --> Manager[Manager: The Router]
-    Manager --> Planner[Planner: The Architect]
-    Planner --> Coder[Coder: The Executor]
-    Coder <--- Simulation ---> Health[Health Score Check]
-    Manager --> Analyst[Analyst: The Auditor]
-    Analyst --> Evo[Evolution: Self-Healing]
-    Analyst --> Memory[(Synaptic Memory)]
-    TrendScout[TrendScout: Tech Radar] --> Manager
-```
+Gortex는 아래 문서들에 정의된 **'헌법'**에 따라 움직입니다.
+1.  **[WORKFLOW.md](./docs/WORKFLOW.md)**: 세션 중단 시에도 파일 기반으로 기억을 잇는 법
+2.  **[RULES.md](./docs/RULES.md)**: "테스트 없이는 코드도 없다"는 품질 원칙
+3.  **[SPEC_CATALOG.md](./docs/SPEC_CATALOG.md)**: 하이브리드 지능형 시스템의 설계 지향점
 
 ---
 
-## 📊 강력한 터미널 관측성 (TUI Dashboard)
-Gortex는 블랙박스가 아닙니다. **Rich 라이브러리 기반의 TUI**를 통해 다음 정보를 실시간 공개합니다.
-*   **Thought Tree**: 에이전트가 어떤 논리 단계를 거쳐 결론에 도달했는지 시각화.
-*   **Health Score**: 아키텍처 위반, 복잡도를 점수화(0~100)하여 시스템 무결성 표시.
-*   **Evolution History**: 최근 어떤 기술이 어떤 파일에 성공적으로 적용되었는지 기록.
+## ❓ 6. 자주 묻는 질문 (F.A.Q)
 
----
+**Q: API 키를 잘못 입력했어요.**
+A: 폴더 내의 `.env` 파일을 메모장으로 열어 `GEMINI_API_KEY_1=` 뒷부분을 수정하고 저장하세요.
 
-## 📜 프로젝트 문서 체계 (Canonical Docs)
-Gortex의 모든 장기 기억과 연속성은 아래 문서들로 관리됩니다.
-*   [`docs/WORKFLOW.md`](./docs/WORKFLOW.md): 에이전트와 인간의 협업 행동 지침
-*   [`docs/SPEC_CATALOG.md`](./docs/SPEC_CATALOG.md): 시스템의 존재 이유와 설계 철학
-*   [`docs/RULES.md`](./docs/RULES.md): 커밋 및 품질 관리를 위한 절대 원칙
-*   [`docs/release_note.md`](./docs/release_note.md): 누적된 진화 및 변경 기록
+**Q: 갑자기 멈춘 것 같아요.**
+A: 터미널에서 `Ctrl + C`를 눌러 강제 종료한 뒤 `./start.sh`를 다시 실행하세요. Gortex는 모든 상태를 저장하므로 이전 대화부터 바로 이어집니다.
+
+**Q: 로컬 모델(Ollama)은 어떻게 쓰나요?**
+A: [Ollama](https://ollama.ai/)를 설치하고 실행해두면, Gortex가 자동으로 감지하여 단순 작업에 활용합니다.
 
 ---
 *Developed & Evolved by Gortex Autonomous Protocol*
