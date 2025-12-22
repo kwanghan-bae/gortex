@@ -1,27 +1,26 @@
 # Next Session
 
 ## Session Goal
-- **Self-Healing Documentation System**: `AnalystAgent`가 코드베이스의 최신 상태(함수 시그니처, 클래스 구조 등)를 스캔하여, `docs/TECHNICAL_SPEC.md`와 같은 기술 문서와의 불일치를 자동으로 감지하고 수정 제안을 생성하는 기능을 구현한다.
+- **Project Onboarding Automation & Documentation Overhaul**: 기획자(PM)나 비개발 직군도 쉽게 사용할 수 있도록 `README.md`를 전면 개편하고, 설치 및 실행 과정을 '원클릭' 수준으로 자동화한다.
 
 ## Context
-- 코드는 빠르게 변하지만 문서는 뒤쳐지기 쉬움(Documentation Drift).
-- 진화하는 AI 시스템의 특성상, 스스로 문서를 유지보수하는 능력이 필수적임.
-- 특히 `TECHNICAL_SPEC.md`의 데이터 구조 정의가 실제 `TypedDict` 정의와 일치하는지 검증 필요.
+- 현재 `README.md`는 개발자 친화적이지만, 기획자가 접근하기엔 여전히 장벽이 있음.
+- 사용자가 "기획자도 사용할 수 있는 상세 가이드"와 "자동화된 준비"를 명시적으로 요청함.
+- "자리를 비운다"는 시나리오에 맞춰, 누구나 프로젝트에 들어왔을 때 즉시 실행 가능한 상태(Ready-to-Use)를 보장해야 함.
 
 ## Scope
 ### Do
-- `agents/analyst/reflection.py`: `check_documentation_drift` 메서드 구현.
-    - 주요 모듈(`core/state.py`, `core/auth.py` 등)의 AST를 파싱하여 실제 구조 추출.
-    - 문서 내 코드 블록이나 표와 비교.
-- `agents/analyst/base.py`: 감지된 드리프트를 기반으로 문서 업데이트 패치 생성.
+- `README.md`: 섹션 재구성 (소개 -> 설치 -> 가이드 -> FAQ). 비유와 시각적 요소(이모지)를 활용하여 친절하게 작성.
+- `setup.sh`: Python 버전 감지 강화, API 키 입력 시 공백 제거 등 내구성 강화.
+- `docs/GUIDE_FOR_PM.md`: 기획자를 위한 전용 가이드 문서 신설 (선택 사항이나 README에 통합 권장).
 
 ### Do NOT
-- 모든 문서를 대상으로 하지 않음 (우선 `TECHNICAL_SPEC.md`와 `core/*.py` 간의 동기화에 집중).
+- 시스템의 핵심 로직을 건드리지 않음.
 
 ## Expected Outputs
-- `agents/analyst/reflection.py` (Update)
-- `docs/TECHNICAL_SPEC.md` (Self-healed if drift detected)
+- `README.md` (Refined)
+- `setup.sh` (Hardened)
 
 ## Completion Criteria
-- `core/state.py`의 `GortexState` 정의가 변경되었을 때, Analyst가 이를 감지하고 리포트해야 함.
+- `README.md`만 보고도 비개발자가 설치부터 실행까지 막힘없이 진행할 수 있어야 함.
 - `docs/sessions/session_0083.md` 기록.
