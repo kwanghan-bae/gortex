@@ -2,6 +2,7 @@ import ast
 import os
 import json
 import logging
+from datetime import datetime
 from typing import List, Dict, Any
 
 logger = logging.getLogger("GortexIndexer")
@@ -275,6 +276,39 @@ class SynapticIndexer:
             intel_index[file_path] = round(score, 2)
             
         return dict(sorted(intel_index.items(), key=lambda x: x[1], reverse=True))
+
+    def calculate_health_score(self) -> Dict[str, Any]:
+        """
+        시스템 아키텍처 건강도(Health Score) 산출.
+        지능 지수, 의존성 복잡도, 레이어 위반 건수를 종합합니다.
+        """
+        from gortex.agents.analyst import AnalystAgent
+        analyst = AnalystAgent()
+        
+        # 1. 레이어 위반 건수 획득
+        violations = analyst.audit_architecture()
+        violation_penalty = len(violations) * 5.0 # 건당 5점 감점
+        
+        # 2. 코드 복잡도 분석
+        complexity = analyst.scan_project_complexity()
+        total_complexity = sum(item.get("score", 0) for item in complexity)
+        complexity_penalty = min(30, total_complexity / 10.0) # 최대 30점 감점
+        
+        # 3. 지능 성숙도 보너스
+        intel_map = self.calculate_intelligence_index()
+        avg_maturity = sum(intel_map.values()) / len(intel_map) if intel_map else 0
+        maturity_bonus = min(20, avg_maturity / 2.0) # 최대 20점 가산
+        
+        # 기본 점수 80점에서 시작
+        final_score = round(max(0, min(100, 80 - violation_penalty - complexity_penalty + maturity_bonus)), 1)
+        
+        return {
+            "score": final_score,
+            "violation_count": len(violations),
+            "total_complexity": total_complexity,
+            "avg_maturity": round(avg_maturity, 2),
+            "timestamp": datetime.now().isoformat()
+        }
 
 if __name__ == "__main__":
     # 독립 실행 테스트

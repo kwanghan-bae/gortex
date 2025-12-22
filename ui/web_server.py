@@ -39,6 +39,13 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
+@app.get("/health")
+async def get_architecture_health():
+    """시스템 아키텍처 건강도 조회"""
+    from gortex.utils.indexer import SynapticIndexer
+    indexer = SynapticIndexer()
+    return indexer.calculate_health_score()
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     # 쿼리 파라미터나 헤더를 통해 XR 기기 여부 확인

@@ -37,15 +37,27 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
 
     energy = state.get("agent_energy", 100)
     call_count = state.get("api_call_count", 0)
+    roadmap = state.get("evolution_roadmap", [])
 
     # [Persona Lab]
     recommended_personas = ["Innovation", "Stability"]
-    if any(k in internal_input.lower() for k in ["보안", "security", "취약점", "auth"]):
-        recommended_personas.append("Security Expert")
-    if any(k in internal_input.lower() for k in ["ui", "ux", "디자인", "dashboard", "화면"]):
-        recommended_personas.append("UX Specialist")
+    virtual_persona_instruction = ""
+    
+    # 특수 상황 감지: 보안 위반 또는 대규모 리팩토링 필요 시
+    is_critical_security = any(k in internal_input.lower() for k in ["보안", "security", "취약점", "auth"])
+    major_roadmap = [r for r in roadmap if r.get("priority") == "High"]
+    
+    if is_critical_security:
+        recommended_personas = ["Security Expert"]
+        virtual_persona_instruction = "너는 지금부터 'Gortex Security Sentinel'이다. 모든 아키텍처 변경을 보안적 관점에서 검열하고, 최소 권한 원칙을 강제하라."
+    elif major_roadmap:
+        recommended_personas = ["Innovation"]
+        virtual_persona_instruction = f"너는 지금부터 'Evolution Architect'이다. 로드맵의 {major_roadmap[0]['target']} 진화를 최우선으로 고려하여 과감한 구조 개선을 설계하라."
+    
     persona_context = f"선택 가능 페르소나: {', '.join(recommended_personas)}"
-
+    if virtual_persona_instruction:
+        persona_context += f"\n[VIRTUAL PERSONA OVERRIDE] {virtual_persona_instruction}"
+    
     # 2. 장기 기억 및 과거 사례 검색
     namespace = os.path.basename(state.get("working_dir", "global"))
     recalled_items = ltm.recall(internal_input, namespace=namespace)
