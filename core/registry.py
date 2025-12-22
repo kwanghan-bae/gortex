@@ -1,4 +1,7 @@
 import logging
+import importlib.util
+import inspect
+import os
 from typing import Dict, Any, List, Type, Optional
 
 logger = logging.getLogger("GortexRegistry")
@@ -32,6 +35,33 @@ class AgentRegistry:
             "metadata": metadata
         }
         logger.info(f"🆕 Agent '{agent_name}' (v{metadata.version}) registered to registry.")
+
+    def load_agent_from_file(self, file_path: str) -> bool:
+        """소스 파일로부터 에이전트 클래스를 동적으로 로드하고 등록함"""
+        if not os.path.exists(file_path):
+            logger.error(f"File not found: {file_path}")
+            return False
+
+        try:
+            module_name = os.path.basename(file_path).replace(".py", "")
+            spec = importlib.util.spec_from_file_location(module_name, file_path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+
+            # BaseAgent를 상속받은 클래스 탐색
+            from gortex.agents.base import BaseAgent
+            for name, obj in inspect.getmembers(module):
+                if inspect.isclass(obj) and issubclass(obj, BaseAgent) and obj is not BaseAgent:
+                    # 인스턴스 생성하여 메타데이터 확인
+                    instance = obj()
+                    self.register(instance.metadata.name, obj, instance.metadata)
+                    return True
+            
+            logger.warning(f"No valid BaseAgent subclass found in {file_path}")
+            return False
+        except Exception as e:
+            logger.error(f"Failed to load agent from {file_path}: {e}")
+            return False
 
     def get_agent(self, agent_name: str) -> Optional[Type]:
         """등록된 에이전트 클래스 반환"""

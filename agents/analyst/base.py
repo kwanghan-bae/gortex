@@ -43,6 +43,35 @@ class AnalystAgent(BaseAgent):
         score = 100.0 / (1.0 + math.log1p(cost / 5.0))
         return round(min(100.0, score), 1)
 
+    def identify_capability_gap(self, error_log: str = "", unresolved_task: str = "") -> Optional[Dict[str, Any]]:
+        """
+        시스템이 처리하지 못한 과제나 에러를 분석하여 필요한 새로운 전문가 에이전트 명세를 제안함.
+        """
+        prompt = f"""You are the Intelligence Growth Strategist. 
+        Analyze the following failure/unresolved task and design a NEW specialized agent to handle it.
+        
+        [Failure/Task]: {error_log or unresolved_task}
+        
+        Design an agent that inherits from 'BaseAgent'.
+        Return JSON ONLY:
+        {{
+            "agent_name": "UniqueNameAgent",
+            "role": "Specific role title",
+            "description": "What this agent does better than others",
+            "required_tools": ["tool1", "tool2"],
+            "version": "1.0.0",
+            "logic_strategy": "How its 'run' method should behave"
+        }}
+        """
+        try:
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+        except Exception as e:
+            logger.error(f"Capability gap analysis failed: {e}")
+            return None
+
     def generate_milestone_report(self, start_session: int = 1, end_session: int = 100) -> str:
         """지정된 범위의 세션들을 분석하여 마일스톤 보고서를 생성함."""
         session_dir = "docs/sessions"

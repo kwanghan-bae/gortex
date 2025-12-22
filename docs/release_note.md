@@ -11,13 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.13.5 (2025-12-23)
+- **Self-Evolution**: `Automated Agent Generation Loop` 완성. 시스템이 자신의 능력 공백을 분석하고, 새로운 전문가 에이전트를 스스로 설계 및 제조하여 영입하는 '지능 증식' 메커니즘 탑재.
+- **Dynamic Loading**: 런타임 소스 코드 생성 및 즉시 활성화(Dynamic Spawning) 기술 안착.
+- **Intelligence**: 에러 로그 및 미결 과제 기반의 '필요 역량 설계(Gap Analysis)' 지능 고도화.
+
 ### v2.13.4 (2025-12-23)
 - **Interface**: `Interactive Dashboard Upgrade` 완료. `AgentRegistry` 연동을 통한 실시간 에이전트 목록 시각화 패널 도입.
-- **Commands**: `/agents` 명령어 신설. 시스템 전문가들의 명세(역할, 버전, 도구)를 즉시 확인 가능한 인터페이스 확보.
-- **Visibility**: 에이전트별 가용 기술(Skill) 표시 기능 안착.
-
-### v2.13.3 (2025-12-23)
-- **Orchestration**: `Dynamic Capability Discovery` 구현. 하드코딩된 노드 이름을 제거하고, 사용자 의도에 필요한 '도구'와 '역할'을 기반으로 레지스트리에서 에이전트를 자율 탐색.
 
 ### v2.13.2 (2025-12-23)
 - **Migration**: 핵심 에이전트 3종(`Planner`, `Coder`, `Analyst`)의 v3.0 표준 마이그레이션 완료. 클래스 기반 구조로 전면 리팩토링 및 중앙 레지스트리 공식 등록.
