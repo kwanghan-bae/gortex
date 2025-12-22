@@ -44,15 +44,38 @@ class LLMFactory:
     _instances = {}
 
     @staticmethod
-    def get_model_for_grade(grade: str) -> str:
-        """에이전트 등급에 최적화된 모델 할당"""
+    def get_model_for_grade(grade: str, daily_cost: float = 0.0, budget_limit: float = 0.5) -> str:
+        """
+        에이전트 등급 및 예산 상황에 최적화된 모델 할당.
+        예산 소진율에 따라 자동으로 모델을 하향(Downgrade) 조정함.
+        """
+        # 등급별 기본 모델 정의
         grade_map = {
-            "Diamond": "gemini-2.0-flash", # 최고 존엄
-            "Gold": "gemini-pro-latest",   # 고수준 분석
-            "Silver": "gemini-1.5-flash",  # 표준 실행
-            "Bronze": "gemini-2.5-flash-lite" # 경량 보조
+            "Diamond": "gemini-2.0-flash", 
+            "Gold": "gemini-pro-latest",   
+            "Silver": "gemini-1.5-flash",  
+            "Bronze": "gemini-2.5-flash-lite" 
         }
-        return grade_map.get(grade, "ollama/llama3") # 기본/초보자는 로컬 모델
+        
+        selected_model = grade_map.get(grade, "ollama/llama3")
+        
+        # [Economic Defense] 예산 기반 하향 조정
+        budget_usage = daily_cost / budget_limit if budget_limit > 0 else 0
+        
+        if budget_usage > 0.9: # 90% 소진 시
+            logger.warning(f"💸 Budget critical ({budget_usage*100:.1f}%). Downgrading to lightweight/local models.")
+            return "ollama/llama3"
+        elif budget_usage > 0.7: # 70% 소진 시
+            # 한 단계씩 하향
+            downgrade_map = {
+                "gemini-2.0-flash": "gemini-1.5-flash",
+                "gemini-pro-latest": "gemini-1.5-flash",
+                "gemini-1.5-flash": "gemini-2.5-flash-lite",
+                "gemini-2.5-flash-lite": "ollama/llama3"
+            }
+            return downgrade_map.get(selected_model, "ollama/llama3")
+            
+        return selected_model
 
     @staticmethod
     def get_backend(backend_type: Literal["gemini", "ollama", "hybrid"] = "hybrid") -> LLMBackend:

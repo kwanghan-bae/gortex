@@ -81,6 +81,29 @@ class EfficiencyMonitor:
             logger.error(f"Failed to analyze efficiency stats: {e}")
             return {}
 
+    def get_daily_cumulative_cost(self) -> float:
+        """오늘 하루 동안 발생한 누적 추정 비용($) 계산"""
+        if not os.path.exists(self.stats_path):
+            return 0.0
+
+        total_cost = 0.0
+        today = datetime.now().date()
+        
+        try:
+            from gortex.utils.token_counter import estimate_cost
+            with open(self.stats_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    data = json.loads(line)
+                    ts = datetime.fromisoformat(data["timestamp"])
+                    if ts.date() == today:
+                        tokens = data.get("tokens", 0)
+                        model = data.get("model", "unknown")
+                        total_cost += estimate_cost(tokens, model)
+            return total_cost
+        except Exception as e:
+            logger.error(f"Failed to calculate daily cost: {e}")
+            return 0.0
+
     def calculate_model_scores(self) -> Dict[str, float]:
         """
         각 모델의 종합 점수를 계산합니다 (0~100).

@@ -11,13 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.12.7 (2025-12-22)
+- **Economy**: `Intelligent Token Budgeting` 시스템 구축. 일일 예산 사용량(70%, 90%)에 따라 모델 지능 수준을 자율적으로 하향 조정하여 운영 안정성 확보.
+- **Resilience**: API 비용 임계치 도달 시 로컬 모델(Ollama)로 강제 전환되는 '경제적 방어 기제' 탑재.
+
 ### v2.12.6 (2025-12-22)
 - **Agent Coordination**: `Intelligent Handoff System` 도입. 에이전트 간 전환 시 '인수인계 지침(Handoff Instruction)'을 생성하여 직전 단계의 핵심 통찰과 주의사항을 유실 없이 전달.
 - **Prompt Engineering**: 시스템 프롬프트에 동적 지침 주입 레이어를 추가하여 협업의 정밀도와 연속성 강화.
-
-### v2.12.5 (2025-12-22)
-- **Intelligence**: `Autonomous Session Reflection` 구현. 매 세션 종료 시 활동 기록에서 핵심 통찰을 추출하여 시스템 규칙(`Experience Rules`)으로 자동 승격.
-- **Learning Loop**: 비정형 문서 데이터를 정형화된 지능으로 변환하는 자기 학습 파이프라인 안착.
 
 ### v2.11.9 (2025-12-22)
 - **Self-Healing**: `Automated Bug Patching Loop` 구현. 시스템 에러 로그를 분석하여 원인을 특정하고, 코드 수정 후 무결성을 검증하는 자율 수리 프로세스 안착.

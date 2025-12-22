@@ -1,27 +1,28 @@
 # Next Session
 
 ## Session Goal
-- **Intelligent Resource Scaling & Token Budgeting**: 일일 API 사용 예산(토큰 및 비용)을 관리하고, 예산 소진 속도에 따라 시스템이 스스로 사용하는 모델의 지능 수준(Pro -> Flash -> Lite -> Ollama)을 하향 조정하는 '자율 경제 방어' 시스템을 구축한다.
+- **Milestone Summary & Release Candidate (v2.13.0)**: 100번째 세션을 맞이하여 지금까지의 모든 세션 기록과 진화 이력을 종합 요약하고, 현재의 안정된 소스 코드를 배포 후보(Release Candidate)로 패키징한다.
 
 ## Context
-- 현재 모델 선택은 에이전트 등급에만 의존함.
-- API 할당량이 부족하거나 하루 목표 비용을 초과할 위험이 있을 때, 고평판 에이전트라도 강제로 경량 모델을 쓰게 하여 전체 가용성을 유지해야 함.
-- 이는 장기적인 운영 안정성을 보장하기 위함임.
+- Gortex는 100회에 걸친 자율 세션을 통해 초기 챗봇에서 하이브리드 지능형 운영 파트너로 진화함.
+- 중요한 마일스톤인 만큼, 시스템의 현주소를 진단하고 '다음 세대의 Gortex'를 위한 기반을 닦아야 함.
+- 누적된 경험(`experience.json`)과 핵심 기능들을 검증하고 아카이빙함.
 
 ## Scope
 ### Do
-- `core/config.py`: `DAILY_COST_BUDGET` 설정 추가.
-- `utils/efficiency_monitor.py`: 당일 누적 비용(`daily_cumulative_cost`) 계산 기능 추가.
-- `core/llm/factory.py`: `get_model_for_grade` 메서드에 '예산 가중치(Budget Scale)'를 반영하여 모델을 하향(Downgrade)하는 로직 구현.
+- `agents/analyst/base.py`: `generate_milestone_report` 메서드 추가 (1~100 세션 요약).
+- `utils/tools.py`: `package_release_candidate` 유틸리티 구현 (stable 버전 ZIP 패키징).
+- `docs/release_note.md`: 100세션 기념 메이저 변경 요약문 작성.
 
 ### Do NOT
-- 실제 카드 결제나 외부 청구 데이터와 연동하지 않음 (시스템 내 추정치 기준).
+- 새로운 실험적 기능을 추가하지 않음 (안정성 및 정리 집중).
 
 ## Expected Outputs
-- `utils/efficiency_monitor.py` (Update)
-- `core/llm/factory.py` (Update)
-- `tests/test_budget_scaling.py` (New)
+- `agents/analyst/base.py` (Update)
+- `logs/archives/Gortex_RC_v2.13.0.zip` (Artifact)
+- `docs/MILESTONE_100.md` (New Summary Doc)
 
 ## Completion Criteria
-- 하루 예산이 $0.10 인데 이미 $0.09를 썼을 경우, 다이아몬드 등급 에이전트에게도 Pro가 아닌 Flash 또는 Lite 모델이 할당되어야 함.
-- `docs/sessions/session_0099.md` 기록.
+- 1~100 세션의 핵심 성과가 담긴 요약 보고서가 생성되어야 함.
+- 현재 소스 코드가 포함된 ZIP 아카이브가 에러 없이 생성되어야 함.
+- `docs/sessions/session_0100.md` 기록.

@@ -142,12 +142,20 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         
         target_node = res_data.get("next_node", "__end__")
         
-        # [Intelligent Model Allocation] 에이전트 등급별 모델 할당
+        # [Intelligent Model Allocation] 에이전트 등급 및 예산 기반 모델 할당
         agent_eco = state.get("agent_economy", {})
         target_grade = agent_eco.get(target_node, {}).get("level", "Bronze")
         
-        # 평판 기반 모델 결정
-        final_assigned_model = LLMFactory.get_model_for_grade(target_grade)
+        # 일일 누적 비용 및 예산 한도 확인
+        daily_cost = monitor.get_daily_cumulative_cost()
+        from gortex.core.config import GortexConfig
+        budget_limit = GortexConfig().get("daily_budget", 0.5)
+        
+        final_assigned_model = LLMFactory.get_model_for_grade(
+            target_grade, 
+            daily_cost=daily_cost, 
+            budget_limit=budget_limit
+        )
         
         # 특정 작업(진화 등)이나 과거 성과가 좋은 모델이 있다면 우선순위 부여
         expert_model = monitor.get_best_model_for_task(target_node)
