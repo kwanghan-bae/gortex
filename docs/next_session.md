@@ -1,28 +1,28 @@
 # Next Session
 
 ## Session Goal
-- **Energy Recovery & Maintenance Mode**: 시스템 에너지가 낮을 때 스스로 휴식하며 자원을 회복하는 '유지보수 모드'를 도입하고, 아이들(Idle) 시간 동안 에너지가 점진적으로 충전되는 메커니즘을 구현한다.
+- **Autonomous Backup & Knowledge Archiving**: 시스템이 누적된 대화 로그와 지능 데이터를 주기적으로 정리(Garbage Collection)하고, 핵심 지식 파일인 `experience.json`을 안전하게 백업하여 데이터 손실을 방지한다.
 
 ## Context
-- `Session 0087`에서 저에너지 시 작업 가지치기 기능을 추가함.
-- 현재는 에너지가 줄어들기만 하고 다시 채워지는 로직이 없어, 결국 시스템이 멈추게 됨.
-- 생물학적 시스템처럼 휴식을 통한 '에너지 충전' 개념을 도입하여 시스템의 영속성을 확보해야 함.
+- 대화 세션이 90개를 넘어서면서 로그 폴더와 지식 파일의 크기가 점차 커지고 있음.
+- 파일 손상이나 예기치 못한 유실에 대비하여, 시스템 스스로가 '백업 사본'을 만들고 관리할 필요가 있음.
+- `Analyst` 에이전트의 역할 중 '기록 관리' 능력을 실체화함.
 
 ## Scope
 ### Do
-- `core/engine.py`: 에너지가 일정 수준 이하(예: 10%)로 떨어지면 강제로 `Maintenance Mode`로 진입하는 로직 추가.
-- `main.py`: 사용자의 입력이 없는 Idle 시간 동안 에너지를 초당 일정량(예: 0.1) 회복하는 비동기 루틴 구현.
-- `ui/dashboard.py`: 에너지 회복 중임을 나타내는 시각적 효과(Pulse 등) 추가.
+- `utils/tools.py`: `backup_file_with_rotation` 함수 추가 (최근 5개 버전 유지).
+- `agents/analyst/base.py`: 주기적으로 로그를 압축하여 아카이브 폴더로 이동시키는 `archive_system_logs` 구현.
+- `core/graph.py`: 세션 종료 전 또는 특정 주기마다 `analyst`가 아카이빙을 수행하도록 트리거 연동.
 
 ### Do NOT
-- 외부 전력 관리나 실제 PC 절전 모드와 연동하지 않음 (순수 시스템 가상 에너지).
+- 실제 클라우드 스토리지(S3 등) 연동은 배제 (로컬 파일 시스템 내 백업 집중).
 
 ## Expected Outputs
-- `main.py` (Update with recovery loop)
-- `ui/dashboard.py` (Update)
-- `tests/test_energy_recovery.py` (New)
+- `utils/tools.py` (Update)
+- `agents/analyst/base.py` (Update)
+- `logs/backups/` (New Directory for backups)
 
 ## Completion Criteria
-- 시스템을 실행해두고 1분간 대기했을 때, 에너지가 최소 5포인트 이상 상승해야 함.
-- 에너지가 10 미만일 때 에이전트 작업 요청 시 "휴식 중" 메시지가 출력되어야 함.
-- `docs/sessions/session_0095.md` 기록.
+- `experience.json` 파일의 백업 사본이 `logs/backups/`에 날짜별로 생성되어야 함.
+- 30일 이상 지난 로그 파일이 ZIP으로 압축되어 `logs/archives/`로 이동해야 함.
+- `docs/sessions/session_0096.md` 기록.

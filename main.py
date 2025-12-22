@@ -40,6 +40,19 @@ def save_sessions_cache(all_sessions_cache: dict):
     except Exception as e:
         logger.error(f"Failed to save session cache: {e}")
 
+async def energy_recovery_loop(state_vars: dict, ui: DashboardUI):
+    """Idle 시간 동안 에너지를 점진적으로 회복하는 루프"""
+    while True:
+        await asyncio.sleep(2) # 2초마다 체크
+        if state_vars["agent_energy"] < 100:
+            # 2초당 1포인트 회복
+            state_vars["agent_energy"] = min(100, state_vars["agent_energy"] + 1)
+            # UI 실시간 반영 (Idle 상태일 때만)
+            if ui.current_agent == "Idle":
+                ui.update_sidebar("Idle", "Recovering...", state_vars["total_tokens"], state_vars["total_cost"], 0, 
+                                  energy=state_vars["agent_energy"], efficiency=state_vars["last_efficiency"], 
+                                  agent_economy=state_vars.get("agent_economy"))
+
 async def run_gortex():
     theme_manager = ThemeManager()
     ui = DashboardUI(console=console)
@@ -64,7 +77,8 @@ async def run_gortex():
         "session_cache": all_sessions_cache.get(thread_id, {}),
         "pinned_messages": [],
         "last_event_id": None,
-        "last_question": None
+        "last_question": None,
+        "agent_economy": {} # 초기 경제 데이터 빈값 설정
     }
     
     working_dir = os.getenv("WORKING_DIR", "./workspace")
@@ -72,6 +86,9 @@ async def run_gortex():
     state_vars["session_cache"], _ = deep_integrity_check(working_dir, state_vars["session_cache"])
     
     console.print(f"[bold cyan]🚀 {i18n.t('system.initialized', thread_id=thread_id)}[/bold cyan]")
+    
+    # 에너지 회복 루프 시작
+    recovery_task = asyncio.create_task(energy_recovery_loop(state_vars, ui))
     
     with Live(ui.layout, console=console, refresh_per_second=4) as live:
         while True:

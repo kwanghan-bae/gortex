@@ -13,7 +13,6 @@ from rich.markdown import Markdown
 from gortex.core.config import GortexConfig
 from gortex.core.observer import GortexObserver
 from gortex.utils.notifier import Notifier
-from gortex.ui.three_js_bridge import ThreeJsBridge
 from gortex.utils.indexer import SynapticIndexer
 from gortex.agents.analyst import AnalystAgent
 

@@ -105,6 +105,15 @@ class GortexEngine:
             "agent_economy": {}
         }
         
+        # [MAINTENANCE] 에너지 고갈 체크
+        energy = state.get("agent_energy", 100)
+        if energy < 10:
+            logger.warning(f"🔋 Energy critical ({energy}%). Entering Maintenance Mode.")
+            return {
+                "messages": [("ai", "🔋 **시스템 에너지 고갈**: 현재 유지보수 모드입니다. 에너지가 충전될 때까지 잠시만 기다려주세요 (최소 20% 필요).")],
+                "next_node": "__end__"
+            }
+        
         try:
             final_state = self.graph.invoke(state, self.config)
             return final_state

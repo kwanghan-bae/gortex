@@ -11,13 +11,14 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.12.3 (2025-12-22)
+- **Sustainability**: `Energy Recovery` 시스템 구축. 시스템 대기 시간(Idle) 동안 에너지가 자동으로 충전되어 영속적인 작업 수행 가능.
+- **Resilience**: `Maintenance Mode` 도입. 에너지 고갈(10% 미만) 시 작업을 일시 중단하고 시스템을 보호하는 안전장치 탑재.
+- **Interface**: 에너지 충전 상태를 직관적으로 보여주는 시각적 피드백 연동.
+
 ### v2.12.2 (2025-12-22)
 - **Authentication**: `Intelligent API Key Rotation` 구축. API 키 풀(Key Pool)과 쿨다운(Cooldown) 시스템을 도입하여 429 에러에 지능적으로 대응하고 시스템 가용성 극대화.
 - **Resilience**: 키별 실패 이력을 추적하여 문제 발생 시 일정 시간 격리 후 자동 복구하는 자가 치유형 인증 레이어 안착.
-
-### v2.12.1 (2025-12-22)
-- **Interface**: `Visual Reputation & Skill Tree` 구현. 에이전트별 코딩, 조사, 설계, 분석 등 분야별 숙련도를 TUI 대시보드에 막대 그래프로 시각화.
-- **Economy**: 분야별 스킬 포인트(`skill_points`) 추적 시스템 및 자동 분야 분류 로직 안착.
 
 ### v2.11.9 (2025-12-22)
 - **Self-Healing**: `Automated Bug Patching Loop` 구현. 시스템 에러 로그를 분석하여 원인을 특정하고, 코드 수정 후 무결성을 검증하는 자율 수리 프로세스 안착.

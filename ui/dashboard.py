@@ -365,8 +365,11 @@ class DashboardUI:
         latency_color = "green" if avg_latency < 3000 else ("yellow" if avg_latency < 7000 else "red")
         stats_table.add_row("Avg Lat:", f"[{latency_color}]{avg_latency}ms[/{latency_color}]")
         
+        # Energy & Efficiency Visualization
         energy_color = "green" if energy > 70 else ("yellow" if energy > 30 else "red")
-        stats_table.add_row("Energy:", f"[{energy_color}]{'⚡' * (energy // 20)}{' ' * (5 - energy // 20)} {energy}%[/{energy_color}]")
+        is_recovering = step == "Recovering..."
+        energy_suffix = " [pulse]⚡[/]" if is_recovering else f" {energy}%"
+        stats_table.add_row("Energy:", f"[{energy_color}]{'⚡' * (energy // 20)}{' ' * (5 - energy // 20)}{energy_suffix}[/{energy_color}]")
         
         eff_color = "cyan" if efficiency >= 80 else ("yellow" if efficiency >= 50 else "red")
         stats_table.add_row("Effic.:", f"[{eff_color}]{efficiency:.1f}[/{eff_color}]")
