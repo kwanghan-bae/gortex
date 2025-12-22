@@ -1,27 +1,27 @@
 # Next Session
 
 ## Session Goal
-- **Heuristic Memory Pruning & Ranking**: 누적된 자가 진화 규칙(`Experience Rules`)의 기여도를 평가하여, 실제 작업 성공률에 영향을 주지 못하는 저가치 규칙을 폐기하거나 유사한 규칙끼리 병합하여 지식 베이스를 슬림하게 유지한다.
+- **Visual Reputation & Skill Tree**: 에이전트별 평판뿐만 아니라, 코딩(`Coding`), 조사(`Research`), 설계(`Design`), 분석(`Analysis`) 등 각 분야에서의 전문성 점수를 TUI 대시보드에 스킬 트리(Skill Tree) 형태로 시각화한다.
 
 ## Context
-- 현재 규칙이 무분별하게 쌓이면서 프롬프트 크기가 증가하고 모델의 인지적 노이즈가 발생하고 있음.
-- 배운 것을 기억하는 것만큼, 잊어야 할 것을 잊는 '지능적 망각'이 필요함.
-- `experience.json`의 각 규칙에 성공 기여 횟수(`usage_count`)와 성공률(`impact_rate`)을 도입함.
+- `Session 0089`에서 평판 리더보드를 구축했으나, 총점만 보여주므로 에이전트의 강점 파악이 어려움.
+- 에이전트가 특정 분야의 작업을 성공할 때마다 해당 분야의 스킬 포인트를 별도로 적립함.
+- 시각적으로 '성장하는 직원'의 느낌을 주어 사용자 경험을 강화함.
 
 ## Scope
 ### Do
-- `core/evolutionary_memory.py`: 규칙별 사용 통계(Usage Tracking) 필드 및 로직 추가.
-- `agents/analyst/base.py`: 규칙의 유효성을 평가하고 최적화(Pruning/Merging)를 수행하는 `optimize_knowledge_base` 구현.
-- `utils/tools.py`: 지식 베이스 최적화 전후의 토큰 절감 효과 측정 유틸리티 추가.
+- `utils/economy.py`: 분야별 스킬 포인트(`skill_points`) 추적 필드 추가.
+- `ui/dashboard.py`: 평판 패널(`economy`) 하위에 분야별 숙련도를 막대 그래프로 보여주는 렌더링 로직 추가.
+- `agents/analyst/reflection.py`: 작업 품질 평가 시 분야(Category)를 판별하여 스킬 포인트 가중치 도출.
 
 ### Do NOT
-- 사용자가 수동으로 작성한 규칙은 절대 삭제하지 않음 (시스템 자동 생성 규칙만 대상).
+- 실제 게임 같은 복잡한 스킬 해금(Unlock) 로직은 다음 단계로 미룸.
 
 ## Expected Outputs
-- `core/evolutionary_memory.py` (Update)
-- `agents/analyst/base.py` (Update)
-- `tests/test_memory_optimization.py` (New)
+- `utils/economy.py` (Update)
+- `ui/dashboard.py` (Update)
+- `tests/test_skill_tree.py` (New)
 
 ## Completion Criteria
-- 10개의 중복되거나 무의미한 규칙이 있을 때, 최적화 후 핵심 규칙 2~3개로 압축되어야 함.
-- `docs/sessions/session_0092.md` 기록.
+- Coder가 코딩 작업을 성공했을 때, 평판 포인트와 함께 `Coding` 스킬 포인트가 동시에 오르고 대시보드에 반영되어야 함.
+- `docs/sessions/session_0093.md` 기록.

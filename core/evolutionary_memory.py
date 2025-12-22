@@ -70,11 +70,25 @@ class EvolutionaryMemory:
             "source_session": source_session,
             "created_at": datetime.now().isoformat(),
             "last_reinforced": datetime.now().isoformat(),
-            "usage_count": 0
+            "usage_count": 0,
+            "success_count": 0,
+            "failure_count": 0
         }
         self.memory.append(new_rule)
         self._persist()
         logger.info(f"New rule saved: {rule_id} - {instruction}")
+
+    def record_rule_outcome(self, rule_id: str, success: bool):
+        """특정 규칙이 적용된 작업의 성공/실패 결과 기록"""
+        for rule in self.memory:
+            if rule["id"] == rule_id:
+                rule["usage_count"] = rule.get("usage_count", 0) + 1
+                if success:
+                    rule["success_count"] = rule.get("success_count", 0) + 1
+                else:
+                    rule["failure_count"] = rule.get("failure_count", 0) + 1
+                self._persist()
+                break
 
 
 

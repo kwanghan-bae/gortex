@@ -291,6 +291,81 @@ class AnalystAgent:
             logger.error(f"Failed to curate evolution data: {e}")
             return f"❌ Failed: {e}"
 
+    def optimize_knowledge_base(self, model_id: str = "gemini-2.0-flash") -> Dict[str, Any]:
+        """
+        지식 베이스(Experience Rules)의 품질을 평가하고 최적화함.
+        성공률이 낮은 규칙을 제거하고, 유사한 고성과 규칙을 병합함.
+        """
+        rules = self.memory.memory
+        if len(rules) < 5:
+            return {"status": "skipped", "reason": "지식 데이터가 부족하여 최적화를 수행하지 않음."}
+
+        original_count = len(rules)
+        optimized_rules = []
+        removed_count = 0
+        
+        # 1. 수치 기반 필터링 (Heuristic Pruning)
+        active_pool = []
+        for r in rules:
+            usage = r.get("usage_count", 0)
+            success = r.get("success_count", 0)
+            # 생성된 지 오래되었는데(예: 사용 5회 이상) 성공률이 30% 미만인 경우 퇴출
+            if usage >= 5 and (success / usage) < 0.3:
+                removed_count += 1
+                logger.info(f"🗑️ Rule {r['id']} removed due to low performance.")
+                continue
+            active_pool.append(r)
+
+        # 2. LLM 기반 시맨틱 병합 (Semantic Merging)
+        rules_text = "\n".join([f"- [{r['id']}] {r['learned_instruction']} (Success: {r.get('success_count',0)}/{r.get('usage_count',0)})" for r in active_pool])
+        
+        prompt = f"""다음은 자가 진화 시스템이 습득한 지식 리스트다.
+        1. 내용이 중복되거나 서로 보완적인 고성과 규칙들은 하나의 더 강력하고 범용적인 규칙으로 병합하라.
+        2. 병합된 규칙은 가장 핵심적인 트리거 패턴을 유지해야 한다.
+        3. 실제 성공 사례가 많은 지식을 우선하라.
+        
+        [Knowledge List]
+        {rules_text}
+        
+        결과는 반드시 병합 및 정제된 최종 JSON 리스트만 반환하라:
+        [{{ "instruction": "...", "trigger_patterns": ["...", "..."], "severity": 1~5 }}]
+        """
+        
+        try:
+            response_text = self.backend.generate(model_id, [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+            new_data = json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+            
+            if isinstance(new_data, list):
+                # 최종 메모리 교체 (아카이빙 이력을 남기거나 백업 권장)
+                updated_memory = []
+                for idx, item in enumerate(new_data):
+                    updated_memory.append({
+                        "id": f"RULE_EVOLVED_{datetime.now().strftime('%Y%m%d')}_{idx}",
+                        "learned_instruction": item["instruction"],
+                        "trigger_patterns": item["trigger_patterns"],
+                        "severity": item.get("severity", 3),
+                        "created_at": datetime.now().isoformat(),
+                        "usage_count": 0,
+                        "success_count": 0,
+                        "failure_count": 0,
+                        "is_super_rule": True # 병합된 지능임을 표시
+                    })
+                self.memory.memory = updated_memory
+                self.memory._persist()
+                
+                return {
+                    "status": "success",
+                    "original": original_count,
+                    "final": len(updated_memory),
+                    "removed": removed_count,
+                    "merged": original_count - removed_count - len(updated_memory)
+                }
+        except Exception as e:
+            logger.error(f"Knowledge optimization failed: {e}")
+            return {"status": "error", "reason": str(e)}
+
     def generate_evolution_roadmap(self) -> List[Dict[str, Any]]:
         """지능 지수가 낮은 모듈을 식별하여 진화 우선순위 로드맵 생성"""
         from gortex.utils.indexer import SynapticIndexer
