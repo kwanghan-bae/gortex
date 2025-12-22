@@ -1,28 +1,28 @@
 # Next Session
 
 ## Session Goal
-- **Collaborative Multi-Agent Debugging**: 단일 에이전트(Coder)가 해결하지 못한 고난도 버그에 대해 `Swarm` 노드와 `Analyst`가 협력하여 공동 진단하고, 여러 가설을 동시에 검증하여 최적의 패치를 도출하는 '집단 지성 수리 루프'를 강화한다.
+- **Predictive Performance Guardrails**: 에이전트가 고부하 작업(예: 대규모 리팩토링, 광범위한 웹 검색)을 수행하기 전, 과거 데이터를 기반으로 예상 토큰 사용량과 실행 시간을 예측하고, 임계치 초과가 예상될 경우 사용자에게 경고하거나 스스로 계획을 최적화하는 '선제적 방어선'을 구축한다.
 
 ## Context
-- 현재 수리는 주로 `Analyst` 진단 -> `Coder` 집도로 이루어짐.
-- 하지만 원인이 불분명한 간헐적 버그나 복잡한 의존성 문제는 단일 관점으로 해결이 어려움.
-- `Swarm`의 '토론' 지능을 디버깅에 도입하여, 다양한 해결책을 제안받고 상호 비판을 통해 신뢰도를 높여야 함.
+- 현재 시스템은 작업을 일단 실행한 뒤에 비용과 효율을 측정함.
+- 복잡도가 높은 작업의 경우 실행 중간에 API 할당량이 소진되거나 에너지가 바닥나 작업이 중단되는 리스크가 있음.
+- `EfficiencyMonitor`의 누적 데이터를 활용하여 '실행 전 예측' 지능을 강화함.
 
 ## Scope
 ### Do
-- `agents/swarm.py`: 'Debug Mode' 추가. 에러 로그를 바탕으로 여러 페르소나가 각자 다른 가설을 제안하도록 유도.
-- `agents/analyst/base.py`: Swarm이 제안한 여러 패치 후보 중 가장 안전하고 효율적인 것을 선별하는 `synthesize_debug_consensus` 구현.
-- `core/graph.py`: Coder가 반복 실패 시 자동으로 'Swarm Debug Mode'로 라우팅하는 엣지 보강.
+- `utils/efficiency_monitor.py`: 작업 유형별 평균 토큰/시간 데이터를 기반으로 한 `predict_resource_usage` 메서드 추가.
+- `agents/planner.py`: 계획 수립 직후 각 단계의 예상 비용을 산출하고, 총합이 위험 수준일 때 `thought_process`에 경고 주입.
+- `ui/dashboard.py`: 예측된 비용을 대시보드 상단에 '예상 비용'으로 미리 표시.
 
 ### Do NOT
-- 인프라 수준의 디버깅(Docker, OS Kernel 등)은 범위에서 제외.
+- 복잡한 머신러닝 모델 도입은 배제 (통계적 가중치 평균 방식 우선).
 
 ## Expected Outputs
-- `agents/swarm.py` (Debug Persona support)
-- `agents/analyst/base.py` (Debug Synthesis)
-- `tests/test_swarm_debugging.py` (New)
+- `utils/efficiency_monitor.py` (Update)
+- `agents/planner.py` (Predictive mode)
+- `tests/test_performance_prediction.py` (New)
 
 ## Completion Criteria
-- Coder가 3회 이상 동일 버그 수리에 실패했을 때, Swarm이 개입하여 최소 2개 이상의 대안적 가설을 제시해야 함.
-- 최종적으로 선택된 가설이 기존의 실패한 방식과 달라야 함.
-- `docs/sessions/session_0107.md` 기록.
+- 특정 작업에 대해 과거 평균보다 2배 이상의 리소스가 필요할 것으로 예측될 때, 플래너가 "Resource Alert"를 발생시켜야 함.
+- 대시보드에 현재 작업의 '예상 완료 시간'이 실시간으로 노출되어야 함.
+- `docs/sessions/session_0108.md` 기록.

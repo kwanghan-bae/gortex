@@ -16,6 +16,9 @@ from gortex.agents.swarm import swarm_node
 from gortex.agents.evolution_node import evolution_node
 from gortex.utils.memory import summarizer_node
 
+import logging
+logger = logging.getLogger("GortexGraph")
+
 def route_manager(state: GortexState) -> Literal["summarizer", "planner", "researcher", "analyst", "optimizer", "swarm", "evolution", "__end__"]:
     """Manager의 결정에 따라 다음 노드로 라우팅."""
     next_node = state.get("next_node", "__end__")
@@ -40,23 +43,24 @@ def route_after_summary(state: GortexState) -> str:
     """요약 후 원래 가려던 노드로 복귀"""
     return state.get("next_node", "manager")
 
-def route_emergency(state: GortexState) -> Literal["analyst", "manager"]:
-    """치명적 에러 감지 시 자율 수리 경로로 안내"""
+def route_coder(state: GortexState) -> Literal["coder", "analyst", "swarm", "manager"]:
+    """Coder 노드의 다음 행방을 결정. 성공, 재시도, 에러, 반복 실패 대응."""
     messages = state.get("messages", [])
-    if not messages: return "manager"
+    last_msg = str(messages[-1][1] if isinstance(messages[-1], tuple) else messages[-1].content if hasattr(messages[-1], 'content') else str(messages[-1]))
     
-    last_msg = str(messages[-1][1] if isinstance(messages[-1], tuple) else messages[-1])
+    # 1. 반복 실패 감지 -> Swarm 집단 지성 요청
+    if state.get("coder_iteration", 0) > 3:
+        logger.warning("🚑 Coder repeated failure. Escalating to Swarm Debug.")
+        return "swarm"
+        
+    # 2. 긴급 에러 감지 -> Analyst 수술실행
     if "❌" in last_msg or "error" in last_msg.lower():
-        logger.warning("🚨 Emergency detected! Routing to Surgeon (Analyst).")
+        logger.warning("🚨 Emergency detected. Routing to Surgeon (Analyst).")
         return "analyst"
-    return "manager"
-
-def route_coder(state: GortexState) -> Literal["coder", "analyst", "__end__"]:
-    """Coder의 작업 완료 여부에 따라 라우팅"""
-    next_node = state.get("next_node", "manager")
-    if next_node == "__end__":
-        return "analyst"
-    return "coder"
+        
+    # 3. 기본 흐름 준수 (coder 또는 analyst)
+    target = state.get("next_node", "coder")
+    return target if target in ["coder", "analyst", "manager"] else "coder"
 
 def compile_gortex_graph(checkpointer=None):
     """Gortex 시스템의 모든 에이전트를 연결하여 그래프 컴파일"""
@@ -118,13 +122,15 @@ def compile_gortex_graph(checkpointer=None):
     # Planner -> Coder
     workflow.add_edge("planner", "coder")
 
-    # Coder 루프 및 완료 후 Analyst 검증 또는 Emergency Patch
+    # Coder 루프 및 완료 후 Analyst 검증 또는 Emergency Patch/Swarm Escalation
     workflow.add_conditional_edges(
         "coder",
-        route_emergency,
+        route_coder,
         {
-            "analyst": "analyst", # Repair mode
-            "manager": "manager"  # Success
+            "coder": "coder",
+            "analyst": "analyst",
+            "swarm": "swarm",
+            "manager": "manager"
         }
     )
 

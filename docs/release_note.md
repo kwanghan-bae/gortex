@@ -11,13 +11,12 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.13.7 (2025-12-23)
+- **Collaboration**: `Collaborative Multi-Agent Debugging` 구현. 단일 에이전트 실패 시 `Swarm` 토론과 `Analyst` 종합을 통해 집단 지성으로 버그를 해결하는 에스컬레이션 워크플로우 안착.
+- **Resilience**: `route_coder` 고도화를 통해 반복 실패 상황을 자동으로 감지하고 최적의 전문가 그룹을 소집하는 대응 체계 구축.
+
 ### v2.13.6 (2025-12-23)
 - **Strategy**: `Proactive Self-Expansion` 지능 탑재. 외부 기술 트렌드를 감지하여 필요한 전문가 에이전트를 선제적으로 설계하고 영입하는 전략적 확장 워크플로우 안착.
-- **Intelligence**: `TrendScout`의 신규 에이전트 제안 기능 및 `Manager`의 확장 전용 라우팅 로직 연동.
-- **Identity**: `SPEC_CATALOG.md` 개정을 통해 '자가 개발 가능한 시스템(v3.0)'의 정체성 확립.
-
-### v2.13.5 (2025-12-23)
-- **Self-Evolution**: `Automated Agent Generation Loop` 완성. 시스템이 자신의 능력 공백을 분석하고, 새로운 전문가 에이전트를 스스로 설계 및 제조하여 영입하는 '지능 증식' 메커니즘 탑재.
 
 ### v2.13.2 (2025-12-23)
 - **Migration**: 핵심 에이전트 3종(`Planner`, `Coder`, `Analyst`)의 v3.0 표준 마이그레이션 완료. 클래스 기반 구조로 전면 리팩토링 및 중앙 레지스트리 공식 등록.

@@ -72,6 +72,36 @@ class AnalystAgent(BaseAgent):
             logger.error(f"Capability gap analysis failed: {e}")
             return None
 
+    def synthesize_debug_consensus(self, error_log: str, debate_history: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        여러 에이전트의 디버깅 가설과 토론 내용을 종합하여 최종 수리 계획을 확정함.
+        """
+        prompt = f"""You are the Chief Surgeon. Synthesize the following debugging debate into one final, authoritative fix plan.
+        
+        [Original Error]:
+        {error_log}
+        
+        [Debate History]:
+        {json.dumps(debate_history, indent=2, ensure_ascii=False)}
+        
+        Analyze the pros and cons of each hypothesis and output the best combined solution.
+        Return JSON ONLY:
+        {{
+            "diagnosis": "Final root cause identification",
+            "fix_strategy": "Authoritative fix strategy",
+            "action_plan": ["Step 1", "Step 2"],
+            "verification_method": "How to verify the fix"
+        }}
+        """
+        try:
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+        except Exception as e:
+            logger.error(f"Debug consensus synthesis failed: {e}")
+            return {"diagnosis": "Failed to synthesize", "fix_strategy": str(e), "action_plan": []}
+
     def generate_milestone_report(self, start_session: int = 1, end_session: int = 100) -> str:
         """지정된 범위의 세션들을 분석하여 마일스톤 보고서를 생성함."""
         session_dir = "docs/sessions"
