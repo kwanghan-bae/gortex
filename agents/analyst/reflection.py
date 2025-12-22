@@ -1,20 +1,110 @@
 import json
 import logging
 import re
+import ast
+import os
 from typing import Dict, Any, List, Optional
 from gortex.agents.analyst.base import AnalystAgent
-from gortex.utils.tools import read_file
+from gortex.utils.tools import read_file, write_file
 
 logger = logging.getLogger("GortexAnalystReflection")
 
 class ReflectionAnalyst(AnalystAgent):
     """시스템의 사고 과정을 성찰하고 진화 규칙을 생성하는 전문가"""
     
+    def check_documentation_drift(self, file_path: str, doc_path: str, target_symbol: str) -> Dict[str, Any]:
+        """
+        코드 파일의 특정 심볼(Class/Function) 정의와 문서 내 기술(Markdown Code Block)을 비교하여
+        불일치(Drift) 여부를 감지하고, 필요 시 문서 업데이트를 수행합니다.
+        """
+        if not os.path.exists(file_path) or not os.path.exists(doc_path):
+            return {"status": "error", "reason": "File or doc not found"}
+
+        # 1. Extract Code Definition (AST)
+        try:
+            code_content = read_file(file_path)
+            tree = ast.parse(code_content)
+            target_node = None
+            for node in ast.walk(tree):
+                if isinstance(node, (ast.ClassDef, ast.FunctionDef)) and node.name == target_symbol:
+                    target_node = node
+                    break
+            
+            if not target_node:
+                # If it's a TypedDict, it might be an assignment: GortexState = TypedDict(...)
+                # But typically TypedDict is defined as class GortexState(TypedDict): ...
+                # Let's assume class definition for now as per core/state.py
+                return {"status": "skipped", "reason": f"Symbol {target_symbol} not found in AST"}
+
+            # Reconstruct source for the target node
+            start_line = target_node.lineno - 1
+            end_line = target_node.end_lineno
+            lines = code_content.splitlines()
+            target_source = "\n".join(lines[start_line:end_line])
+
+        except Exception as e:
+            return {"status": "error", "reason": f"AST parsing failed: {e}"}
+
+        # 2. Extract Doc Definition (Regex)
+        doc_content = read_file(doc_path)
+        # Find code block that likely describes this symbol
+        # Strategy: Look for ```python ... class TargetSymbol ... ```
+        pattern = rf"```python\n(class {target_symbol}.*?)\n```"
+        match = re.search(pattern, doc_content, re.DOTALL)
+        
+        doc_source = match.group(1) if match else None
+        
+        if not doc_source:
+            return {"status": "skipped", "reason": f"Documentation for {target_symbol} not found"}
+
+        # 3. Compare (Simple String/Structure Comparison)
+        # Whitespace normalization
+        norm_code = re.sub(r'\s+', ' ', target_source).strip()
+        norm_doc = re.sub(r'\s+', ' ', doc_source).strip()
+        
+        # 주석 등 세부 사항이 다를 수 있으므로, 단순 길이 차이나 필드명 존재 여부로 판단
+        # 여기서는 LLM을 사용하여 의미적 불일치를 판단
+        prompt = f"""Compare the following code and documentation for '{target_symbol}'.
+        Does the documentation accurately reflect the code structure?
+        Ignore minor formatting or comment differences. Focus on fields, types, and logic.
+        
+        [Actual Code]
+        {target_source}
+        
+        [Documentation]
+        {doc_source}
+        
+        If significant drift is detected (e.g. missing fields, wrong types), return JSON:
+        {{ "drift_detected": true, "reason": "...", "suggested_doc": "Updated markdown code block content" }}
+        
+        Else:
+        {{ "drift_detected": false }}
+        """
+        
+        try:
+            # 보다 안정적인 성능을 위해 gemini-2.0-flash 사용 권장
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            res_data = json.loads(re.search(r'\{.*\}', response_text, re.DOTALL).group(0))
+            
+            if res_data.get("drift_detected"):
+                # 4. Auto-Heal (Update Doc)
+                new_block = f"```python\n{res_data['suggested_doc']}\n```"
+                new_doc_content = doc_content.replace(match.group(0), new_block)
+                write_file(doc_path, new_doc_content)
+                logger.info(f"🩹 Healed documentation drift for {target_symbol} in {doc_path}")
+                return {"status": "healed", "reason": res_data["reason"]}
+            else:
+                return {"status": "synced"}
+                
+        except Exception as e:
+            logger.error(f"Drift check failed: {e}")
+            return {"status": "error", "reason": str(e)}
+
     def generate_anti_failure_rule(self, error_log: str, context: str) -> Optional[Dict[str, Any]]:
         """실패 사례 분석을 통한 방어 규칙 생성"""
         prompt = f"다음 에러를 분석하여 재발 방지 규칙을 JSON으로 제안하라.\nError: {error_log}\nContext: {context}"
         try:
-            response_text = self.backend.generate("gemini-1.5-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
             import re
             json_match = re.search(r'\{{.*\}}', response_text, re.DOTALL)
             return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
@@ -26,7 +116,7 @@ class ReflectionAnalyst(AnalystAgent):
         """여러 에이전트의 상반된 의견을 조율하여 최종 합의안 도출"""
         prompt = f"주제: {topic}\n토론 데이터: {json.dumps(scenarios)}\n가장 합리적인 최종 결정을 JSON으로 요약하라."
         try:
-            response_text = self.backend.generate("gemini-1.5-pro", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
             import re
             json_match = re.search(r'\{{.*\}}', response_text, re.DOTALL)
             return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
@@ -38,7 +128,7 @@ class ReflectionAnalyst(AnalystAgent):
         if not constraints: return {"is_valid": True}
         prompt = f"규칙: {json.dumps(constraints)}\n도구 호출: {json.dumps(tool_call)}\n위반 여부를 JSON으로 반환하라."
         try:
-            response_text = self.backend.generate("gemini-1.5-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
             import re
             json_match = re.search(r'\{{.*\}}', response_text, re.DOTALL)
             return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
@@ -53,7 +143,7 @@ class ReflectionAnalyst(AnalystAgent):
         """사용자 피드백을 분석하여 개선 규칙 추출"""
         prompt = f"피드백 분석: {feedback}\n개선이 필요한 규칙들을 JSON 리스트로 추출하라."
         try:
-            response_text = self.backend.generate("gemini-1.5-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
             import re
             json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
             return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
@@ -63,7 +153,7 @@ class ReflectionAnalyst(AnalystAgent):
         """질의응답을 통한 실시간 지식 학습"""
         prompt = f"질문: {question}\n답변: {answer}\n시스템이 기억해야 할 핵심 정보를 추출하라."
         try:
-            response_text = self.backend.generate("gemini-1.5-flash", [{"role": "user", "content": prompt}])
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}])
             from gortex.utils.vector_store import LongTermMemory
             LongTermMemory().memorize(f"User Knowledge: {response_text}", {"source": "Interaction"})
         except: pass
@@ -94,7 +184,7 @@ class ReflectionAnalyst(AnalystAgent):
             오직 코드만 반환하라.
             """
             try:
-                response_text = self.backend.generate("gemini-1.5-pro", [{"role": "user", "content": prompt}])
+                response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}])
                 test_code = re.sub(r'```python\n|```', '', response_text).strip()
                 proposals.append({
                     "target_file": f"tests/test_auto_{os.path.basename(file)}",

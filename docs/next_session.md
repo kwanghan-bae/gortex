@@ -1,26 +1,27 @@
 # Next Session
 
 ## Session Goal
-- **Self-Healing Documentation System**: `AnalystAgent`가 코드베이스와 문서 간의 불일치(Drift)를 감지하고, 문서를 자동으로 최신화하는 기능을 구현한다.
+- **Local LLM Performance Optimization (Ollama Integration)**: 클라우드 API 할당량 소진 시에도 시스템이 원활하게 동작할 수 있도록, 로컬 모델(Ollama)의 추론 속도와 파싱 정확도를 최적화한다.
 
 ## Context
-- `Session 0083`에서 README를 개편했지만, `TECHNICAL_SPEC.md` 등 기술 문서는 코드 변경 사항(예: `GortexState` 구조 변경)을 따라가지 못할 위험이 큼.
-- 진화하는 시스템은 스스로 문서를 유지보수해야 함.
+- `Session 0084`에서 클라우드 API 429 에러로 인해 실제 문서 치유가 지연됨.
+- Gortex의 지속 가능성을 위해 로컬 모델은 단순한 백업이 아닌 '대등한 동료'로 성장해야 함.
+- 현재 Ollama 연동은 되어 있으나, Structured Output(JSON) 파싱 안정성 및 복잡한 작업 수행 능력이 클라우드 모델 대비 낮음.
 
 ## Scope
 ### Do
-- `agents/analyst/reflection.py`: `check_documentation_drift(file_path, doc_path)` 메서드 구현.
-    - Python `ast` 모듈을 사용하여 클래스/TypedDict 구조 파싱.
-    - 문서 내 코드 블록(Markdown)과 비교.
-- `docs/TECHNICAL_SPEC.md` vs `core/state.py` 동기화 테스트.
+- `core/llm/ollama_client.py`: Ollama 모델의 프롬프트 템플릿 최적화 (ChatML 포맷 등 적용).
+- `core/llm/factory.py`: 할당량 소진 감지 시 즉시 로컬 모델로 전환하는 스마트 폴백 로직 강화.
+- `utils/tools.py`: 로컬 모델의 출력을 위한 전용 JSON 복구(Healing) 알고리즘 구현.
 
 ### Do NOT
-- 모든 문서를 한 번에 처리하지 않음 (Pilot: Technical Spec).
+- 대규모 모델 학습(Fine-tuning)은 진행하지 않음 (기존 모델의 효율적 사용에 집중).
 
 ## Expected Outputs
-- `agents/analyst/reflection.py` (Update)
-- `docs/TECHNICAL_SPEC.md` (Auto-updated if drift detected)
+- `core/llm/ollama_client.py` (Update)
+- `core/llm/factory.py` (Update)
+- `utils/tools.py` (Update)
 
 ## Completion Criteria
-- `core/state.py`에 더미 필드를 추가했을 때, Analyst가 이를 감지하고 `TECHNICAL_SPEC.md`를 수정해야 함.
-- `docs/sessions/session_0084.md` 기록.
+- 클라우드 API를 강제로 차단했을 때, Ollama를 통해 `GortexState` 구조 분석 및 JSON 파싱이 100% 성공해야 함.
+- `docs/sessions/session_0085.md` 기록.
