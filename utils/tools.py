@@ -350,6 +350,18 @@ def verify_patch_integrity(file_path: str) -> Dict[str, Any]:
     
     return {"success": True, "details": "Syntax passed (No matching test found)."}
 
+def package_release_candidate(version: str, output_dir: str = "logs/archives") -> str:
+    """현재 안정적인 소스 코드를 배포 후보(RC)로 패키징함."""
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, f"Gortex_RC_{version}.zip")
+    
+    ignore_patterns = [
+        ".git", "venv", "__pycache__", ".DS_Store", "site-packages", 
+        "logs", ".idea", ".pytest_cache", "training_jobs", "gortex"
+    ]
+    
+    return compress_directory(".", output_path, ignore_patterns=ignore_patterns)
+
 def compress_directory(source_dir: str, output_path: str, ignore_patterns: List[str] = None) -> str:
     """디렉토리 전체를 ZIP 아카이브로 압축 (특정 패턴 제외)"""
     if ignore_patterns is None:

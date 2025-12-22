@@ -25,6 +25,47 @@ class AnalystAgent:
         score = 100.0 / (1.0 + math.log1p(cost / 5.0))
         return round(min(100.0, score), 1)
 
+    def generate_milestone_report(self, start_session: int = 1, end_session: int = 100) -> str:
+        """지정된 범위의 세션들을 분석하여 마일스톤 보고서를 생성함."""
+        session_dir = "docs/sessions"
+        if not os.path.exists(session_dir):
+            return "Session directory not found."
+
+        summary_parts = []
+        for i in range(start_session, end_session + 1):
+            path = os.path.join(session_dir, f"session_{i:04d}.md")
+            if os.path.exists(path):
+                from gortex.utils.tools import read_file
+                content = read_file(path)
+                # 각 세션의 목표와 결과만 추출 (단순화)
+                goal_match = re.search(r"## 🎯 Goal(.*?)(?=\n##|$)", content, re.DOTALL)
+                outcome_match = re.search(r"## 📈 Outcomes(.*?)(?=\n##|$)", content, re.DOTALL)
+                
+                if goal_match:
+                    summary_parts.append(f"S{i:03d}: {goal_match.group(1).strip()}")
+
+        combined_summary = "\n".join(summary_parts)
+        
+        prompt = f"""다음은 Gortex 시스템의 {start_session}회부터 {end_session}회까지의 개발 기록이다.
+        이 기록을 바탕으로 Gortex가 어떻게 진화해왔는지 5가지 핵심 테마로 요약하고, 
+        미래를 위한 제언을 포함한 '100세션 기념 마일스톤 보고서'를 작성하라.
+        
+        [Session Logs]:
+        {combined_summary}
+        
+        답변은 Markdown 형식으로 작성하라.
+        """
+        
+        try:
+            report = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}])
+            output_path = "docs/MILESTONE_100.md"
+            from gortex.utils.tools import write_file
+            write_file(output_path, f"# 🏆 Gortex 100-Session Milestone Report\n\n> {datetime.now()}\n\n{report}")
+            return f"✅ Milestone report generated: {output_path}"
+        except Exception as e:
+            logger.error(f"Milestone report generation failed: {e}")
+            return f"❌ Failed: {e}"
+
     def archive_system_logs(self) -> Dict[str, Any]:
         """누적된 로그 파일을 아카이빙하고 지식 파일을 백업함."""
         from gortex.utils.tools import compress_directory, backup_file_with_rotation
