@@ -1,27 +1,29 @@
 # Next Session
 
 ## Session Goal
-- **Autonomous Post-Session Reflection**: 매 세션 종료 시 작성된 활동 기록(`docs/sessions/session_XXXX.md`)을 정밀 분석하여, 단순한 활동 나열을 넘어 시스템이 미래에 지켜야 할 명확한 지침(`Experience Rules`)으로 추출 및 승격시키는 지능을 구현한다.
+- **Intelligent Task Chaining & Handoff**: 에이전트 간 노드 전환 시, 단순히 다음 순서로 넘어가는 것이 아니라 이전 에이전트가 다음 주자에게 전달하는 구체적인 '인수인계 지침(Handoff Instruction)'을 생성하여 작업의 맥락과 정밀도를 극대화한다.
 
 ## Context
-- 현재 세션 기록은 사람이 읽기엔 좋지만, AI가 즉각적으로 학습에 활용하기에는 비정형적임.
-- "이런 문제가 있어서 이렇게 해결했다"는 기록을 "앞으로 이럴 때는 이렇게 하라"는 규칙으로 변환해야 진정한 자가 진화가 완성됨.
-- `Analyst` 에이전트의 성찰(Reflection) 능력을 세션 단위로 확장함.
+- 현재 에이전트들은 `messages`와 `plan`을 공유하지만, 직전 단계에서 발견한 미묘한 뉘앙스나 주의사항을 명시적으로 전달하는 통로가 부족함.
+- 예: `Planner`가 계획을 짤 때 "A 파일을 수정할 때는 B 함수의 부수 효과를 꼭 확인하라"는 메시지를 `Coder`에게 직접 귓속말 하듯 전달해야 함.
+- 이는 다중 에이전트 협업의 '지능적 연결성'을 강화함.
 
 ## Scope
 ### Do
-- `agents/analyst/reflection.py`: `reflect_on_session_docs` 메서드 추가.
-- `agents/analyst/reflection.py`: 세션 문서에서 'Issues & Resolutions' 섹션을 파싱하여 `Experience Rules` 후보 도출.
-- `main.py`: 세션 종료 루틴에 사후 성찰 단계를 공식적으로 추가.
+- `core/state.py`: `handoff_instruction` 필드 추가.
+- `agents/planner.py` & `agents/coder.py`: 작업 완료 시 다음 에이전트를 위한 지침을 작성하도록 로직 보강.
+- `utils/prompt_loader.py`: `handoff_instruction`이 있을 경우 시스템 프롬프트 최상단에 강조하여 주입.
 
 ### Do NOT
-- 모든 과거 세션을 소급 적용하지 않음 (가장 최근 세션 위주로 시작).
+- 모든 노드 조합에 대해 복잡한 핸드오프 로직을 짜지 않음 (우선 Planner -> Coder, Coder -> Analyst 위주).
 
 ## Expected Outputs
-- `agents/analyst/reflection.py` (Update)
-- `experience.json` (Auto-updated with rules from session docs)
-- `tests/test_session_reflection.py` (New)
+- `core/state.py` (Update)
+- `agents/planner.py` (Update)
+- `utils/prompt_loader.py` (Update)
+- `tests/test_handoff_instruction.py` (New)
 
 ## Completion Criteria
-- 특정 세션 문서에 "API 404 에러 해결" 기록이 있을 때, 성찰 후 `experience.json`에 관련 모델 명명 규칙이 자동 저장되어야 함.
-- `docs/sessions/session_0097.md` 기록.
+- `Planner` 실행 후 `GortexState`에 `handoff_instruction`이 생성되어야 함.
+- `Coder`가 해당 지침을 인식하고 작업에 반영하는지 로그로 확인.
+- `docs/sessions/session_0098.md` 기록.

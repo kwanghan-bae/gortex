@@ -11,7 +11,74 @@ logger = logging.getLogger("GortexAnalystReflection")
 
 class ReflectionAnalyst(AnalystAgent):
     """시스템의 사고 과정을 성찰하고 진화 규칙을 생성하는 전문가"""
-    
+
+    def reflect_on_session_docs(self, session_id: Optional[str] = None) -> List[Dict[str, Any]]:
+        """
+        세션 문서(session_XXXX.md)를 분석하여 공식적인 경험 규칙(Experience Rules)으로 승격함.
+        """
+        session_dir = "docs/sessions"
+        if not os.path.exists(session_dir):
+            return []
+
+        # 특정 ID가 없으면 가장 최신 파일 선택
+        if not session_id:
+            files = [f for f in os.listdir(session_dir) if f.startswith("session_") and f.endswith(".md")]
+            if not files: return []
+            files.sort(reverse=True)
+            target_file = os.path.join(session_dir, files[0])
+        else:
+            target_file = os.path.join(session_dir, f"session_{session_id}.md")
+
+        if not os.path.exists(target_file):
+            return []
+
+        content = read_file(target_file)
+        
+        # 'Issues & Resolutions' 또는 'Activities' 섹션 추출
+        relevant_parts = ""
+        issue_match = re.search(r"## 🔍 Issues & Resolutions(.*?)(?=\n##|$)", content, re.DOTALL)
+        if issue_match: relevant_parts += issue_match.group(1)
+        
+        activity_match = re.search(r"## 📝 Activities(.*?)(?=\n##|$)", content, re.DOTALL)
+        if activity_match: relevant_parts += activity_match.group(1)
+
+        if not relevant_parts.strip():
+            return []
+
+        prompt = f"""다음 세션 기록에서 미래의 작업을 가이드할 수 있는 '명시적 규칙'을 추출하라.
+        단순 활동 나열이 아닌, "앞으로 ~할 때는 ~하라"는 형태의 교정 지시여야 한다.
+        
+        [Session Content]:
+        {relevant_parts}
+        
+        Return JSON List:
+        [{{ "instruction": "규칙 내용", "trigger_patterns": ["패턴1", "패턴2"], "severity": 1~5 }}]
+        """
+        
+        try:
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            json_match = re.search(r'\[.*\]', response_text, re.DOTALL)
+            new_rules = json.loads(json_match.group(0)) if json_match else []
+            
+            extracted = []
+            for r in new_rules:
+                self.memory.save_rule(
+                    instruction=r["instruction"],
+                    trigger_patterns=r["trigger_patterns"],
+                    severity=r.get("severity", 3),
+                    source_session=session_id or "auto_reflection",
+                    context=f"Extracted from {os.path.basename(target_file)}"
+                )
+                extracted.append(r)
+            
+            if extracted:
+                logger.info(f"✨ Extracted {len(extracted)} new rules from {target_file}")
+            return extracted
+            
+        except Exception as e:
+            logger.error(f"Session reflection failed: {e}")
+            return []
+
     def diagnose_bug(self, error_log: str) -> Dict[str, Any]:
         """
         시스템 로그를 분석하여 버그의 원인 지점을 특정하고 수정 계획을 수립함.
