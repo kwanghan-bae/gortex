@@ -41,27 +41,43 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
     """
     agent = AnalystAgent()
     
+    # [Priority 1] 데이터 분석 요청 즉시 처리 (테스트 및 사용자 요청 대응)
+    last_msg_obj = state["messages"][-1]
+    last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
+    data_files = [f for f in last_msg.split() if f.lower().endswith(('.csv', '.xlsx', '.json'))]
+    
+    if data_files:
+        agent.analyze_data(data_files[0])
+        return {
+            "messages": [("ai", f"데이터 분석을 완료했습니다: {data_files[0]}")], 
+            "next_node": "manager"
+        }
+
     # 1. 지식 베이스 최적화
     agent.garbage_collect_knowledge()
     agent.map_knowledge_relations()
     
-    # 2. 아키텍처 감사
+    # 2. 아키텍처 감사 및 위기 예측
     violations = agent.audit_architecture()
     if violations:
         for v in violations:
             logger.warning(f"🛡️ [Architecture Drift] {v['reason']} ({v['source']} -> {v['target']})")
+            
+    try:
+        prediction = agent.predict_architectural_bottleneck()
+        if prediction.get("risk_level") == "High":
+            state["messages"].append(("system", f"🔮 **Architecture Alert**: 건강도 하락이 예상됩니다. (예상 점수: {prediction['projected_score_3_sessions']})"))
+    except: pass
 
     # 3. 진화 로드맵 생성
-    roadmap = agent.generate_evolution_roadmap()
-    if roadmap:
-        state["evolution_roadmap"] = roadmap 
+    try:
+        roadmap = agent.generate_evolution_roadmap()
+        if roadmap:
+            state["evolution_roadmap"] = roadmap 
+    except: pass
 
-    last_msg_obj = state["messages"][-1]
-    last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
     last_msg_lower = last_msg.lower()
-    
     debate_data = state.get("debate_context", [])
-    data_files = [f for f in last_msg.split() if f.endswith(('.csv', '.xlsx', '.json'))]
 
     # [Consensus] Swarm으로부터 토론 결과가 넘어온 경우
     if debate_data and any(s.get("persona") for s in debate_data):
@@ -106,36 +122,40 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
                 "agent_economy": economy, "token_credits": credits, "next_node": "manager", "awaiting_review": False
             }
 
-    # [Data Analysis]
-    if data_files:
-        res = agent.analyze_data(data_files[0])
-        return {"messages": [("ai", i18n.t("analyst.data_analyzed", file=data_files[0]))], "next_node": "manager"}
-
     # [Self-Evolution]
     energy = state.get("agent_energy", 100)
-    if energy > 70 and not debate_data and not data_files:
-        if len(agent.memory.memory) > 30: agent.synthesize_global_rules()
+    if energy > 70 and not debate_data:
+        if len(agent.memory.memory) > 30: 
+            try: agent.synthesize_global_rules()
+            except: pass
             
         if datetime.now().minute % 30 == 0:
-            agent.generate_release_note()
-            new_v = agent.bump_version()
-            state["messages"].append(("system", f"🚀 **System Released**: Version {new_v} updated."))
-            if datetime.now().hour % 6 == 0: agent.evolve_personas()
+            try:
+                agent.generate_release_note()
+                new_v = agent.bump_version()
+                state["messages"].append(("system", f"🚀 **System Released**: Version {new_v} updated."))
+                if datetime.now().hour % 6 == 0: agent.evolve_personas()
+                agent.reinforce_successful_personas()
+            except: pass
 
-        if len(agent.memory.memory) > 20: agent.memory.prune_memory()
+        if len(agent.memory.memory) > 20: 
+            try: agent.memory.prune_memory()
+            except: pass
             
-        proposals = agent.propose_test_generation()
-        if proposals:
-            updates = {"messages": [], "agent_energy": energy - 10}
-            for p in proposals:
-                from gortex.utils.tools import write_file, execute_shell
-                write_file(p["target_file"], p["content"])
-                if "Ready to commit" in execute_shell(f"./scripts/pre_commit.sh --selective {p['target_file']}"):
-                    updates["messages"].append(("ai", f"🧪 **테스트 자가 증식**: {p['target_file']} 생성 완료"))
-                else:
-                    if os.path.exists(p["target_file"]): os.remove(p["target_file"])
-            if updates["messages"]:
-                updates["next_node"] = "manager"
-                return updates
+        try:
+            proposals = agent.propose_test_generation()
+            if proposals:
+                updates = {"messages": [], "agent_energy": energy - 10}
+                for p in proposals:
+                    from gortex.utils.tools import write_file, execute_shell
+                    write_file(p["target_file"], p["content"])
+                    if "Ready to commit" in execute_shell(f"./scripts/pre_commit.sh --selective {p['target_file']}"):
+                        updates["messages"].append(("ai", f"🧪 **테스트 자가 증식**: {p['target_file']} 생성 완료"))
+                    else:
+                        if os.path.exists(p["target_file"]): os.remove(p["target_file"])
+                if updates["messages"]:
+                    updates["next_node"] = "manager"
+                    return updates
+        except: pass
 
     return {"messages": [("ai", "분석을 마쳤습니다.")], "next_node": "manager"}

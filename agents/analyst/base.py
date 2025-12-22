@@ -103,6 +103,57 @@ class AnalystAgent:
             return "✅ 전역 규칙 종합 완료."
         except: return "❌ 실패"
 
+    def predict_architectural_bottleneck(self) -> Dict[str, Any]:
+        """과거 건강도 점수 이력을 분석하여 미래 병목 지점 예측"""
+        # (실제 구현에서는 logs/trace.jsonl 또는 별도 통계 파일 참조)
+        # 현재는 단순 선형 회귀 추정 방식의 로직 구조 마련
+        from gortex.utils.indexer import SynapticIndexer
+        current_health = SynapticIndexer().calculate_health_score()
+        
+        # 가상의 히스토리 분석 (추후 실제 데이터 연동)
+        score = current_health["score"]
+        trend = "Stable"
+        if score < 60: trend = "Declining"
+        elif score > 80: trend = "Improving"
+        
+        prediction = {
+            "current_score": score,
+            "projected_score_3_sessions": round(score * 0.95, 1) if trend == "Declining" else score,
+            "risk_level": "High" if score < 50 else "Medium" if score < 70 else "Low",
+            "bottleneck_candidates": ["Dependency Bloat", "Missing Unit Tests"] if score < 70 else []
+        }
+        return prediction
+
+    def reinforce_successful_personas(self):
+        """가상 페르소나의 성과를 분석하여 우수 지침을 정식 페르소나에 통합"""
+        from gortex.utils.efficiency_monitor import EfficiencyMonitor
+        perf = EfficiencyMonitor().get_persona_performance()
+        
+        p_path = "docs/i18n/personas.json"
+        if not os.path.exists(p_path): return
+        
+        with open(p_path, 'r', encoding='utf-8') as f:
+            personas = json.load(f)
+            
+        updated = False
+        for p_name, stats in perf.items():
+            # 성공률 90% 이상인 경우 강화 대상으로 고려
+            if stats["rate"] >= 90.0 and p_name not in personas:
+                logger.info(f"🌟 High performing virtual persona detected: {p_name}")
+                # (단순화: 실제 구현 시 LLM이 지침을 정제하여 병합)
+                personas[p_name] = {
+                    "name": p_name,
+                    "description": "Successfully evolved from virtual persona",
+                    "traits": ["proven", "reliable"],
+                    "focus": ["general"]
+                }
+                updated = True
+        
+        if updated:
+            with open(p_path, 'w', encoding='utf-8') as f:
+                json.dump(personas, f, indent=2, ensure_ascii=False)
+            logger.info("✅ Official personas reinforced with successful evolution.")
+
     def generate_release_note(self, model_id: str = "gemini-1.5-pro") -> str:
         try:
             import subprocess

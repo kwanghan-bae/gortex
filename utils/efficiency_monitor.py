@@ -133,6 +133,27 @@ class EfficiencyMonitor:
         except:
             return None
 
+    def get_persona_performance(self) -> Dict[str, Any]:
+        """페르소나별(가상 페르소나 포함) 성공률 통계 반환"""
+        if not os.path.exists(self.stats_path):
+            return {}
+
+        stats = {}
+        try:
+            with open(self.stats_path, "r", encoding="utf-8") as f:
+                for line in f:
+                    data = json.loads(line)
+                    persona = data.get("metadata", {}).get("persona_name", "standard")
+                    if persona not in stats: stats[persona] = {"s": 0, "c": 0}
+                    stats[persona]["c"] += 1
+                    if data["success"]: stats[persona]["s"] += 1
+            
+            for p in stats:
+                stats[p]["rate"] = round((stats[p]["s"] / stats[p]["c"]) * 100, 1)
+            return stats
+        except:
+            return {}
+
     def get_evolution_history(self, limit: int = 10) -> List[Dict[str, Any]]:
         """시스템 진화(코드 수정) 이력을 반환합니다."""
         if not os.path.exists(self.stats_path):
