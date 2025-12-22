@@ -11,15 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.13.2 (2025-12-23)
+- **Migration**: 핵심 에이전트 3종(`Planner`, `Coder`, `Analyst`)의 v3.0 표준 마이그레이션 완료. 클래스 기반 구조로 전면 리팩토링 및 중앙 레지스트리 공식 등록.
+- **Modularity**: 에이전트 간 결합도를 낮추고 자가 기술 메타데이터를 활용한 동적 협업 기반 마련.
+
 ### v2.13.1 (2025-12-23)
 - **Architecture**: `Gortex v3.0` 설계 및 기초 구현. 중앙 레지스트리(`AgentRegistry`) 기반의 플러그인 아키텍처 도입.
 - **Modularity**: 모든 에이전트의 표준 인터페이스인 `BaseAgent` 추상 클래스 신설 및 에이전트 메타데이터 정형화.
-- **Future-proofing**: 하드코딩된 노드 구조에서 탈피하여 능력 기반 에이전트 탐색(Capability Discovery)이 가능한 구조적 토대 마련.
-
-### v2.13.0 (2025-12-23) - 🎊 100-Session Milestone
-- **Milestone**: 100회 세션 기념 `MILESTONE_100.md` 리포트 생성. 초기 챗봇에서 하이브리드 자율 운영 시스템으로의 진화 과정 총정리.
-- **Packaging**: `Release Candidate (RC)` 패키징 도구 탑재 및 v2.13.0 아카이브 생성.
-- **Infrastructure**: 데이터 기반 진화, 지능형 자동화, 맥락 적응, 지능적 지식 관리, 지속 가능성이라는 5대 핵심 가치 확립.
 
 ### v2.11.9 (2025-12-22)
 - **Self-Healing**: `Automated Bug Patching Loop` 구현. 시스템 에러 로그를 분석하여 원인을 특정하고, 코드 수정 후 무결성을 검증하는 자율 수리 프로세스 안착.

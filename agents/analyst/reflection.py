@@ -4,12 +4,12 @@ import re
 import ast
 import os
 from typing import Dict, Any, List, Optional
-from gortex.agents.analyst.base import AnalystAgent
+from gortex.agents.analyst.base import AnalystAgent as BaseAnalyst
 from gortex.utils.tools import read_file, write_file
 
 logger = logging.getLogger("GortexAnalystReflection")
 
-class ReflectionAnalyst(AnalystAgent):
+class ReflectionAnalyst(BaseAnalyst):
     """시스템의 사고 과정을 성찰하고 진화 규칙을 생성하는 전문가"""
 
     def reflect_on_session_docs(self, session_id: Optional[str] = None) -> List[Dict[str, Any]]:

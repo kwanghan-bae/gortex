@@ -6,6 +6,7 @@ from typing import Dict, Any, List
 from datetime import datetime
 from gortex.core.state import GortexState
 from gortex.utils.translator import i18n
+from gortex.core.registry import registry
 from .base import AnalystAgent as BaseAnalyst
 from .reflection import ReflectionAnalyst
 from .organizer import WorkspaceOrganizer
@@ -14,7 +15,10 @@ logger = logging.getLogger("GortexAnalyst")
 
 class AnalystAgent(ReflectionAnalyst, WorkspaceOrganizer):
     """모든 분석 및 정리 기능이 통합된 최종 에이전트 클래스"""
-    
+    @property
+    def metadata(self):
+        return BaseAnalyst().metadata
+
     def perform_peer_review(self, source_file: str, new_code: str, model_id: str = "gemini-1.5-flash") -> Dict[str, Any]:
         """다른 모델을 활용하여 생성된 코드의 품질을 교차 리뷰함"""
         prompt = f"""다음 리팩토링된 코드를 전문가의 시각에서 리뷰하라.
@@ -34,12 +38,16 @@ class AnalystAgent(ReflectionAnalyst, WorkspaceOrganizer):
             logger.error(f"Peer review failed: {e}")
             return {"score": 50, "comment": "Review failed", "is_approved": True}
 
+# 레지스트리 등록 및 호환성 래퍼
+analyst_instance = AnalystAgent()
+registry.register("Analyst", AnalystAgent, analyst_instance.metadata)
+
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """
     Analyst 노드 엔트리 포인트.
     코드 검증, 합의 도출, 데이터 분석 및 진화 로드맵 생성을 총괄합니다.
     """
-    agent = AnalystAgent()
+    agent = analyst_instance
     
     # [Priority 1] 데이터 분석 요청 즉시 처리 (테스트 및 사용자 요청 대응)
     last_msg_obj = state["messages"][-1]

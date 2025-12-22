@@ -10,14 +10,32 @@ from gortex.core.llm.factory import LLMFactory
 from gortex.core.evolutionary_memory import EvolutionaryMemory
 from gortex.utils.vector_store import LongTermMemory
 
+from gortex.agents.base import BaseAgent
+from gortex.core.registry import AgentMetadata, registry
+
 logger = logging.getLogger("GortexAnalystBase")
 
-class AnalystAgent:
+class AnalystAgent(BaseAgent):
     """Gortex 시스템의 분석 및 진화 담당 에이전트 (Base Class)"""
     def __init__(self):
-        self.backend = LLMFactory.get_default_backend()
+        super().__init__()
         self.memory = EvolutionaryMemory()
         self.ltm = LongTermMemory()
+
+    @property
+    def metadata(self) -> AgentMetadata:
+        return AgentMetadata(
+            name="Analyst",
+            role="Analyst",
+            description="Analyzes work quality, audits architecture, and curates knowledge base.",
+            tools=["scan_complexity", "audit_architecture", "optimize_knowledge"],
+            version="3.0.0"
+        )
+
+    def run(self, state: GortexState) -> Dict[str, Any]:
+        """기본 분석 루틴: 품질 평가 또는 리서치 결과 요약"""
+        # (기본 구현: manager로 복귀하며 성과 리포트)
+        return {"next_node": "manager", "thought": "Analysis routine complete."}
 
     def calculate_efficiency_score(self, success: bool, tokens: int, latency_ms: int, energy_cost: int) -> float:
         if not success: return 0.0

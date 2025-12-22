@@ -1,30 +1,27 @@
 # Next Session
 
 ## Session Goal
-- **Migration of Core Agents to v3.0 Standard**: `Planner`, `Coder`, `Analyst` 등 핵심 에이전트들을 v3.0 표준인 `BaseAgent` 기반 클래스 구조로 리팩토링하고 `AgentRegistry`에 등록한다.
+- **Dynamic Agent Orchestration & Capability Discovery**: `Manager`가 하드코딩된 에이전트 목록이 아닌, `AgentRegistry`를 실시간 조회하여 사용자 요청(또는 작업 단계)을 처리하기 위해 가장 적합한 도구와 역할을 가진 에이전트를 자율적으로 탐색하고 선택하는 로직을 구현한다.
 
 ## Context
-- `Session 0101`에서 새로운 아키텍처의 기반(Registry, BaseAgent)을 마련함.
-- 이제 실제 에이전트들을 이 구조로 마이그레이션하여, 플러그인 스타일의 에이전트 관리가 실제로 작동함을 증명해야 함.
-- 기존의 함수 기반 노드(`planner_node`, `coder_node` 등)는 클래스 인스턴스 호출 방식으로 대체됨.
+- 102세션을 통해 핵심 에이전트들이 레지스트리에 등록됨.
+- 현재 `Manager`는 여전히 "다음은 coder야"라고 하드코딩된 이름을 리턴하고 있음.
+- v3.0의 진정한 가치는 "이 작업에는 A 도구가 필요한데, 누가 쓸 줄 알아?"라고 물으면 레지스트리가 "Planner가 그 도구를 갖고 있어"라고 대답해주는 동적 매칭에 있음.
 
 ## Scope
 ### Do
-- `agents/planner.py`: `PlannerAgent(BaseAgent)` 클래스로 리팩토링.
-- `agents/coder.py`: `CoderAgent(BaseAgent)` 클래스로 리팩토링.
-- `agents/analyst/base.py`: `AnalystAgent`를 `BaseAgent` 상속 구조로 업데이트.
-- `core/graph.py`: 레지스트리에서 에이전트를 가져와 워크플로우에 등록하는 방식으로 점진적 전환.
+- `core/registry.py`: `get_agents_by_role(role)` 및 `get_agents_by_tool(tool)` 유틸리티 메서드 추가.
+- `agents/manager.py`: 의도 분석 결과 도출 시, 필요한 '능력(Capability)'을 추출하고 레지스트리에서 에이전트를 조회하여 `next_node`를 결정하는 로직 도입.
+- `agents/manager.py`: 여러 후보 에이전트가 있을 경우 평판 점수(`agent_economy`)가 가장 높은 에이전트를 우선 선택.
 
 ### Do NOT
-- 모든 에이전트(Swarm, TrendScout 등)를 한 번에 옮기지 않음 (핵심 3종 우선).
+- 모든 라우팅을 한 번에 동적화하지 않음 (단계적 전환).
 
 ## Expected Outputs
-- `agents/planner.py` (Class-based)
-- `agents/coder.py` (Class-based)
-- `core/graph.py` (Updated registration)
-- `tests/test_v3_migration.py` (New)
+- `core/registry.py` (Extended)
+- `agents/manager.py` (Refined with discovery logic)
+- `tests/test_dynamic_orchestration.py` (New)
 
 ## Completion Criteria
-- 마이그레이션된 에이전트들이 레지스트리에 정상 등록되어야 함.
-- 기존의 LangGraph 실행 흐름이 깨지지 않고 동일하게 작동해야 함 (하위 호환성 유지).
-- `docs/sessions/session_0102.md` 기록.
+- 새로운 에이전트(예: `CloudDeployer`)를 레지스트리에 등록만 해도, `Manager`가 관련 요청 시 해당 에이전트를 `next_node`로 지목해야 함.
+- `docs/sessions/session_0103.md` 기록.

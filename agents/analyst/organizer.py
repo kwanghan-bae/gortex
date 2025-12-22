@@ -3,12 +3,12 @@ import json
 import logging
 import math
 from typing import List, Dict, Any
-from gortex.agents.analyst.base import AnalystAgent
+from gortex.agents.analyst.base import AnalystAgent as BaseAnalyst
 from gortex.utils.tools import archive_project_artifacts, compress_directory
 
 logger = logging.getLogger("GortexAnalystOrganizer")
 
-class WorkspaceOrganizer(AnalystAgent):
+class WorkspaceOrganizer(BaseAnalyst):
     """세션 종료 시 작업 공간을 정리하고 아카이빙하는 전문가"""
     
     def organize_workspace(self, project_name: str, version: str):
