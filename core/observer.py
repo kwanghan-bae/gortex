@@ -21,13 +21,46 @@ class GortexObserver:
     def _ensure_log_dir(self):
         os.makedirs(os.path.dirname(self.log_path), exist_ok=True)
 
+    def archive_and_reset_logs(self) -> str:
+        """현재 로그를 압축 아카이빙하고 원본을 초기화함 (리소스 최적화)"""
+        if not os.path.exists(self.log_path) or os.path.getsize(self.log_path) == 0:
+            return "Log file is already empty or missing."
+
+        try:
+            from gortex.utils.tools import compress_directory
+            archive_dir = "logs/archives"
+            os.makedirs(archive_dir, exist_ok=True)
+            
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            zip_path = os.path.join(archive_dir, f"trace_archive_{timestamp}.zip")
+            
+            # 임시 파일로 복사 후 압축 (쓰기 잠금 방지)
+            temp_path = self.log_path + ".tmp"
+            shutil.copy2(self.log_path, temp_path)
+            
+            # 압축 수행 (파일 하나만 압축하므로 compress_directory 활용 또는 직접 구현)
+            import zipfile
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                zipf.write(temp_path, os.path.basename(self.log_path))
+            
+            os.remove(temp_path)
+            
+            # 원본 로그 초기화 (Truncate)
+            with open(self.log_path, 'w') as f:
+                f.write("")
+                
+            logger.info(f"📁 Trace logs archived to {zip_path} and reset.")
+            return zip_path
+        except Exception as e:
+            logger.error(f"Failed to archive logs: {e}")
+            return f"Error: {e}"
+
     def _rotate_logs(self, max_size_mb: int = 10):
-        """로그 파일 크기가 크면 백업"""
+        """로그 파일 크기가 크면 자동으로 아카이빙 트리거"""
         if os.path.exists(self.log_path):
             if os.path.getsize(self.log_path) > max_size_mb * 1024 * 1024:
-                ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-                shutil.move(self.log_path, f"{self.log_path}.{ts}.bak")
-                logger.info(f"Logs rotated: {self.log_path}.{ts}.bak")
+                logger.warning(f"⚠️ Log size exceeded {max_size_mb}MB. Triggering auto-archive.")
+                self.archive_and_reset_logs()
 
     def log_event(self, agent: str, event_type: str, payload: Any, latency_ms: Optional[int] = None, tokens: Optional[Dict[str, int]] = None, cause_id: Optional[str] = None):
         """이벤트를 JSONL 형식으로 기록 (인과 관계 추적 지원)"""

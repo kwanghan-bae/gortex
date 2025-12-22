@@ -227,17 +227,24 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
         return "skip"
 
     elif cmd == "/history":
-        log_path = observer.log_path if observer else "logs/trace.jsonl"
-        if os.path.exists(log_path):
-            try:
-                with open(log_path, "r", encoding='utf-8') as f:
-                    lines = f.readlines()[-10:] # Last 10 lines
-                history_text = "".join(lines)
-                ui.chat_history.append(("system", Panel(history_text, title="RECENT LOGS", border_style="dim")))
-            except Exception as e:
-                ui.chat_history.append(("system", f"❌ 로그 읽기 실패: {e}"))
+        summary_path = "logs/trace_summary.md"
+        if os.path.exists(summary_path):
+            from gortex.utils.tools import read_file
+            content = read_file(summary_path)
+            ui.chat_history.append(("system", Panel(Markdown(content), title="📜 HISTORICAL SUMMARY", border_style="cyan")))
         else:
-            ui.chat_history.append(("system", "❌ 로그 파일이 없습니다."))
+            log_path = observer.log_path if observer else "logs/trace.jsonl"
+            if os.path.exists(log_path):
+                try:
+                    with open(log_path, "r", encoding='utf-8') as f:
+                        lines = f.readlines()[-10:] # Last 10 lines
+                    history_text = "".join(lines)
+                    ui.chat_history.append(("system", Panel(history_text, title="RECENT RAW LOGS", border_style="dim")))
+                    ui.chat_history.append(("system", "[TIP] 'Analyst'에게 로그 요약을 요청하여 정제된 역사를 확인하세요."))
+                except Exception as e:
+                    ui.chat_history.append(("system", f"❌ 로그 읽기 실패: {e}"))
+            else:
+                ui.chat_history.append(("system", "❌ 로그 파일이 없습니다."))
         ui.update_main(ui.chat_history)
         return "skip"
 

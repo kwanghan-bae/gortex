@@ -102,6 +102,49 @@ class AnalystAgent(BaseAgent):
             logger.error(f"Debug consensus synthesis failed: {e}")
             return {"diagnosis": "Failed to synthesize", "fix_strategy": str(e), "action_plan": []}
 
+    def summarize_system_trace(self, log_path: str = "logs/trace.jsonl") -> str:
+        """거대한 시스템 로그를 분석하여 핵심 타임라인과 통찰을 요약함."""
+        if not os.path.exists(log_path):
+            return "No trace logs available for summarization."
+
+        try:
+            with open(log_path, "r", encoding="utf-8") as f:
+                logs = [json.loads(line) for line in f][-300:] # 최근 300개 이벤트 대상
+            
+            # 중요 이벤트만 추출 (에러, 노드 완료, 도구 결과 등)
+            significant_events = []
+            for l in logs:
+                if l.get("event") in ["error", "node_complete", "tool_call"] or "❌" in str(l.get("payload")):
+                    significant_events.append({
+                        "agent": l.get("agent"),
+                        "event": l.get("event"),
+                        "time": l.get("timestamp"),
+                        "info": str(l.get("payload"))[:200]
+                    })
+
+            prompt = f"""다음은 Gortex 시스템의 최근 실행 로그 데이터다.
+            이 데이터를 분석하여 시스템의 '최근 역사'를 마크다운 형식으로 요약하라.
+            
+            [분석 항목]
+            1. 주요 마일스톤: 성공적으로 완료된 큰 작업들
+            2. 위기 및 해결: 발생했던 치명적 에러와 자율 수리 결과
+            3. 협업 패턴: 가장 활발했던 에이전트 간의 관계
+            4. 개선 권고: 로그를 통해 본 아키텍처적 약점
+            
+            [Raw Data]
+            {json.dumps(significant_events, ensure_ascii=False)}
+            """
+            
+            summary = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}])
+            summary_path = "logs/trace_summary.md"
+            from gortex.utils.tools import write_file
+            write_file(summary_path, f"# 📜 Gortex Historical Trace Summary\n\n> Generated: {datetime.now()}\n\n{summary}")
+            return summary
+            
+        except Exception as e:
+            logger.error(f"Trace summarization failed: {e}")
+            return f"Error: {e}"
+
     def generate_milestone_report(self, start_session: int = 1, end_session: int = 100) -> str:
         """지정된 범위의 세션들을 분석하여 마일스톤 보고서를 생성함."""
         session_dir = "docs/sessions"

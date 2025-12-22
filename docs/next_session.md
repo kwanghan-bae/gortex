@@ -1,28 +1,28 @@
 # Next Session
 
 ## Session Goal
-- **Autonomous Log Summarization & Archiving**: 세션이 반복되면서 비대해진 `trace.jsonl` 로그 파일에서 시스템 진화에 기여한 핵심 사건(교훈, 패턴, 주요 오류 해결)만 지능적으로 추출하여 `logs/trace_summary.md`에 보존하고, 원본 로그는 주기적으로 압축 아카이빙하여 시스템 성능을 유지한다.
+- **Decentralized Knowledge Search (Memory Sharding)**: 하나의 거대한 파일(`experience.json`)로 관리되던 지식 베이스를 분야별(Coding, Research 등) 또는 프로젝트별 독립적인 조각(Shard)으로 분산 저장하고, 현재 맥락에 필요한 조각만 선택적으로 로드하여 검색 속도와 인지 정확도를 높인다.
 
 ## Context
-- 현재 로그는 `GortexObserver`에 의해 지속적으로 누적되지만, 데이터 양이 많아질수록 조회 속도가 느려지고 모델의 인지 범위를 초과함.
-- `Analyst`가 정기적으로 로그를 스캔하여 미래에 도움이 될 '압축된 역사'를 남기도록 함.
-- 이는 단순한 백업을 넘어, 시스템의 과거를 자산화하는 과정임.
+- 100회 이상의 세션을 거치며 `experience.json`에 수십 개의 규칙이 쌓였음.
+- 모든 규칙을 매번 로드하여 프롬프트에 넣는 것은 토큰 낭비와 모델의 집중력 저하를 유발함.
+- 지식의 '관심사 분리'를 통해 고밀도 지능을 유지함.
 
 ## Scope
 ### Do
-- `agents/analyst/base.py`: 로그 파일을 분석하여 핵심 타임라인과 통찰을 추출하는 `summarize_system_trace` 구현.
-- `core/observer.py`: 로그 아카이빙(ZIP 압축 및 순환)을 담당하는 `archive_and_reset_logs` 메서드 보강.
-- `utils/tools.py`: 로그 요약본을 마크다운 형식으로 미려하게 생성하는 템플릿 지원.
+- `core/evolutionary_memory.py`: 지식을 샤드(Shard) 단위로 저장하고 관리하는 `ShardedMemory` 클래스로 진화.
+- `core/evolutionary_memory.py`: 현재 맥락(`context_text`)과 가장 관련성이 높은 샤드를 동적으로 탐색하는 `pick_shards` 로직 구현.
+- `utils/tools.py`: 샤드 간의 중복 데이터를 동기화하거나 정리하는 유틸리티 보강.
 
 ### Do NOT
-- 모든 로그 엔트리를 요약하지 않음 (중요도 점수가 높은 이벤트 위주).
+- 기존 `experience.json`과의 하위 호환성을 깨지 않음 (마이그레이션 도구 포함).
 
 ## Expected Outputs
-- `agents/analyst/base.py` (Trace Summarizer)
-- `logs/trace_summary.md` (New Historical Artifact)
-- `tests/test_log_summarization.py` (New)
+- `core/evolutionary_memory.py` (Sharding support)
+- `logs/memory/` (New directory for shards)
+- `tests/test_memory_sharding.py` (New)
 
 ## Completion Criteria
-- `/history` 명령 시, 거대한 원본 로그 대신 정제된 `trace_summary.md`의 내용을 우선적으로 보여주어야 함.
-- 10MB 이상의 로그 파일이 존재할 때, 아카이빙 후 원본 파일 크기가 0으로 리셋되어야 함.
-- `docs/sessions/session_0111.md` 기록.
+- 코딩 작업 중에는 `coding_shard.json`의 지식이 우선적으로 주입되어야 함.
+- 전체 지식 파일 크기가 줄어들지 않더라도, 매 요청 시 로드되는 토큰 양은 50% 이상 감소해야 함.
+- `docs/sessions/session_0112.md` 기록.
