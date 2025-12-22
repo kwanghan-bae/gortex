@@ -11,14 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.12.2 (2025-12-22)
+- **Authentication**: `Intelligent API Key Rotation` 구축. API 키 풀(Key Pool)과 쿨다운(Cooldown) 시스템을 도입하여 429 에러에 지능적으로 대응하고 시스템 가용성 극대화.
+- **Resilience**: 키별 실패 이력을 추적하여 문제 발생 시 일정 시간 격리 후 자동 복구하는 자가 치유형 인증 레이어 안착.
+
 ### v2.12.1 (2025-12-22)
 - **Interface**: `Visual Reputation & Skill Tree` 구현. 에이전트별 코딩, 조사, 설계, 분석 등 분야별 숙련도를 TUI 대시보드에 막대 그래프로 시각화.
 - **Economy**: 분야별 스킬 포인트(`skill_points`) 추적 시스템 및 자동 분야 분류 로직 안착.
-
-### v2.12.0 (2025-12-22)
-- **Knowledge Base**: `Heuristic Memory Pruning` 구현. 누적된 규칙들의 성공 기여도를 정량 분석하여 저성과 규칙 자동 퇴출.
-- **Intelligence**: `Semantic Consolidation` 탑재. LLM을 활용해 파편화된 지식들을 강력한 'Super Rule'로 통합하여 인지 효율 극대화.
-- **Maintenance**: 규칙별 사용 통계(`usage_count`, `success_rate`) 추적 시스템 안착.
 
 ### v2.11.9 (2025-12-22)
 - **Self-Healing**: `Automated Bug Patching Loop` 구현. 시스템 에러 로그를 분석하여 원인을 특정하고, 코드 수정 후 무결성을 검증하는 자율 수리 프로세스 안착.

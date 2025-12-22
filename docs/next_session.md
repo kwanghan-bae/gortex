@@ -1,26 +1,28 @@
 # Next Session
 
 ## Session Goal
-- **Automated API Key Health Check & Rotation**: 빈번한 429 에러(할당량 초과)에 대응하여, 사용 전 API 키의 상태를 실시간 체크하고 문제가 발생한 키를 일정 시간 동안 제외(Cooldown)하는 견고한 로테이션 시스템을 구축한다.
+- **Energy Recovery & Maintenance Mode**: 시스템 에너지가 낮을 때 스스로 휴식하며 자원을 회복하는 '유지보수 모드'를 도입하고, 아이들(Idle) 시간 동안 에너지가 점진적으로 충전되는 메커니즘을 구현한다.
 
 ## Context
-- 최근 여러 세션에서 API 할당량 부족으로 인한 실패가 반복됨.
-- 현재 로테이션은 단순한 순차 전환 방식이라, 이미 소진된 키로 다시 돌아가는 문제가 있음.
-- 키별로 '마지막 사용 시간'과 '실패 이력'을 관리하여 지능적으로 모델을 공급해야 함.
+- `Session 0087`에서 저에너지 시 작업 가지치기 기능을 추가함.
+- 현재는 에너지가 줄어들기만 하고 다시 채워지는 로직이 없어, 결국 시스템이 멈추게 됨.
+- 생물학적 시스템처럼 휴식을 통한 '에너지 충전' 개념을 도입하여 시스템의 영속성을 확보해야 함.
 
 ## Scope
 ### Do
-- `core/auth.py`: `check_key_status` 메서드 추가 (ListModels 호출 등으로 유효성 확인).
-- `core/auth.py`: `KeyPool` 클래스 도입 (Cooldown 로직, 가중치 로테이션 등).
-- `core/llm/gemini_client.py`: 새롭게 강화된 로테이션 엔진 연동.
+- `core/engine.py`: 에너지가 일정 수준 이하(예: 10%)로 떨어지면 강제로 `Maintenance Mode`로 진입하는 로직 추가.
+- `main.py`: 사용자의 입력이 없는 Idle 시간 동안 에너지를 초당 일정량(예: 0.1) 회복하는 비동기 루틴 구현.
+- `ui/dashboard.py`: 에너지 회복 중임을 나타내는 시각적 효과(Pulse 등) 추가.
 
 ### Do NOT
-- 새로운 외부 API 제공자(Anthropic 등) 연동은 이 세션에서 다루지 않음 (Gemini 최적화 집중).
+- 외부 전력 관리나 실제 PC 절전 모드와 연동하지 않음 (순수 시스템 가상 에너지).
 
 ## Expected Outputs
-- `core/auth.py` (Refactored)
-- `tests/test_auth_rotation.py` (New)
+- `main.py` (Update with recovery loop)
+- `ui/dashboard.py` (Update)
+- `tests/test_energy_recovery.py` (New)
 
 ## Completion Criteria
-- 키 하나를 강제로 무효화(429 발생)했을 때, 시스템이 이를 감지하고 일정 시간 동안 해당 키를 후보에서 제외해야 함.
-- `docs/sessions/session_0094.md` 기록.
+- 시스템을 실행해두고 1분간 대기했을 때, 에너지가 최소 5포인트 이상 상승해야 함.
+- 에너지가 10 미만일 때 에이전트 작업 요청 시 "휴식 중" 메시지가 출력되어야 함.
+- `docs/sessions/session_0095.md` 기록.

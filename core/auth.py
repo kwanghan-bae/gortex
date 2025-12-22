@@ -20,9 +20,22 @@ if os.path.exists(env_path):
 else:
     load_dotenv()
 
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+
+@dataclass
+class APIKeyInfo:
+    key: str
+    client: genai.Client
+    status: str = "alive" # alive, cooldown, exhausted
+    last_failure: Optional[datetime] = None
+    cooldown_until: Optional[datetime] = None
+    failure_count: int = 0
+
 class GortexAuth:
     """
     API 할당량 소진 시 다른 계정이나 서비스(OpenAI)로 폴백하는 멀티 LLM 인증 엔진.
+    지능형 키 로테이션 및 쿨다운(Cooldown) 시스템 탑재.
     """
     _instance = None
 
@@ -41,25 +54,29 @@ class GortexAuth:
         if hasattr(self, '_initialized') and self._initialized:
             return
             
-        # Gemini 설정
-        self.api_keys: List[str] = [
+        # Gemini 키 풀 초기화
+        raw_keys = [
             os.getenv("GEMINI_API_KEY_1"),
-            os.getenv("GEMINI_API_KEY_2")
+            os.getenv("GEMINI_API_KEY_2"),
+            os.getenv("GEMINI_API_KEY_3"),
+            os.getenv("GEMINI_API_KEY_4")
         ]
-        self.api_keys = [k for k in self.api_keys if k]
-        self.clients: List[genai.Client] = [genai.Client(api_key=k) for k in self.api_keys]
-        self.current_index = 0
+        self.key_pool: List[APIKeyInfo] = []
+        for k in raw_keys:
+            if k:
+                self.key_pool.append(APIKeyInfo(key=k, client=genai.Client(api_key=k)))
         
-        # OpenAI 설정 (폴백용)
+        self.current_key_idx = 0
+        
+        # OpenAI 설정 (최종 폴백용)
         self.openai_key = os.getenv("OPENAI_API_KEY")
         self.openai_client = OpenAI(api_key=self.openai_key) if (OpenAI and self.openai_key) else None
         
-        # 모델 매핑 테이블 (Gemini -> OpenAI)
         self.model_mapping = {
             "gemini-1.5-flash": "gpt-4o-mini",
             "gemini-1.5-pro": "gpt-4o",
-            "gemini-2.0-flash-exp": "gpt-4o",
-            "gemini-3-flash-preview": "gpt-4o-mini"
+            "gemini-2.0-flash": "gpt-4o",
+            "gemini-2.5-flash-lite": "gpt-4o-mini"
         }
         
         self.call_history: List[float] = []
@@ -70,8 +87,6 @@ class GortexAuth:
         now = time.time()
         self.call_history.append(now)
         self.call_history = [t for t in self.call_history if now - t < 60]
-        if len(self.call_history) > 15:
-            logger.warning(f"🚀 API call frequency is high: {len(self.call_history)} calls/min")
 
     def get_call_count(self) -> int:
         now = time.time()
@@ -79,37 +94,86 @@ class GortexAuth:
         return len(self.call_history)
 
     def get_provider(self) -> str:
-        """현재 활성화된 LLM 제공업체명 반환"""
         return self._provider.upper()
 
-    def get_current_client(self) -> Any:
-        """현재 활성화된 Gemini 클라이언트 반환"""
-        return self.clients[self.current_index]
+    def _get_available_gemini_key(self) -> Optional[APIKeyInfo]:
+        """현재 사용 가능한(Alive 또는 Cooldown 종료된) 키를 찾음"""
+        now = datetime.now()
+        
+        # 1. 만료된 Cooldown 먼저 해제
+        for key_info in self.key_pool:
+            if key_info.status == "cooldown" and key_info.cooldown_until and now >= key_info.cooldown_until:
+                logger.info(f"🔄 Key Cooldown expired for a key. Resetting to alive.")
+                key_info.status = "alive"
+                key_info.failure_count = 0
+        
+        # 2. 첫 번째 Alive 상태인 키 반환
+        for key_info in self.key_pool:
+            if key_info.status == "alive":
+                return key_info
+                
+        return None
 
-    def switch_account(self, error_message: str) -> bool:
-        """다음 Gemini 계정으로 전환하거나 OpenAI로 폴백함"""
-        if self.current_index < len(self.clients) - 1:
-            old_idx = self.current_index
-            self.current_index += 1
-            wait_time = random.uniform(5.5, 12.0)
-            logger.warning(f"[⚠️ QUOTA] Gemini {old_idx+1} 소진. {wait_time:.1f}초 대기 후 다음 키로 전환.")
-            time.sleep(wait_time)
-            return True
-        elif self.openai_client:
+    def report_key_failure(self, key_info: APIKeyInfo, is_quota_error: bool):
+        """키 실패 보고 및 쿨다운 설정"""
+        key_info.last_failure = datetime.now()
+        key_info.failure_count += 1
+        
+        if is_quota_error:
+            # 할당량 초과는 긴 쿨다운 (최소 10분)
+            cooldown_mins = 10 * key_info.failure_count
+            key_info.status = "cooldown"
+            key_info.cooldown_until = datetime.now() + timedelta(minutes=cooldown_mins)
+            logger.warning(f"⚠️ Key Quota Exhausted. Cooldown for {cooldown_mins} mins.")
+        else:
+            # 단순 서버 오류 등은 짧은 대기 후 재시도 가능하도록 alive 유지하되 카운트만 증가
+            if key_info.failure_count >= 3:
+                key_info.status = "cooldown"
+                key_info.cooldown_until = datetime.now() + timedelta(minutes=2)
+                logger.warning(f"⚠️ Key repeated failures. 2 mins cooldown.")
+
+    def generate(self, model_id: str, contents: Any, config: Optional[Any] = None) -> Any:
+        self._track_call()
+        
+        # 1. Gemini 시도
+        for _ in range(len(self.key_pool) * 2): # 모든 키를 최소 두 번은 돌아봄
+            key_info = self._get_available_gemini_key()
+            if not key_info:
+                break
+                
+            try:
+                self._provider = "gemini"
+                return key_info.client.models.generate_content(model=model_id, contents=contents, config=config)
+            except Exception as e:
+                err = str(e)
+                is_quota = any(x in err for x in ["429", "Quota", "Exhausted", "Resource"])
+                is_server = any(x in err for x in ["500", "503", "Overloaded"])
+                
+                self.report_key_failure(key_info, is_quota)
+                
+                if is_server:
+                    logger.warning(f"❗ Gemini server busy. Retrying with next key...")
+                    time.sleep(2)
+                    continue
+                elif is_quota:
+                    # 지터 대기 후 다음 키
+                    time.sleep(random.uniform(1.0, 3.0))
+                    continue
+                else:
+                    logger.error(f"❌ Gemini Critical Error: {e}")
+                    raise e
+
+        # 2. OpenAI 폴백
+        if self.openai_client:
             self._provider = "openai"
-            logger.warning("🚨 모든 Gemini 키가 소진되었습니다. OpenAI로 전환합니다!")
-            return True
-        return False
+            logger.warning("🚨 No Gemini keys available. Switching to OpenAI fallback.")
+            return self._generate_openai(model_id, contents, config)
+            
+        raise Exception("🚫 모든 LLM 서비스 사용 불가능 (Gemini/OpenAI 소진)")
 
     def _generate_openai(self, model_id: str, contents: Any, config: Optional[Any]) -> Any:
-        """OpenAI를 통한 대체 생성"""
-        if not self.openai_client:
-            raise Exception("OpenAI 클라이언트가 설정되지 않았습니다.")
-            
+        # (기존 OpenAI 변환 로직 유지)
         target_model = self.model_mapping.get(model_id, "gpt-4o-mini")
-        logger.info(f"🔄 OpenAI Fallback: {model_id} -> {target_model}")
-        
-        # google-genai 형식을 OpenAI 형식으로 변환 (단순화)
         messages = []
         if isinstance(contents, list):
             for c in contents:
@@ -128,38 +192,8 @@ class GortexAuth:
             temperature=getattr(config, 'temperature', 0.0) if config else 0.0
         )
         
-        # google-genai Response 객체 덕타이핑
         class OpenAIResponseAdapter:
             def __init__(self, res):
                 self.text = res.choices[0].message.content
-        
         return OpenAIResponseAdapter(response)
 
-    def generate(self, model_id: str, contents: Any, config: Optional[Any] = None) -> Any:
-        self._track_call()
-        
-        if self._provider == "openai":
-            return self._generate_openai(model_id, contents, config)
-
-        max_retries = len(self.clients) + 1
-        for attempt in range(max_retries):
-            try:
-                client = self.clients[self.current_index]
-                return client.models.generate_content(model=model_id, contents=contents, config=config)
-            except Exception as e:
-                error_str = str(e)
-                if any(x in error_str for x in ["429", "QuotaExhausted", "ResourceExhausted"]):
-                    if self.switch_account(error_str):
-                        if self._provider == "openai":
-                            return self._generate_openai(model_id, contents, config)
-                        continue
-                    break
-                elif any(x in error_str for x in ["500", "503"]):
-                    logger.warning(f"❗ 서버 일시 오류. 3초 후 재시도... ({attempt+1})")
-                    time.sleep(3)
-                    continue
-                else:
-                    logger.error(f"❌ 치명적 API 에러: {e}")
-                    raise e
-        
-        raise Exception("🚫 모든 서비스(Gemini, OpenAI)의 할당량이 소진되었거나 사용 불가능합니다.")
