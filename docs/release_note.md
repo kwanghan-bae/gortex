@@ -11,14 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.11.9 (2025-12-22)
+- **Self-Healing**: `Automated Bug Patching Loop` 구현. 시스템 에러 로그를 분석하여 원인을 특정(`diagnose_bug`)하고, 코드 수정 후 무결성을 검증(`verify_patch_integrity`)하는 자율 수리 프로세스 안착.
+- **Routing**: 치명적 오류 발생 시 즉시 수리 모드로 진입하는 `Emergency Patch Route` 그래프 설계 및 연동.
+
 ### v2.11.8 (2025-12-22)
 - **Model Intelligence**: `Multi-Model Strategy Selection` 구축. 에이전트 평판 등급에 따라 `Gemini-Pro`(다이아몬드)부터 `Ollama`(브론즈 미만)까지 최적의 모델을 차등 할당.
 - **Resource Management**: 작업의 성격과 에이전트 숙련도를 결합하여 비용 대비 효율을 극대화하는 지능형 라우팅 구현.
-
-### v2.11.7 (2025-12-22)
-- **Purification**: Web UI 관련 모든 기능 및 파일 전수 폐기. `three_js_bridge.py`, `web_server.py` 등을 제거하고 TUI(`rich`) 전용 대시보드로 시스템 경량화 및 최적화.
-- **Interface**: `Real-time Reputation Dashboard` 안착. 사이드바에 에이전트별 평판 등급(`Bronze`~`Diamond`) 및 실시간 리더보드 시각화 연동.
-- **Policy**: `RULES.md`에 Web UI 개발 금지 및 TUI 집중 원칙 명문화.
 
 ### v2.11.2 (2025-12-22)
 - **Infrastructure**: `ReflectionAnalyst`에 자가 치유 문서 시스템(`Self-Healing Documentation`) 탑재. 코드와 문서 간의 불일치(Drift)를 AI가 감지하고 자동 치유 가능.

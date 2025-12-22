@@ -5,6 +5,7 @@ import logging
 import hashlib
 import re
 import json
+import ast
 import zipfile
 from datetime import datetime
 from typing import Dict, Union, Tuple, Optional, List
@@ -290,6 +291,36 @@ def repair_and_load_json(text: str) -> Dict[str, Any]:
         except Exception as e:
             logger.error(f"JSON Recovery failed: {e}")
             return {}
+
+def verify_patch_integrity(file_path: str) -> Dict[str, Any]:
+    """
+    적용된 패치가 시스템 무결성을 해치지 않는지 검증 (Syntax + Tests).
+    """
+    if not os.path.exists(file_path):
+        return {"success": False, "reason": "File not found"}
+
+    # 1. Syntax Check
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            ast.parse(f.read())
+    except SyntaxError as e:
+        return {"success": False, "reason": f"Syntax Error: {e}"}
+    except Exception as e:
+        return {"success": False, "reason": str(e)}
+
+    # 2. Selective Test Execution
+    # 파일명 기반으로 대응하는 테스트 파일 추측 (예: core/auth.py -> tests/test_auth.py)
+    base_name = os.path.basename(file_path).replace(".py", "")
+    test_file = f"tests/test_{base_name}.py"
+    
+    if os.path.exists(test_file):
+        res = execute_shell(f"python3 -m unittest {test_file}")
+        if "OK" in res:
+            return {"success": True, "details": "Syntax and Tests passed."}
+        else:
+            return {"success": False, "reason": "Tests failed after patch.", "output": res}
+    
+    return {"success": True, "details": "Syntax passed (No matching test found)."}
 
 def compress_directory(source_dir: str, output_path: str, ignore_patterns: List[str] = None) -> str:
     """디렉토리 전체를 ZIP 아카이브로 압축 (특정 패턴 제외)"""

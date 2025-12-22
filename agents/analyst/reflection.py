@@ -12,6 +12,33 @@ logger = logging.getLogger("GortexAnalystReflection")
 class ReflectionAnalyst(AnalystAgent):
     """시스템의 사고 과정을 성찰하고 진화 규칙을 생성하는 전문가"""
     
+    def diagnose_bug(self, error_log: str) -> Dict[str, Any]:
+        """
+        시스템 로그를 분석하여 버그의 원인 지점을 특정하고 수정 계획을 수립함.
+        """
+        prompt = f"""You are the System Surgeon. Analyze this error log and find the root cause.
+        
+        [Error Log]:
+        {error_log}
+        
+        Return JSON ONLY:
+        {{
+            "bug_type": "LogicError/SyntaxError/ImportError/etc",
+            "target_file": "path/to/file.py",
+            "line_number": 123,
+            "cause_analysis": "Detailed reason",
+            "fix_instruction": "Specific instruction for Coder",
+            "is_patchable": true/false
+        }}
+        """
+        try:
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            res_data = json.loads(re.search(r'\{.*\}', response_text, re.DOTALL).group(0))
+            return res_data
+        except Exception as e:
+            logger.error(f"Bug diagnosis failed: {e}")
+            return {"is_patchable": False, "reason": str(e)}
+
     def evaluate_work_quality(self, agent_name: str, task: str, result: str) -> Dict[str, Any]:
         """
         특정 에이전트의 작업 결과물을 평가하여 품질 점수를 산출함.

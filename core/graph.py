@@ -40,6 +40,17 @@ def route_after_summary(state: GortexState) -> str:
     """요약 후 원래 가려던 노드로 복귀"""
     return state.get("next_node", "manager")
 
+def route_emergency(state: GortexState) -> Literal["analyst", "manager"]:
+    """치명적 에러 감지 시 자율 수리 경로로 안내"""
+    messages = state.get("messages", [])
+    if not messages: return "manager"
+    
+    last_msg = str(messages[-1][1] if isinstance(messages[-1], tuple) else messages[-1])
+    if "❌" in last_msg or "error" in last_msg.lower():
+        logger.warning("🚨 Emergency detected! Routing to Surgeon (Analyst).")
+        return "analyst"
+    return "manager"
+
 def route_coder(state: GortexState) -> Literal["coder", "analyst", "__end__"]:
     """Coder의 작업 완료 여부에 따라 라우팅"""
     next_node = state.get("next_node", "manager")
@@ -107,13 +118,13 @@ def compile_gortex_graph(checkpointer=None):
     # Planner -> Coder
     workflow.add_edge("planner", "coder")
 
-    # Coder 루프 및 완료 후 Analyst 검증
+    # Coder 루프 및 완료 후 Analyst 검증 또는 Emergency Patch
     workflow.add_conditional_edges(
         "coder",
-        route_coder,
+        route_emergency,
         {
-            "coder": "coder",
-            "analyst": "analyst"
+            "analyst": "analyst", # Repair mode
+            "manager": "manager"  # Success
         }
     )
 
