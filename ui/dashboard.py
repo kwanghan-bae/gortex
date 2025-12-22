@@ -12,14 +12,9 @@ from gortex.utils.asset_manager import SynapticAssetManager
 from gortex.ui.dashboard_theme import ThemeManager
 from datetime import datetime
 import logging
-import asyncio
+import json
 
 logger = logging.getLogger("GortexDashboard")
-
-try:
-    from gortex.ui.three_js_bridge import ThreeJsBridge
-except ImportError:
-    ThreeJsBridge = None
 
 def render_sparkline(data: list[float]) -> str:
     """Renders a simple unicode sparkline."""
@@ -49,9 +44,10 @@ def create_layout() -> Layout:
     )
     layout["sidebar"].split_column(
         Layout(name="status", size=10),
-        Layout(name="stats", size=10),
+        Layout(name="stats", size=12),
+        Layout(name="economy", size=8), # Reputation Leaderboard
         Layout(name="evolution", size=8),
-        Layout(name="debt", size=10), # Technical Debt Panel
+        Layout(name="debt", size=10),
         Layout(name="logs")
     )
     return layout
@@ -61,12 +57,10 @@ class DashboardUI:
         self.console = console
         self.assets = SynapticAssetManager()
         self.theme = ThemeManager()
-        self.bridge = None # 3D Bridge (lazy init)
         self.layout = create_layout()
         self.chat_history = []
         self.agent_thought = ""
-        self.thought_tree = [] # 사고 과정 트리 데이터
-        self.current_diagram = "" # 아키텍처 다이어그램 코드
+        self.thought_tree = []
         self.thought_history = [] 
         self.current_agent = "Idle"
         self.last_agent = "Idle"
@@ -79,18 +73,12 @@ class DashboardUI:
         self.call_count = 0
         self.energy = 100
         self.efficiency = 100.0
-        self.achievements = [] # 주요 마일스톤 성과 기록
-        self.security_events = [] # 보안 이벤트 기록
-        self.thought_timeline = [] # 타임라인 스냅샷 기록
-        self.activity_stream = [] # 저널 스타일 활동 일지
-        self.review_board = {} # 에이전트 승인 현황 관리
-        self.debt_list = [] # 기술 부채(복잡도) 목록
-        self.active_debate = [] # 현재 진행 중인 토론 데이터
-        self.target_language = "ko" # 웹 UI 타겟 언어
-        self.knowledge_lineage = [] # 지식 출처 계보
-        self.suggested_actions = [] # 예측된 다음 행동 제안
+        self.achievements = []
+        self.debt_list = []
+        self.active_debate = []
+        self.knowledge_lineage = []
+        self.suggested_actions = []
         
-        # Progress bar for tools
         self.progress = Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -100,7 +88,6 @@ class DashboardUI:
         )
         self.tool_task = None
 
-        # 에이전트별 색상 매핑
         self.agent_colors = {
             "manager": "agent.manager",
             "planner": "agent.planner",
@@ -112,7 +99,6 @@ class DashboardUI:
             "optimizer": "agent.optimizer"
         }
         
-        # 에이전트별 애니메이션 스타일 매핑
         self.agent_spinners = {
             "manager": "dots",
             "planner": "bouncingBar",
@@ -124,83 +110,9 @@ class DashboardUI:
             "optimizer": "runner"
         }
 
-        # Web Streaming support
-        self.web_manager = None
-        try:
-            from gortex.ui.web_server import manager
-            self.web_manager = manager
-        except ImportError:
-            pass
-
-    def _generate_thought_graph(self) -> Dict[str, Any]:
-        """사고 트리를 그래프(Nodes/Edges) 구조로 변환"""
-        nodes = []
-        edges = []
-        for item in self.thought_tree:
-            node_id = item.get("id")
-            nodes.append({
-                "id": node_id,
-                "label": item.get("text")[:30] + "..." if len(item.get("text", "")) > 30 else item.get("text"),
-                "full_text": item.get("text"),
-                "type": item.get("type", "analysis")
-            })
-            if item.get("parent_id"):
-                edges.append({"from": item["parent_id"], "to": node_id})
-        return {"nodes": nodes, "edges": edges}
-
-    async def _broadcast_to_web(self):
-        """현재 UI 상태를 웹 대시보드로 전송 (실시간 번역 포함)"""
-        if not self.web_manager:
-            return
-            
-        from gortex.ui.three_js_bridge import ThreeJsBridge
-        from gortex.utils.translator import SynapticTranslator
-        bridge_3d = ThreeJsBridge()
-        translator = SynapticTranslator()
-        
-        # 실시간 번역 대상 데이터 구성
-        trans_data = {
-            "thought": self.agent_thought,
-            "step": self.current_step
-        }
-        translated = translator.translate_batch(trans_data, self.target_language)
-        
-        state = {
-            "agent": self.current_agent,
-            "step": translated.get("step", self.current_step),
-            "tokens": self.tokens_used,
-            "cost": self.total_cost,
-            "provider": self.provider,
-            "call_count": self.call_count,
-            "energy": self.energy,
-            "efficiency": self.efficiency,
-            "ui_language": self.target_language,
-            "thought": translated.get("thought", self.agent_thought),
-            "thought_tree": self.thought_tree,
-            "thought_tree_3d": bridge_3d.convert_thought_to_3d(self.thought_tree), # 3D 신경망 추가
-            "thought_graph": self._generate_thought_graph(), # 마인드맵용 그래프 데이터 추가
-            "diagram": self.current_diagram,
-            "achievements": self.achievements,
-            "security": self.security_events, # 보안 이벤트 추가
-            "activity": self.activity_stream, # 활동 일지 추가
-            "review": self.review_board, # 리뷰 현황 추가
-            "debt": self.debt_list, # 기술 부채 추가
-            "debate": self.active_debate, # 토론 데이터 추가
-            "chat_history": [
-                (r, c if isinstance(c, str) else "[Rich Object]") 
-                for r, c in self.chat_history[-10:]
-            ]
-        }
-        try:
-            await self.web_manager.broadcast(json.dumps(state, ensure_ascii=False))
-        except:
-            pass
-
     def update_debate_monitor(self, debate_data: list):
-        """에이전트 간 토론 현황 시각화"""
         self.active_debate = debate_data
-        if not debate_data:
-            return
+        if not debate_data: return
 
         debate_group = []
         debate_group.append(Text("⚔️ [bold red]MULTI-AGENT DEBATE IN PROGRESS[/bold red]", justify="center"))
@@ -212,21 +124,16 @@ class DashboardUI:
             content = entry.get("report", "")[:500] + "..." if len(entry.get("report", "")) > 500 else entry.get("report", "")
             debate_group.append(Panel(content, title=title, border_style=color, padding=(0, 1)))
 
-        # 터미널 메인 화면에 토론 내용을 일시적으로 주입 (채팅 기록 위에 표시)
         self.layout["main"].update(Panel(Group(*debate_group), title="[bold red]⚖️ CONSENSUS DEBATE[/bold red]", border_style="red"))
-        
-        if self.web_manager:
-            asyncio.create_task(self._broadcast_to_web())
 
     def update_debt_panel(self, debt_list: list):
-        """기술 부채(복잡도) 패널 업데이트"""
         self.debt_list = debt_list
         if not debt_list:
             self.layout["debt"].update(Panel("No debt scanned.", title="📉 TECHNICAL DEBT", border_style="dim"))
             return
 
         table = Table.grid(expand=True)
-        for item in debt_list[:5]: # 상위 5개만 표시
+        for item in debt_list[:5]:
             file_name = item.get("file", "").split("/")[-1]
             score = item.get("score", 0)
             color = "red" if score > 50 else ("yellow" if score > 20 else "green")
@@ -235,9 +142,7 @@ class DashboardUI:
         self.layout["debt"].update(Panel(table, title="📉 [bold red]TECHNICAL DEBT[/]", border_style="red"))
 
     def update_main(self, messages: list):
-        """메인 채팅 패널 업데이트 (역할별 구분 및 자동 요약 표시)"""
-        if len(messages) > 50:
-            del messages[:-50]
+        if len(messages) > 50: del messages[:-50]
 
         display_msgs = messages[-15:]
         msg_group = []
@@ -247,11 +152,9 @@ class DashboardUI:
 
         for item in display_msgs:
             try:
-                if not isinstance(item, (list, tuple)) or len(item) < 2:
-                    continue
+                if not isinstance(item, (list, tuple)) or len(item) < 2: continue
                 role, content = item
-            except Exception:
-                continue
+            except Exception: continue
 
             if role == "user":
                 icon = self.assets.get_icon("user")
@@ -266,7 +169,6 @@ class DashboardUI:
                     if len(content) > 2000:
                         display_content = content[:1000] + f"\n\n[... {len(content)-2000} characters truncated ...]\n\n" + content[-1000:]
                     
-                    # 1. JSON 검사
                     try:
                         stripped = display_content.strip()
                         if (stripped.startswith("{}") and stripped.endswith("}")) or (stripped.startswith("[") and stripped.endswith("]")):
@@ -277,13 +179,11 @@ class DashboardUI:
                     except:
                         pass
 
-                    # 2. 테이블 형식 검사
                     table_renderable = try_render_as_table(display_content)
                     if table_renderable:
                         msg_group.append(Panel(table_renderable, title=f"{icon} [bold yellow]OBSERVATION (TABLE)[/bold yellow]", border_style="yellow", style="dim"))
                         continue
 
-                    # 3. 코드 형태인 경우 하이라이팅
                     code_keywords = ["import ", "def ", "class ", "void ", "public ", "{", "}", "const ", "SELECT ", "INSERT ", "UPDATE ", "DELETE ", "#!", "bash", "npm "]
                     if any(x in display_content for x in code_keywords):
                         lang = "python"
@@ -306,17 +206,11 @@ class DashboardUI:
                     msg_group.append(content)
         
         self.layout["main"].update(Panel(Group(*msg_group), title="[bold cyan]🧠 GORTEX TERMINAL[/bold cyan]", border_style="cyan"))
-        
-        if self.web_manager:
-            asyncio.create_task(self._broadcast_to_web())
 
     def render_thought_tree(self) -> Group:
-        """사고 트리를 터미널용 계층 구조로 렌더링"""
-        if not self.thought_tree:
-            return Group(Text("No thought tree available.", style="dim"))
+        if not self.thought_tree: return Group(Text("No thought tree available.", style="dim"))
 
         tree_display = []
-        # 부모-자식 관계 맵 생성
         children = {}
         roots = []
         for item in self.thought_tree:
@@ -343,31 +237,15 @@ class DashboardUI:
         return Group(*tree_display)
 
     def update_thought(self, thought: str, agent_name: str = "agent", tree: list = None):
-        """에이전트의 사고 과정 실시간 업데이트 (TUI 트리 렌더링 추가)"""
         self.agent_thought = thought
-        if tree:
-            self.thought_tree = tree
+        if tree: self.thought_tree = tree
         
         timestamp = datetime.now().isoformat()
         self.thought_history.append((agent_name, thought, timestamp))
         
-        # [TIMELINE] 현재 상태 스냅샷 저장
-        snapshot = {
-            "timestamp": timestamp,
-            "agent": agent_name,
-            "thought": thought,
-            "tree": self.thought_tree,
-            "diagram": self.current_diagram,
-            "step": self.current_step
-        }
-        self.thought_timeline.append(snapshot)
-        if len(self.thought_timeline) > 50: # 최대 50개 유지
-            self.thought_timeline.pop(0)
-
         style = self.agent_colors.get(agent_name.lower(), "agent.manager")
         title = f"💭 [{style}]AGENT REASONING ({agent_name.upper()})[/{style}]"
         
-        # 트리 데이터가 있으면 트리와 함께 표시
         if self.thought_tree:
             thought_group = Group(
                 Text(thought, style="italic cyan"),
@@ -377,15 +255,10 @@ class DashboardUI:
             self.layout["thought"].update(Panel(thought_group, title=title, border_style="cyan", padding=(1, 2)))
         else:
             self.layout["thought"].update(Panel(Text(thought, style="italic cyan"), title=title, border_style="cyan", padding=(1, 2)))
-        
-        if self.web_manager:
-            asyncio.create_task(self._broadcast_to_web())
 
     def update_logs(self, log_entry: dict):
-        """최근 로그 업데이트 (최신 항목 하이라이트)"""
         self.recent_logs.append(log_entry)
-        if len(self.recent_logs) > 8:
-            self.recent_logs.pop(0)
+        if len(self.recent_logs) > 8: self.recent_logs.pop(0)
             
         log_table = Table.grid(expand=True)
         for i, entry in enumerate(self.recent_logs):
@@ -400,35 +273,19 @@ class DashboardUI:
             
         self.layout["logs"].update(Panel(log_table, title="📜 [bold white]TRACE LOGS[/bold white]", border_style="white"))
 
-    def reset_thought_style(self):
-        """사고 패널의 스타일을 평상시로 복구"""
-        if self.agent_thought:
-            self.layout["thought"].update(
-                Panel(Text(self.agent_thought, style="italic cyan"), title="💭 [bold cyan]AGENT REASONING[/bold cyan]", border_style="cyan", padding=(1, 2))
-            )
-
-    def complete_thought_style(self):
-        """사고 완료 시 시각 효과 (녹색 강조)"""
-        if self.agent_thought:
-            self.layout["thought"].update(
-                Panel(Text(self.agent_thought, style="italic green"), title="✅ [bold green]THOUGHT COMPLETE[/bold green]", border_style="green", padding=(1, 2))
-            )
-
     def start_tool_progress(self, description: str):
-        """도구 실행 진행 바 시작"""
         if self.tool_task is None:
             self.tool_task = self.progress.add_task(description, total=None)
         else:
             self.progress.update(self.tool_task, description=description)
 
     def stop_tool_progress(self):
-        """도구 실행 진행 바 중단"""
         if self.tool_task is not None:
             self.progress.remove_task(self.tool_task)
             self.tool_task = None
 
-    def update_sidebar(self, agent: str = "Idle", step: str = "N/A", tokens: int = 0, cost: float = 0.0, rules: int = 0, provider: str = "GEMINI", call_count: int = 0, avg_latency: int = 0, energy: int = 100, efficiency: float = 100.0, knowledge_lineage: list = None, suggested_actions: list = None):
-        """사이드바 정보 업데이트 (에이전트, 성능 및 행동 예측 시각화)"""
+    def update_sidebar(self, agent: str = "Idle", step: str = "N/A", tokens: int = 0, cost: float = 0.0, rules: int = 0, provider: str = "GEMINI", call_count: int = 0, avg_latency: int = 0, energy: int = 100, efficiency: float = 100.0, knowledge_lineage: list = None, suggested_actions: list = None, agent_economy: dict = None):
+        """사이드바 정보 업데이트 (에이전트, 성능, 경제 상태 시각화)"""
         self.current_agent = agent
         self.current_step = step
         self.tokens_used = tokens
@@ -441,35 +298,41 @@ class DashboardUI:
         if knowledge_lineage is not None: self.knowledge_lineage = knowledge_lineage
         if suggested_actions is not None: self.suggested_actions = suggested_actions
         
-        if self.web_manager:
-            asyncio.create_task(self._broadcast_to_web())
-
         agent_style_name = self.agent_colors.get(agent.lower(), "dim white")
         try:
             border_color = self.console.get_style(agent_style_name).color.name
         except:
             border_color = "cyan" if agent != "Idle" else "white"
 
+        # [ECONOMY] 현재 에이전트 경제 정보
+        rep_text = ""
+        if agent_economy and agent.lower() in agent_economy:
+            eco = agent_economy[agent.lower()]
+            lvl = eco.get("level", "N/A")
+            pts = eco.get("points", 0)
+            rep_text = f" [{lvl}] {pts}pts"
+
         # Status
         status_text = Text()
         status_text.append(f"Agent: ", style="bold")
         agent_style = self.agent_colors.get(agent.lower(), "dim white")
         agent_label = self.assets.get_agent_label(agent)
-        status_text.append(f"{agent_label}\n", style=agent_style if agent != "Idle" else "green")
+        status_text.append(f"{agent_label}", style=agent_style if agent != "Idle" else "green")
+        if rep_text: status_text.append(rep_text, style="italic yellow")
+        status_text.append("\n")
+        
         status_text.append(f"LLM  : ", style="bold")
         provider_style = "bold blue" if provider == "GEMINI" else "bold green"
         status_text.append(f"{provider}\n", style=provider_style)
         
-        # 지식 계보(Lineage) 노출
         if self.knowledge_lineage:
             status_text.append(f"Source: ", style="bold")
-            for item in self.knowledge_lineage[:2]: # 상위 2개만 요약 노출
+            for item in self.knowledge_lineage[:2]:
                 source = item.get("source", "N/A")
                 score = item.get("score", 0)
                 status_text.append(f"{source}({score}) ", style="italic magenta")
             status_text.append("\n")
 
-        # 호출 빈도 시각화
         status_text.append(f"Load : ", style="bold")
         bars = min(10, (call_count + 1) // 2)
         load_color = "green" if bars < 4 else ("yellow" if bars < 8 else "red")
@@ -480,7 +343,6 @@ class DashboardUI:
         status_text.append(f"Step : ", style="bold")
         status_text.append(f"{step}\n")
         
-        # 다음 행동 제안 시각화
         if self.suggested_actions:
             status_text.append(f"🚀 Next? \n", style="bold yellow")
             for i, act in enumerate(self.suggested_actions):
@@ -503,7 +365,6 @@ class DashboardUI:
         latency_color = "green" if avg_latency < 3000 else ("yellow" if avg_latency < 7000 else "red")
         stats_table.add_row("Avg Lat:", f"[{latency_color}]{avg_latency}ms[/{latency_color}]")
         
-        # Energy & Efficiency Visualization
         energy_color = "green" if energy > 70 else ("yellow" if energy > 30 else "red")
         stats_table.add_row("Energy:", f"[{energy_color}]{'⚡' * (energy // 20)}{' ' * (5 - energy // 20)} {energy}%[/{energy_color}]")
         
@@ -512,16 +373,13 @@ class DashboardUI:
         
         stats_group = [stats_table]
         
-        # [NEW] Health Trend
         try:
             from gortex.utils.efficiency_monitor import EfficiencyMonitor
             health_hist = EfficiencyMonitor().get_health_history(limit=10)
             if health_hist:
-                scores = [h.get("score", 0) for h in reversed(health_hist)] # Oldest to newest
+                scores = [h.get("score", 0) for h in reversed(health_hist)]
                 spark = render_sparkline(scores)
                 current_health = scores[-1] if scores else 0
-                
-                # Determine trend color
                 trend_color = "green"
                 if len(scores) > 1:
                     if scores[-1] < scores[-2]: trend_color = "red"
@@ -539,103 +397,46 @@ class DashboardUI:
 
         self.layout["stats"].update(Panel(Group(*stats_group), title=f"📊 [bold {border_color}]USAGE STATS[/]", border_style="green" if tokens > 0 else border_color))
 
-        # Evolution
-        from gortex.utils.efficiency_monitor import EfficiencyMonitor
-        evo_history = EfficiencyMonitor().get_evolution_history(limit=3)
+        if agent_economy:
+            self.update_economy_panel(agent_economy)
+
+    def update_economy_panel(self, agent_economy: dict):
+        """에이전트 평판 리더보드 업데이트"""
+        if not agent_economy:
+            self.layout["economy"].update(Panel("No data.", title="🏆 REPUTATION", border_style="dim"))
+            return
+
+        table = Table.grid(expand=True)
+        sorted_agents = sorted(agent_economy.items(), key=lambda x: x[1].get("points", 0), reverse=True)
         
-        evo_group = []
-        evo_group.append(Text(f"Active Rules: {rules}", style="bold magenta"))
-        
-        if evo_history:
-            evo_group.append(Text("\n[Recent Evolutions]", style="bold dim"))
-            for ev in evo_history:
-                tech = ev.get("metadata", {}).get("tech", "Unknown")
-                file = ev.get("metadata", {}).get("file", "").split("/")[-1]
-                evo_group.append(Text(f"• {tech} -> {file}", style="magenta", overflow="ellipsis"))
-        
-        if rules > 0:
-            evo_group.append(Text("\n[LEARNED MODE]", style="blink magenta"))
+        for name, data in sorted_agents[:3]:
+            lvl = data.get("level", "B")
+            pts = data.get("points", 0)
+            color = "yellow" if lvl == "Gold" else ("white" if lvl == "Silver" else "magenta")
+            table.add_row(f"{name[:8]}", f"[{color}]{lvl}[/]", f"{pts}")
             
-        self.layout["evolution"].update(Panel(Group(*evo_group), title=f"🧬 [bold {border_color}]EVOLUTION[/]", border_style="magenta" if rules > 0 else border_color))
-
-    def add_achievement(self, text: str, icon: str = "🏆"):
-        """새로운 성과(마일스톤)를 타임라인에 추가"""
-        timestamp = datetime.now().strftime("%H:%M:%S")
-        self.achievements.append({
-            "time": timestamp,
-            "text": text,
-            "icon": icon
-        })
-        # 최신 5개만 보존 고려 가능하나, 여기서는 전체 보존
-        logger.info(f"✨ Achievement Unlocked: {text}")
-        
-        if self.web_manager:
-            asyncio.create_task(self._broadcast_to_web())
-
-    def filter_thoughts(self, agent_name: str = None, keyword: str = None) -> list:
-        """사고 히스토리를 필터링하여 반환"""
-        results = self.thought_history
-        if agent_name:
-            results = [t for t in results if t[0].lower() == agent_name.lower()]
-        if keyword:
-            results = [t for t in results if keyword.lower() in t[1].lower()]
-        return results
-
-    def add_security_event(self, event_type: str, details: str):
-        """보안 관련 이벤트(차단 등)를 기록"""
-        self.security_events.append({
-            "time": datetime.now().strftime("%H:%M:%S"),
-            "type": event_type,
-            "details": details
-        })
-        if self.web_manager:
-            asyncio.create_task(self._broadcast_to_web())
-
-    def add_journal_entry(self, entry: str):
-        """저널 스타일 활동 항목 추가"""
-        self.activity_stream.append({
-            "time": datetime.now().strftime("%H:%M:%S"),
-            "content": entry
-        })
-        if len(self.activity_stream) > 20:
-            self.activity_stream.pop(0)
-        if self.web_manager:
-            asyncio.create_task(self._broadcast_to_web())
-
-    def update_review_board(self, task_id: str, agent_name: str, approved: bool, feedback: str):
-        """다중 에이전트 승인 현황 업데이트"""
-        if task_id not in self.review_board:
-            self.review_board[task_id] = {"title": task_id, "approvals": {}}
-            
-        self.review_board[task_id]["approvals"][agent_name] = {
-            "approved": approved,
-            "feedback": feedback,
-            "time": datetime.now().strftime("%H:%M:%S")
-        }
-        if self.web_manager:
-            asyncio.create_task(self._broadcast_to_web())
+        self.layout["economy"].update(Panel(table, title="🏆 [bold yellow]REPUTATION[/]", border_style="yellow"))
 
     def render(self):
         return self.layout
 
     def set_mode(self, mode: str):
-        """작업 맥락에 따라 UI 레이아웃 비율 동적 조정"""
         if mode == "coding":
             self.layout["content"]["main"].ratio = 6
             self.layout["content"]["thought"].ratio = 4
             self.layout["sidebar"].ratio = 3
         elif mode == "research":
             self.layout["content"]["main"].ratio = 7
-            self.layout["sidebar"].ratio = 4 # 사이드바 확대
+            self.layout["sidebar"].ratio = 4
         elif mode == "debugging":
-            self.layout["sidebar"]["logs"].size = 20 # 로그 패널 확대
+            self.layout["sidebar"]["logs"].size = 20
             self.layout["sidebar"]["status"].size = 8
         elif mode == "analyst":
-            self.layout["sidebar"]["stats"].size = 15 # 통계 패널 확대
-        else: # standard
+            self.layout["sidebar"]["stats"].size = 15
+        else:
             self.layout["content"]["main"].ratio = 7
             self.layout["content"]["thought"].ratio = 3
             self.layout["sidebar"].ratio = 3
-            self.layout["sidebar"]["logs"].size = None # 가변
+            self.layout["sidebar"]["logs"].size = None
             
         logger.info(f"🎭 UI Layout adjusted to: {mode}")

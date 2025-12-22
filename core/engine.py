@@ -11,10 +11,6 @@ from gortex.utils.tools import execute_shell
 from gortex.utils.token_counter import count_tokens
 from gortex.utils.notifier import Notifier
 from gortex.utils.healing_memory import SelfHealingMemory
-try:
-    from gortex.ui.three_js_bridge import ThreeJsBridge
-except ImportError:
-    ThreeJsBridge = None
 
 logger = logging.getLogger("GortexEngine")
 
@@ -68,12 +64,11 @@ class GortexEngine:
             if "❌" in msg_str or "security alert" in msg_str.lower():
                 self.ui.add_security_event("High", "Security issue detected")
             
-            if hasattr(self.ui, 'web_manager') and self.ui.web_manager:
-                msg = json.dumps({"agent": node_name, "impact": output.get("impact_analysis")})
-                try:
-                    res = self.ui.web_manager.broadcast(msg)
-                    if asyncio.iscoroutine(res): await res
-                except: pass
+            # [ECONOMY] 경제 상태 실시간 업데이트
+            if "agent_economy" in state or "agent_economy" in output:
+                eco_data = output.get("agent_economy") or state.get("agent_economy")
+                if eco_data:
+                    self.ui.update_economy_panel(eco_data)
         
         # 4. 음성 브릿지 연동
         if self.vocal and output.get("messages"):

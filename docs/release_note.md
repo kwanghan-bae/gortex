@@ -11,13 +11,14 @@
 
 ## ✅ Completed (Recent Milestones)
 
-### v2.11.6 (2025-12-22)
-- **Economy**: `Cross-Agent Reputation System` 도입. 에이전트 간 상호 평가를 통해 포인트와 등급(`Bronze` ~ `Diamond`)을 관리하는 내부 경제 엔진 구축.
-- **QA**: `ReflectionAnalyst`에 LLM 기반 작업 품질 평가(`evaluate_work_quality`) 기능 탑재.
+### v2.11.7 (2025-12-22)
+- **Purification**: Web UI 관련 모든 기능 및 파일 전수 폐기. `three_js_bridge.py`, `web_server.py` 등을 제거하고 TUI(`rich`) 전용 대시보드로 시스템 경량화 및 최적화.
+- **Interface**: `Real-time Reputation Dashboard` 안착. 사이드바에 에이전트별 평판 등급(`Bronze`~`Diamond`) 및 실시간 리더보드 시각화 연동.
+- **Policy**: `RULES.md`에 Web UI 개발 금지 및 TUI 집중 원칙 명문화.
 
-### v2.11.5 (2025-12-22)
-- **Agent Intelligence**: `Autonomous Task Prioritization` 구현. 시스템 에너지(30% 미만) 상황에 따라 필수적이지 않은 작업을 자동으로 걸러내는 전략적 선택 지능 탑재.
-- **Planning**: `Planner` 스키마 고도화를 통해 작업 단계별 `priority` 및 `is_essential` 메타데이터 부여.
+### v2.11.6 (2025-12-22)
+- **Economy**: `Cross-Agent Reputation System` 도입. 에이전트 간 상호 평가를 통해 포인트와 등급을 관리하는 내부 경제 엔진 구축.
+- **QA**: `ReflectionAnalyst`에 LLM 기반 작업 품질 평가(`evaluate_work_quality`) 기능 탑재.
 
 ### v2.11.2 (2025-12-22)
 - **Infrastructure**: `ReflectionAnalyst`에 자가 치유 문서 시스템(`Self-Healing Documentation`) 탑재. 코드와 문서 간의 불일치(Drift)를 AI가 감지하고 자동 치유 가능.

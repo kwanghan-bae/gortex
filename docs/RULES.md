@@ -79,6 +79,10 @@ Commit messages MUST be written in **Korean** and follow this format:
 ### 4.2 Security Guard
 *   시스템 파괴적인 셸 명령(`rm -rf /` 등)은 차단되며, 시도 시 즉시 보안 경고를 발생시킨다.
 
+### 4.3 UI Development Policy (CRITICAL)
+*   **Web UI 개발 중단**: React, Three.js, HTML/JS 기반의 모든 Web 인터페이스 개발 및 리팩토링은 무기한 중단한다.
+*   **TUI(Terminal UI) 전념**: 모든 UI 관련 역량은 `rich` 라이브러리 기반의 터미널 대시보드 고도화에 집중한다. Web 관련 코드를 추가하거나 복구하려는 시도는 규정 위반으로 간주한다.
+
 ---
 
 ## 5. Custom Tooling Protocol
