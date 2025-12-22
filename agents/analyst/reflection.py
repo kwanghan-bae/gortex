@@ -12,6 +12,37 @@ logger = logging.getLogger("GortexAnalystReflection")
 class ReflectionAnalyst(AnalystAgent):
     """시스템의 사고 과정을 성찰하고 진화 규칙을 생성하는 전문가"""
     
+    def evaluate_work_quality(self, agent_name: str, task: str, result: str) -> Dict[str, Any]:
+        """
+        특정 에이전트의 작업 결과물을 평가하여 품질 점수를 산출함.
+        """
+        prompt = f"""You are the Quality Assurance Chief. 
+        Evaluate the work done by Agent '{agent_name}'.
+        
+        [Task]: {task}
+        [Result]:
+        {result}
+        
+        Evaluate based on:
+        1. Technical Integrity (Is it correct and robust?)
+        2. Efficiency (Did it use optimal path?)
+        3. Compliance (Did it follow system rules?)
+        
+        Return JSON ONLY:
+        {{
+            "quality_score": 0.0 ~ 2.0 (1.0 is standard),
+            "rationale": "Brief reason for score",
+            "feedback": "Feedback for the agent to improve"
+        }}
+        """
+        try:
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            res_data = json.loads(re.search(r'\{.*\}', response_text, re.DOTALL).group(0))
+            return res_data
+        except Exception as e:
+            logger.error(f"Work quality evaluation failed: {e}")
+            return {"quality_score": 1.0, "rationale": "Fallback score due to error", "feedback": str(e)}
+
     def check_documentation_drift(self, file_path: str, doc_path: str, target_symbol: str) -> Dict[str, Any]:
         """
         코드 파일의 특정 심볼(Class/Function) 정의와 문서 내 기술(Markdown Code Block)을 비교하여

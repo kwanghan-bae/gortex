@@ -1,27 +1,26 @@
 # Next Session
 
 ## Session Goal
-- **Cross-Agent Reputation System**: 에이전트(`Coder`, `Researcher` 등)의 작업 결과물을 다른 에이전트(`Analyst`)가 평가하여 평판 점수(`agent_economy`)를 갱신하고, 고평판 에이전트에게 더 많은 리소스를 할당하는 선순환 시스템을 구축한다.
+- **Real-time Reputation Dashboard**: 에이전트별 평판 등급, 포인트, 성과 통계를 TUI 대시보드에 시각화하여 시스템의 내부 상태를 직관적으로 파악할 수 있게 한다.
 
 ## Context
-- 현재 `agent_economy`는 구조만 있고 실제 작동 로직이 약함.
-- 작업의 질에 따른 차등 보상이 없으므로 에이전트들이 대충 답변할 가능성(Laziness)이 존재함.
-- '평판'을 통해 고성능 모델(Pro) 사용권을 획득하는 등의 게임화 요소를 강화함.
+- `Session 0088`에서 경제 시스템 백엔드를 구축함.
+- 현재 사용자는 평판 변화를 로그로만 확인할 수 있어 가독성이 낮음.
+- '신뢰할 수 있는 시스템'을 위해 에이전트들이 서로를 어떻게 평가하는지 투명하게 공개해야 함.
 
 ## Scope
 ### Do
-- `agents/analyst/reflection.py`: 작업 품질 평가(`evaluate_work_quality`) 메서드 추가.
-- `utils/economy.py` (New): 포인트 지급 및 평판 관리 전문 유틸리티 신설.
-- `core/state.py`: `GortexState` 내 `agent_economy` 데이터 구조 최적화.
+- `ui/dashboard.py`: `update_sidebar` 메서드 확장하여 에이전트 경제 정보 렌더링 추가.
+- `ui/dashboard.py`: 포인트 순위를 보여주는 소형 테이블(`Reputation Leaderboard`) 레이아웃 추가.
+- `main.py`: 루프 종료 시마다 대시보드에 경제 상태 업데이트 트리거 연동.
 
 ### Do NOT
-- 실제 암호화폐나 외부 결제 시스템은 도입하지 않음 (순수 내부 가상 경제).
+- 복잡한 차트나 외부 라이브러리 추가를 지양하고 Rich 기본 기능을 최대한 활용.
 
 ## Expected Outputs
-- `utils/economy.py` (New)
-- `agents/analyst/reflection.py` (Update)
-- `tests/test_agent_economy.py` (New)
+- `ui/dashboard.py` (Update)
+- `tests/test_dashboard_economy.py` (New)
 
 ## Completion Criteria
-- Coder가 작업을 완수했을 때, Analyst의 평가에 따라 `agent_economy`의 포인트가 정상적으로 가감되는지 확인.
-- `docs/sessions/session_0088.md` 기록.
+- `/status` 명령이나 사이드바에서 Coder의 `Silver` 등급과 포인트가 실시간으로 표시되어야 함.
+- `docs/sessions/session_0089.md` 기록.

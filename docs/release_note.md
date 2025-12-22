@@ -11,13 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.11.6 (2025-12-22)
+- **Economy**: `Cross-Agent Reputation System` 도입. 에이전트 간 상호 평가를 통해 포인트와 등급(`Bronze` ~ `Diamond`)을 관리하는 내부 경제 엔진 구축.
+- **QA**: `ReflectionAnalyst`에 LLM 기반 작업 품질 평가(`evaluate_work_quality`) 기능 탑재.
+
 ### v2.11.5 (2025-12-22)
 - **Agent Intelligence**: `Autonomous Task Prioritization` 구현. 시스템 에너지(30% 미만) 상황에 따라 필수적이지 않은 작업을 자동으로 걸러내는 전략적 선택 지능 탑재.
 - **Planning**: `Planner` 스키마 고도화를 통해 작업 단계별 `priority` 및 `is_essential` 메타데이터 부여.
-
-### v2.11.4 (2025-12-22)
-- **Optimization**: `Dynamic Context Pruning` 시스템 구축. 대화 이력이 길어질 경우 프로젝트 상태(Goal, Progress 등)를 자동 요약하고 불필요한 메시지를 절삭하여 인지 효율 극대화.
-- **Infrastructure**: 전문 요약 모듈 `core/llm/summarizer.py` 신설 및 백엔드 유형에 따른 동적 임계값 로직 탑재.
 
 ### v2.11.2 (2025-12-22)
 - **Infrastructure**: `ReflectionAnalyst`에 자가 치유 문서 시스템(`Self-Healing Documentation`) 탑재. 코드와 문서 간의 불일치(Drift)를 AI가 감지하고 자동 치유 가능.
