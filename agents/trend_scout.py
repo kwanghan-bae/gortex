@@ -254,6 +254,69 @@ class TrendScoutAgent:
             
         return []
 
+    async def propose_new_agents(self, model_id: str = "gemini-1.5-flash") -> List[Dict[str, Any]]:
+        """Tech Radar 정보를 바탕으로 시스템에 필요한 신규 전문가 에이전트 영입 제안"""
+        if not self.radar_data.get("patterns") and not self.radar_data.get("models"):
+            return []
+
+        logger.info("🔭 Designing proactive agent expansion strategies...")
+        
+        radar_summary = json.dumps({
+            "models": self.radar_data.get("models", []),
+            "patterns": self.radar_data.get("patterns", [])
+        }, ensure_ascii=False)
+
+        prompt = f"""
+        당신은 Gortex 시스템의 지능 확장 전략가입니다. 
+        아래의 테크 레이더 정보를 분석하여, Gortex v3.0의 성능을 획기적으로 높일 수 있는 '새로운 전문가 에이전트'를 1개 설계하십시오.
+        
+        [Tech Radar]
+        {radar_summary}
+        
+        에이전트 설계 조건:
+        1. 기존의 Manager, Coder, Planner, Analyst와 역할이 겹치지 않아야 합니다.
+        2. 구체적인 도구(Tools)와 실행 전략을 포함해야 합니다.
+        
+        결과는 JSON으로만 반환하십시오:
+        {{
+            "proposed_agent": {{
+                "agent_name": "UniqueNameAgent",
+                "role": "역할명",
+                "description": "상세 설명",
+                "required_tools": ["tool1", "tool2"],
+                "logic_strategy": "핵심 알고리즘/동작 방식",
+                "strategic_value": "이 에이전트를 도입했을 때의 이득"
+            }}
+        }}
+        """
+        
+        config = {"temperature": 0.0}
+        if self.backend.supports_structured_output():
+            from google.genai import types
+            config = types.GenerateContentConfig(response_mime_type="application/json")
+
+        try:
+            response_text = self.backend.generate(model_id, [{"role": "user", "content": prompt}], config)
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            res_data = json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+            
+            proposal = res_data.get("proposed_agent")
+            if proposal:
+                # tech_radar에 제안 기록
+                if "agent_proposals" not in self.radar_data:
+                    self.radar_data["agent_proposals"] = []
+                self.radar_data["agent_proposals"].append({
+                    "timestamp": datetime.now().isoformat(),
+                    "proposal": proposal
+                })
+                self._save_radar()
+                return [proposal]
+        except Exception as e:
+            logger.error(f"Agent expansion proposal failed: {e}")
+            
+        return []
+
 import asyncio
 import re
 
@@ -282,18 +345,27 @@ def trend_scout_node(state: GortexState) -> Dict[str, Any]:
                 f2 = executor.submit(lambda: asyncio.run(scout.check_vulnerabilities(assigned_model)))
                 notifications = f1.result() + f2.result()
                 
-                # 도입 기회 분석은 위 결과 반영 후 순차 실행
+                # 도입 기회 및 에이전트 확장 제안 분석
                 f3 = executor.submit(lambda: asyncio.run(scout.analyze_adoption_opportunity(file_list, assigned_model)))
+                f4 = executor.submit(lambda: asyncio.run(scout.propose_new_agents(assigned_model)))
+                
                 notifications += f3.result()
+                agent_proposals = f4.result()
+                
+                for p in agent_proposals:
+                    notifications.append(f"🌟 [선제적 확장 제안] '{p['agent_name']}' 영입 검토 필요 ({p['strategic_value']})")
         else:
             n1 = loop.run_until_complete(scout.scan_trends(assigned_model))
             n2 = loop.run_until_complete(scout.check_vulnerabilities(assigned_model))
             n3 = loop.run_until_complete(scout.analyze_adoption_opportunity(file_list, assigned_model))
-            notifications = n1 + n2 + n3
+            n4 = loop.run_until_complete(scout.propose_new_agents(assigned_model))
+            notifications = n1 + n2 + n3 + [f"🌟 [선제적 확장 제안] '{p['agent_name']}' 영입 검토 필요" for p in n4]
+            agent_proposals = n4
             
         return {
             "messages": [("ai", "\n".join(notifications))],
-            "next_node": "manager"
+            "next_node": "manager",
+            "agent_proposals": agent_proposals # 매니저에게 제안 데이터 전달
         }
     
     return {

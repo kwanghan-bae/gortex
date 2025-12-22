@@ -1,28 +1,28 @@
 # Next Session
 
 ## Session Goal
-- **Proactive Self-Expansion Strategy**: `TrendScout` 에이전트가 수집한 외부 기술 트렌드와 프로젝트 로드맵을 대조하여, 현재 발생하지 않은 문제라도 미래를 위해 필요한 새로운 전문가 에이전트를 선제적으로 생성하고 등록하는 '공격적 자가 확장' 지능을 구현한다.
+- **Collaborative Multi-Agent Debugging**: 단일 에이전트(Coder)가 해결하지 못한 고난도 버그에 대해 `Swarm` 노드와 `Analyst`가 협력하여 공동 진단하고, 여러 가설을 동시에 검증하여 최적의 패치를 도출하는 '집단 지성 수리 루프'를 강화한다.
 
 ## Context
-- 105세션에서 '문제가 생겼을 때' 에이전트를 만드는 기초를 닦음.
-- 이제는 '문제가 생기기 전'에, 혹은 '더 나은 방식이 나왔을 때' 선제적으로 에이전트를 영입해야 함.
-- 예: "최신 라이브러리 X가 나왔으니 이를 전담할 에이전트를 만들자"는 의사결정 프로세스 구축.
+- 현재 수리는 주로 `Analyst` 진단 -> `Coder` 집도로 이루어짐.
+- 하지만 원인이 불분명한 간헐적 버그나 복잡한 의존성 문제는 단일 관점으로 해결이 어려움.
+- `Swarm`의 '토론' 지능을 디버깅에 도입하여, 다양한 해결책을 제안받고 상호 비판을 통해 신뢰도를 높여야 함.
 
 ## Scope
 ### Do
-- `agents/trend_scout.py`: 기술 레이더 분석 결과에서 '새로운 에이전트 후보'를 도출하는 로직 추가.
-- `agents/manager.py`: `TrendScout`의 제안을 `Analyst`에게 검토 맡기고, 승인 시 `Coder`가 에이전트를 생성하게 하는 'Expansion Workflow' 연동.
-- `docs/SPEC_CATALOG.md`: '선제적 자가 증식' 철학을 시스템 정체성에 추가.
+- `agents/swarm.py`: 'Debug Mode' 추가. 에러 로그를 바탕으로 여러 페르소나가 각자 다른 가설을 제안하도록 유도.
+- `agents/analyst/base.py`: Swarm이 제안한 여러 패치 후보 중 가장 안전하고 효율적인 것을 선별하는 `synthesize_debug_consensus` 구현.
+- `core/graph.py`: Coder가 반복 실패 시 자동으로 'Swarm Debug Mode'로 라우팅하는 엣지 보강.
 
 ### Do NOT
-- 실제 웹 검색 API 할당량 소진 상황을 고려하여, 가상의 트렌드 데이터를 활용한 시뮬레이션 위주로 진행.
+- 인프라 수준의 디버깅(Docker, OS Kernel 등)은 범위에서 제외.
 
 ## Expected Outputs
-- `agents/trend_scout.py` (Update)
-- `agents/manager.py` (Expansion Routing)
-- `docs/SPEC_CATALOG.md` (Updated Vision)
+- `agents/swarm.py` (Debug Persona support)
+- `agents/analyst/base.py` (Debug Synthesis)
+- `tests/test_swarm_debugging.py` (New)
 
 ## Completion Criteria
-- `TrendScout`이 특정 신기술을 발견했을 때, 매니저가 이를 새로운 에이전트 영입 작업으로 플래닝해야 함.
-- 결과적으로 시스템에 새로운 '미래 지향형' 에이전트가 자동 등록되어야 함.
-- `docs/sessions/session_0106.md` 기록.
+- Coder가 3회 이상 동일 버그 수리에 실패했을 때, Swarm이 개입하여 최소 2개 이상의 대안적 가설을 제시해야 함.
+- 최종적으로 선택된 가설이 기존의 실패한 방식과 달라야 함.
+- `docs/sessions/session_0107.md` 기록.
