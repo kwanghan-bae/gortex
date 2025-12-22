@@ -67,7 +67,6 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     case_context = "\n".join([f"Case: {c.get('agent')} - {c.get('event')}" for c in past_cases]) if past_cases else ""
 
     # 3. 시스템 프롬프트 구성
-    roadmap = state.get("evolution_roadmap", [])
     roadmap_context = "\n".join([f"- {r['target']} ({r['suggested_tech']}) [Priority: {r['priority']}]" for r in roadmap]) if roadmap else ""
     
     from gortex.utils.prompt_loader import loader
@@ -95,7 +94,6 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     else:
         model_id = cloud_model
 
-    # 복잡한 작업은 PRO 강제
     if any(k in internal_input.lower() for k in ["진화", "evolve", "architecture", "refactor"]):
         model_id = "gemini-1.5-pro"
 
@@ -128,6 +126,7 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
     success = False
     tokens = 0
     target_node = "__end__"
+    res_data = {}
     
     try:
         response_text = backend.generate(model=model_id, messages=formatted_messages, config=config)
@@ -136,11 +135,20 @@ def manager_node(state: GortexState) -> Dict[str, Any]:
         
         import re
         json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
-        res_data = json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+        if json_match:
+            res_data = json.loads(json_match.group(0))
+        else:
+            res_data = json.loads(response_text)
         
         target_node = res_data.get("next_node", "__end__")
         expert_model = monitor.get_best_model_for_task(target_node)
         final_assigned_model = expert_model if expert_model and expert_model.startswith("gemini") else "gemini-1.5-flash"
+
+        # [Council Mode Trigger]
+        is_council_needed = target_node == "evolution" or any(k in res_data.get("thought", "").lower() for k in ["risk", "danger", "critical"])
+        if is_council_needed:
+            target_node = "swarm"
+            logger.info("⚖️ Council Mode Activated")
 
         latency_ms = int((time.time() - start_time) * 1000)
         monitor.record_interaction("manager", model_id, success, tokens, latency_ms, metadata={"next_node": target_node})

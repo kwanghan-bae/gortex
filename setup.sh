@@ -40,21 +40,34 @@ fi
 echo -e "${GREEN}🌐 브라우저 엔진 설치 중...${NC}"
 playwright install chromium
 
-# 5. .env 파일 체크
+# 5. .env 파일 체크 및 생성
 if [ ! -f ".env" ]; then
-    echo -e "${YELLOW}📝 .env 파일이 없습니다. 템플릿을 생성합니다.${NC}"
+    echo -e "${YELLOW}📝 .env 설정이 필요합니다.${NC}"
+    echo -n "첫 번째 Gemini API 키를 입력하세요 (필수): "
+    read -r API_KEY_1
+    echo -n "두 번째 Gemini API 키를 입력하세요 (선택, 엔터로 스킵): "
+    read -r API_KEY_2
+    
     cat <<EOF > .env
-GEMINI_API_KEY_1=your_key_here
-GEMINI_API_KEY_2=
+GEMINI_API_KEY_1=$API_KEY_1
+GEMINI_API_KEY_2=$API_KEY_2
 WORKING_DIR=./workspace
 LOG_LEVEL=INFO
 MAX_CODER_ITERATIONS=30
 TREND_SCAN_INTERVAL_HOURS=24
 EOF
-    echo -e "${YELLOW}⚠️  .env 파일을 열어 Gemini API 키를 입력해주세요.${NC}"
+    echo -e "${GREEN}✅ .env 파일이 생성되었습니다.${NC}"
 fi
 
-# 6. 실행 권한 부여
+# 6. 실행 권한 부여 및 바로가기 생성
 chmod +x run.sh scripts/pre_commit.sh
+if [ ! -f "start.sh" ]; then
+    cat <<EOF > start.sh
+#!/bin/bash
+./run.sh
+EOF
+    chmod +x start.sh
+fi
 
-echo -e "${BLUE}✨ 설정 완료! './run.sh'로 실행하거나 'gortex' 명령어를 등록하세요.${NC}"
+echo -e "${BLUE}✨ 모든 준비가 끝났습니다!${NC}"
+echo -e "${GREEN}👉 './start.sh'를 실행하여 Gortex를 시작하세요.${NC}"

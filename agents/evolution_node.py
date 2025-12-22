@@ -74,6 +74,14 @@ class EvolutionNode:
             new_code = self.backend.generate(assigned_model, [{"role": "user", "content": prompt}])
             new_code = re.sub(r'```python\n|```', '', new_code).strip()
             
+            # [Simulation Step]
+            if not self.simulate_evolution(state, source_file, new_code):
+                return {
+                    "thought": "아키텍처 치유 시뮬레이션 결과 건강도가 하락하여 중단됨.",
+                    "messages": [("system", "⚠️ 시뮬레이션 결과 건강도 하락이 예상되어 리팩토링이 차단되었습니다.")],
+                    "next_node": "manager"
+                }
+
             write_file(source_file, new_code)
             check_res = execute_shell(f"./scripts/pre_commit.sh --selective {source_file}")
             
@@ -171,6 +179,32 @@ class EvolutionNode:
         except Exception as e:
             return {"thought": f"서브시스템 진화 중 오류: {e}", "next_node": "manager"}
 
+    def simulate_evolution(self, state: GortexState, target_file: str, new_code: str) -> bool:
+        """코드 수정이 실제로 건강도 점수를 향상시키는지 가상 시뮬레이션"""
+        original_code = read_file(target_file)
+        from gortex.utils.indexer import SynapticIndexer
+        indexer = SynapticIndexer()
+        
+        # 1. 수정 전 점수 측정
+        before_stats = indexer.calculate_health_score()
+        
+        # 2. 임시 파일 쓰기 및 재인덱싱
+        write_file(target_file, new_code)
+        indexer.scan_project()
+        after_stats = indexer.calculate_health_score()
+        
+        # 3. 점수 비교
+        improved = after_stats["score"] >= before_stats["score"]
+        
+        if not improved:
+            logger.warning(f"📉 Simulation rejected: Health score would drop from {before_stats['score']} to {after_stats['score']}")
+            write_file(target_file, original_code) # 원복
+            indexer.scan_project() # 인덱스 복구
+        else:
+            logger.info(f"📈 Simulation passed: Health score {before_stats['score']} -> {after_stats['score']}")
+            
+        return improved
+
     def evolve_system(self, state: GortexState) -> Dict[str, Any]:
         """시스템 진화 로직 실행"""
         candidates = self._get_radar_candidates()
@@ -207,10 +241,16 @@ class EvolutionNode:
         start_time = time.time()
         try:
             new_code = self.backend.generate(assigned_model, [{"role": "user", "content": prompt}])
-            
-            # 마크다운 코드 블록 제거
             new_code = re.sub(r'```python\n|```', '', new_code).strip()
             
+            # [Simulation Step]
+            if not self.simulate_evolution(state, target_file, new_code):
+                return {
+                    "thought": "시스템 진화 시뮬레이션 결과 건강도가 하락하여 중단됨.",
+                    "messages": [("system", "⚠️ 시뮬레이션 결과 건강도 하락이 예상되어 리팩토링이 차단되었습니다.")],
+                    "next_node": "manager"
+                }
+
             # 1. 파일 쓰기
             write_file(target_file, new_code)
             
