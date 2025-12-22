@@ -17,7 +17,8 @@ class AnalystAgent(ReflectionAnalyst, WorkspaceOrganizer):
     
     def perform_peer_review(self, source_file: str, new_code: str, model_id: str = "gemini-1.5-flash") -> Dict[str, Any]:
         """다른 모델을 활용하여 생성된 코드의 품질을 교차 리뷰함"""
-        prompt = f"""다음 리팩토링된 코드를 전문가의 시각에서 리뷰하라.        
+        prompt = f"""다음 리팩토링된 코드를 전문가의 시각에서 리뷰하라.
+        
         [Target File] {source_file}
         [New Code]
         {new_code}
@@ -31,7 +32,7 @@ class AnalystAgent(ReflectionAnalyst, WorkspaceOrganizer):
             return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
         except Exception as e:
             logger.error(f"Peer review failed: {e}")
-            return {"score": 50, "comment": "Review failed", "is_approved": True} # 실패 시 기본 승인
+            return {"score": 50, "comment": "Review failed", "is_approved": True}
 
 def analyst_node(state: GortexState) -> Dict[str, Any]:
     """
@@ -50,12 +51,9 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
         for v in violations:
             logger.warning(f"🛡️ [Architecture Drift] {v['reason']} ({v['source']} -> {v['target']})")
 
-    # 3. 진화 로드맵 생성 (Roadmap Generation)
+    # 3. 진화 로드맵 생성
     roadmap = agent.generate_evolution_roadmap()
     if roadmap:
-        roadmap_msg = "🗺️ **Gortex Evolution Roadmap**:\n" + "\n".join([f"- {r['target']} ({r['suggested_tech']}) - Priority: {r['priority']}" for r in roadmap])
-        logger.info(f"Evolution Roadmap: {roadmap}")
-        # 로드맵 정보를 상태에 저장 (Manager 참조용)
         state["evolution_roadmap"] = roadmap 
 
     last_msg_obj = state["messages"][-1]
@@ -68,15 +66,10 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
     # [Consensus] Swarm으로부터 토론 결과가 넘어온 경우
     if debate_data and any(s.get("persona") for s in debate_data):
         res = agent.synthesize_consensus("High-Risk System Decision", debate_data)
-        msg = f"🤝 **{i18n.t('analyst.consensus_reached', decision=res.get('final_decision', '')[:50])}**\n"
-        msg += f"💡 Rationale: {res.get('rationale', 'N/A')}"
+        msg = f"🤝 **{i18n.t('analyst.consensus_reached', decision=res.get('final_decision', '')[:50])}**\n💡 Rationale: {res.get('rationale', 'N/A')}"
         
         history = state.get("consensus_history", [])
-        history.append({
-            "timestamp": datetime.now().isoformat(),
-            "decision": res.get("final_decision"),
-            "performance": None
-        })
+        history.append({"timestamp": datetime.now().isoformat(), "decision": res.get("final_decision")})
         return {
             "messages": [("ai", msg)],
             "next_node": "manager",
@@ -89,14 +82,11 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
         ai_outputs = [m for m in state["messages"] if (isinstance(m, tuple) and m[0] == "ai") or (hasattr(m, 'type') and m.type == "ai")]
         if ai_outputs:
             last_ai_msg = ai_outputs[-1][1] if isinstance(ai_outputs[-1], tuple) else ai_outputs[-1].content
-            
-            # 1. 기본 제약 조건 검증
             val_res = agent.validate_constraints(state.get("active_constraints", []), {"content": last_ai_msg})
             
             if not val_res.get("is_valid", True):
                 return {"messages": [("ai", f"🛡️ [Validation Alert] {val_res.get('reason')}")], "next_node": "planner"}
             
-            # 2. 고도화된 교차 리뷰 (Peer Review) - 신규
             if state.get("awaiting_review"):
                 review_res = agent.perform_peer_review(state.get("review_target", "code"), last_ai_msg)
                 if not review_res.get("is_approved", True) or review_res.get("score", 100) < 70:
@@ -104,7 +94,6 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
                 else:
                     state["messages"].append(("system", f"✅ [Peer Review Approved] {review_res.get('comment')} (Score: {review_res.get('score')})"))
 
-            # 검증 통과 시 보상 지급
             economy = state.get("agent_economy", {}).copy()
             credits = state.get("token_credits", {}).copy()
             if "coder" not in economy: economy["coder"] = {"points": 0, "level": "Novice"}
@@ -113,32 +102,27 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             credits["coder"] += 10.0
             
             return {
-                "messages": [("ai", i18n.t("analyst.review_complete", risk_count=0))],
+                "messages": [("ai", i18n.t("analyst.review_complete", risk_count=0))], 
                 "agent_economy": economy, "token_credits": credits, "next_node": "manager", "awaiting_review": False
             }
-
-    # [Command Helpers]
-    if "리뷰" in last_msg_lower or "검토" in last_msg_lower:
-        return {"messages": [("ai", "코드 품질 리뷰를 완료했습니다. 특이사항 없습니다.")], "next_node": "manager"}
 
     # [Data Analysis]
     if data_files:
         res = agent.analyze_data(data_files[0])
         return {"messages": [("ai", i18n.t("analyst.data_analyzed", file=data_files[0]))], "next_node": "manager"}
 
-    # [Self-Evolution: Auto-Test Proliferation, Memory Pruning & Release Management]
+    # [Self-Evolution]
     energy = state.get("agent_energy", 100)
     if energy > 70 and not debate_data and not data_files:
-        if len(agent.memory.memory) > 30:
-            agent.synthesize_global_rules()
+        if len(agent.memory.memory) > 30: agent.synthesize_global_rules()
             
         if datetime.now().minute % 30 == 0:
             agent.generate_release_note()
             new_v = agent.bump_version()
             state["messages"].append(("system", f"🚀 **System Released**: Version {new_v} updated."))
+            if datetime.now().hour % 6 == 0: agent.evolve_personas()
 
-        if len(agent.memory.memory) > 20:
-            agent.memory.prune_memory()
+        if len(agent.memory.memory) > 20: agent.memory.prune_memory()
             
         proposals = agent.propose_test_generation()
         if proposals:
@@ -146,8 +130,7 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             for p in proposals:
                 from gortex.utils.tools import write_file, execute_shell
                 write_file(p["target_file"], p["content"])
-                check_res = execute_shell(f"./scripts/pre_commit.sh --selective {p['target_file']}")
-                if "Ready to commit" in check_res:
+                if "Ready to commit" in execute_shell(f"./scripts/pre_commit.sh --selective {p['target_file']}"):
                     updates["messages"].append(("ai", f"🧪 **테스트 자가 증식**: {p['target_file']} 생성 완료"))
                 else:
                     if os.path.exists(p["target_file"]): os.remove(p["target_file"])

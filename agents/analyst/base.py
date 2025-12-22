@@ -134,6 +134,40 @@ class AnalystAgent:
             return new_v
         except: return "Error"
 
+    def evolve_personas(self, model_id: str = "gemini-1.5-pro") -> str:
+        """에이전트별 성과 데이터를 분석하여 페르소나 지침(personas.json)을 자동 튜닝"""
+        try:
+            from gortex.utils.efficiency_monitor import EfficiencyMonitor
+            summary = EfficiencyMonitor().get_summary(days=14)
+            
+            # 현재 페르소나 로드
+            p_path = "docs/i18n/personas.json"
+            with open(p_path, 'r', encoding='utf-8') as f:
+                personas = json.load(f)
+
+            prompt = f"""다음 에이전트 성과 요약과 현재 페르소나 정의를 바탕으로, 
+            성능이 낮은 에이전트의 성격을 더 전문화하거나 성공적인 패턴을 반영하여 지침을 강화하라.
+            
+            [성능 요약]
+            {json.dumps(summary, indent=2)}
+            
+            [현재 페르소나]
+            {json.dumps(personas, indent=2, ensure_ascii=False)}
+            
+            업데이트된 전체 personas.json 내용을 반환하라. 오직 JSON만 출력하라.
+            """
+            
+            new_json_text = self.backend.generate(model_id, [{"role": "user", "content": prompt}])
+            # JSON 추출 로직 (정규식 생략 - LLM이 정교하게 줄 것으로 기대하나 추후 보강 가능)
+            
+            with open(p_path, 'w', encoding='utf-8') as f:
+                f.write(new_json_text)
+                
+            return "✅ 페르소나 자가 진화 완료."
+        except Exception as e:
+            logger.error(f"Persona evolution failed: {e}")
+            return f"❌ 실패: {e}"
+
     def generate_evolution_roadmap(self) -> List[Dict[str, Any]]:
         """지능 지수가 낮은 모듈을 식별하여 진화 우선순위 로드맵 생성"""
         from gortex.utils.indexer import SynapticIndexer

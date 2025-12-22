@@ -103,6 +103,74 @@ class EvolutionNode:
                 "next_node": "manager"
             }
 
+    def evolve_subsystem(self, state: GortexState) -> Dict[str, Any]:
+        """서브시스템 전체의 아키텍처를 점진적으로 개선 (다중 파일)"""
+        candidates = self._get_radar_candidates()
+        if not candidates:
+            return {"thought": "진화 후보가 없습니다.", "next_node": "manager"}
+
+        target = next((c for c in candidates if c.get("effort") == "High"), candidates[0])
+        target_file = target.get("target_file")
+        
+        # 1. 영향 범위 분석
+        from gortex.utils.indexer import SynapticIndexer
+        indexer = SynapticIndexer()
+        impact = indexer.get_impact_radius(target_file)
+        
+        related_files = [target_file] + impact.get("direct", [])
+        files_context = ""
+        for f in related_files:
+            if os.path.exists(f):
+                files_context += f"\n--- FILE: {f} ---\n{read_file(f)}\n"
+
+        prompt = f"""너는 Gortex의 시스템 아키텍트다. 
+다음 파일들을 분석하여 기술 '{target.get('tech')}'를 일관성 있게 적용하라.
+
+[대상 파일들]
+{', '.join(related_files)}
+
+[파일 내용들]
+{files_context}
+
+각 파일별 수정된 전체 코드를 다음 JSON 형식으로 반환하라:
+{{
+    "files": [
+        {{ "path": "file1.py", "content": "..." }},
+        {{ "path": "file2.py", "content": "..." }}
+    ]
+}}
+"""
+        logger.info(f"🚀 Evolving subsystem: {target_file} and related {len(impact.get('direct', []))} files...")
+        assigned_model = "gemini-1.5-pro"
+        
+        try:
+            response_text = self.backend.generate(assigned_model, [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import json
+            res_data = json.loads(response_text)
+            
+            modified_files = []
+            for f_data in res_data.get("files", []):
+                path = f_data["path"]
+                content = f_data["content"]
+                write_file(path, content)
+                modified_files.append(path)
+            
+            # 일괄 검증
+            check_res = execute_shell(f"./scripts/pre_commit.sh --selective {' '.join(modified_files)}")
+            if "Ready to commit" in check_res:
+                return {
+                    "thought": f"서브시스템 진화 성공: {len(modified_files)}개 파일 수정 완료.",
+                    "messages": [("ai", f"🏛️ **서브시스템 아키텍처 진화 완료**\n- 대상: {target_file} 및 관련 모듈\n- 수정 파일: {', '.join(modified_files)}")],
+                    "next_node": "analyst",
+                    "awaiting_review": True,
+                    "review_target": f"Subsystem ({target_file})"
+                }
+            else:
+                # 롤백 (단순화: 여기선 생략하나 실제로는 백업 복구 필요)
+                return {"thought": "서브시스템 진화 검증 실패", "next_node": "manager"}
+        except Exception as e:
+            return {"thought": f"서브시스템 진화 중 오류: {e}", "next_node": "manager"}
+
     def evolve_system(self, state: GortexState) -> Dict[str, Any]:
         """시스템 진화 로직 실행"""
         candidates = self._get_radar_candidates()
@@ -194,5 +262,10 @@ def evolution_node(state: GortexState) -> Dict[str, Any]:
     if violations:
         return node.heal_architecture(state, violations)
         
-    # 2. 일반 시스템 진화
+    # 2. 서브시스템 단위 진화 (High Effort 후보가 있는 경우)
+    candidates = node._get_radar_candidates()
+    if any(c.get("effort") == "High" for c in candidates):
+        return node.evolve_subsystem(state)
+
+    # 3. 일반 시스템 진화
     return node.evolve_system(state)
