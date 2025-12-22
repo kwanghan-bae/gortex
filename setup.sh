@@ -45,8 +45,10 @@ if [ ! -f ".env" ]; then
     echo -e "${YELLOW}📝 .env 설정이 필요합니다.${NC}"
     echo -n "첫 번째 Gemini API 키를 입력하세요 (필수): "
     read -r API_KEY_1
+    API_KEY_1=$(echo "$API_KEY_1" | xargs) # 공백 제거
     echo -n "두 번째 Gemini API 키를 입력하세요 (선택, 엔터로 스킵): "
     read -r API_KEY_2
+    API_KEY_2=$(echo "$API_KEY_2" | xargs) # 공백 제거
     
     cat <<EOF > .env
 GEMINI_API_KEY_1=$API_KEY_1
