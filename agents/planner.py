@@ -36,8 +36,9 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
             if res.get('docstring'):
                 context_info += f"  Doc: {res['docstring'].split('\\n')[0]}\n"
 
-    # 2. 현재 환경 파악
+    # 2. 현재 환경 및 리소스 파악
     current_files = list_files(state.get("working_dir", "."))
+    energy = state.get("agent_energy", 100)
     
     # 3. 시스템 프롬프트 구성 (외부 템플릿 로드)
     from gortex.utils.prompt_loader import loader
@@ -47,11 +48,10 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
         current_files=current_files, 
         context_info=context_info
     )
-
-    # 진화된 제약 조건 주입
-    if state.get("active_constraints"):
-        constraints_str = "\n".join([f"- {c}" for c in state["active_constraints"]])
-        base_instruction += f"\n\n[USER-SPECIFIC EVOLVED RULES]\n{constraints_str}"
+    
+    # 리소스 인식 지침 추가
+    base_instruction += f"\n\n[System Resource State]\n- Current Energy: {energy}/100\n- Budget Constraints: API costs must be minimized."
+    base_instruction += "\n\nAssign 'priority' (1-10) and 'is_essential' (true/false) to each step. Essential steps are those without which the main goal cannot be achieved."
 
     # 응답 스키마 정의 (Native용)
     schema = {
@@ -92,9 +92,11 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
                         "id": {"type": "INTEGER"},
                         "action": {"type": "STRING"},
                         "target": {"type": "STRING"},
-                        "reason": {"type": "STRING"}
+                        "reason": {"type": "STRING"},
+                        "priority": {"type": "INTEGER"},
+                        "is_essential": {"type": "BOOLEAN"}
                     },
-                    "required": ["id", "action", "target", "reason"]
+                    "required": ["id", "action", "target", "reason", "priority", "is_essential"]
                 }
             }
         },
@@ -138,13 +140,36 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
         
         logger.info(f"Planner Thought: {plan_data.get('thought_process')}")
         
+        # [Autonomous Pruning] 리소스 상황에 따른 계획 최적화
+        raw_steps = plan_data.get("steps", [])
+        energy = state.get("agent_energy", 100)
+        
+        final_steps = []
+        pruned_count = 0
+        
+        for step in raw_steps:
+            # 에너지가 부족한 경우 (30 미만)
+            if energy < 30:
+                if step.get("is_essential", True) or step.get("priority", 5) >= 8:
+                    final_steps.append(step)
+                else:
+                    pruned_count += 1
+                    logger.warning(f"⚡ Resource low ({energy}%). Pruning non-essential step: {step.get('action')}")
+            else:
+                final_steps.append(step)
+        
         # Plan을 상태에 저장하고 Coder에게 넘김
-        plan_steps = [json.dumps(step, ensure_ascii=False) for step in plan_data["steps"]]
+        plan_steps = [json.dumps(step, ensure_ascii=False) for step in final_steps]
         
         latency_ms = int((time.time() - start_time) * 1000)
-        monitor.record_interaction("planner", assigned_model, success, tokens, latency_ms, metadata={"goal": plan_data.get('goal')})
+        monitor.record_interaction("planner", assigned_model, success, tokens, latency_ms, metadata={"goal": plan_data.get('goal'), "pruned": pruned_count})
 
         from gortex.utils.translator import i18n
+        
+        msg = i18n.t("task.plan_established", goal=plan_data.get('goal'), steps=len(plan_steps))
+        if pruned_count > 0:
+            msg += f" (⚠️ {pruned_count}개의 부차적 작업이 리소스 절약을 위해 생략되었습니다.)"
+
         updates = {
             "thought_process": plan_data.get("thought_process"),
             "impact_analysis": plan_data.get("impact_analysis"),
@@ -153,7 +178,7 @@ def planner_node(state: GortexState) -> Dict[str, Any]:
             "plan": plan_steps,
             "current_step": 0,
             "next_node": "coder",
-            "messages": [("ai", i18n.t("task.plan_established", goal=plan_data.get('goal'), steps=len(plan_steps)))]
+            "messages": [("ai", msg)]
         }
         
         return updates

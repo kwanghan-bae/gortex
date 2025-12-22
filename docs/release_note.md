@@ -11,14 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.11.5 (2025-12-22)
+- **Agent Intelligence**: `Autonomous Task Prioritization` 구현. 시스템 에너지(30% 미만) 상황에 따라 필수적이지 않은 작업을 자동으로 걸러내는 전략적 선택 지능 탑재.
+- **Planning**: `Planner` 스키마 고도화를 통해 작업 단계별 `priority` 및 `is_essential` 메타데이터 부여.
+
 ### v2.11.4 (2025-12-22)
 - **Optimization**: `Dynamic Context Pruning` 시스템 구축. 대화 이력이 길어질 경우 프로젝트 상태(Goal, Progress 등)를 자동 요약하고 불필요한 메시지를 절삭하여 인지 효율 극대화.
 - **Infrastructure**: 전문 요약 모듈 `core/llm/summarizer.py` 신설 및 백엔드 유형에 따른 동적 임계값 로직 탑재.
-
-### v2.11.3 (2025-12-22)
-- **Architecture**: `HybridBackend` 도입을 통한 클라우드-로컬 멀티 모델 전략 수립. API 할당량 소진 시 로컬 Ollama 모델로 자동 폴백.
-- **Resilience**: 비정형 응답 복구 엔진(`repair_and_load_json`) 탑재. 로컬 모델의 불안정한 JSON 출력을 실시간으로 교정.
-- **Optimization**: `OllamaBackend` 프롬프트 지침 강화 및 JSON 모드 최적화.
 
 ### v2.11.2 (2025-12-22)
 - **Infrastructure**: `ReflectionAnalyst`에 자가 치유 문서 시스템(`Self-Healing Documentation`) 탑재. 코드와 문서 간의 불일치(Drift)를 AI가 감지하고 자동 치유 가능.
