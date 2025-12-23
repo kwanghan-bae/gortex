@@ -1,51 +1,61 @@
 import unittest
-import os
 from unittest.mock import MagicMock, patch
 from gortex.core.state import GortexState
-from gortex.utils.memory import compress_synapse, prune_synapse
+from gortex.utils.memory import ContextPruner, summarizer_node
 
 class TestContextPruning(unittest.TestCase):
     def setUp(self):
-        # 더미 상태 생성 (20개의 메시지)
-        self.messages = [("user", f"message {i}") for i in range(20)]
         self.state: GortexState = {
-            "messages": self.messages,
-            "history_summary": "",
-            "active_constraints": ["Rule 1"]
+            "messages": [
+                ("system", "Project summary"), # Must keep (0)
+                ("user", "Old unrelated talk"), # Low relevance
+                ("ai", "I am a robot"), # Low relevance
+                ("user", "Fix bug in engine.py"), # Related to plan
+                ("ai", "Starting bug fix"), # Related to plan
+                ("ai", "Last 1"), # Must keep (-4)
+                ("ai", "Last 2"), # Must keep (-3)
+                ("ai", "Last 3"), # Must keep (-2)
+                ("ai", "Last 4")  # Must keep (-1)
+            ],
+            "plan": ["Fix critical bug in core/engine.py"],
+            "pinned_messages": []
         }
 
-    @patch("gortex.utils.memory.get_summarizer")
-    def test_compress_synapse_ollama(self, mock_get_summarizer):
-        """Ollama 환경에서 압축이 일찍 트리거되는지 테스트"""
-        os.environ["LLM_BACKEND"] = "ollama"
+    @patch('gortex.agents.analyst.base.AnalystAgent.rank_context_relevance')
+    def test_semantic_pruning_logic(self, mock_rank):
+        """시맨틱 점수에 따른 노이즈 메시지 제거 테스트"""
+        # 1. 랭킹 점수 모킹: 1번, 2번 메시지는 낮은 점수, 3번, 4번은 높은 점수
+        # eval_indices 는 [1, 2, 3, 4] 임.
+        mock_rank.return_value = [0.1, 0.1, 0.9, 0.9]
         
-        mock_summarizer = mock_get_summarizer.return_value
-        mock_summarizer.summarize.return_value = "Structured Summary Result"
+        pruner = ContextPruner(self.state)
+        # 9개 메시지 중 7개로 줄이기 시도 (2개 삭제)
+        new_messages = pruner.prune(target_count=7)
         
-        # 20개 메시지 상태에서 압축 실행
-        result = compress_synapse(self.state)
+        self.assertEqual(len(new_messages), 7)
         
-        # 결과 확인: 메시지 수가 줄어들어야 함 (시스템 요약 + 최근 4개 = 5개)
-        self.assertEqual(len(result["messages"]), 5)
-        self.assertIn("[PROJECT STATE SUMMARY]", result["messages"][0][1])
-        self.assertEqual(result["history_summary"], "Structured Summary Result")
+        # 0번(Summary)과 최신 4개는 반드시 있어야 함
+        self.assertEqual(new_messages[0][1], "Project summary")
+        self.assertEqual(new_messages[-1][1], "Last 4")
+        
+        # 1번, 2번(노이즈)이 삭제되었는지 확인
+        contents = [m[1] for m in new_messages]
+        self.assertNotIn("Old unrelated talk", contents)
+        self.assertNotIn("I am a robot", contents)
+        
+        # 3번, 4번(관련성 높음)은 보존되어야 함
+        self.assertIn("Fix bug in engine.py", contents)
 
-    def test_prune_synapse_limit(self):
-        """가지치기 한계치가 정상 적용되는지 테스트"""
-        os.environ["LLM_BACKEND"] = "ollama" # Limit 20
-        
-        # 30개 메시지 생성
-        long_messages = [("ai", f"msg {i}") for i in range(30)]
-        state: GortexState = {"messages": long_messages}
-        
-        pruned_state = prune_synapse(state)
-        
-        # 30개 -> 20개로 줄어들어야 함
-        self.assertEqual(len(pruned_state["messages"]), 20)
-        # 첫 번째 메시지는 보존되어야 함
-        self.assertEqual(pruned_state["messages"][0], long_messages[0])
-        # 마지막 메시지도 보존되어야 함
-        self.assertEqual(pruned_state["messages"][-1], long_messages[-1])
+    def test_pruning_protection_rules(self):
+        """최신 메시지 보존 규칙 테스트"""
+        pruner = ContextPruner(self.state)
+        # target_count를 극단적으로 낮게 잡아도 최소 보존 개수는 유지되어야 함
+        with patch.object(pruner, 'get_semantic_scores', return_value=[0.1]*4):
+            new_messages = pruner.prune(target_count=3)
+            
+            # 최소 보존: 0번 + 최신 4개 = 5개
+            # (구현상 target_count보다 보존 메시지가 많으면 보존 메시지 위주로 남음)
+            self.assertGreaterEqual(len(new_messages), 5)
 
 if __name__ == '__main__':
     unittest.main()

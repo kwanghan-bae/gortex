@@ -703,6 +703,34 @@ class AnalystAgent(BaseAgent):
             logger.error(f"Knowledge optimization failed: {e}")
             return {"status": "error", "reason": str(e)}
 
+    def rank_context_relevance(self, messages: List[Dict[str, str]], current_plan: List[str]) -> List[float]:
+        """메시지 뭉치와 현재 계획 간의 시맨틱 관련성 점수를 산출함."""
+        if not messages or not current_plan: return [0.5] * len(messages)
+        
+        prompt = f"""You are the Context Librarian. 
+        Rank each message's relevance to the current execution plan (0.0 to 1.0).
+        High score if the message contains essential technical details or tool outputs needed for the plan.
+        Low score if it's general chat or unrelated noise.
+        
+        [Plan]:
+        {json.dumps(current_plan, ensure_ascii=False)}
+        
+        [Messages]:
+        {json.dumps(messages, ensure_ascii=False)}
+        
+        Return JSON ONLY:
+        {{ "scores": [0.9, 0.2, 0.5, ...] }}
+        """
+        try:
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            res_data = json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+            return res_data.get("scores", [0.5] * len(messages))
+        except Exception as e:
+            logger.error(f"Context ranking failed: {e}")
+            return [0.5] * len(messages)
+
     def identify_test_hotspots(self) -> List[Dict[str, Any]]:
         """수정 영향력이 크지만 테스트가 누락된 '핫스팟'을 식별함."""
         from gortex.utils.indexer import SynapticIndexer

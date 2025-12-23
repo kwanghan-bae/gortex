@@ -39,23 +39,69 @@ def compress_synapse(state: GortexState) -> GortexState:
         "history_summary": summary_text
     }
 
-def prune_synapse(state: GortexState) -> GortexState:
-    """메시지가 너무 많을 경우 강제 절삭하여 토큰 한계 보호"""
-    messages = state.get("messages", [])
-    backend_type = os.getenv("LLM_BACKEND", "hybrid").lower()
-    
-    # 최대 한도: 로컬 모델은 20개, 클라우드는 50개
-    limit = 20 if backend_type == "ollama" else 50
-    
-    if len(messages) <= limit:
-        return state
+class ContextPruner:
+    """메시지의 가치와 관련성을 분석하여 선별적으로 가지치기를 수행함."""
+    def __init__(self, state: GortexState):
+        self.state = state
+        self.messages = list(state.get("messages", []))
+        self.pinned = state.get("pinned_messages", [])
+        self.plan = state.get("plan", [])
+
+    def get_semantic_scores(self, target_messages: List) -> List[float]:
+        """AnalystAgent를 통해 시맨틱 관련성 점수 획득"""
+        from gortex.agents.analyst.base import AnalystAgent
+        analyst = AnalystAgent()
         
-    logger.info(f"✂️ Pruning synapse: {len(messages)} -> {limit} messages.")
+        # 메시지 텍스트 리스트 구성
+        formatted_msgs = []
+        for m in target_messages:
+            content = str(m[1] if isinstance(m, tuple) else m.content if hasattr(m, 'content') else str(m))
+            formatted_msgs.append({"role": m[0] if isinstance(m, tuple) else "ai", "content": content})
+            
+        return analyst.rank_context_relevance(formatted_msgs, self.plan)
+
+    def prune(self, target_count: int = 15) -> List:
+        """시맨틱 관련성이 낮은 메시지를 우선적으로 제거"""
+        if len(self.messages) <= target_count:
+            return self.messages
+            
+        logger.info(f"✂️ Semantic Pruning: {len(self.messages)} -> {target_count} messages.")
+        
+        # 무조건 보존 대상: 첫 번째 메시지, 최신 4개 메시지
+        must_keep_indices = {0} | set(range(len(self.messages)-4, len(self.messages)))
+        
+        # 평가 대상 인덱스 추출
+        eval_indices = [i for i in range(1, len(self.messages)-4)]
+        eval_messages = [self.messages[i] for i in eval_indices]
+        
+        # 시맨틱 점수 획득
+        scores = self.get_semantic_scores(eval_messages)
+        
+        eval_list = []
+        for idx, i_orig in enumerate(eval_indices):
+            # 시맨틱 점수 + 최신성 보너스
+            final_score = scores[idx] + (i_orig / len(self.messages) * 0.2)
+            eval_list.append({"index": i_orig, "score": final_score})
+            
+        # 점수 낮은 순 정렬 후 삭제 대상 선정
+        eval_list.sort(key=lambda x: x["score"])
+        
+        remove_count = len(self.messages) - target_count
+        to_remove_indices = {e["index"] for e in eval_list[:remove_count]}
+        
+        new_messages = [m for i, m in enumerate(self.messages) if i not in to_remove_indices]
+        return new_messages
+
+
+def prune_synapse(state: GortexState) -> GortexState:
+    """지능형 가지치기 수행"""
+    pruner = ContextPruner(state)
+    backend_type = os.getenv("LLM_BACKEND", "hybrid").lower()
+    limit = 15 if backend_type == "ollama" else 30
     
-    # 첫 번째 요약 메시지와 마지막 limit-1개 메시지 유지
-    pruned = [messages[0]] + messages[-(limit-1):]
-    
-    return {"messages": pruned}
+    new_messages = pruner.prune(target_count=limit)
+    return {"messages": new_messages}
+
 
 def summarizer_node(state: GortexState):
     """LangGraph node for compression & pruning"""
