@@ -1,28 +1,27 @@
 # Next Session
 
 ## Session Goal
-- **Automated Regression Test Generation & Validation**: 영향력 분석 결과 위험도가 높거나 테스트 커버리지가 낮은 지역을 시스템이 스스로 식별하고, 해당 지역의 기능을 검증하는 유닛 테스트를 자동으로 생성 및 실행하여 리팩토링의 무결성을 자율적으로 보장한다.
+- **Intelligent Context Pruning & Relevance Ranking**: 세션 내 메시지나 로그가 길어질 때, 단순히 전체를 요약하는 대신 현재 작업 목표(`state.plan`)와의 '관련성 점수(Relevance Score)'를 매겨, 중요도가 낮은 메시지를 선택적으로 제거(Pruning)하고 핵심 정보의 밀도를 극대화하는 지능형 압축 엔진을 구축한다.
 
 ## Context
-- 현재 Gortex는 기존 테스트에 의존하여 회귀 테스트를 수행함.
-- 하지만 영향력이 큰 핵심 함수 수정 시, 연결된 모든 지점을 테스트할 수 있는 충분한 케이스가 부족한 경우가 많음.
-- `Analyst`가 `SynapticIndexer`와 연동하여 '취약 구역'을 찾아내고, `Coder`에게 테스트 작성을 지시하는 자율 방어 루프가 필요함.
+- 현재 Gortex는 메시지가 일정 개수를 넘으면 `summarizer`를 통해 전체를 하나로 합침.
+- 이 과정에서 과거의 구체적인 명령이나 도구 출력 결과 등 '디테일'이 유실되는 부작용이 있음.
+- 현재 해결 중인 작업 단계와 관련이 깊은 메시지는 원본을 유지하고, 관련 없는 노이즈만 쳐내는 정밀한 컨텍스트 관리가 필요함.
 
 ## Scope
 ### Do
-- `agents/analyst/base.py`: 영향력 지도를 기반으로 테스트가 필요한 'Hotspot'을 제안하는 `identify_test_hotspots` 로직 추가.
-- `agents/coder.py`: 요구사항에 맞춰 자동으로 테스트 코드를 생성하고 `tests/`에 안착시키는 프롬프트 강화.
-- `core/engine.py`: 자동 생성된 테스트를 즉시 실행하고 결과를 보고하는 `SelfTestingLoop` 통합.
+- `utils/memory.py`: 메시지별 관련성을 계산하고 가지치기를 수행하는 `ContextPruner` 클래스 추가.
+- `core/engine.py`: 노드 실행 전 컨텍스트 가지치기 로직을 주입하여 에이전트에게 전달되는 토큰 최적화.
+- `agents/analyst/base.py`: 메시지의 가치를 평가하는 LLM 기반의 `rank_context_relevance` 지침 추가.
 
 ### Do NOT
-- 실제 프로덕션 데이터 기반의 테스트 생성은 배제 (순수 로직/모킹 기반 테스트).
+- `pinned_messages`(고정 메시지)는 어떠한 경우에도 가지치기 대상에서 제외함.
 
 ## Expected Outputs
-- `agents/analyst/base.py` (Hotspot Detection)
-- `agents/coder.py` (Auto Test Generation)
-- `tests/test_auto_patching.py` (New Integration Test)
+- `utils/memory.py` (Context Pruner)
+- `tests/test_context_pruning.py` (New)
 
 ## Completion Criteria
-- 특정 핵심 함수를 입력했을 때, 해당 함수를 호출하는 상위 모듈 중 테스트가 없는 곳을 1개 이상 찾아내야 함.
-- 자동으로 생성된 테스트 파일이 `python -m unittest`를 성공적으로 통과해야 함.
-- `docs/sessions/session_0122.md` 기록.
+- 컨텍스트 길이가 임계치를 넘었을 때, 현재 단계와 관련 없는 과거 메시지 3개 이상이 정확히 제거되어야 함.
+- 가지치기 후에도 에이전트가 현재의 핵심 작업 목표를 완벽히 인지하고 있어야 함.
+- `docs/sessions/session_0123.md` 기록.

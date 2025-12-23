@@ -703,6 +703,36 @@ class AnalystAgent(BaseAgent):
             logger.error(f"Knowledge optimization failed: {e}")
             return {"status": "error", "reason": str(e)}
 
+    def identify_test_hotspots(self) -> List[Dict[str, Any]]:
+        """수정 영향력이 크지만 테스트가 누락된 '핫스팟'을 식별함."""
+        from gortex.utils.indexer import SynapticIndexer
+        indexer = SynapticIndexer()
+        
+        # 1. 테스트 누락 파일 목록 획득
+        missing_tests = self.identify_missing_tests()
+        if not missing_tests: return []
+        
+        hotspots = []
+        for item in missing_tests:
+            file_path = item["file"]
+            # 2. 해당 파일의 영향력 반경(Impact Radius) 분석
+            impact = indexer.get_impact_radius(file_path)
+            
+            # 위험 점수 산출: (누락 커버리지 가중치) * (영향 받는 모듈 수 + 1)
+            coverage_gap = 100 - item["coverage"]
+            impact_score = (len(impact["direct"]) + len(impact["indirect"]) * 0.5 + 1)
+            risk_score = round(coverage_gap * impact_score, 1)
+            
+            hotspots.append({
+                "file": file_path,
+                "coverage": item["coverage"],
+                "impact_count": len(impact["direct"]) + len(impact["indirect"]),
+                "risk_score": risk_score,
+                "reason": f"High impact ({len(impact['direct'])} direct deps) with low coverage ({item['coverage']}%)"
+            })
+            
+        return sorted(hotspots, key=lambda x: x["risk_score"], reverse=True)
+
     def generate_evolution_roadmap(self) -> List[Dict[str, Any]]:
         """지능 지수가 낮은 모듈을 식별하여 진화 우선순위 로드맵 생성"""
         from gortex.utils.indexer import SynapticIndexer

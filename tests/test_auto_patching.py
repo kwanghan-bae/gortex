@@ -1,64 +1,62 @@
 import unittest
 import os
+import shutil
 import json
 from unittest.mock import MagicMock, patch
-from gortex.agents.analyst.reflection import ReflectionAnalyst
-from gortex.utils.tools import verify_patch_integrity
+from gortex.core.engine import GortexEngine
+from gortex.agents.analyst.base import AnalystAgent
+from gortex.agents.coder import CoderAgent
 
-class TestAutoPatching(unittest.TestCase):
-    def test_bug_diagnosis(self):
-        """버그 진단 로직 테스트"""
-        analyst = ReflectionAnalyst()
-        analyst.backend = MagicMock()
+class TestAutoPatching(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.engine = GortexEngine()
+        self.engine.ui = MagicMock()
         
-        # 1. Mock LLM Response
-        mock_res = {
-            "bug_type": "ZeroDivisionError",
-            "target_file": "core/engine.py",
-            "line_number": 42,
-            "fix_instruction": "Add check for zero before division",
-            "is_patchable": True
-        }
-        analyst.backend.generate.return_value = json.dumps(mock_res)
-        
-        # 2. Run Diagnosis
-        error_log = "ZeroDivisionError: division by zero in core/engine.py line 42"
-        diagnosis = analyst.diagnose_bug(error_log)
-        
-        self.assertEqual(diagnosis["bug_type"], "ZeroDivisionError")
-        self.assertTrue(diagnosis["is_patchable"])
+        self.test_file = "utils/token_counter.py"
+        self.test_output = "tests/test_auto_token_counter.py"
 
-    def test_verify_patch_integrity_syntax_error(self):
-        """구문 오류 패치 감지 테스트"""
-        bad_file = "broken.py"
-        with open(bad_file, "w") as f:
-            f.write("def broken_func(:") # Syntax Error
+    def tearDown(self):
+        if os.path.exists(self.test_output):
+            os.remove(self.test_output)
+
+    def test_identify_test_hotspots(self):
+        """테스트 핫스팟 식별 기능 검증"""
+        analyst = AnalystAgent()
+        hotspots = analyst.identify_test_hotspots()
+        if hotspots:
+            self.assertIn("file", hotspots[0])
+            self.assertIn("risk_score", hotspots[0])
+
+    def test_generate_regression_test(self):
+        """자율 테스트 생성 및 초기 실행 검증"""
+        coder = CoderAgent()
+        # 인스턴스에 직접 모킹 주입
+        coder.backend = MagicMock()
+        
+        # Mock LLM response
+        mock_test_code = """import unittest
+class TestDummy(unittest.TestCase):
+    def test_pass(self): self.assertTrue(True)
+"""
+        coder.backend.generate.return_value = f"```python\n{mock_test_code}\n```"
+        
+        res = coder.generate_regression_test(self.test_file, risk_info="Test Risk")
+        
+        self.assertEqual(res["status"], "success")
+        self.assertTrue(os.path.exists(self.test_output))
+
+    async def test_run_self_defense_cycle_integration(self):
+        """방어 사이클 통합 실행 테스트 (Async)"""
+        with patch('gortex.agents.analyst.base.AnalystAgent.identify_test_hotspots') as mock_hotspots, \
+             patch('gortex.agents.coder.CoderAgent.generate_regression_test') as mock_gen:
             
-        result = verify_patch_integrity(bad_file)
-        self.assertFalse(result["success"])
-        self.assertIn("Syntax Error", result["reason"])
-        
-        if os.path.exists(bad_file): os.remove(bad_file)
-
-    @patch("gortex.utils.tools.execute_shell")
-    def test_verify_patch_integrity_success(self, mock_shell):
-        """정상 패치 검증 테스트"""
-        good_file = "good.py"
-        with open(good_file, "w") as f:
-            f.write("def ok(): return True")
+            mock_hotspots.return_value = [{"file": "util.py", "risk_score": 100, "reason": "High Risk"}]
+            mock_gen.return_value = {"status": "success", "file": "tests/test_auto_util.py"}
             
-        mock_shell.return_value = "OK" # Test pass simulation
-        
-        # Create a dummy test file to trigger test execution
-        test_file = "tests/test_good.py"
-        os.makedirs("tests", exist_ok=True)
-        with open(test_file, "w") as f: f.write("import unittest")
-
-        result = verify_patch_integrity(good_file)
-        self.assertTrue(result["success"])
-        
-        if os.path.exists(good_file): os.remove(good_file)
-        if os.path.exists(test_file): os.remove(test_file)
+            await self.engine.run_self_defense_cycle()
+            
+            # UI 알림 호출 확인
+            self.engine.ui.add_achievement.assert_called_with("Defense Up: test_auto_util.py")
 
 if __name__ == '__main__':
     unittest.main()

@@ -11,13 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.15.2 (2025-12-23)
+- **Safety**: `Autonomous Regression Defense` 시스템 구축. 영향력 분석을 통해 취약 구역을 식별하고 유닛 테스트를 자동 생성.
+- **Testing**: `CoderAgent`에 `generate_regression_test` 지능 탑재로 모킹 및 엣지 케이스를 포함한 견고한 테스트 자율 작성.
+- **Automation**: `GortexEngine` 내 자가 방어 루프(`run_self_defense_cycle`) 안착으로 시스템 안정성 상시 보강.
+
 ### v2.15.1 (2025-12-23)
 - **Visualization**: `Proactive Dependency Visualization` 시스템 구축. 코드 수정 시 파급 효과를 Mermaid 다이어그램으로 시각화.
-- **Impact Analysis**: `SynapticIndexer` 고도화로 특정 심볼(함수/클래스)의 역방향 의존성(Reverse Dependents) 정밀 추적 기능 탑재.
-- **UI**: 대시보드 내 '🌐 IMPACT MAP' 패널 신설. 변경 위험도를 실시간으로 리포트하는 지능형 위젯 통합.
-
-### v2.15.0 (2025-12-23)
-- **Scheduling**: `Intelligent Task Prioritization` 시스템 구축. 작업의 긴급도와 가치를 스스로 판별하여 실행 순서를 지능적으로 재배열.
 - **Maintenance**: `Log Life-cycle Management` 도입. 로그 자동 압축 아카이빙 및 리셋 기능을 통해 장기 운영 성능 최적화.
 
 ### v2.13.2 (2025-12-23)

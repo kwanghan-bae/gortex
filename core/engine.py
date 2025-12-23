@@ -42,6 +42,36 @@ class GortexEngine:
             if self.ui:
                 self.ui.add_achievement(f"Scaling to {self.max_concurrency}x")
 
+    async def run_self_defense_cycle(self):
+        """자율적으로 취약 구역을 찾아 테스트를 생성하고 방어력을 높임."""
+        from gortex.agents.analyst.base import AnalystAgent
+        from gortex.agents.coder import CoderAgent
+        import os
+        
+        analyst = AnalystAgent()
+        coder = CoderAgent()
+        
+        logger.info("🛡️ Initiating Self-Defense Cycle...")
+        
+        # 1. 테스트 핫스팟 식별
+        hotspots = analyst.identify_test_hotspots()
+        if not hotspots:
+            logger.info("✅ No urgent test hotspots found. System is well-defended.")
+            return
+            
+        target = hotspots[0] # 가장 위험한 곳 우선
+        logger.info(f"📍 Target hotspot identified: {target['file']} (Risk: {target['risk_score']})")
+        
+        # 2. 회귀 테스트 생성 및 검증
+        res = coder.generate_regression_test(target["file"], risk_info=target["reason"])
+        
+        if res.get("status") == "success":
+            logger.info(f"✅ Defenses strengthened: {res['file']}")
+            if self.ui:
+                self.ui.add_achievement(f"Defense Up: {os.path.basename(res['file'])}")
+        else:
+            logger.error(f"❌ Defense generation failed for {target['file']}: {res.get('error') or res.get('reason')}")
+
     def select_optimal_model(self, state: GortexState, agent_name: str) -> str:
         """에이전트 평판, 작업 위험도, 일일 예산을 고려하여 최적 모델 선택"""
         risk = state.get("risk_score", 0.5)

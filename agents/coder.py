@@ -2,6 +2,7 @@ import logging
 import json
 import time
 import re
+import os
 from typing import Dict, Any, List, Optional
 from gortex.core.state import GortexState
 from gortex.agents.base import BaseAgent
@@ -67,6 +68,51 @@ class CoderAgent(BaseAgent):
                 
         except Exception as e:
             logger.error(f"Agent generation failed: {e}")
+            return {"status": "error", "reason": str(e)}
+
+    def generate_regression_test(self, target_file: str, risk_info: str = "") -> Dict[str, Any]:
+        """특정 소스 코드에 대한 회귀 테스트를 자동으로 생성함."""
+        source_code = read_file(target_file)
+        file_name = os.path.basename(target_file)
+        test_file = f"tests/test_auto_{file_name}"
+        
+        prompt = f"""Generate a robust Python unittest for the following code.
+        
+        [Source File]: {target_file}
+        [Risk Info]: {risk_info}
+        [Code]:
+        {source_code}
+        
+        Requirements:
+        1. Use 'unittest' standard library.
+        2. Use 'unittest.mock' to isolate dependencies.
+        3. Include Happy Path, Edge Cases (empty input, None, etc.), and Exception handling.
+        4. Follow the project's existing test style.
+        5. The test file must be runnable with 'python3 -m unittest {test_file}'.
+        
+        Output ONLY the complete Python code. No conversational text.
+        """
+        
+        try:
+            test_code = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}])
+            test_code = re.sub(r'```python\n|```', '', test_code).strip()
+            
+            # 테스트 파일 작성
+            write_file(test_file, test_code)
+            
+            # 즉시 실행 검증
+            res = execute_shell(f"python3 -m unittest {test_file}")
+            success = "OK" in res
+            
+            if success:
+                logger.info(f"🛡️ Regression test generated and passed: {test_file}")
+                return {"status": "success", "file": test_file, "passed": True}
+            else:
+                logger.warning(f"⚠️ Generated test failed initial run: {res}")
+                return {"status": "failed", "file": test_file, "passed": False, "error": res}
+                
+        except Exception as e:
+            logger.error(f"Regression test generation failed: {e}")
             return {"status": "error", "reason": str(e)}
 
     def run(self, state: GortexState) -> Dict[str, Any]:
