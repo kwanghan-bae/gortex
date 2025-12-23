@@ -62,6 +62,11 @@ class GortexState(TypedDict):
     replication_version: int # 상태 복제 시퀀스 번호
     last_sync_ts: float      # 마지막 외부 동기화 타임스탬프
     node_id: str             # 현재 상태를 갱신한 노드 식별자
+    
+    # 10. Proactive Self-Expansion (자가 확장 및 영입)
+    agent_proposals: List[Dict[str, Any]] # TrendScout가 제안한 신규 에이전트 명세
+    spawned_agents: List[str]             # 런타임에 동적으로 생성된 에이전트 목록
+
 
 
 

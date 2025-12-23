@@ -28,46 +28,46 @@ class CoderAgent(BaseAgent):
             version="3.0.0"
         )
 
-    def generate_new_agent(self, spec: Dict[str, Any]) -> Dict[str, Any]:
-        """
-        제공된 명세(Analyst 제안)를 바탕으로 새로운 에이전트 클래스 코드를 생성하고 레지스트리에 등록함.
-        """
-        agent_name = spec["agent_name"]
-        file_name = f"agents/auto_{agent_name.lower()}.py"
+    def spawn_new_agent(self, proposal: Dict[str, Any]) -> Dict[str, Any]:
+        """제안된 명세를 바탕으로 새로운 전문가 에이전트를 영입함."""
+        agent_name = proposal["agent_name"]
+        file_name = f"agents/auto_spawned_{agent_name.lower()}.py"
         
-        prompt = f"""Create a new Gortex Agent class based on this specification.
+        prompt = f"""You are the Master Recruiter. 
+        Create a high-performance Gortex Agent class based on this blueprint.
         
-        [Spec]:
-        {json.dumps(spec, indent=2)}
+        [Proposal]:
+        {json.dumps(proposal, indent=2, ensure_ascii=False)}
         
         Requirements:
         1. Inherit from 'gortex.agents.base.BaseAgent'.
-        2. Implement 'metadata' property using 'AgentMetadata'.
-        3. Implement 'run' method with provided 'logic_strategy'.
-        4. Register the instance at the end of the file using 'gortex.core.registry.registry.register'.
+        2. Implement 'metadata' property with name, role, and required tools.
+        3. Implement 'run' method using the 'logic_strategy'.
+        4. MUST include 'from gortex.core.registry import registry' and register the instance at the end.
+        5. The code must be self-contained and ready to be imported.
         
-        Output ONLY the complete Python code. No conversational text.
+        Return ONLY valid Python code.
         """
         
         try:
             code = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}])
             code = re.sub(r'```python\n|```', '', code).strip()
             
-            # 파일 작성
+            # 파일 안전 쓰기
             write_file(file_name, code)
             
-            # 동적 로드 및 레지스트리 등록 시도
+            # 동적 로드 시도
             from gortex.core.registry import registry
             success = registry.load_agent_from_file(file_name)
             
             if success:
-                logger.info(f"✨ New agent '{agent_name}' spawned and registered via {file_name}")
+                logger.info(f"✨ New elite agent '{agent_name}' has joined the team via {file_name}")
                 return {"status": "success", "file": file_name, "agent": agent_name}
             else:
-                return {"status": "failed", "reason": "Dynamic loading failed after file creation"}
+                return {"status": "failed", "reason": "Runtime injection failed"}
                 
         except Exception as e:
-            logger.error(f"Agent generation failed: {e}")
+            logger.error(f"Failed to spawn agent: {e}")
             return {"status": "error", "reason": str(e)}
 
     def generate_regression_test(self, target_file: str, risk_info: str = "") -> Dict[str, Any]:

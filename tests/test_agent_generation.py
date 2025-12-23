@@ -1,73 +1,78 @@
 import unittest
 import os
 import shutil
+import json
 from unittest.mock import MagicMock, patch
-from gortex.agents.analyst.base import AnalystAgent
 from gortex.agents.coder import CoderAgent
+from gortex.agents.trend_scout import TrendScoutAgent
 from gortex.core.registry import registry
+from gortex.core.state import GortexState
 
 class TestAgentGeneration(unittest.TestCase):
     def setUp(self):
-        self.analyst = AnalystAgent()
         self.coder = CoderAgent()
-        
-        # Mocking LLMs
-        self.analyst.backend = MagicMock()
         self.coder.backend = MagicMock()
-        
-        # 임시 에이전트 폴더 생성 방지 (테스트용)
-        self.test_agent_file = "agents/auto_clouddeployeragent.py"
+        self.auto_file = "agents/auto_spawned_securityauditor.py"
 
     def tearDown(self):
-        if os.path.exists(self.test_agent_file):
-            os.remove(self.test_agent_file)
+        if os.path.exists(self.auto_file):
+            os.remove(self.auto_file)
+        if "securityauditor" in registry._agents:
+            del registry._agents["securityauditor"]
 
-    def test_end_to_end_agent_spawning(self):
-        """명세 제안부터 코드 생성 및 등록까지의 전 과정 테스트"""
-        
-        # 1. Analyst가 결핍을 인지하고 명세를 제안함
-        mock_spec = {
-            "agent_name": "CloudDeployerAgent",
-            "role": "Cloud Specialist",
-            "description": "Deploys apps to AWS/GCP",
-            "required_tools": ["aws_cli", "terraform"],
-            "version": "1.0.0",
-            "logic_strategy": "Use terraform to deploy resources"
+    def test_spawn_and_register_new_agent(self):
+        """신규 에이전트 생성 및 레지스트리 자동 등록 통합 테스트"""
+        proposal = {
+            "agent_name": "SecurityAuditor",
+            "role": "Security Specialist",
+            "description": "Scans code for vulnerabilities",
+            "required_tools": ["scan_file", "search_cve"],
+            "logic_strategy": "Analyze AST for common security patterns."
         }
-        self.analyst.backend.generate.return_value = json.dumps(mock_spec)
         
-        spec = self.analyst.identify_capability_gap(unresolved_task="Deploy this app to AWS")
-        self.assertEqual(spec["agent_name"], "CloudDeployerAgent")
-
-        # 2. Coder가 명세를 바탕으로 코드를 생성함
-        # 실제 BaseAgent를 상속받는 유효한 코드를 모킹
-        generated_code = """
-from gortex.agents.base import BaseAgent
+        # 1. 생성할 소스 코드 모킹 (v3.0 규격 완벽 준수)
+        mock_code_content = r"""from gortex.agents.base import BaseAgent
 from gortex.core.registry import AgentMetadata, registry
+from typing import Dict, Any
 
-class CloudDeployerAgent(BaseAgent):
+class SecurityAuditorAgent(BaseAgent):
     @property
-    def metadata(self):
-        return AgentMetadata(name="CloudDeployerAgent", role="Cloud", description="Test", tools=["aws"], version="1.0.0")
-    def run(self, state):
-        return {"status": "deployed"}
+    def metadata(self) -> AgentMetadata:
+        return AgentMetadata(
+            name="SecurityAuditor",
+            role="Security Specialist",
+            description="Generated Auditor",
+            tools=["scan_file", "search_cve"],
+            version="1.0.0"
+        )
+    def run(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        return {"messages": [("ai", "Security scan complete.")], "next_node": "manager"}
 
-# Register
-registry.register("CloudDeployerAgent", CloudDeployerAgent, CloudDeployerAgent().metadata)
+# Registration
+auditor_instance = SecurityAuditorAgent()
+registry.register("SecurityAuditor", SecurityAuditorAgent, auditor_instance.metadata)
 """
-        self.coder.backend.generate.return_value = generated_code
+        self.coder.backend.generate.return_value = f"""```python
+{mock_code_content}
+```"""
         
-        # 3. 에이전트 생성 및 동적 로드 실행
-        result = self.coder.generate_new_agent(spec)
+        # 2. 에이전트 스폰 실행
+        res = self.coder.spawn_new_agent(proposal)
         
-        self.assertEqual(result["status"], "success")
-        self.assertTrue(os.path.exists(result["file"]))
+        # 3. 결과 검증
+        self.assertEqual(res["status"], "success", f"Spawn failed: {res.get('reason')}")
+        self.assertTrue(os.path.exists(self.auto_file))
         
-        # 4. 레지스트리에 실제 등록되었는지 확인
-        self.assertIn("clouddeployeragent", registry.list_agents())
-        metadata = registry.get_metadata("CloudDeployerAgent")
-        self.assertEqual(metadata.role, "Cloud")
+        # 4. 레지스트리 등록 확인
+        self.assertIn("securityauditor", registry.list_agents())
+        
+        # 5. 실행 능력 확인
+        agent_class = registry.get_agent("securityauditor")
+        self.assertIsNotNone(agent_class)
+        instance = agent_class()
+        state = {"messages": []}
+        output = instance.run(state)
+        self.assertIn("scan complete", output["messages"][0][1])
 
-import json
 if __name__ == '__main__':
     unittest.main()

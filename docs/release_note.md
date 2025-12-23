@@ -11,13 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.15.5 (2025-12-23)
+- **Evolution**: `Proactive Self-Expansion` 시스템 구축. 시스템 스스로 필요한 전문가 에이전트를 설계하고 코드를 자동 생성하여 영입하는 자가 확장 지능 탑재.
+- **Dynamic Injection**: `AgentRegistry` 연동으로 새롭게 생성된 에이전트를 런타임에 즉시 임포트하고 워크플로우에 주입하는 플러그인 아키텍처 완성.
+- **Scouting**: `TrendScoutAgent` 고도화를 통해 시스템의 지능적 공백을 식별하고 해결을 위한 블루프린트(Blueprint) 자율 수립.
+
 ### v2.15.4 (2025-12-23)
 - **Infrastructure**: `Intelligent API Key Rotation` 시스템 구축. 에러 타입(429, 5xx)에 따른 적응형 쿨다운 및 실시간 건강 상태 감시 엔진 안착.
-- **Monitoring**: 대시보드 내 '🔑 AUTH STATUS' 패널 신설. 각 키의 성공/실패 통계 및 복구 잔여 시간 실시간 시각화.
-- **Reliability**: 다중 키 번들을 활용한 무중단 LLM 서비스 보장 및 기하급수적 백오프(Exponential Backoff) 지능 탑재.
-
-### v2.15.3 (2025-12-23)
-- **Memory**: `Intelligent Context Pruning` 시스템 구축. 단순 요약 대신 현재 작업 목표(`state.plan`)와의 시맨틱 관련성을 분석하여 불필요한 메시지를 선별 제거하는 지능형 가지치기 엔진 안착.
 - **Testing**: `CoderAgent`에 `generate_regression_test` 지능 탑재로 모킹 및 엣지 케이스를 포함한 견고한 테스트 자율 작성.
 - **Automation**: `GortexEngine` 내 자가 방어 루프(`run_self_defense_cycle`) 안착으로 시스템 안정성 상시 보강.
 
