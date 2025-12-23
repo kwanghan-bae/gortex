@@ -108,7 +108,7 @@ class ReflectionAnalyst(BaseAnalyst):
 
     def evaluate_work_quality(self, agent_name: str, task: str, result: str) -> Dict[str, Any]:
         """
-        특정 에이전트의 작업 결과물을 평가하여 품질 점수를 산출함.
+        특정 에이전트의 작업 결과물을 평가하여 품질 및 난이도 점수를 산출함.
         """
         prompt = f"""You are the Quality Assurance Chief. 
         Evaluate the work done by Agent '{agent_name}'.
@@ -120,11 +120,12 @@ class ReflectionAnalyst(BaseAnalyst):
         Evaluate based on:
         1. Technical Integrity (Is it correct and robust?)
         2. Efficiency (Did it use optimal path?)
-        3. Compliance (Did it follow system rules?)
+        3. Complexity (How inherently difficult was the task? 1.0~3.0)
         
         Return JSON ONLY:
         {{
             "quality_score": 0.0 ~ 2.0 (1.0 is standard),
+            "complexity": 1.0 ~ 3.0,
             "category": "Coding/Research/Design/Analysis",
             "rationale": "Brief reason for score",
             "feedback": "Feedback for the agent to improve"
@@ -136,7 +137,33 @@ class ReflectionAnalyst(BaseAnalyst):
             return res_data
         except Exception as e:
             logger.error(f"Work quality evaluation failed: {e}")
-            return {"quality_score": 1.0, "category": "Analysis", "rationale": "Fallback score due to error", "feedback": str(e)}
+            return {"quality_score": 1.0, "complexity": 1.0, "category": "Analysis", "rationale": "Fallback due to error", "feedback": str(e)}
+
+    def analyze_failure_reason(self, error_log: str, resource_state: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        실패 원인을 정밀 진단하여 페널티 부과 여부 결정.
+        """
+        prompt = f"""Analyze why this task failed.
+        [Error]: {error_log}
+        [Resource State]: {json.dumps(resource_state)}
+        
+        Determine if it was due to:
+        - INTELLIGENCE: Agent's logic error or poor decision.
+        - RESOURCE: Insufficient energy, token limits, or API quotas.
+        
+        Return JSON ONLY:
+        {{
+            "root_cause": "INTELLIGENCE/RESOURCE",
+            "penalty_factor": 0.0 ~ 1.0 (0.0 means no penalty),
+            "explanation": "Detailed reason for the score"
+        }}
+        """
+        try:
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            res_data = json.loads(re.search(r'\{.*\}', response_text, re.DOTALL).group(0))
+            return res_data
+        except:
+            return {"root_cause": "INTELLIGENCE", "penalty_factor": 1.0, "explanation": "Default penalty applied due to diagnosis failure"}
 
     def check_documentation_drift(self, file_path: str, doc_path: str, target_symbol: str) -> Dict[str, Any]:
         """

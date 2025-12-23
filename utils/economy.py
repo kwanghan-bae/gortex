@@ -42,13 +42,19 @@ class EconomyManager:
         
         economy[agent_name]["skill_points"] = skills
 
-    def record_success(self, state: GortexState, agent_name: str, quality_score: float = 1.0):
-        """작업 성공 시 보상 지급 (품질 점수 반영)"""
+    def calculate_weighted_reward(self, quality_score: float, difficulty: float = 1.0, efficiency_bonus: float = 0.0) -> int:
+        """난이도, 품질, 효율성을 고려한 가중 보상액 계산"""
+        # 기본 보상(10) * 품질(0~2) * 난이도(1~3) + 효율 보너스
+        reward = (self.base_reward * quality_score * difficulty) + (efficiency_bonus * 5)
+        return int(max(1, reward))
+
+    def record_success(self, state: GortexState, agent_name: str, quality_score: float = 1.0, difficulty: float = 1.0, efficiency_bonus: float = 0.0):
+        """작업 성공 시 보상 지급 (가중치 반영)"""
         economy = state.get("agent_economy", {})
         self.initialize_agent(economy, agent_name)
         
-        # 보상 계산 (기본 보상 * 품질 점수)
-        reward = int(self.base_reward * quality_score)
+        # 가중 보상 계산
+        reward = self.calculate_weighted_reward(quality_score, difficulty, efficiency_bonus)
         economy[agent_name]["points"] += reward
         economy[agent_name]["total_tasks"] += 1
         

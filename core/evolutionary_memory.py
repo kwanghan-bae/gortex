@@ -28,12 +28,11 @@ class EvolutionaryMemory:
         for i, rule_a in enumerate(all_rules):
             patterns_a = set(rule_a["trigger_patterns"])
             for j, rule_b in enumerate(all_rules[i+1:]):
-                if rule_a["category"] == rule_b["category"]: continue # 동일 샤드 내 병합은 prune_memory가 처리
+                if rule_a["category"] == rule_b["category"]: continue 
                 
                 patterns_b = set(rule_b["trigger_patterns"])
                 intersection = patterns_a.intersection(patterns_b)
                 
-                # 트리거가 50% 이상 겹치면 잠재적 갈등으로 간주
                 if len(intersection) / max(len(patterns_a), len(patterns_b)) >= 0.5:
                     conflicts.append({
                         "type": "trigger_overlap",
@@ -45,14 +44,12 @@ class EvolutionaryMemory:
 
     def _initialize_shards(self):
         """기존 지식 마이그레이션 및 샤드 로드"""
-        # 1. 마이그레이션: 구버전 experience.json이 있으면 분해하여 샤딩
         if os.path.exists(self.legacy_path):
             logger.info("📦 Migrating legacy experience.json to shards...")
             try:
                 with open(self.legacy_path, 'r', encoding='utf-8') as f:
                     legacy_data = json.load(f)
                 for item in legacy_data:
-                    # 간단한 분류 (키워드 기반)
                     category = self._guess_category(item.get("learned_instruction", ""))
                     self.save_rule(
                         instruction=item["learned_instruction"],
@@ -61,12 +58,10 @@ class EvolutionaryMemory:
                         severity=item.get("severity", 3),
                         source_session=item.get("source_session", "legacy_migration")
                     )
-                # 마이그레이션 완료 후 백업 및 원본 삭제
                 os.rename(self.legacy_path, self.legacy_path + ".migrated.bak")
             except Exception as e:
                 logger.error(f"Migration failed: {e}")
 
-        # 2. 기본 샤드 로드 (초기에는 비어있을 수 있음)
         for cat in ["coding", "research", "design", "general"]:
             self.shards[cat] = self._load_shard(cat)
 
@@ -99,25 +94,24 @@ class EvolutionaryMemory:
             return "design"
         return "general"
 
-    def save_rule(self, instruction: str, trigger_patterns: List[str], category: Optional[str] = None, severity: int = 3, source_session: Optional[str] = None, context: Optional[str] = None):
-        """새로운 규칙을 특정 샤드에 저장 (지능형 병합 포함)"""
+    def save_rule(self, instruction: str, trigger_patterns: List[str], category: Optional[str] = None, severity: int = 3, source_session: Optional[str] = None, context: Optional[str] = None) -> str:
+        """새로운 규칙을 특정 샤드에 저장 (ID 반환 및 밀리초 단위 식별자 사용)"""
         cat = category or self._guess_category(instruction + " " + " ".join(trigger_patterns))
-        
         if cat not in self.shards:
             self.shards[cat] = self._load_shard(cat)
             
         shard = self.shards[cat]
         new_patterns = set(trigger_patterns)
         
-        # 중복/병합 체크
         for existing in shard:
             if existing["learned_instruction"].strip() == instruction.strip():
                 existing["trigger_patterns"] = list(set(existing["trigger_patterns"]).union(new_patterns))
                 existing["reinforcement_count"] = existing.get("reinforcement_count", 0) + 1
                 self._persist_shard(cat)
-                return
+                return existing["id"]
 
-        rule_id = f"RULE_{cat.upper()}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        # %f 추가하여 밀리초 단위 충돌 방지
+        rule_id = f"RULE_{cat.upper()}_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
         new_rule = {
             "id": rule_id,
             "category": cat,
@@ -129,38 +123,71 @@ class EvolutionaryMemory:
             "created_at": datetime.now().isoformat(),
             "usage_count": 0,
             "success_count": 0,
-            "failure_count": 0
+            "failure_count": 0,
+            "is_certified": False
         }
         shard.append(new_rule)
         self._persist_shard(cat)
         logger.info(f"New rule saved to '{cat}' shard: {rule_id}")
+        return rule_id
 
     def get_active_constraints(self, context_text: str) -> List[str]:
-        """맥락과 관련된 샤드만 로드하여 활성 제약 조건 추출"""
+        """맥락과 관련된 샤드에서 활성 제약 조건 추출 (디스크 강제 동기화 및 3단계 정밀 정렬)"""
         target_cat = self._guess_category(context_text)
-        # 검색 대상 샤드 결정 (현재 카테고리 + general)
         search_cats = {target_cat, "general"}
         
-        active_rules = []
+        matching_rules = []
         for cat in search_cats:
-            shard = self.shards.get(cat) or self._load_shard(cat)
+            # 실시간 동기화: 항상 디스크에서 최신 샤드를 읽어옴
+            shard = self._load_shard(cat)
+            self.shards[cat] = shard
+            
             for rule in shard:
                 if any(p.lower() in context_text.lower() for p in rule["trigger_patterns"]):
-                    active_rules.append(rule["learned_instruction"])
-                    rule["usage_count"] = rule.get("usage_count", 0) + 1
-            # 사용 통계 업데이트를 위해 해당 샤드만 저장
-            self._persist_shard(cat)
+                    # 1. 상태 보정 (누락된 필드 복구)
+                    usage = int(rule.get("usage_count", 0))
+                    success = int(rule.get("success_count", 0))
+                    is_certified = bool(rule.get("is_certified", False))
+                    
+                    # 2. 영향력 점수 계산 (Laplace Smoothing)
+                    # usage를 1 증가시킨 가상의 점수로 정렬
+                    rule["impact_score"] = float((success + 1) / (usage + 2))
+                    rule["is_certified"] = is_certified
+                    
+                    matching_rules.append(rule)
+                    # 통계 갱신 (실제 반영은 record_rule_outcome에서 하되, 
+                    # 조회 횟수 증가는 추적용으로 남길 수 있음. 여기선 생략하여 순수 조회 유지)
             
-        return active_rules
+        # [Precision Sorting] 1. 공인 여부(우선), 2. 영향력 점수, 3. 심각도 순 정렬
+        # reverse=True -> 큰 값이 앞으로 (1 > 0, 0.8 > 0.3, 5 > 1)
+        def get_sort_key(r):
+            cert_val = 1 if r.get("is_certified") is True else 0
+            impact = float(r.get("impact_score", 0.0))
+            sev = int(r.get("severity", 0))
+            return (cert_val, impact, sev)
+
+        matching_rules.sort(key=get_sort_key, reverse=True)
+        return [r["learned_instruction"] for r in matching_rules]
 
     def record_rule_outcome(self, rule_id: str, success: bool):
-        """전체 샤드를 스캔하여 특정 규칙의 성과 기록 (ID에 카테고리 힌트 포함됨)"""
+        """특정 규칙의 성과 기록 및 자동 인증 체크"""
         for cat, shard in self.shards.items():
             for rule in shard:
                 if rule["id"] == rule_id:
                     rule["usage_count"] = rule.get("usage_count", 0) + 1
-                    if success: rule["success_count"] = rule.get("success_count", 0) + 1
-                    else: rule["failure_count"] = rule.get("failure_count", 0) + 1
+                    if success: 
+                        rule["success_count"] = rule.get("success_count", 0) + 1
+                    else: 
+                        rule["failure_count"] = rule.get("failure_count", 0) + 1
+                    
+                    # [Auto-Certification] 성과 기반 공인 지혜 승격 (임계치: 10회 사용, 성공률 90% 이상)
+                    usage = rule.get("usage_count", 0)
+                    success_count = rule.get("success_count", 0)
+                    if usage >= 10 and (success_count / usage) >= 0.9:
+                        if not rule.get("is_certified"):
+                            rule["is_certified"] = True
+                            logger.info(f"🎓 Rule {rule['id']} promoted to CERTIFIED WISDOM.")
+                    
                     self._persist_shard(cat)
                     return
 
@@ -172,45 +199,32 @@ class EvolutionaryMemory:
             
             logger.info(f"✨ Pruning '{cat}' memory shard semantically...")
             rules_text = "\n".join([f"[{i}] {r['learned_instruction']} (Patterns: {r['trigger_patterns']})" for i, r in enumerate(shard)])
-            
-            prompt = f"""당신은 지식 최적화 전문가입니다. 다음 '{cat}' 분야의 규칙들을 분석하여:
-            1. 내용이 중복되거나 매우 유사한 규칙은 하나로 통합하십시오.
-            2. 더 구체적이고 실행 가능한 지침을 우선순위에 두십시오.
-            
-            [규칙 리스트]
-            {rules_text}
-            
-            결과는 반드시 통합된 최종 규칙 리스트만 JSON 형식으로 반환하십시오:
-            [{{ "instruction": "...", "trigger_patterns": ["...", "..."], "severity": 1~5 }}]
-            """
+            prompt = f"당신은 지식 최적화 전문가입니다. 다음 '{cat}' 분야의 규칙들을 분석하여 하나로 통합하십시오.\n{rules_text}"
             
             try:
                 from gortex.core.llm.factory import LLMFactory
                 backend = LLMFactory.get_default_backend()
                 response = backend.generate(model_id, [{"role": "user", "content": prompt}])
                 import re
+                # 정규식 수정: [.*]
                 json_match = re.search(r'\[.*\]', response, re.DOTALL)
                 if json_match:
-                    new_rules_data = json.loads(json_match.group(0))
-                    if isinstance(new_rules_data, list) and len(new_rules_data) > 0:
-                        updated_shard = []
-                        for idx, r_data in enumerate(new_rules_data):
-                            updated_shard.append({
-                                "id": f"RULE_{cat.upper()}_PRUNED_{datetime.now().strftime('%Y%m%d')}_{idx}",
-                                "category": cat,
-                                "learned_instruction": r_data["instruction"],
-                                "trigger_patterns": r_data["trigger_patterns"],
-                                "severity": r_data.get("severity", 3),
-                                "reinforcement_count": 1,
-                                "created_at": datetime.now().isoformat(),
-                                "usage_count": 0,
-                                "success_count": 0,
-                                "failure_count": 0
-                            })
-                        self.shards[cat] = updated_shard
-                        self._persist_shard(cat)
-                        logger.info(f"✅ Shard '{cat}' optimized: {len(shard)} -> {len(updated_shard)} rules.")
-            except Exception as e:
-                logger.error(f"Failed to prune shard {cat}: {e}")
-
-
+                    new_data = json.loads(json_match.group(0))
+                    updated_shard = []
+                    for idx, r_data in enumerate(new_data):
+                        updated_shard.append({
+                            "id": f"RULE_{cat.upper()}_PRUNED_{datetime.now().strftime('%Y%m%d')}_{idx}",
+                            "category": cat,
+                            "learned_instruction": r_data["instruction"],
+                            "trigger_patterns": r_data["trigger_patterns"],
+                            "severity": r_data.get("severity", 3),
+                            "reinforcement_count": 1,
+                            "created_at": datetime.now().isoformat(),
+                            "usage_count": 0,
+                            "success_count": 0,
+                            "failure_count": 0
+                        })
+                    self.shards[cat] = updated_shard
+                    self._persist_shard(cat)
+            except:
+                pass
