@@ -248,6 +248,41 @@ class SynapticIndexer:
             "indirect": list(set(indirect_impact))
         }
 
+    def find_reverse_dependencies(self, symbol_name: str) -> List[Dict[str, Any]]:
+        """특정 심볼을 호출하거나 참조하는 모든 위치를 역추적함."""
+        if not self.index:
+            self.scan_project()
+            
+        dependents = []
+        for file_path, defs in self.index.items():
+            for d in defs:
+                # 1. 함수 호출 추적
+                if d["type"] == "function" and symbol_name in d.get("calls", []):
+                    dependents.append({
+                        "file": file_path,
+                        "type": "call",
+                        "caller": d["name"],
+                        "line": d["line"]
+                    })
+                # 2. 클래스 상속 추적
+                elif d["type"] == "class" and symbol_name in d.get("bases", []):
+                    dependents.append({
+                        "file": file_path,
+                        "type": "inheritance",
+                        "caller": d["name"],
+                        "line": d["line"]
+                    })
+                # 3. 명시적 임포트 추적 (ImportFrom)
+                elif d["type"] == "import_from" and symbol_name in d.get("names", []):
+                    dependents.append({
+                        "file": file_path,
+                        "type": "import",
+                        "caller": "module_scope",
+                        "line": d["line"]
+                    })
+                    
+        return dependents
+
     def calculate_intelligence_index(self) -> Dict[str, float]:
         """모듈별 지능 지수(Intelligence Index) 산출"""
         if not self.index:

@@ -11,13 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.15.1 (2025-12-23)
+- **Visualization**: `Proactive Dependency Visualization` 시스템 구축. 코드 수정 시 파급 효과를 Mermaid 다이어그램으로 시각화.
+- **Impact Analysis**: `SynapticIndexer` 고도화로 특정 심볼(함수/클래스)의 역방향 의존성(Reverse Dependents) 정밀 추적 기능 탑재.
+- **UI**: 대시보드 내 '🌐 IMPACT MAP' 패널 신설. 변경 위험도를 실시간으로 리포트하는 지능형 위젯 통합.
+
 ### v2.15.0 (2025-12-23)
 - **Scheduling**: `Intelligent Task Prioritization` 시스템 구축. 작업의 긴급도와 가치를 스스로 판별하여 실행 순서를 지능적으로 재배열.
-- **Strategic Planning**: `PlannerAgent` 고도화를 통해 단계별 카테고리(Security, Fix 등) 및 우선순위 점수 부여 로직 안착.
-- **Resource Protection**: 저에너지 상태에서 가치가 낮은 작업을 자동으로 가지치기(Pruning)하는 선제적 자원 방어 지능 탑재.
-
-### v2.14.9 (2025-12-23)
-- **Performance**: `Dynamic Concurrency Scaling` 엔진 구축. 시스템 CPU/메모리 부하에 따라 에이전트 병렬 실행 수를 실시간 조절(1x ~ 4x).
 - **Maintenance**: `Log Life-cycle Management` 도입. 로그 자동 압축 아카이빙 및 리셋 기능을 통해 장기 운영 성능 최적화.
 
 ### v2.13.2 (2025-12-23)

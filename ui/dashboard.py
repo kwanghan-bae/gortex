@@ -50,8 +50,9 @@ def create_layout() -> Layout:
         Layout(name="status", size=10),
         Layout(name="stats", size=12),
         Layout(name="economy", size=10),
-        Layout(name="registry", size=8),
-        Layout(name="collab", size=8), # [NEW] Collaboration Heatmap
+        Layout(name="registry", size=6),
+        Layout(name="impact", size=8), # [NEW] Impact Visualization
+        Layout(name="collab", size=8),
         Layout(name="evolution", size=6),
         Layout(name="debt", size=8),
         Layout(name="logs")
@@ -123,6 +124,31 @@ class DashboardUI:
         # 초기 렌더링
         self.update_energy_visualizer(100)
         self.update_collaboration_heatmap({})
+        self.update_impact_panel(None, [])
+
+    def update_impact_panel(self, target_symbol: str = None, dependents: list = None):
+        """특정 심볼 변경 시 영향을 받는 의존성 목록 시각화"""
+        if not target_symbol or not dependents:
+            self.layout["impact"].update(Panel("No impact analysis.", title="🌐 IMPACT MAP", border_style="dim"))
+            return
+
+        table = Table.grid(expand=True)
+        table.add_column("Caller", style="bold cyan")
+        table.add_column("Type", justify="right")
+        
+        # 위험도 산출 (의존성 수 기반)
+        risk_color = "red" if len(dependents) > 5 else ("yellow" if len(dependents) > 2 else "green")
+        
+        for d in dependents[:3]: # 상위 3개만 표시
+            file_name = d.get("file", "").split("/")[-1]
+            d_type = d.get("type", "call")[:4].upper()
+            table.add_row(f"{file_name}", f"[dim]{d_type}[/]")
+            
+        if len(dependents) > 3:
+            table.add_row(f"[dim]+ {len(dependents)-3} more[/]", "")
+
+        title = f"🌐 [bold {risk_color}]IMPACT: {target_symbol}[/]"
+        self.layout["impact"].update(Panel(table, title=title, border_style=risk_color))
 
     def update_collaboration_heatmap(self, matrix: Dict[str, Dict[str, int]]):
         """에이전트 간 협업 히트맵을 매트릭스 형태로 시각화"""

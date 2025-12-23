@@ -1,28 +1,28 @@
 # Next Session
 
 ## Session Goal
-- **Proactive Dependency Visualization & Impact Mapping**: 리팩토링이나 핵심 모듈 수정 전, 해당 변경이 시스템 전체에 미치는 영향(Side Effect)을 사전에 시뮬레이션하고, 이를 트리(Tree) 또는 그래프(Graph) 형식으로 시각화하여 위험도를 리포트하는 '영향력 지도 엔진'을 구축한다.
+- **Automated Regression Test Generation & Validation**: 영향력 분석 결과 위험도가 높거나 테스트 커버리지가 낮은 지역을 시스템이 스스로 식별하고, 해당 지역의 기능을 검증하는 유닛 테스트를 자동으로 생성 및 실행하여 리팩토링의 무결성을 자율적으로 보장한다.
 
 ## Context
-- 현재 Gortex는 Planner가 영향력을 분석하긴 하지만, 정성적인 판단에 의존하며 시각적 근거가 부족함.
-- `SynapticIndexer`를 활용하여 실제 코드 레벨의 의존성(Call Graph)을 추출하고, 변경 대상과 연결된 모든 모듈을 명시적으로 식별해야 함.
-- 이는 대규모 리팩토링의 안전성을 보장하는 핵심 지능임.
+- 현재 Gortex는 기존 테스트에 의존하여 회귀 테스트를 수행함.
+- 하지만 영향력이 큰 핵심 함수 수정 시, 연결된 모든 지점을 테스트할 수 있는 충분한 케이스가 부족한 경우가 많음.
+- `Analyst`가 `SynapticIndexer`와 연동하여 '취약 구역'을 찾아내고, `Coder`에게 테스트 작성을 지시하는 자율 방어 루프가 필요함.
 
 ## Scope
 ### Do
-- `utils/indexer.py`: 특정 심볼(Function/Class) 변경 시 영향을 받는 '상향 의존성(Reverse Dependencies)' 추적 로직 추가.
-- `agents/analyst/base.py`: 추출된 데이터를 바탕으로 Mermaid 다이어그램을 생성하는 `generate_impact_map` 메서드 구현.
-- `ui/dashboard.py`: 영향력 지도를 대시보드 하단에 렌더링하는 시각화 위젯 추가.
+- `agents/analyst/base.py`: 영향력 지도를 기반으로 테스트가 필요한 'Hotspot'을 제안하는 `identify_test_hotspots` 로직 추가.
+- `agents/coder.py`: 요구사항에 맞춰 자동으로 테스트 코드를 생성하고 `tests/`에 안착시키는 프롬프트 강화.
+- `core/engine.py`: 자동 생성된 테스트를 즉시 실행하고 결과를 보고하는 `SelfTestingLoop` 통합.
 
 ### Do NOT
-- 실제 런타임 추적(Dynamic Analysis)은 배제하고 정적 코드 분석(Static Analysis)에 집중.
+- 실제 프로덕션 데이터 기반의 테스트 생성은 배제 (순수 로직/모킹 기반 테스트).
 
 ## Expected Outputs
-- `utils/indexer.py` (Reverse Dependency Tracker)
-- `agents/analyst/base.py` (Impact Map Generator)
-- `tests/test_dependency_viz.py` (New)
+- `agents/analyst/base.py` (Hotspot Detection)
+- `agents/coder.py` (Auto Test Generation)
+- `tests/test_auto_patching.py` (New Integration Test)
 
 ## Completion Criteria
-- 특정 함수 이름을 입력했을 때, 그 함수를 참조하는 모든 파일과 라인 번호를 정확히 식별해야 함.
-- 시각화 결과물(Mermaid)이 문법적으로 올바르게 생성되어야 함.
-- `docs/sessions/session_0121.md` 기록.
+- 특정 핵심 함수를 입력했을 때, 해당 함수를 호출하는 상위 모듈 중 테스트가 없는 곳을 1개 이상 찾아내야 함.
+- 자동으로 생성된 테스트 파일이 `python -m unittest`를 성공적으로 통과해야 함.
+- `docs/sessions/session_0122.md` 기록.

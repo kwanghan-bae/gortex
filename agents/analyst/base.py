@@ -194,6 +194,27 @@ class AnalystAgent(BaseAgent):
             logger.error(f"Trace summarization failed: {e}")
             return f"Error: {e}"
 
+    def generate_impact_map(self, symbol_name: str) -> str:
+        """특정 심볼 변경 시의 영향력 지도를 Mermaid 형식으로 생성함."""
+        from gortex.utils.indexer import SynapticIndexer
+        indexer = SynapticIndexer()
+        # 최신 코드 상태 반영을 위한 스캔 강제 실행
+        indexer.scan_project()
+        deps = indexer.find_reverse_dependencies(symbol_name)
+        
+        if not deps:
+            return f"graph TD\n  {symbol_name} -->|No Direct Dependents| Safe"
+            
+        diagram = f"graph RL\n  %% Impact map for {symbol_name}\n"
+        diagram += f"  Target(({symbol_name})):::target\n"
+        
+        for idx, d in enumerate(deps):
+            caller_label = f"{d['file']}\\n({d['caller']})"
+            diagram += f"  Dep{idx}[{caller_label}] --> Target\n"
+            
+        diagram += "\n  classDef target fill:#f96,stroke:#333,stroke-width:4px;"
+        return diagram
+
     def evaluate_artifact_value(self, directory: str = "logs") -> List[Dict[str, Any]]:
         """작업 부산물들의 가치를 평가하여 삭제 후보 목록을 생성함."""
         cleanup_candidates = []
