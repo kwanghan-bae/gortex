@@ -15,6 +15,7 @@ from gortex.agents.optimizer import optimizer_node
 from gortex.agents.swarm import swarm_node
 from gortex.agents.evolution_node import evolution_node
 from gortex.utils.memory import summarizer_node
+from gortex.core.persistence import DistributedSaver
 
 import logging
 logger = logging.getLogger("GortexGraph")
@@ -141,5 +142,5 @@ def compile_gortex_graph(checkpointer=None):
     if checkpointer is not None:
         return workflow.compile(checkpointer=checkpointer)
     else:
-        from langgraph.checkpoint.memory import MemorySaver
-        return workflow.compile(checkpointer=MemorySaver())
+        # v3.0 표준: 실시간 복제를 지원하는 분산형 체크포인터 사용
+        return workflow.compile(checkpointer=DistributedSaver())

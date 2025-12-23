@@ -57,6 +57,12 @@ class GortexState(TypedDict):
     evolution_roadmap: List[Dict[str, Any]]
     # 8. Intelligent Handoff (에이전트 간 직접 지침 전달)
     handoff_instruction: str # 직전 에이전트가 다음 에이전트에게 남기는 귓속말/팁
+    
+    # 9. Replication & Sync Metadata (상태 복제 및 동기화)
+    replication_version: int # 상태 복제 시퀀스 번호
+    last_sync_ts: float      # 마지막 외부 동기화 타임스탬프
+    node_id: str             # 현재 상태를 갱신한 노드 식별자
+
 
 
 
