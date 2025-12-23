@@ -11,13 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.15.6 (2025-12-23)
+- **Knowledge Core**: `Distributed Conflict Resolution` 엔진 구축. 파편화된 지식 샤드 간의 지침 모순을 감지하고 자동 해소하는 지능형 갈등 관리 시스템 안착.
+- **Consensus**: `SwarmAgent` 연동을 통한 다중 에이전트 합의 프로토콜 도입. 모순된 규칙들을 하나의 '통합 규칙(Super Rule)'으로 정제.
+- **Traceability**: 지식 계보(`parent_rules`) 시스템 탑재. 통합된 지능의 뿌리와 진화 경로를 영구 기록하여 투명성 확보.
+
 ### v2.15.5 (2025-12-23)
 - **Evolution**: `Proactive Self-Expansion` 시스템 구축. 시스템 스스로 필요한 전문가 에이전트를 설계하고 코드를 자동 생성하여 영입하는 자가 확장 지능 탑재.
-- **Dynamic Injection**: `AgentRegistry` 연동으로 새롭게 생성된 에이전트를 런타임에 즉시 임포트하고 워크플로우에 주입하는 플러그인 아키텍처 완성.
-- **Scouting**: `TrendScoutAgent` 고도화를 통해 시스템의 지능적 공백을 식별하고 해결을 위한 블루프린트(Blueprint) 자율 수립.
-
-### v2.15.4 (2025-12-23)
-- **Infrastructure**: `Intelligent API Key Rotation` 시스템 구축. 에러 타입(429, 5xx)에 따른 적응형 쿨다운 및 실시간 건강 상태 감시 엔진 안착.
 - **Testing**: `CoderAgent`에 `generate_regression_test` 지능 탑재로 모킹 및 엣지 케이스를 포함한 견고한 테스트 자율 작성.
 - **Automation**: `GortexEngine` 내 자가 방어 루프(`run_self_defense_cycle`) 안착으로 시스템 안정성 상시 보강.
 

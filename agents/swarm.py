@@ -70,6 +70,7 @@ class SwarmAgent:
         
         prompt = f"""You are the {role_title}.
         Synthesize the following debate into a final consensus decision.
+        If this is a Knowledge Conflict Resolution, you MUST provide a 'unified_rule' structure.
         
         [Topic/Error]: {topic}
         [Debate History]:
@@ -79,10 +80,15 @@ class SwarmAgent:
         {{
             "final_decision": "Selected approach or compromise",
             "rationale": "Key reasons for this decision",
+            "unified_rule": {{
+                "instruction": "The single authoritative instruction",
+                "trigger_patterns": ["pattern1", "pattern2"],
+                "severity": 1-5,
+                "category": "coding/research/general"
+            }},
             "tradeoffs": [
                 {{ "aspect": "performance/safety/etc", "gain": "...", "loss": "..." }}
             ],
-            "residual_risk": "Remaining risks",
             "action_plan": ["Step 1", "Step 2"]
         }}
         """

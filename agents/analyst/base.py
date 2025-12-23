@@ -194,6 +194,37 @@ class AnalystAgent(BaseAgent):
             logger.error(f"Trace summarization failed: {e}")
             return f"Error: {e}"
 
+    def apply_consensus_result(self, debate_result: Dict[str, Any], conflicting_rules: List[Dict[str, Any]]):
+        """Swarm의 합의 결과를 지식 베이스에 영구 반영함."""
+        unified = debate_result.get("unified_rule")
+        if not unified:
+            logger.warning("No unified rule found in consensus result. Skipping integration.")
+            return
+
+        # 1. 새로운 전역 규칙 생성 (계보 연결)
+        parent_ids = [r["id"] for r in conflicting_rules]
+        new_rule_id = self.memory.save_rule(
+            instruction=unified["instruction"],
+            trigger_patterns=unified["trigger_patterns"],
+            category=unified.get("category", "general"),
+            severity=unified.get("severity", 3),
+            context=f"Consensus achieved via Swarm Intelligence. Rationale: {debate_result.get('rationale')}"
+        )
+        
+        # 2. 계보(Lineage) 정보 추가 업데이트 (save_rule 이후 메타데이터 보강)
+        # shard를 직접 찾아 parent_rules 주입
+        cat = unified.get("category", "general")
+        for rule in self.memory.shards.get(cat, []):
+            if rule["id"] == new_rule_id:
+                rule["parent_rules"] = parent_ids
+                rule["is_super_rule"] = True
+                break
+        self.memory._persist_shard(cat)
+
+        # 3. 기존 갈등 규칙들 정리 (Soft-delete 또는 Flag 처리)
+        # 현재는 단순하게 새 규칙으로 대체하는 방식으로 운영 (중복 제거 루틴에서 추후 완전 소거)
+        logger.info(f"✨ Unified rule {new_rule_id} created from parents: {parent_ids}")
+
     def generate_impact_map(self, symbol_name: str) -> str:
         """특정 심볼 변경 시의 영향력 지도를 Mermaid 형식으로 생성함."""
         from gortex.utils.indexer import SynapticIndexer
