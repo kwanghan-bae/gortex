@@ -1,28 +1,28 @@
 # Next Session
 
 ## Session Goal
-- **Proactive Self-Cleanup & Artifact Pruning**: 작업 과정에서 생성되는 수많은 임시 파일, 오래된 백업(`*.bak`), 버전 관리 잔해들을 시스템이 스스로 분석하여, 불필요한 데이터를 주기적으로 삭제하고 '최소한의 가벼운 상태'를 유지하는 자율 청소 지능을 구현한다.
+- **Intelligent Feedback Loop Optimization**: 시스템 내부의 성공/실패 데이터를 더욱 정밀하게 분석하여, 에이전트의 평판 점수(`agent_economy`)와 경험 규칙(`Experience Rules`)의 강화 및 약화에 즉각적이고 정확하게 반영하는 '초정밀 피드백 엔진'을 구축한다.
 
 ## Context
-- `write_file` 도구가 실행될 때마다 자동 백업과 버전 아카이빙이 수행되면서 `logs/` 디렉토리의 크기가 급격히 팽창하고 있음.
-- 시스템의 속도와 효율을 위해, 7일 이상 지나거나 중복된 데이터는 압축 후 삭제하는 등의 '데이터 가지치기'가 필수적임.
-- 이는 단순한 삭제가 아닌, 지능적인 '가치 평가' 기반의 관리여야 함.
+- 현재 피드백은 성공 시 +10, 실패 시 -5와 같이 다소 단순하게 작동함.
+- 작업의 난이도, 소모된 리소스 대비 성과, 그리고 사용자 만족도를 종합한 '가중 피드백' 체계가 필요함.
+- 이는 에이전트들이 더 효율적이고 똑똑한 경로를 스스로 선택하도록 만드는 진화의 가속기임.
 
 ## Scope
 ### Do
-- `agents/analyst/base.py`: 파일의 생성일과 사용 빈도를 분석하여 삭제 대상을 선별하는 `evaluate_artifact_value` 메서드 추가.
-- `utils/tools.py`: 대량의 임시 파일을 안전하게 소거하는 `safe_bulk_delete` 유틸리티 구현.
-- `main.py`: 세션 종료 또는 에너지 회복 루프 시점에 주기적으로 자율 청소를 수행하도록 트리거 연동.
+- `utils/economy.py`: 작업 난이도(Complexity)와 성과(Quality)를 결합한 `calculate_weighted_reward` 로직 추가.
+- `agents/analyst/reflection.py`: 사후 분석 시 실패 원인이 '지능 부족'인지 '리소스 부족'인지 판별하여 피드백 방향성 결정.
+- `core/evolutionary_memory.py`: 성과가 누적된 규칙에 대해 '검증된 지혜(Certified Wisdom)' 배지 부여 및 프롬프트 우선순위 격상.
 
 ### Do NOT
-- `experience.json`(샤드)이나 `trace.jsonl` 요약본 등 시스템 지능과 직결된 데이터는 절대 삭제하지 않음.
+- 외부 보상 시스템 연동은 고려하지 않음 (순수 내부 알고리즘 고도화).
 
 ## Expected Outputs
-- `agents/analyst/base.py` (Cleanup logic)
-- `utils/tools.py` (Safe delete utility)
-- `tests/test_self_cleanup.py` (New)
+- `utils/economy.py` (Weighted Reward)
+- `agents/analyst/reflection.py` (Precision Feedback)
+- `tests/test_precision_feedback.py` (New)
 
 ## Completion Criteria
-- 7일 이상 된 백업 파일이 존재할 때, 청소 루틴 실행 후 해당 파일들이 성공적으로 제거되어야 함.
-- 청소 후 시스템 전체 용량(logs 기준)이 유의미하게 감소해야 함.
-- `docs/sessions/session_0116.md` 기록.
+- 고난도 작업을 적은 토큰으로 성공했을 때, 일반 작업보다 최소 3배 이상의 포인트가 지급되어야 함.
+- 반복적인 성공을 이끈 규칙이 프롬프트 상단에 우선적으로 배치되는지 확인.
+- `docs/sessions/session_0117.md` 기록.

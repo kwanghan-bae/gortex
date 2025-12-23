@@ -11,13 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.14.6 (2025-12-23)
+- **Maintenance**: `Proactive Self-Cleanup` 지능 구축. 7일 이상 된 백업 및 임시 파일을 스스로 식별하고 소거하는 자율 청소 엔진 안착.
+- **Safety**: 핵심 지능 파일 보호막을 갖춘 `safe_bulk_delete` 유틸리티 탑재로 데이터 무결성 보장.
+- **Optimization**: 시스템 부산물 가치 평가 로직을 통한 디스크 사용량 최적화 및 I/O 성능 향상.
+
 ### v2.14.5 (2025-12-23)
 - **Infrastructure**: `Distributed State Replication` 시스템 구축. `DistributedSaver`를 통해 시스템 상태를 실시간으로 미러링하여 세션 연속성 및 복구 지능 강화.
-- **Data Integrity**: 복제 버전 관리 및 타임스탬프 동기화 메타데이터를 `GortexState`에 통합.
-- **Resilience**: 프로세스 중단 시 외부 스냅샷으로부터 즉각적인 의식 복원이 가능한 구조 안착.
-
-### v2.14.4 (2025-12-23)
-- **Transparency**: `Visual Knowledge Lineage` 시스템 구축. 특정 지식의 유래와 병합 이력을 추적할 수 있는 `parent_rules` 기록 로직 탑재.
 - **Maintenance**: `Log Life-cycle Management` 도입. 로그 자동 압축 아카이빙 및 리셋 기능을 통해 장기 운영 성능 최적화.
 
 ### v2.13.2 (2025-12-23)

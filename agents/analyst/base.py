@@ -194,6 +194,67 @@ class AnalystAgent(BaseAgent):
             logger.error(f"Trace summarization failed: {e}")
             return f"Error: {e}"
 
+    def evaluate_artifact_value(self, directory: str = "logs") -> List[Dict[str, Any]]:
+        """작업 부산물들의 가치를 평가하여 삭제 후보 목록을 생성함."""
+        cleanup_candidates = []
+        now = datetime.now()
+        
+        # 청소 대상 폴더 정의
+        target_dirs = [
+            os.path.join(directory, "backups"),
+            os.path.join(directory, "versions"),
+            "training_jobs" # 오래된 학습 잡 포함
+        ]
+        
+        for d in target_dirs:
+            if not os.path.exists(d): continue
+            
+            for f in os.listdir(d):
+                path = os.path.join(d, f)
+                if os.path.isdir(path): continue
+                
+                mtime = datetime.fromtimestamp(os.path.getmtime(path))
+                age_days = (now - mtime).days
+                size_kb = os.path.getsize(path) / 1024
+                
+                # 가치 평가 로직: 7일 이상 된 백업은 낮은 가치
+                value_score = 100
+                if age_days > 7: value_score -= 50
+                if age_days > 30: value_score -= 40
+                
+                # 특정 확장자(백업) 가중치
+                if f.endswith(".bak"): value_score -= 10
+                
+                if value_score < 50:
+                    cleanup_candidates.append({
+                        "path": path,
+                        "age_days": age_days,
+                        "size_kb": round(size_kb, 1),
+                        "reason": "Old backup/artifact" if age_days > 7 else "Low priority"
+                    })
+                    
+        return sorted(cleanup_candidates, key=lambda x: x["age_days"], reverse=True)
+
+    def perform_autonomous_cleanup(self) -> Dict[str, Any]:
+        """부산물 가치 평가 및 자율 삭제 통합 수행"""
+        candidates = self.evaluate_artifact_value()
+        if not candidates:
+            return {"status": "skipped", "message": "No cleanup candidates found."}
+            
+        target_paths = [c["path"] for c in candidates]
+        total_size_kb = sum(c["size_kb"] for c in candidates)
+        
+        from gortex.utils.tools import safe_bulk_delete
+        result = safe_bulk_delete(target_paths)
+        
+        freed_count = len(result["success"])
+        return {
+            "status": "success",
+            "deleted_count": freed_count,
+            "freed_kb": round(total_size_kb, 1) if freed_count > 0 else 0,
+            "message": f"🧹 Autonomous cleanup finished. {freed_count} files removed, {round(total_size_kb, 1)} KB freed."
+        }
+
     def generate_milestone_report(self, start_session: int = 1, end_session: int = 100) -> str:
         """지정된 범위의 세션들을 분석하여 마일스톤 보고서를 생성함."""
         session_dir = "docs/sessions"

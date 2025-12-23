@@ -273,6 +273,33 @@ def backup_file_with_rotation(file_path: str, backup_dir: str = "logs/backups", 
     except Exception as e:
         return f"Error during backup rotation: {e}"
 
+def safe_bulk_delete(file_paths: List[str]) -> Dict[str, Any]:
+    """대량의 파일을 안전하게 삭제하고 결과를 보고함. 핵심 파일 보호 기능 포함."""
+    results = {"success": [], "failed": [], "protected": []}
+    
+    # 절대 삭제하면 안 되는 보호 패턴
+    protected_patterns = ["experience", "shard", "trace_summary", "release_note", "MILESTONE"]
+    
+    for path in file_paths:
+        if not os.path.exists(path):
+            continue
+            
+        # 보호 로직
+        if any(p in path for p in protected_patterns):
+            results["protected"].append(path)
+            logger.warning(f"🛡️ Protected file deletion blocked: {path}")
+            continue
+            
+        try:
+            os.remove(path)
+            results["success"].append(path)
+        except Exception as e:
+            results["failed"].append({"path": path, "error": str(e)})
+            logger.error(f"Failed to delete {path}: {e}")
+            
+    logger.info(f"🧹 Bulk cleanup: {len(results['success'])} deleted, {len(results['protected'])} protected.")
+    return results
+
 def repair_and_load_json(text: str) -> Dict[str, Any]:
     """
     로컬 LLM이 생성한 비정형 텍스트에서 JSON을 추출하고 흔한 오류를 복구합니다.
