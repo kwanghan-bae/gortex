@@ -505,6 +505,28 @@ class DashboardUI:
 
         self.layout["stats"].update(Panel(Group(*stats_group), title=f"📊 [bold {border_color}]USAGE STATS[/]", border_style="green" if tokens > 0 else border_color))
 
+        # [EVOLUTION] 자가 진화 패널 업데이트
+        from gortex.utils.efficiency_monitor import EfficiencyMonitor
+        evo_history = EfficiencyMonitor().get_evolution_history(limit=3)
+        
+        evo_group = []
+        evo_group.append(Text(f"Active Rules: {rules}", style="bold magenta"))
+        
+        if evo_history:
+            evo_group.append(Text("\n[Recent Evolutions]", style="bold dim"))
+            for ev in evo_history:
+                tech = ev.get("metadata", {}).get("tech", "Unknown")
+                file = ev.get("metadata", {}).get("file", "").split("/")[-1]
+                # ID 표시 (단축형)
+                rid = ev.get("metadata", {}).get("rule_id", "NEW")[:8]
+                evo_group.append(Text(f"• {tech} -> {file} ", style="magenta"))
+                evo_group.append(Text(f"  ID: {rid}", style="dim italic"))
+        
+        if rules > 0:
+            evo_group.append(Text("\n[ /inspect ID to trace ]", style="italic dim"))
+            
+        self.layout["evolution"].update(Panel(Group(*evo_group), title=f"🧬 [bold {border_color}]EVOLUTION[/]", border_style="magenta" if rules > 0 else border_color))
+
         if agent_economy:
             self.update_economy_panel(agent_economy)
 

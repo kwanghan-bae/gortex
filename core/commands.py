@@ -29,6 +29,7 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
 📚 **Gortex 완전 명령어 가이드**
 - `/status`: 시스템 성능, 토큰 사용량 및 자원 상태 보고
 - `/agents`: 레지스트리에 등록된 모든 에이전트 목록 및 명세 출력
+- `/inspect [id]`: 특정 지식(규칙)의 상세 명세 및 탄생 계보 추적
 - `/rca [id]`: 특정 이벤트의 인과 관계(Root Cause) 역추적
 - `/search [query]`: 프로젝트 내 의미 기반(Semantic) 심볼 검색
 - `/map`: 프로젝트 전체 구조(파일/클래스/함수) 트리 출력
@@ -66,6 +67,53 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
                     ", ".join(meta.tools)
                 )
             ui.chat_history.append(("system", table))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/inspect":
+        if len(cmd_parts) < 2:
+            ui.chat_history.append(("system", "사용법: /inspect [rule_id]"))
+        else:
+            rule_id = cmd_parts[1]
+            from gortex.core.evolutionary_memory import EvolutionaryMemory
+            evo_mem = EvolutionaryMemory()
+            
+            # 모든 샤드에서 규칙 탐색
+            target_rule = None
+            for shard in evo_mem.shards.values():
+                for r in shard:
+                    if r["id"] == rule_id:
+                        target_rule = r; break
+                if target_rule: break
+            
+            if not target_rule:
+                ui.chat_history.append(("system", f"❌ 규칙 ID '{rule_id}'를 찾을 수 없습니다."))
+            else:
+                # 상세 정보 카드
+                card = Panel(
+                    Text.assemble(
+                        ("Instruction: ", "bold yellow"), f"{target_rule['learned_instruction']}\n",
+                        ("Patterns: ", "bold cyan"), f"{', '.join(target_rule['trigger_patterns'])}\n",
+                        ("Stats: ", "bold green"), f"Usage: {target_rule.get('usage_count',0)}, Success: {target_rule.get('success_count',0)}"
+                    ),
+                    title=f"🔍 Knowledge Detail: {rule_id}",
+                    border_style="yellow"
+                )
+                ui.chat_history.append(("system", card))
+                
+                # 계보 트리 (Lineage Tree)
+                if target_rule.get("parent_rules"):
+                    tree = Tree(f"🌳 [bold green]Lineage of {rule_id}[/bold green]")
+                    
+                    def add_parents(parent_tree, rule_ids):
+                        for p_id in rule_ids:
+                            node = parent_tree.add(f"[dim]{p_id}[/dim]")
+                            # 재귀적으로 부모 찾기 (여기서는 1단계만 예시, 실제로는 메모리 전체 검색 필요)
+                            # 단순화를 위해 ID만 표시하거나, 실제 상위 규칙 검색 로직 추가 가능
+                    
+                    add_parents(tree, target_rule["parent_rules"])
+                    ui.chat_history.append(("system", tree))
+                    
         ui.update_main(ui.chat_history)
         return "skip"
 

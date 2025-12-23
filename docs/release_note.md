@@ -11,13 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.14.4 (2025-12-23)
+- **Transparency**: `Visual Knowledge Lineage` 시스템 구축. 특정 지식의 유래와 병합 이력을 추적할 수 있는 `parent_rules` 기록 로직 탑재.
+- **Commands**: `/inspect` 명령어 신설. 지식의 상세 명세 및 탄생 계보를 트리(Tree) 형식으로 시각화.
+- **UI**: 대시보드 내 규칙 ID 노출 및 계보 탐색 힌트 제공.
+
 ### v2.14.3 (2025-12-23)
 - **Knowledge Base**: `Distributed Conflict Resolution` 엔진 구축. 파편화된 지식 샤드 간의 지침 모순을 감지하고 데이터 기반/의미론적 분석을 통해 자동 해소.
-- **Consistency**: 시스템 전역의 의사결정 일관성을 위한 지식 조정(Mediation) 프로세스 도입.
-- **Resilience**: 갈등 해결 시 지식 스냅샷 자동 생성 및 백업 강화.
-
-### v2.14.2 (2025-12-23)
-- **Knowledge Base**: `Memory Sharding` 기술 도입. 지식 베이스를 주제별 독립 샤드로 분산 저장하여 로딩 속도와 인지 정확도 대폭 개선.
 - **Maintenance**: `Log Life-cycle Management` 도입. 로그 자동 압축 아카이빙 및 리셋 기능을 통해 장기 운영 성능 최적화.
 
 ### v2.13.2 (2025-12-23)

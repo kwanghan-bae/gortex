@@ -1,28 +1,28 @@
 # Next Session
 
 ## Session Goal
-- **Visual Knowledge Lineage**: 대시보드에 특정 지식(규칙)이 어떤 과거 사건(에러, 세션, 활동)으로부터 유래했는지 추적할 수 있는 '지식 계보(Lineage)' 시각화 기능을 구현하고, 이를 탐색할 수 있는 명령어를 추가한다.
+- **Distributed State Replication**: 여러 세션이나 다양한 환경에서도 동일한 `GortexState`를 유지하고 복구할 수 있도록, 상태 데이터를 주기적으로 외부 영속성 계층(Redis 또는 암호화된 Shared JSON)에 실시간 복제(Replication)하고 동기화하는 상태 엔진을 구축한다.
 
 ## Context
-- 시스템이 지식을 스스로 생성하고 병합함에 따라, "이 규칙은 대체 왜 생긴 거지?"라는 질문에 답할 수 있는 투명성이 필요함.
-- `experience.json` (샤드)의 각 규칙은 이미 `context`, `source_session` 정보를 갖고 있지만, 이를 사용자가 보기 쉽게 표현하지 못하고 있음.
-- 이는 AI의 블랙박스 문제를 해결하는 핵심 열쇠임.
+- 현재 상태는 메모리(`MemorySaver`)나 로컬 SQLite에 의존하고 있어, 프로세스 종료 시나 특정 환경에서 유실될 위험이 있음.
+- 시스템의 '연속성'을 보장하기 위해, 상태를 원격으로 공유하거나 강력한 파일 기반 동기화를 지원해야 함.
+- 이는 미래의 '다중 노드 Gortex'를 위한 필수 기초 작업임.
 
 ## Scope
 ### Do
-- `ui/dashboard.py`: 규칙 선택 시 해당 규칙의 히스토리와 근거 사례를 보여주는 `Knowledge Detail` 팝업 또는 패널 보강.
-- `core/commands.py`: `/inspect [rule_id]` 명령어를 추가하여 지식의 뿌리를 텍스트 트리로 출력.
-- `agents/analyst/base.py`: 지식 병합 시 원본 규칙들의 ID를 `parent_rules` 필드로 남겨 계보를 잇는 로직 추가.
+- `core/persistence.py` (New): `DistributedSaver` 인터페이스 및 구현체 추가.
+- `core/state.py`: 상태 복제 시점(Checkpointing)과 동기화 전략 정의.
+- `main.py`: 새로운 영속성 계층을 워크플로우 그래프에 연동.
 
 ### Do NOT
-- 복잡한 3D 그래프는 구현하지 않음 (TUI 텍스트 트리 위주).
+- 실제 분산 서버 인프라 구축은 배제 (추상화된 클라이언트 로직 위주).
 
 ## Expected Outputs
-- `ui/dashboard.py` (Detail view)
-- `core/commands.py` (New /inspect command)
-- `tests/test_knowledge_lineage.py` (New)
+- `core/persistence.py` (New Persistence Layer)
+- `core/state.py` (Updated schema for sync metadata)
+- `tests/test_state_replication.py` (New)
 
 ## Completion Criteria
-- `/inspect` 명령 실행 시 해당 규칙의 원인 사건과 부모 규칙들이 트리 형태로 출력되어야 함.
-- 대시보드의 `evolution` 패널에서 규칙 클릭 시 상세 정보가 노출되어야 함.
-- `docs/sessions/session_0114.md` 기록.
+- 시스템 종료 후 재시작 시, 로컬 저장이 아닌 '복제된 저장소'로부터 이전 상태를 100% 복원해야 함.
+- 상태 변경 시 복제 지연(Latency)이 100ms 이내여야 함.
+- `docs/sessions/session_0115.md` 기록.

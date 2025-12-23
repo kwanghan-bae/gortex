@@ -601,10 +601,14 @@ class AnalystAgent(BaseAgent):
                         "usage_count": 0,
                         "success_count": 0,
                         "failure_count": 0,
+                        "parent_rules": [r["id"] for r in active_pool], # 모든 부모 후보 기록 (계보 연결)
                         "is_super_rule": True # 병합된 지능임을 표시
                     })
-                self.memory.memory = updated_memory
-                self.memory._persist()
+                
+                # 샤딩 아키텍처 대응: 전체를 'general' 샤드로 취급하거나 개별 분류 필요
+                # 여기서는 병합된 전역 지식이므로 'general' 샤드로 업데이트
+                self.memory.shards["general"] = updated_memory
+                self.memory._persist_shard("general")
                 
                 return {
                     "status": "success",
