@@ -59,7 +59,7 @@ class PlannerAgent(BaseAgent):
         )
         
         base_instruction += f"\n\n[System Resource State]\n- Current Energy: {energy}/100"
-        base_instruction += "\n\nAssign 'priority' (1-10) and 'is_essential' (true/false) to each step. Provide a 'handoff_instruction' for the next agent."
+        base_instruction += "\n\nAssign 'priority_score' (1-10) and 'category' (Security, Fix, Feature, Doc, Refactor) to each step. Provide a 'handoff_instruction' for the next agent."
 
         # 스키마 정의 (Native용)
         schema = {
@@ -69,7 +69,21 @@ class PlannerAgent(BaseAgent):
                 "impact_analysis": {"type": "OBJECT", "properties": {"target": {"type": "STRING"}, "direct": {"type": "ARRAY", "items": {"type": "STRING"}}, "indirect": {"type": "ARRAY", "items": {"type": "STRING"}}, "risk_level": {"type": "STRING"}}},
                 "thought_tree": {"type": "ARRAY", "items": {"type": "OBJECT", "properties": {"id": {"type": "STRING"}, "text": {"type": "STRING"}, "type": {"type": "STRING"}, "priority": {"type": "INTEGER"}, "certainty": {"type": "NUMBER"}}}},
                 "goal": {"type": "STRING"},
-                "steps": {"type": "ARRAY", "items": {"type": "OBJECT", "properties": {"id": {"type": "INTEGER"}, "action": {"type": "STRING"}, "target": {"type": "STRING"}, "reason": {"type": "STRING"}, "priority": {"type": "INTEGER"}, "is_essential": {"type": "BOOLEAN"}}}},
+                "steps": {
+                    "type": "ARRAY", 
+                    "items": {
+                        "type": "OBJECT", 
+                        "properties": {
+                            "id": {"type": "INTEGER"}, 
+                            "action": {"type": "STRING"}, 
+                            "target": {"type": "STRING"}, 
+                            "reason": {"type": "STRING"}, 
+                            "priority_score": {"type": "INTEGER"}, 
+                            "category": {"type": "STRING", "enum": ["Security", "Fix", "Feature", "Doc", "Refactor"]},
+                            "is_essential": {"type": "BOOLEAN"}
+                        }
+                    }
+                },
                 "handoff_instruction": {"type": "STRING"}
             },
             "required": ["thought_process", "goal", "steps", "handoff_instruction"]
@@ -115,10 +129,14 @@ class PlannerAgent(BaseAgent):
                 logger.warning(f"🚨 Resource Alert: Expected cost ${expected_cost:.4f} is high.")
 
             for step in raw_steps:
-                if energy < 30 and not step.get("is_essential", True) and step.get("priority", 5) < 8:
+                if energy < 30 and step.get("category") == "Doc" and step.get("priority_score", 5) < 7:
                     pruned_count += 1
                     continue
                 final_steps.append(step)
+            
+            # [Intelligent Sorting] 우선순위 점수 내림차순 정렬 (높은 점수가 먼저)
+            # 단, id(원래 순서)를 보조 정렬 키로 사용하여 논리적 흐름 유지
+            final_steps.sort(key=lambda x: (x.get("priority_score", 5), -x.get("id", 0)), reverse=True)
             
             plan_steps = [json.dumps(step, ensure_ascii=False) for step in final_steps]
             latency_ms = int((time.time() - start_time) * 1000)

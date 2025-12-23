@@ -1,28 +1,28 @@
 # Next Session
 
 ## Session Goal
-- **Intelligent Task Prioritization & Preemptive Scheduling**: 작업 대기열(Task Queue)에 쌓인 수많은 단계들을 긴급도(Urgency)와 시스템 임팩트(Impact)를 기준으로 자동 분류하고, 고가치 작업을 가장 먼저 실행하며 리소스 여유 시 백그라운드 작업을 배치하는 '전략적 작업 스케줄러'를 구축한다.
+- **Proactive Dependency Visualization & Impact Mapping**: 리팩토링이나 핵심 모듈 수정 전, 해당 변경이 시스템 전체에 미치는 영향(Side Effect)을 사전에 시뮬레이션하고, 이를 트리(Tree) 또는 그래프(Graph) 형식으로 시각화하여 위험도를 리포트하는 '영향력 지도 엔진'을 구축한다.
 
 ## Context
-- 현재 작업은 Planner가 생성한 순서대로만 실행됨.
-- 하지만 보안 패치, 치명적 버그 수정 등은 코드 가독성 개선보다 먼저 처리되어야 함.
-- 또한, 리소스가 남을 때 수행하면 좋은 '정적 분석'이나 '문서화' 등의 작업을 후순위로 미뤄두었다가 처리하는 영리함이 필요함.
+- 현재 Gortex는 Planner가 영향력을 분석하긴 하지만, 정성적인 판단에 의존하며 시각적 근거가 부족함.
+- `SynapticIndexer`를 활용하여 실제 코드 레벨의 의존성(Call Graph)을 추출하고, 변경 대상과 연결된 모든 모듈을 명시적으로 식별해야 함.
+- 이는 대규모 리팩토링의 안전성을 보장하는 핵심 지능임.
 
 ## Scope
 ### Do
-- `core/engine.py`: 작업 우선순위를 계산하고 재배열하는 `PriorityScheduler` 로직 추가.
-- `core/state.py`: 개별 작업 단계(Plan Step)에 `priority_score` 및 `category` 메타데이터 포함.
-- `agents/planner.py`: 계획 수립 시 각 단계의 가중치를 계산하여 출력하는 기능 강화.
+- `utils/indexer.py`: 특정 심볼(Function/Class) 변경 시 영향을 받는 '상향 의존성(Reverse Dependencies)' 추적 로직 추가.
+- `agents/analyst/base.py`: 추출된 데이터를 바탕으로 Mermaid 다이어그램을 생성하는 `generate_impact_map` 메서드 구현.
+- `ui/dashboard.py`: 영향력 지도를 대시보드 하단에 렌더링하는 시각화 위젯 추가.
 
 ### Do NOT
-- 실제 운영체제의 프로세스 우선순위(Nice 등) 변경은 배제 (AI 애플리케이션 레벨의 스케줄링).
+- 실제 런타임 추적(Dynamic Analysis)은 배제하고 정적 코드 분석(Static Analysis)에 집중.
 
 ## Expected Outputs
-- `core/engine.py` (Priority Scheduler)
-- `agents/planner.py` (Priority-Aware Planning)
-- `tests/test_task_prioritization.py` (New)
+- `utils/indexer.py` (Reverse Dependency Tracker)
+- `agents/analyst/base.py` (Impact Map Generator)
+- `tests/test_dependency_viz.py` (New)
 
 ## Completion Criteria
-- 계획된 작업 중 'Security' 또는 'Critical Fix' 범주가 포함된 경우, 기존 순서와 상관없이 최상단으로 배치되어야 함.
-- 저부하 상태일 때만 'Documentation' 범주의 작업을 실행하는지 확인.
-- `docs/sessions/session_0120.md` 기록.
+- 특정 함수 이름을 입력했을 때, 그 함수를 참조하는 모든 파일과 라인 번호를 정확히 식별해야 함.
+- 시각화 결과물(Mermaid)이 문법적으로 올바르게 생성되어야 함.
+- `docs/sessions/session_0121.md` 기록.
