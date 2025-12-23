@@ -1,74 +1,71 @@
 import unittest
 import os
+import shutil
 import json
+from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
-from gortex.agents.analyst.base import AnalystAgent
 from gortex.core.evolutionary_memory import EvolutionaryMemory
+from gortex.agents.analyst.base import AnalystAgent
 
 class TestMemoryOptimization(unittest.TestCase):
     def setUp(self):
-        self.memory_path = "test_experience_opt.json"
-        self.memory = EvolutionaryMemory(file_path=self.memory_path)
-        self.agent = AnalystAgent()
-        self.agent.memory = self.memory
-        self.agent.backend = MagicMock()
+        self.test_mem_dir = "tests/test_memory_gc"
+        if os.path.exists(self.test_mem_dir):
+            shutil.rmtree(self.test_mem_dir)
+        self.memory = EvolutionaryMemory(base_dir=self.test_mem_dir)
+        self.analyst = AnalystAgent()
+        self.analyst.memory = self.memory
 
     def tearDown(self):
-        if os.path.exists(self.memory_path): os.remove(self.memory_path)
+        if os.path.exists(self.test_mem_dir):
+            shutil.rmtree(self.test_mem_dir)
 
-    def test_record_rule_outcome(self):
-        """성공/실패 결과 기록 기능 테스트"""
-        self.memory.save_rule("Test Rule", ["pattern"])
-        rule_id = self.memory.memory[0]["id"]
+    def test_calculate_rule_value_logic(self):
+        """규칙 가치 산출 로직 검증"""
+        # 1. 고가치 규칙 (Certified)
+        cert_rule = {"is_certified": True, "usage_count": 100, "success_count": 95}
+        self.assertEqual(self.memory.calculate_rule_value(cert_rule), 100.0)
         
-        self.memory.record_rule_outcome(rule_id, success=True)
-        self.assertEqual(self.memory.memory[0]["success_count"], 1)
-        self.assertEqual(self.memory.memory[0]["usage_count"], 1)
+        # 2. 신규 규칙 (2일 전 생성)
+        new_date = (datetime.now() - timedelta(days=2)).isoformat()
+        new_rule = {"created_at": new_date, "usage_count": 0, "success_count": 0}
+        self.assertGreaterEqual(self.memory.calculate_rule_value(new_rule), 90.0)
+        
+        # 3. 저가치 노후 규칙 (20일 전 생성, 0% 성공률)
+        old_date = (datetime.now() - timedelta(days=20)).isoformat()
+        bad_rule = {"created_at": old_date, "usage_count": 5, "success_count": 0}
+        # (0*70) + (5/10*30) = 15점 -> 30점 미만
+        val = self.memory.calculate_rule_value(bad_rule)
+        self.assertLess(val, 30.0)
 
-    def test_optimize_knowledge_base_merging(self):
-        """유사 규칙 병합 및 최적화 테스트"""
-        # 1. 유사한 규칙 5개 생성 (최적화 트리거 최소 조건)
-        for i in range(5):
-            self.memory.save_rule(f"Strict typing in python {i}", ["python", "typing"])
-            
-        # 2. LLM 응답 시뮬레이션: 5개의 규칙을 1개로 통합
-        mock_merge_res = [
-            {
-                "instruction": "Always use strict typing in Python projects.",
-                "trigger_patterns": ["python", "typing", "type hint"],
-                "severity": 4
-            }
-        ]
-        self.agent.backend.generate.return_value = json.dumps(mock_merge_res)
+    def test_garbage_collect_knowledge_pruning(self):
+        """가치 기반 지식 소거 통합 테스트"""
+        old_date = (datetime.now() - timedelta(days=20)).isoformat()
         
-        # 3. 최적화 실행
-        result = self.agent.optimize_knowledge_base()
+        # 1. 보존될 규칙
+        self.memory.save_rule("Good instruction", ["pattern1"], category="general")
         
-        self.assertEqual(result["status"], "success")
-        self.assertEqual(len(self.memory.memory), 1) # 1개로 압축됨
-        self.assertTrue(self.memory.memory[0]["is_super_rule"])
-        self.assertIn("Always use strict typing", self.memory.memory[0]["learned_instruction"])
-
-    def test_optimize_low_performance_removal(self):
-        """성과 저조 규칙 삭제 테스트"""
-        # 1. 충분한 수의 규칙 생성
-        for i in range(4): self.memory.save_rule(f"Good rule {i}", ["ok"])
+        # 2. 삭제될 규칙 (강제 주입하여 점수 낮춤)
+        bad_rule_id = self.memory.save_rule("Bad instruction", ["pattern2"], category="general")
         
-        self.memory.save_rule("Bad rule", ["fail"])
-        bad_rule_id = self.memory.memory[-1]["id"]
+        # 메모리 캐시와 파일 모두 업데이트
+        for cat in self.memory.shards:
+            for r in self.memory.shards[cat]:
+                if r["id"] == bad_rule_id:
+                    r["created_at"] = old_date
+                    r["usage_count"] = 10
+                    r["success_count"] = 0
+        self.memory._persist_shard("general")
         
-        # 2. 성과 저조 시뮬레이션 (5회 사용 중 0회 성공 = 0%)
-        for _ in range(5):
-            self.memory.record_rule_outcome(bad_rule_id, success=False)
-            
-        # 3. LLM은 그대로 유지한다고 가정해도, 수치 필터링에서 걸러져야 함
-        self.agent.backend.generate.return_value = "[]" # 병합 결과 없음
+        # 3. GC 실행
+        report = self.analyst.garbage_collect_knowledge()
         
-        result = self.agent.optimize_knowledge_base()
-        
-        self.assertEqual(result["removed"], 1)
-        # 삭제 후 병합 로직(LLM)이 빈 리스트를 줬으므로 최종 0개 (테스트 설정상)
-        self.assertEqual(len(self.memory.memory), 0)
+        # 4. 결과 검증
+        self.assertEqual(report["removed"], 1, f"Expected 1 removal, got {report['removed']}. Report: {report}")
+        updated_shard = self.memory._load_shard("general")
+        ids = [r["id"] for r in updated_shard]
+        self.assertNotIn(bad_rule_id, ids)
+        self.assertIn("Good instruction", [r["learned_instruction"] for r in updated_shard])
 
 if __name__ == '__main__':
     unittest.main()

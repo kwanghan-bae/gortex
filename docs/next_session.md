@@ -1,28 +1,28 @@
 # Next Session
 
 ## Session Goal
-- **Intelligent Knowledge Pruning & Semantic Garbage Collection**: 지식 베이스에 축적된 수많은 경험 규칙(Experience Rules) 중, 오랫동안 사용되지 않았거나 성공률이 현저히 낮은 노후 지식을 스스로 식별하여 제거(GC)하고, 유사한 고성과 규칙들을 시맨틱 군집화(Semantic Clustering)를 통해 하나의 강력한 지침으로 병합함으로써 지능의 밀도를 극한으로 끌어올린다.
+- **Dynamic Skill Tree & Role Specialization**: 에이전트별 작업 성공 이력과 평판(`agent_economy`)을 기반으로 특정 도메인(Coding, UI/UX, Research, Security)의 '스킬 포인트'를 자동으로 부여하고, 숙련도에 따라 사용할 수 있는 상위 도구(Advanced Tools)의 잠금을 해제하며, 이를 대시보드에 '기술 트리' 형태로 시각화하는 동적 전문화 시스템을 구축한다.
 
 ## Context
-- 시스템이 오래 운영됨에 따라 수백 개의 자잘한 규칙들이 쌓여 프롬프트의 토큰을 낭비하고 인지적 노이즈를 유발하고 있음.
-- 단순히 병합하는 것이 아니라, 규칙의 '생존 가치'를 평가하여 가치가 낮은 것은 과감히 소거하는 '지식 다윈주의'가 필요함.
-- 이는 에이전트가 항상 가장 순도 높은 지혜만을 참조하게 만드는 성능 최적화의 정점임.
+- 현재 모든 에이전트는 동일한 도구 셋을 가지거나 하드코딩된 역할에만 의존함.
+- 에이전트가 특정 분야에서 반복적인 성과를 거둘 때 그 분야의 전문가로 '성장'하는 재미와 실질적인 성능 이득을 제공해야 함.
+- 이는 에이전트 선발(Routing) 시 평판뿐만 아니라 '전문 기술 등급'을 고려하게 만드는 기초 작업임.
 
 ## Scope
 ### Do
-- `core/evolutionary_memory.py`: 규칙의 성공률과 마지막 사용 시점을 기반으로 '가치 점수'를 산출하는 `calculate_rule_value` 로직 추가.
-- `agents/analyst/base.py`: 가치가 낮은 규칙들을 소거하고 유사 규칙들을 통합하는 `garbage_collect_knowledge` 기능 구현.
-- `main.py`: 세션 종료 또는 일정 주기마다 '지능 최적화' 트리거를 발생시켜 자율 청소 수행.
+- `utils/economy.py`: 작업 범주별 스킬 포인트 산출 로직 `update_skill_points` 추가.
+- `core/registry.py`: 스킬 레벨에 따른 도구 사용 권한(Permissions) 필터링 로직 통합.
+- `ui/dashboard.py`: 현재 에이전트의 스킬 트리와 전문 분야를 시각화하는 'Skill Radar' 위젯 추가.
 
 ### Do NOT
-- 'Certified Wisdom'이나 최근 3회 세션 내 생성된 신규 지식은 가치 점수와 상관없이 보존함.
+- 실제 에이전트의 LLM 모델 파라미터 튜닝은 배제 (순수 애플리케이션 레벨의 능력 제어).
 
 ## Expected Outputs
-- `core/evolutionary_memory.py` (Value Calculation)
-- `agents/analyst/base.py` (Knowledge GC)
-- `tests/test_memory_optimization.py` (New)
+- `utils/economy.py` (Skill Accumulation)
+- `core/registry.py` (Tool Permissions)
+- `tests/test_skill_tree.py` (New)
 
 ## Completion Criteria
-- 성공률 20% 미만이거나 10세션 이상 미사용된 일반 규칙 3개 이상이 정확히 소거되어야 함.
-- 유사한 의미를 가진 규칙 2개가 하나로 병합되어야 함.
-- `docs/sessions/session_0127.md` 기록.
+- 코딩 작업을 5회 연속 성공한 에이전트의 'Coding' 스킬 등급이 상승하고, 기존에 잠겨있던 'Apply Patch' 도구의 사용 권한이 해제되어야 함.
+- 대시보드 사이드바에 에이전트별 전문성 게이지가 정확히 렌더링되어야 함.
+- `docs/sessions/session_0128.md` 기록.

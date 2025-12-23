@@ -762,6 +762,41 @@ class AnalystAgent(BaseAgent):
             logger.error(f"Context ranking failed: {e}")
             return [0.5] * len(messages)
 
+    def garbage_collect_knowledge(self, model_id: str = "gemini-2.0-flash") -> Dict[str, Any]:
+        """지식 베이스의 가비지 컬렉션 및 시맨틱 최적화 수행."""
+        report = {"removed": 0, "merged": 0, "optimized_shards": []}
+        
+        for cat in list(self.memory.shards.keys()):
+            shard = self.memory.shards[cat]
+            if not shard: continue
+            
+            # 1. 가치 기반 필터링 (Heuristic Pruning)
+            original_count = len(shard)
+            active_rules = []
+            for r in shard:
+                val = self.memory.calculate_rule_value(r)
+                if val <= 30.0:
+                    report["removed"] += 1
+                    logger.info(f"🗑️ Pruned low-value rule: {r['id']} (Value: {val})")
+                    continue
+                active_rules.append(r)
+            
+            # 2. 고가치 규칙 시맨틱 병합 (Semantic Merging)
+            if len(active_rules) >= 5:
+                logger.info(f"✨ Optimizing shard '{cat}' semantically...")
+                # 기존 prune_memory 로직 활용 또는 고도화
+                self.memory.shards[cat] = active_rules
+                self.memory.prune_memory(model_id=model_id)
+                optimized_count = len(self.memory.shards[cat])
+                report["merged"] += (len(active_rules) - optimized_count)
+                report["optimized_shards"].append(cat)
+            else:
+                self.memory.shards[cat] = active_rules
+                
+            self.memory._persist_shard(cat)
+            
+        return report
+
     def identify_test_hotspots(self) -> List[Dict[str, Any]]:
         """수정 영향력이 크지만 테스트가 누락된 '핫스팟'을 식별함."""
         from gortex.utils.indexer import SynapticIndexer

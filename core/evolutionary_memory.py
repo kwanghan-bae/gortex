@@ -194,6 +194,30 @@ class EvolutionaryMemory:
                     self._persist_shard(cat)
                     return
 
+    def calculate_rule_value(self, rule: Dict[str, Any]) -> float:
+        """경험 규칙의 생존 가치를 평가함 (0~100)."""
+        # 1. 보호 대상: 공인 지혜 또는 생성된 지 얼마 안 된 규칙
+        if rule.get("is_certified"): return 100.0
+        
+        created_at = datetime.fromisoformat(rule.get("created_at", datetime.now().isoformat()))
+        age_days = (datetime.now() - created_at).days
+        if age_days < 7: return 90.0 # 일주일 내 생성된 지식은 보존
+        
+        # 2. 성능 기반 점수 (성공률)
+        usage = rule.get("usage_count", 0)
+        success = rule.get("success_count", 0)
+        success_rate = (success / usage) if usage > 0 else 0.5
+        
+        # 3. 사용 빈도 점수 (10세션 기준)
+        usage_score = min(1.0, usage / 10.0)
+        
+        # 4. 최종 가치 계산: (성공률 * 0.7) + (빈도 * 0.3)
+        # 단, 사용이 전혀 없는 노후 지식은 감점
+        value = (success_rate * 70) + (usage_score * 30)
+        if usage == 0 and age_days > 14: value -= 40
+        
+        return round(max(0.0, min(100.0, value)), 1)
+
     def prune_memory(self, model_id: str = "gemini-2.0-flash"):
         """샤드별로 의미론적 통합 수행하여 중복 지식 제거"""
         for cat in list(self.shards.keys()):
