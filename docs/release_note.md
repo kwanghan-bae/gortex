@@ -11,13 +11,14 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.14.2 (2025-12-23)
+- **Knowledge Base**: `Memory Sharding` 기술 도입. 지식 베이스를 주제별 독립 샤드로 분산 저장하여 로딩 속도와 인지 정확도 대폭 개선.
+- **Scalability**: 맥락 기반의 지식 필터링 로직을 통해 대규모 지능 데이터 상황에서도 고밀도 프롬프트 효율성 유지.
+- **Migration**: 레거시 `experience.json`의 자동 샤딩 마이그레이션 시스템 구축.
+
 ### v2.14.1 (2025-12-23)
 - **Intelligence**: `Autonomous Log Summarization` 구현. 대규모 실행 로그에서 핵심 통찰을 추출하여 `logs/trace_summary.md`로 자산화.
 - **Maintenance**: `Log Life-cycle Management` 도입. 로그 자동 압축 아카이빙 및 리셋 기능을 통해 장기 운영 성능 최적화.
-- **Commands**: `/history` 명령어 고도화. 정제된 역사 요약본 우선 노출을 통한 사용자 경험 개선.
-
-### v2.14.0 (2025-12-23)
-- **Observability**: `Agent Collaboration Heatmap` 탑재. 에이전트 간 호출 빈도와 상호작용 강도를 매트릭스 형태로 대시보드에 실시간 시각화.
 
 ### v2.13.2 (2025-12-23)
 - **Migration**: 핵심 에이전트 3종(`Planner`, `Coder`, `Analyst`)의 v3.0 표준 마이그레이션 완료. 클래스 기반 구조로 전면 리팩토링 및 중앙 레지스트리 공식 등록.

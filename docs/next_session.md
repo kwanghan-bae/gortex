@@ -1,28 +1,27 @@
 # Next Session
 
 ## Session Goal
-- **Decentralized Knowledge Search (Memory Sharding)**: 하나의 거대한 파일(`experience.json`)로 관리되던 지식 베이스를 분야별(Coding, Research 등) 또는 프로젝트별 독립적인 조각(Shard)으로 분산 저장하고, 현재 맥락에 필요한 조각만 선택적으로 로드하여 검색 속도와 인지 정확도를 높인다.
+- **Distributed Conflict Resolution**: 여러 지식 샤드에 분산된 규칙들이 서로 상충되거나 모순될 경우(예: `coding_shard`와 `general_shard`의 지침 충돌), 이를 자동으로 감지하고 `Analyst`와 `Swarm`이 협력하여 최신 상황에 맞는 단일 지침으로 통합하는 '지능형 갈등 해결' 엔진을 구축한다.
 
 ## Context
-- 100회 이상의 세션을 거치며 `experience.json`에 수십 개의 규칙이 쌓였음.
-- 모든 규칙을 매번 로드하여 프롬프트에 넣는 것은 토큰 낭비와 모델의 집중력 저하를 유발함.
-- 지식의 '관심사 분리'를 통해 고밀도 지능을 유지함.
+- 지식이 파편화됨에 따라 각 샤드 간의 일관성을 유지하는 것이 중요해짐.
+- 서로 다른 에이전트가 생성한 규칙들이 충돌할 경우, 시스템의 의사결정이 모호해질 리스크가 있음.
+- "최신성", "성공률", "권위(Severity)"를 기준으로 규칙의 우선순위를 정립함.
 
 ## Scope
 ### Do
-- `core/evolutionary_memory.py`: 지식을 샤드(Shard) 단위로 저장하고 관리하는 `ShardedMemory` 클래스로 진화.
-- `core/evolutionary_memory.py`: 현재 맥락(`context_text`)과 가장 관련성이 높은 샤드를 동적으로 탐색하는 `pick_shards` 로직 구현.
-- `utils/tools.py`: 샤드 간의 중복 데이터를 동기화하거나 정리하는 유틸리티 보강.
+- `core/evolutionary_memory.py`: 샤드 간 모순되는 트리거 패턴을 찾는 `detect_cross_shard_conflicts` 메서드 추가.
+- `agents/analyst/base.py`: 감지된 갈등을 해소하기 위해 `Swarm` 토론을 요청하고 결과를 반영하는 `resolve_knowledge_conflict` 로직 구현.
+- `experience.json.migrated.bak`: 만약의 사태를 대비한 정기적인 '지식 스냅샷' 기능 보강.
 
 ### Do NOT
-- 기존 `experience.json`과의 하위 호환성을 깨지 않음 (마이그레이션 도구 포함).
+- 사용자가 수동으로 'Lock'을 걸어둔 규칙은 자동 수정 대상에서 제외.
 
 ## Expected Outputs
-- `core/evolutionary_memory.py` (Sharding support)
-- `logs/memory/` (New directory for shards)
-- `tests/test_memory_sharding.py` (New)
+- `core/evolutionary_memory.py` (Conflict detection)
+- `agents/analyst/base.py` (Conflict resolution)
+- `tests/test_conflict_resolution.py` (New)
 
 ## Completion Criteria
-- 코딩 작업 중에는 `coding_shard.json`의 지식이 우선적으로 주입되어야 함.
-- 전체 지식 파일 크기가 줄어들지 않더라도, 매 요청 시 로드되는 토큰 양은 50% 이상 감소해야 함.
-- `docs/sessions/session_0112.md` 기록.
+- 서로 다른 샤드에 상충하는 규칙 2개를 주입했을 때, 시스템이 이를 감지하고 하나로 통합하거나 우선순위를 명확히 해야 함.
+- `docs/sessions/session_0113.md` 기록.
