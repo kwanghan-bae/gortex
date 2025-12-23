@@ -1,49 +1,44 @@
 import os
+import psutil
 import logging
-import time
 from typing import Dict, Any
-
-try:
-    import psutil
-except ImportError:
-    psutil = None
 
 logger = logging.getLogger("GortexResourceMonitor")
 
 class ResourceMonitor:
-    """
-    시스템 및 프로세스 리소스 사용량을 측정하는 모니터링 도구.
-    """
+    """시스템 자원 및 작업 부하를 실시간 모니터링함."""
     def __init__(self):
-        self.process = psutil.Process(os.getpid()) if psutil else None
+        self.process = psutil.Process(os.getpid())
 
-    def get_stats(self) -> Dict[str, Any]:
-        """현재 리소스 사용량 스냅샷 반환"""
-        if not psutil:
-            return {"error": "psutil not installed"}
-            
-        try:
-            # 시스템 전체
-            cpu_total = psutil.cpu_percent(interval=None)
-            mem_total = psutil.virtual_memory().percent
-            
-            # 현재 Gortex 프로세스
-            cpu_proc = self.process.cpu_percent(interval=None)
-            mem_proc = self.process.memory_info().rss / (1024 * 1024) # MB
-            
-            return {
-                "cpu_total": cpu_total,
-                "mem_total": mem_total,
-                "cpu_proc": cpu_proc,
-                "mem_proc_mb": round(mem_proc, 2),
-                "timestamp": time.time()
-            }
-        except Exception as e:
-            logger.error(f"Failed to get resource stats: {e}")
-            return {"error": str(e)}
+    def get_system_stats(self) -> Dict[str, Any]:
+        """CPU, Memory 등 하드웨어 자원 상태 반환"""
+        cpu_usage = psutil.cpu_percent(interval=0.1)
+        memory_info = psutil.virtual_memory()
+        
+        return {
+            "cpu_percent": cpu_usage,
+            "memory_percent": memory_info.percent,
+            "memory_available_mb": memory_info.available / (1024 * 1024),
+            "process_memory_mb": self.process.memory_info().rss / (1024 * 1024)
+        }
 
-if __name__ == "__main__":
-    monitor = ResourceMonitor()
-    while True:
-        print(monitor.get_stats())
-        time.sleep(1)
+    def get_load_level(self) -> str:
+        """현재 시스템 부하 수준을 3단계로 판별"""
+        stats = self.get_system_stats()
+        cpu = stats["cpu_percent"]
+        mem = stats["memory_percent"]
+        
+        if cpu > 80 or mem > 90:
+            return "CRITICAL"
+        elif cpu > 50 or mem > 70:
+            return "MODERATE"
+        return "LIGHT"
+
+    def estimate_concurrency_limit(self, base_limit: int = 2) -> int:
+        """자원 상태에 따른 권장 동시 실행 수 계산"""
+        load = self.get_load_level()
+        if load == "CRITICAL":
+            return 1
+        elif load == "LIGHT":
+            return base_limit * 2
+        return base_limit

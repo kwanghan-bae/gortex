@@ -8,17 +8,17 @@ from gortex.core.graph import compile_gortex_graph
 from gortex.core.state import GortexState
 from gortex.core.config import GortexConfig
 from gortex.utils.tools import execute_shell
-from gortex.utils.token_counter import count_tokens
 from gortex.utils.notifier import Notifier
 from gortex.utils.healing_memory import SelfHealingMemory
 from gortex.utils.token_counter import count_tokens, DailyTokenTracker
+from gortex.utils.resource_monitor import ResourceMonitor
 
 logger = logging.getLogger("GortexEngine")
 
 class GortexEngine:
     """
     Gortex 시스템의 핵심 실행 엔진.
-    에이전트 그래프를 실행하고 상태를 관리합니다.
+    시스템 부하에 따라 리소스를 동적으로 스케일링하며 에이전트 그래프를 실행합니다.
     """
     def __init__(self, ui=None, observer=None, vocal_bridge=None, thread_id: str = None):
         self.ui = ui
@@ -29,6 +29,18 @@ class GortexEngine:
         self.config = {"configurable": {"thread_id": self.thread_id}}
         self.healer = SelfHealingMemory()
         self.tracker = DailyTokenTracker()
+        self.monitor = ResourceMonitor()
+        self.max_concurrency = 2 # 기본 동시 실행 한도
+
+    def update_scaling_policy(self):
+        """시스템 부하에 따라 동시 실행 한도 스케일링"""
+        old_limit = self.max_concurrency
+        self.max_concurrency = self.monitor.estimate_concurrency_limit(base_limit=2)
+        
+        if old_limit != self.max_concurrency:
+            logger.info(f"⚖️ Scaling Policy Updated: {old_limit} -> {self.max_concurrency} tasks concurrently.")
+            if self.ui:
+                self.ui.add_achievement(f"Scaling to {self.max_concurrency}x")
 
     def select_optimal_model(self, state: GortexState, agent_name: str) -> str:
         """에이전트 평판, 작업 위험도, 일일 예산을 고려하여 최적 모델 선택"""
@@ -59,13 +71,10 @@ class GortexEngine:
         tokens = count_tokens(json.dumps(output))
         model = state.get("assigned_model", "flash")
         self.tracker.update_usage(tokens, model)
-
-
         
-        # 2. 인과 관계 및 관찰자 기록
+        # 인과 관계 및 관찰자 기록
         event_id = str(uuid.uuid4())
         if self.observer:
-            # state["last_event_id"]를 cause_id로 사용
             cause_id = state.get("last_event_id")
             res_id = self.observer.log_event(
                 agent=node_name, 
@@ -73,53 +82,46 @@ class GortexEngine:
                 payload=output, 
                 cause_id=cause_id
             )
-            # 결과 ID를 다시 last_event_id에 저장 (연쇄)
             state["last_event_id"] = res_id or event_id
         
-        # 3. UI 업데이트 및 성과 기록
+        # UI 업데이트
         if self.ui:
             self.ui.update_thought(output.get("thought", ""), agent_name=node_name)
-            
             if "ui_mode" in output:
                 self.ui.set_layout_mode(output["ui_mode"])
             
-            # 성과 기록 조건: 메시지에 "완료했습니다" 포함 시
             msg_str = str(output.get("messages", ""))
             if "완료했습니다" in msg_str:
                 self.ui.add_achievement("Goal Reached")
             
-            # 보안 경고
             if "❌" in msg_str or "security alert" in msg_str.lower():
                 self.ui.add_security_event("High", "Security issue detected")
             
-            # [ECONOMY] 경제 상태 실시간 업데이트
             if "agent_economy" in state or "agent_economy" in output:
                 eco_data = output.get("agent_economy") or state.get("agent_economy")
                 if eco_data:
                     self.ui.update_economy_panel(eco_data)
         
-        # 4. 음성 브릿지 연동
+        # 음성 브릿지
         if self.vocal and output.get("messages"):
             last_msg = str(output["messages"][-1][1] if isinstance(output["messages"][-1], tuple) else output["messages"][-1])
             self.vocal.text_to_speech(last_msg)
             self.vocal.play_audio()
             
-        # 5. 자가 치유 (Healer)
+        # 자가 치유
         if output.get("status") == "failed":
             hint = self.healer.get_solution_hint("Error detected in node output")
             if hint:
                 logger.info(f"🩹 Healing hint found: {hint}")
 
-        # 6. 상태 변수 병합 및 캐시 관리
-        if "file_cache" in output:
-            if "session_cache" not in state: state["session_cache"] = {}
-            state["session_cache"].update(output["file_cache"])
-            
         state.update(output)
         return tokens
 
     def run(self, user_input: str, initial_state: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         """사용자 입력을 바탕으로 에이전트 루프 실행"""
+        # 실행 전 스케일링 정책 갱신
+        self.update_scaling_policy()
+        
         state = initial_state or {
             "messages": [("user", user_input)],
             "pinned_messages": [],
@@ -130,15 +132,14 @@ class GortexEngine:
             "agent_energy": 100,
             "api_call_count": 0,
             "token_credits": {},
-            "agent_economy": {}
+            "agent_economy": {},
+            "risk_score": 0.5
         }
         
-        # [MAINTENANCE] 에너지 고갈 체크
         energy = state.get("agent_energy", 100)
         if energy < 10:
-            logger.warning(f"🔋 Energy critical ({energy}%). Entering Maintenance Mode.")
             return {
-                "messages": [("ai", "🔋 **시스템 에너지 고갈**: 현재 유지보수 모드입니다. 에너지가 충전될 때까지 잠시만 기다려주세요 (최소 20% 필요).")],
+                "messages": [("ai", "🔋 **시스템 에너지 고갈**: 유지보수 모드입니다.")],
                 "next_node": "__end__"
             }
         
@@ -150,5 +151,4 @@ class GortexEngine:
             return {"error": str(e), "next_node": "__end__"}
 
     async def run_async(self, user_input: str, initial_state: Optional[Dict[str, Any]] = None):
-        """비동기 실행 지원"""
         return self.run(user_input, initial_state)
