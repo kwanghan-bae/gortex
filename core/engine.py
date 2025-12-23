@@ -11,6 +11,7 @@ from gortex.utils.tools import execute_shell
 from gortex.utils.token_counter import count_tokens
 from gortex.utils.notifier import Notifier
 from gortex.utils.healing_memory import SelfHealingMemory
+from gortex.utils.token_counter import count_tokens, DailyTokenTracker
 
 logger = logging.getLogger("GortexEngine")
 
@@ -27,12 +28,39 @@ class GortexEngine:
         self.thread_id = thread_id or str(uuid.uuid4())
         self.config = {"configurable": {"thread_id": self.thread_id}}
         self.healer = SelfHealingMemory()
+        self.tracker = DailyTokenTracker()
+
+    def select_optimal_model(self, state: GortexState, agent_name: str) -> str:
+        """에이전트 평판, 작업 위험도, 일일 예산을 고려하여 최적 모델 선택"""
+        risk = state.get("risk_score", 0.5)
+        budget_status = self.tracker.get_budget_status()
+        economy = state.get("agent_economy", {}).get(agent_name, {})
+        points = economy.get("points", 0)
+        
+        # 1. 예산 고갈 상태 (80% 이상 소모) -> 강제 Ollama 다운그레이드
+        if budget_status > 0.8:
+            logger.warning(f"🔋 Budget critical ({budget_status:.1%}). Downgrading to Ollama.")
+            return "ollama/llama3"
+            
+        # 2. 고위험/에픽 작업 + 엘리트 에이전트 -> Gemini Pro
+        if risk > 0.8 and points > 1000:
+            return "gemini-1.5-pro"
+            
+        # 3. 일반 전문 작업 -> Gemini Flash
+        if points > 500 or risk > 0.4:
+            return "gemini-2.0-flash"
+            
+        # 4. 단순 반복 작업/저평판 에이전트 -> Ollama
+        return "ollama/llama3"
 
     async def process_node_output(self, node_name: str, output: Dict[str, Any], state: Dict[str, Any]):
         """노드 실행 결과를 처리하고 UI/관찰자에게 알림"""
-        
-        # 1. 토큰 계산
+        # 토큰 추적 업데이트
         tokens = count_tokens(json.dumps(output))
+        model = state.get("assigned_model", "flash")
+        self.tracker.update_usage(tokens, model)
+
+
         
         # 2. 인과 관계 및 관찰자 기록
         event_id = str(uuid.uuid4())

@@ -11,13 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.14.8 (2025-12-23)
+- **Model Orchestration**: `Dynamic Model Selection` 시스템 구축. 에이전트 평판, 작업 위험도, 가용 예산을 기반으로 Gemini Pro/Flash/Ollama를 지능적으로 할당.
+- **Budget Management**: `DailyTokenTracker`를 통한 일일 토큰 소비량 추적 및 예산 보호(80% 도달 시 Ollama 강제 전환) 로직 안착.
+- **Sustainability**: 비용 효율성과 시스템 생존력을 동시에 확보하는 하이브리드 리소스 배분 엔진 완성.
+
 ### v2.14.7 (2025-12-23)
 - **Feedback Loop**: `Intelligent Feedback Loop` 최적화. 작업 난이도 및 리소스 효율 기반의 초정밀 가중 보상 시스템 구축.
-- **Knowledge Base**: `Certified Wisdom` 시스템 탑재. 90% 이상 성공이 검증된 지식을 '공인 지혜'로 승격하고 프롬프트 최상단에 우선 배치.
-- **Reliability**: 밀리초 단위 ID 생성 엔진 도입으로 지식 데이터 충돌 방지 및 시스템 안정성 강화.
-
-### v2.14.6 (2025-12-23)
-- **Maintenance**: `Proactive Self-Cleanup` 지능 구축. 7일 이상 된 백업 및 임시 파일을 스스로 식별하고 소거하는 자율 청소 엔진 안착.
 - **Maintenance**: `Log Life-cycle Management` 도입. 로그 자동 압축 아카이빙 및 리셋 기능을 통해 장기 운영 성능 최적화.
 
 ### v2.13.2 (2025-12-23)
