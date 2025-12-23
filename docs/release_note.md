@@ -11,13 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.14.3 (2025-12-23)
+- **Knowledge Base**: `Distributed Conflict Resolution` 엔진 구축. 파편화된 지식 샤드 간의 지침 모순을 감지하고 데이터 기반/의미론적 분석을 통해 자동 해소.
+- **Consistency**: 시스템 전역의 의사결정 일관성을 위한 지식 조정(Mediation) 프로세스 도입.
+- **Resilience**: 갈등 해결 시 지식 스냅샷 자동 생성 및 백업 강화.
+
 ### v2.14.2 (2025-12-23)
 - **Knowledge Base**: `Memory Sharding` 기술 도입. 지식 베이스를 주제별 독립 샤드로 분산 저장하여 로딩 속도와 인지 정확도 대폭 개선.
-- **Scalability**: 맥락 기반의 지식 필터링 로직을 통해 대규모 지능 데이터 상황에서도 고밀도 프롬프트 효율성 유지.
-- **Migration**: 레거시 `experience.json`의 자동 샤딩 마이그레이션 시스템 구축.
-
-### v2.14.1 (2025-12-23)
-- **Intelligence**: `Autonomous Log Summarization` 구현. 대규모 실행 로그에서 핵심 통찰을 추출하여 `logs/trace_summary.md`로 자산화.
 - **Maintenance**: `Log Life-cycle Management` 도입. 로그 자동 압축 아카이빙 및 리셋 기능을 통해 장기 운영 성능 최적화.
 
 ### v2.13.2 (2025-12-23)

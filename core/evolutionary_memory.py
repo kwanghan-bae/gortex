@@ -13,9 +13,35 @@ class EvolutionaryMemory:
     def __init__(self, base_dir: str = "logs/memory"):
         self.base_dir = base_dir
         os.makedirs(self.base_dir, exist_ok=True)
+        os.makedirs(os.path.join(self.base_dir, "snapshots"), exist_ok=True)
         self.legacy_path = "experience.json"
         self.shards: Dict[str, List[Dict[str, Any]]] = {}
         self._initialize_shards()
+
+    def detect_cross_shard_conflicts(self) -> List[Dict[str, Any]]:
+        """서로 다른 샤드 간의 트리거 중복 및 지침 충돌 감지"""
+        conflicts = []
+        all_rules = []
+        for cat, rules in self.shards.items():
+            all_rules.extend(rules)
+            
+        for i, rule_a in enumerate(all_rules):
+            patterns_a = set(rule_a["trigger_patterns"])
+            for j, rule_b in enumerate(all_rules[i+1:]):
+                if rule_a["category"] == rule_b["category"]: continue # 동일 샤드 내 병합은 prune_memory가 처리
+                
+                patterns_b = set(rule_b["trigger_patterns"])
+                intersection = patterns_a.intersection(patterns_b)
+                
+                # 트리거가 50% 이상 겹치면 잠재적 갈등으로 간주
+                if len(intersection) / max(len(patterns_a), len(patterns_b)) >= 0.5:
+                    conflicts.append({
+                        "type": "trigger_overlap",
+                        "rule_a": rule_a,
+                        "rule_b": rule_b,
+                        "overlap": list(intersection)
+                    })
+        return conflicts
 
     def _initialize_shards(self):
         """기존 지식 마이그레이션 및 샤드 로드"""

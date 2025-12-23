@@ -43,6 +43,55 @@ class AnalystAgent(BaseAgent):
         score = 100.0 / (1.0 + math.log1p(cost / 5.0))
         return round(min(100.0, score), 1)
 
+    def resolve_knowledge_conflict(self, conflict: Dict[str, Any], model_id: str = "gemini-2.0-flash") -> Optional[Dict[str, Any]]:
+        """두 샤드 간의 상충되는 지식을 하나로 통합하거나 우선순위를 결정함."""
+        rule_a = conflict["rule_a"]
+        rule_b = conflict["rule_b"]
+        
+        logger.info(f"⚖️ Resolving conflict between {rule_a['id']} and {rule_b['id']}...")
+        
+        # 1. 메타데이터 기반 자동 해결 시도
+        score_a = (rule_a.get("success_count", 0) + 1) * rule_a.get("reinforcement_count", 1)
+        score_b = (rule_b.get("success_count", 0) + 1) * rule_b.get("reinforcement_count", 1)
+        
+        # 점수 차이가 크면 (예: 3배 이상) 우세한 쪽을 선택
+        if score_a > score_b * 3:
+            logger.info(f"✅ Auto-resolved: {rule_a['id']} wins by performance score.")
+            return rule_a
+        elif score_b > score_a * 3:
+            logger.info(f"✅ Auto-resolved: {rule_b['id']} wins by performance score.")
+            return rule_b
+
+        # 2. 점수가 비슷하면 LLM을 통해 통합(Synthesis) 시도
+        prompt = f"""당신은 시스템의 일관성을 관리하는 지식 조정자입니다. 다음 두 상충되는 규칙을 분석하여 하나의 최적화된 규칙으로 통합하십시오.
+        
+        [Rule A (Category: {rule_a['category']})]: {rule_a['learned_instruction']}
+        [Rule B (Category: {rule_b['category']})]: {rule_b['learned_instruction']}
+        
+        통합 원칙:
+        1. 모순되는 부분은 더 현대적이고 안전한 기술적 관점을 따르십시오.
+        2. 두 분야의 맥락을 모두 수용할 수 있는 범용적인 지침을 만드십시오.
+        
+        결과는 JSON 형식으로만 반환하십시오:
+        {{ "instruction": "통합된 지침 내용", "trigger_patterns": ["패턴1", "패턴2"], "severity": 1~5, "target_category": "어느 샤드로 보낼지" }}
+        """
+        
+        try:
+            response_text = self.backend.generate(model_id, [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            res_data = json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+            
+            return {
+                "learned_instruction": res_data["instruction"],
+                "trigger_patterns": res_data["trigger_patterns"],
+                "severity": res_data.get("severity", 3),
+                "category": res_data.get("target_category", rule_a["category"])
+            }
+        except Exception as e:
+            logger.error(f"Semantic conflict resolution failed: {e}")
+            return rule_a if score_a >= score_b else rule_b # 최악의 경우 성과 좋은 쪽 유지
+
     def identify_capability_gap(self, error_log: str = "", unresolved_task: str = "") -> Optional[Dict[str, Any]]:
         """
         시스템이 처리하지 못한 과제나 에러를 분석하여 필요한 새로운 전문가 에이전트 명세를 제안함.
