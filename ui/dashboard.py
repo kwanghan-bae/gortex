@@ -49,9 +49,10 @@ def create_layout() -> Layout:
     layout["sidebar"].split_column(
         Layout(name="status", size=10),
         Layout(name="stats", size=12),
+        Layout(name="auth", size=8), # [NEW] API Key Health Monitoring
         Layout(name="economy", size=10),
         Layout(name="registry", size=6),
-        Layout(name="impact", size=8), # [NEW] Impact Visualization
+        Layout(name="impact", size=8),
         Layout(name="collab", size=8),
         Layout(name="evolution", size=6),
         Layout(name="debt", size=8),
@@ -125,6 +126,39 @@ class DashboardUI:
         self.update_energy_visualizer(100)
         self.update_collaboration_heatmap({})
         self.update_impact_panel(None, [])
+        self.update_auth_panel()
+
+    def update_auth_panel(self):
+        """API 키 풀의 실시간 건강 상태 시각화"""
+        from gortex.core.auth import GortexAuth
+        auth = GortexAuth()
+        pool = auth.get_pool_status()
+        
+        if not pool:
+            self.layout["auth"].update(Panel("No keys configured.", title="🔑 AUTH STATUS", border_style="dim"))
+            return
+
+        table = Table.grid(expand=True)
+        table.add_column("Idx", style="dim", width=3)
+        table.add_column("Stat", width=8)
+        table.add_column("S/F", justify="right")
+        
+        for info in pool:
+            status = info["status"]
+            color = "green" if status == "alive" else ("yellow" if status == "cooldown" else "red")
+            
+            # 상태 텍스트 구성
+            stat_text = f"[{color}]{status.upper()}[/]"
+            if info["cooldown"] > 0:
+                stat_text = f"[{color}]CD:{info['cooldown']}s[/]"
+                
+            table.add_row(
+                str(info["idx"]),
+                stat_text,
+                f"[green]{info['success']}[/]/[red]{info['failure']}[/]"
+            )
+
+        self.layout["auth"].update(Panel(table, title="🔑 [bold white]AUTH STATUS[/]", border_style="blue"))
 
     def update_impact_panel(self, target_symbol: str = None, dependents: list = None):
         """특정 심볼 변경 시 영향을 받는 의존성 목록 시각화"""

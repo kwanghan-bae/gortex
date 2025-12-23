@@ -1,28 +1,28 @@
 # Next Session
 
 ## Session Goal
-- **Intelligent API Key Rotation & Health Check**: 여러 Gemini API Key의 상태와 할당량(Quota)을 실시간으로 감시하고, 에러나 속도 제한(429) 발생 시 가장 건강한 키로 즉각 전환하며, 키별 쿨다운(Cooldown) 시간을 지능적으로 관리하는 '무중단 인증 관리 엔진'을 구축한다.
+- **Proactive Tech Scout & Capability Expansion**: 시스템의 미비한 기능이나 외부의 새로운 기술 트렌드를 감지하여, 시스템에 필요한 새로운 '전문가 에이전트'의 명세를 스스로 설계하고, 해당 에이전트의 코드를 자동 생성 및 중앙 레지스트리에 등록하여 시스템의 능력을 자율적으로 확장한다.
 
 ## Context
-- 현재 Gortex는 `core/auth.py`에서 키 로테이션을 수행하지만, 단순히 순차적(Round-robin)으로 전환하거나 고정된 Jitter 대기 시간을 가짐.
-- 특정 키가 할당량 소진 시 전체 시스템이 지연되는 현상을 방지하기 위해, 각 키의 '건강 상태'와 '잔여 수명'을 추적해야 함.
-- 이는 대규모 작업이나 다중 에이전트 동시 실행 시 시스템의 안정성을 보장하는 핵심 인프라임.
+- 현재 Gortex는 이미 Milestone 3.0을 달성하여 기본 에이전트들을 갖추고 있음.
+- 하지만 특정 도메인(예: 이미지 생성, 보안 감사 강화 등)에 특화된 전문가가 부족할 경우, 에러 발생 후 대응하는 것이 아니라 선제적으로 '팀원'을 뽑아 교육(코드 생성)해야 함.
+- 이는 Gortex가 단순한 '도구'를 넘어 스스로 진화하는 '조직'으로 성장하는 핵심 단계임.
 
 ## Scope
 ### Do
-- `core/auth.py`: 키별 성공률과 할당량 상태를 기록하는 `KeyHealthMonitor` 클래스 추가.
-- `core/auth.py`: 에러 타입(429 vs 500)에 따라 서로 다른 쿨다운 전략을 적용하는 `AdaptiveRotationStrategy` 구현.
-- `ui/dashboard.py`: 현재 활성화된 키의 상태와 전체 키 번들의 건강도를 보여주는 인증 감시 위젯 추가.
+- `agents/trend_scout.py`: 현재 코드베이스와 외부(또는 모의) 기술 트렌드를 비교하여 '필요한 전문가'를 제안하는 `scout_needed_capabilities` 로직 추가.
+- `agents/coder.py`: 제안된 명세를 바탕으로 `BaseAgent`를 상속받는 새로운 에이전트 소스 코드를 생성하는 `spawn_new_agent` 기능 강화.
+- `core/registry.py`: 새롭게 생성된 에이전트 파일을 런타임에 동적으로 로드하고 노드로 추가하는 `dynamic_node_injection` 구현.
 
 ### Do NOT
-- 실제 Gemini API의 내부 할당량 조회 API 연동은 배제하고(지원하지 않을 수 있음), 시스템 내부 에러 로그를 기반으로 추정함.
+- 외부 실시간 웹 크롤링은 배제하고(Researcher 활용 가능), 사전에 정의된 '기술 레이더' 또는 현재 시스템의 에러 패턴을 기술 트렌드로 의인화하여 처리함.
 
 ## Expected Outputs
-- `core/auth.py` (Key Health Monitor & Adaptive Rotation)
-- `ui/dashboard.py` (Auth Status Widget)
-- `tests/test_auth_rotation.py` (New)
+- `agents/trend_scout.py` (Capability Scouter)
+- `agents/auto_spawned_*.py` (Generated Agent)
+- `tests/test_agent_generation.py` (New)
 
 ## Completion Criteria
-- 특정 키에서 429 에러가 발생했을 때, 해당 키가 즉시 'Cooldown' 상태로 전환되고 5초 이내에 다른 건강한 키로 교체되어야 함.
-- 쿨다운 중인 키는 지정된 시간이 지나기 전까지 로테이션 대상에서 제외되어야 함.
-- `docs/sessions/session_0124.md` 기록.
+- 새로운 전문가(예: `SecurityAuditorAgent`)가 필요하다고 판단되었을 때, 1분 이내에 해당 파일이 생성되고 `AgentRegistry`에 공식 등록되어야 함.
+- 등록된 에이전트가 `GortexState`를 인자로 받아 `run` 메서드를 실행할 수 있어야 함.
+- `docs/sessions/session_0125.md` 기록.

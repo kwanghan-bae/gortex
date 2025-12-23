@@ -11,13 +11,13 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v2.15.4 (2025-12-23)
+- **Infrastructure**: `Intelligent API Key Rotation` 시스템 구축. 에러 타입(429, 5xx)에 따른 적응형 쿨다운 및 실시간 건강 상태 감시 엔진 안착.
+- **Monitoring**: 대시보드 내 '🔑 AUTH STATUS' 패널 신설. 각 키의 성공/실패 통계 및 복구 잔여 시간 실시간 시각화.
+- **Reliability**: 다중 키 번들을 활용한 무중단 LLM 서비스 보장 및 기하급수적 백오프(Exponential Backoff) 지능 탑재.
+
 ### v2.15.3 (2025-12-23)
 - **Memory**: `Intelligent Context Pruning` 시스템 구축. 단순 요약 대신 현재 작업 목표(`state.plan`)와의 시맨틱 관련성을 분석하여 불필요한 메시지를 선별 제거하는 지능형 가지치기 엔진 안착.
-- **Ranking**: `AnalystAgent`에 `rank_context_relevance` 지능 탑재로 컨텍스트의 기술적 가치를 0~1.0 사이로 정밀 수치화.
-- **Efficiency**: 대화 노이즈를 효과적으로 쳐냄으로써 프롬프트 정보 밀도를 극대화하고 API 토큰 소모 효율을 획기적으로 개선.
-
-### v2.15.2 (2025-12-23)
-- **Safety**: `Autonomous Regression Defense` 시스템 구축. 영향력 분석을 통해 취약 구역을 식별하고 유닛 테스트를 자동 생성.
 - **Testing**: `CoderAgent`에 `generate_regression_test` 지능 탑재로 모킹 및 엣지 케이스를 포함한 견고한 테스트 자율 작성.
 - **Automation**: `GortexEngine` 내 자가 방어 루프(`run_self_defense_cycle`) 안착으로 시스템 안정성 상시 보강.
 
