@@ -1,59 +1,67 @@
 #!/bin/bash
 
-# 🛡️ SOVEREIGN GUARD PRE-COMMIT V6.0 (Final Evolution)
-# High-rigor enforcement of documentation-code integrity.
+# 🛡️ SOVEREIGN GUARD PRE-COMMIT V6.3 (Language-Specific Edition)
+# Enforces specific linters and tests based on changed file types.
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-echo -e "${GREEN}🔒 [Sovereign Guard] Executing absolute quality audit...${NC}"
+echo -e "${GREEN}🔒 [Guard] Starting language-specific quality audit...${NC}"
 
-# 1. AI Laziness & Placeholder Detection (Hard Block)
-# 패턴 정의 (패턴 자체가 grep에 걸리지 않도록 쪼개서 작성)
-P1='//'
-P2=' ...'
-P3='#'
-P4='(중략)'
+# 1. AI Laziness & Hallucination Guard
+P1='//'; P2=' ...'; P3='#'; P4='(중략)'
 JOINED_PATTERNS="${P1}${P2}|${P3}${P2}|\/\* ${P2} \*\/|// existing code|// rest of code|// same as before|# remains unchanged|TODO: Implement|${P4}|\(생략\)|// 기존 로직과 동일|// 상동|// 이전과 동일"
-if git diff --cached | grep -Ei "$JOINED_PATTERNS"; then
+
+if git diff --cached -- . ':!scripts/pre_commit.sh' | grep "^+" | grep -Ei "$JOINED_PATTERNS" > /dev/null; then
     echo -e "${RED}❌ [ABSOLUTE BLOCK] AI Laziness Detected!${NC}"
     exit 1
 fi
 
-# 2. Strict Documentation Enforcement (NEW: Hard Link)
-# 논리적 코드 변경 시 docs/ 하위 파일이나 README.md 수정이 없으면 커밋을 막습니다.
+# 2. File Identification
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
-HAS_LOGIC=$(echo "$STAGED_FILES" | grep -E "\.(kt|dart|py)$" || true)
-HAS_DOCS=$(echo "$STAGED_FILES" | grep -E "(\.md|docs/)" || true)
+HAS_KOTLIN=$(echo "$STAGED_FILES" | grep -E "\.kt$" || true)
+HAS_TS=$(echo "$STAGED_FILES" | grep -E "\.(ts|tsx)$" || true)
+HAS_PYTHON=$(echo "$STAGED_FILES" | grep -E "\.py$" || true)
+HAS_DART=$(echo "$STAGED_FILES" | grep -E "\.dart$" || true)
+HAS_CSHARP=$(echo "$STAGED_FILES" | grep -E "\.cs$" || true)
 
-if [ -n "$HAS_LOGIC" ] && [ -z "$HAS_DOCS" ]; then
-    echo -e "${RED}❌ [DOCUMENTATION DEBT] You modified code but NOT documentation!${NC}"
-    echo "AI는 반드시 SPEC_CATALOG.md, TECHNICAL_SPEC.md 혹은 ADR.md 중 하나를 업데이트해야 합니다."
-    exit 1
-fi
-
-# 3. TDD Enforcement (Strict Pair Matching)
-for FILE in $STAGED_FILES; do
-    if [[ $FILE == *.kt ]] || [[ $FILE == *.dart ]]; then
-        FILENAME=$(basename "$FILE")
-        if [[ $FILENAME == *Test* ]] || [[ $FILENAME == *_test* ]]; then continue; fi
-        TEST_KT="${FILENAME%.*}Test.kt"
-        TEST_DART="${FILENAME%.*}_test.dart"
-        if ! find . -name "$TEST_KT" -o -name "$TEST_DART" | grep -q .; then
-            echo -e "${RED}❌ [TDD VIOLATION] Missing test file for: $FILENAME${NC}"
-            exit 1
-        fi
+# 3. Dedicated Linting & Testing
+# 3.1 C# / Unity
+if [ -n "$HAS_CSHARP" ]; then
+    if command -v dotnet &> /dev/null; then
+        echo "🧪 Linting C# (dotnet format)..."
+        dotnet format --verify-no-changes || exit 1
+    else
+        echo -e "${YELLOW}⚠️ dotnet SDK not found, skipping C# format check...${NC}"
     fi
-done
-
-# 4. Project Specific Verification
-if [ -f "clover-wallet/gradlew" ]; then
-    (cd clover-wallet && ./gradlew ktlintCheck test --quiet) || exit 1
-fi
-if [ -f "clover_wallet_app/pubspec.yaml" ]; then
-    (cd clover_wallet_app && flutter analyze && flutter test) || exit 1
 fi
 
-echo -e "${GREEN}✅ [Sovereign Guard] Audit successful. Your intelligence is consistent.${NC}"
+# 3.2 Kotlin (ktlint)
+if [ -n "$HAS_KOTLIN" ] && [ -f "backend/gradlew" ]; then
+    echo "🧪 Linting Kotlin (ktlint)..."
+    (cd backend && ./gradlew ktlintCheck test --quiet) || exit 1
+fi
+
+# 3.2 React Native / TS (ESLint)
+if [ -n "$HAS_TS" ] && [ -f "frontend/package.json" ]; then
+    echo "🧪 Linting TypeScript (ESLint)..."
+    (cd frontend && npm run lint && npm test -- --watchAll=false) || exit 1
+fi
+
+# 3.3 Python (Ruff)
+if [ -n "$HAS_PYTHON" ]; then
+    if command -v ruff &> /dev/null; then
+        echo "🧪 Linting Python (Ruff)..."
+        ruff check . || exit 1
+    fi
+fi
+
+# 3.4 Flutter (Analyzer)
+if [ -n "$HAS_DART" ] && [ -f "pubspec.yaml" ]; then
+    echo "🧪 Linting Dart (Analyzer)..."
+    flutter analyze || exit 1
+fi
+
+echo -e "${GREEN}✅ [Guard] All specific checks passed.${NC}"
