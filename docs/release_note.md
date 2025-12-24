@@ -11,6 +11,22 @@
 
 ## ✅ Completed (Recent Milestones)
 
+### v3.3.0 (2025-12-23)
+- **Dynamic Swarm Recruitment**: 고난이도 과제 발생 시, `Economy` 시스템을 조회하여 각 분야(Security, Design 등)의 최고 실력자들을 소집하는 '드림팀' 결성 로직 구현.
+- **Expert Debate**: 가상의 페르소나 대신 실제 선발된 에이전트들이 자신의 전문 지식(Role)을 바탕으로 토론하고 해결책을 제시하는 실질적 협업 체계 안착.
+- **UI Enhancement**: Swarm 토론 패널에 참여 전문가의 실명과 역할을 시각적으로 구분하여 표시.
+
+### v3.2.0 (2025-12-23)
+- **Intelligent Routing**: Manager가 작업의 성격을 분석하여 해당 분야의 스킬 점수가 높은 '진짜 전문가'를 선발하는 가중치 기반 라우팅 도입.
+- **Mastery Resource Allocation**: Master 등급(스킬 2500+ pts) 에이전트에게는 작업 위험도와 무관하게 고성능 모델(`gemini-1.5-pro`)을 우선 배정하여 품질 보장.
+- **Hybrid Scoring**: 전문성(70%)과 평판(30%)을 균형 있게 평가하여 에이전트 선발의 안정성 확보.
+
+### v3.1.0 (2025-12-23)
+- **Dynamic Skill Tree**: 에이전트가 작업 성공 시 해당 분야(Coding, Design, Analysis, General)의 숙련도 포인트를 획득하는 성장 시스템 구축.
+- **Tool Permissions**: `AgentRegistry`를 통한 도구 권한 강제화. 특정 스킬 등급(Master, Expert 등)에 도달한 에이전트만 `apply_patch` 등 고급 도구 사용 가능.
+- **TUI Skill Radar**: 터미널 대시보드에 에이전트별 전문 지표를 시각화하는 'Skill Radar' 위젯 도입.
+- **Robustness**: 에이전트 식별 로직의 대소문자 구분 이슈 해결 및 경제 시스템 무결성 강화.
+
 ### v2.15.7 (2025-12-23)
 - **Knowledge Base**: `Intelligent Knowledge Pruning` 시스템 구축. 성공률과 사용 빈도 기반의 '지식 가치 산출' 로직을 통해 노후 규칙 자율 소거.
 - **Optimization**: 지식 가비지 컬렉션(GC) 엔진 안착. 고가치 규칙의 시맨틱 병합을 통해 프롬프트 정보 밀도 극대화.

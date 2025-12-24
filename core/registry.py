@@ -63,6 +63,30 @@ class AgentRegistry:
             logger.error(f"Failed to load agent from {file_path}: {e}")
             return False
 
+    def is_tool_permitted(self, agent_name: str, tool_name: str, agent_economy: Dict[str, Any]) -> bool:
+        """에이전트의 숙련도에 따라 특정 도구의 사용 가능 여부를 판별함."""
+        # 1. 고급 도구별 필요 스킬 포인트 정의
+        advanced_tools = {
+            "apply_patch": {"cat": "Coding", "pts": 500},
+            "audit_architecture": {"cat": "Analysis", "pts": 1000},
+            "spawn_new_agent": {"cat": "Analysis", "pts": 2000},
+            "execute_shell": {"cat": "General", "pts": 300}
+        }
+        
+        if tool_name not in advanced_tools:
+            return True # 일반 도구는 무조건 허용
+            
+        # 2. 에이전트의 현재 스킬 점수 확인
+        required = advanced_tools[tool_name]
+        agent_skills = agent_economy.get(agent_name.lower(), {}).get("skill_points", {})
+        current_pts = agent_skills.get(required["cat"], 0)
+        
+        if current_pts >= required["pts"]:
+            return True
+            
+        logger.warning(f"🚫 Tool '{tool_name}' is locked for {agent_name}. Requires {required['pts']} pts in {required['cat']}.")
+        return False
+
     def get_agent(self, agent_name: str) -> Optional[Type]:
         """등록된 에이전트 클래스 반환"""
         return self._agents.get(agent_name.lower(), {}).get("class")

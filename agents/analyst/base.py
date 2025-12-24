@@ -34,8 +34,24 @@ class AnalystAgent(BaseAgent):
 
     def run(self, state: GortexState) -> Dict[str, Any]:
         """기본 분석 루틴: 품질 평가 또는 리서치 결과 요약"""
+        # [INTEGRATION] Update Skill Points on Success
+        from gortex.utils.economy import get_economy_manager
+        eco_manager = get_economy_manager()
+        
+        eco_manager.update_skill_points(
+            state, 
+            self.metadata.name, 
+            category="Analysis", 
+            quality_score=1.0, 
+            difficulty=1.0
+        )
+        
         # (기본 구현: manager로 복귀하며 성과 리포트)
-        return {"next_node": "manager", "thought": "Analysis routine complete."}
+        return {
+            "next_node": "manager", 
+            "thought": "Analysis routine complete.",
+            "agent_economy": state.get("agent_economy")
+        }
 
     def calculate_efficiency_score(self, success: bool, tokens: int, latency_ms: int, energy_cost: int) -> float:
         if not success: return 0.0

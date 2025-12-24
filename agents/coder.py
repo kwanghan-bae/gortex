@@ -165,6 +165,17 @@ class CoderAgent(BaseAgent):
             if "action" in res_data and res_data["action"] != "none":
                 fname = res_data["action"]
                 fargs = res_data.get("action_input", {})
+                
+                # [INTEGRATION] Tool Permission Check
+                economy_data = state.get("agent_economy", {})
+                if not registry.is_tool_permitted(self.metadata.name, fname, economy_data):
+                    return {
+                        "thought": f"I tried to use {fname} but I don't have enough skill points yet.",
+                        "messages": [("ai", f"🚫 Access Denied: {fname} is locked.")],
+                        "next_node": "coder",
+                        "coder_iteration": current_iteration + 1
+                    }
+
                 result_msg = ""
                 new_file_cache = state.get("file_cache", {}).copy()
 
@@ -186,11 +197,25 @@ class CoderAgent(BaseAgent):
                 }
 
             if status == "success":
+                # [INTEGRATION] Update Skill Points on Success
+                from gortex.utils.economy import get_economy_manager
+                eco_manager = get_economy_manager()
+                
+                # Coding 분야 스킬 포인트 업데이트 (기본 품질 1.2, 난이도 1.5 가정 - 향후 Analyst가 평가)
+                eco_manager.update_skill_points(
+                    state, 
+                    self.metadata.name, 
+                    category="Coding", 
+                    quality_score=1.2, 
+                    difficulty=1.5
+                )
+                
                 return {
                     "current_step": current_step_idx + 1,
                     "coder_iteration": 0,
                     "next_node": "coder",
-                    "messages": [("ai", f"✅ Step {current_step_idx+1} complete")]
+                    "messages": [("ai", f"✅ Step {current_step_idx+1} complete")],
+                    "agent_economy": state.get("agent_economy") # 업데이트된 경제 정보 전파
                 }
             
             return {"thought": coder_thought, "coder_iteration": current_iteration + 1, "next_node": "coder"}

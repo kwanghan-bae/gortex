@@ -76,23 +76,32 @@ class GortexEngine:
         """에이전트 평판, 작업 위험도, 일일 예산을 고려하여 최적 모델 선택"""
         risk = state.get("risk_score", 0.5)
         budget_status = self.tracker.get_budget_status()
-        economy = state.get("agent_economy", {}).get(agent_name, {})
+        economy = state.get("agent_economy", {}).get(agent_name.lower(), {}) # Lowercase key safety
         points = economy.get("points", 0)
+        
+        # 스킬 마스터리 체크 (가장 높은 스킬 점수 확인)
+        skills = economy.get("skill_points", {})
+        max_skill_score = max(skills.values()) if skills else 0
         
         # 1. 예산 고갈 상태 (80% 이상 소모) -> 강제 Ollama 다운그레이드
         if budget_status > 0.8:
             logger.warning(f"🔋 Budget critical ({budget_status:.1%}). Downgrading to Ollama.")
             return "ollama/llama3"
             
-        # 2. 고위험/에픽 작업 + 엘리트 에이전트 -> Gemini Pro
+        # 2. [Rule] Master 등급(2500+)은 고위험 작업에서 Pro 모델 보장
+        if max_skill_score >= 2500 and risk > 0.5:
+             logger.info(f"💎 Agent {agent_name} is a Master ({max_skill_score} pts). Assigning Pro model.")
+             return "gemini-1.5-pro"
+
+        # 3. 고위험/에픽 작업 + 엘리트 에이전트(총점 기준) -> Gemini Pro
         if risk > 0.8 and points > 1000:
             return "gemini-1.5-pro"
             
-        # 3. 일반 전문 작업 -> Gemini Flash
+        # 4. 일반 전문 작업 -> Gemini Flash
         if points > 500 or risk > 0.4:
             return "gemini-2.0-flash"
             
-        # 4. 단순 반복 작업/저평판 에이전트 -> Ollama
+        # 5. 단순 반복 작업/저평판 에이전트 -> Ollama
         return "ollama/llama3"
 
     async def process_node_output(self, node_name: str, output: Dict[str, Any], state: Dict[str, Any]):

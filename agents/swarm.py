@@ -10,20 +10,109 @@ from gortex.core.state import GortexState
 from gortex.agents.analyst import AnalystAgent
 from gortex.core.llm.factory import LLMFactory
 from gortex.utils.prompt_loader import PromptLoader
+from gortex.core.registry import registry
 
 logger = logging.getLogger("GortexSwarm")
 
 class SwarmAgent:
     """
     다중 에이전트 협업 및 토론(Debate)을 관장하는 Swarm Intelligence 모듈.
-    상반된 페르소나(Innovation vs Stability) 간의 라운드 기반 토론을 수행하고 합의를 도출합니다.
+    상반된 페르소나 또는 실제 전문가(Swarm) 간의 라운드 기반 토론을 수행하고 합의를 도출합니다.
     """
     def __init__(self):
         self.backend = LLMFactory.get_default_backend()
         self.prompts = PromptLoader()
+        self.participants = [] # Recruited experts
 
-    async def conduct_debate_round(self, topic: str, round_idx: int, history: List[Dict[str, str]], is_debug: bool = False) -> List[Dict[str, str]]:
-        """단일 토론 라운드 실행 (Innovation -> Stability 순서)"""
+    def recruit_experts(self, state: GortexState, required_skills: List[str]) -> List[Dict[str, Any]]:
+        """요구되는 스킬에 대해 가장 높은 점수를 가진 전문가들을 소집함."""
+        agent_eco = state.get("agent_economy", {})
+        recruits = []
+        recruited_names = set()
+
+        for skill in required_skills:
+            best_agent = None
+            best_score = -1
+            
+            # 모든 에이전트를 순회하며 해당 스킬 점수 확인
+            all_agents = registry.list_agents()
+            for name in all_agents:
+                data = agent_eco.get(name.lower(), {})
+                score = data.get("skill_points", {}).get(skill, 0)
+                if score > best_score:
+                    best_score = score
+                    best_agent = name
+            
+            if best_agent and best_agent not in recruited_names:
+                meta = registry.get_metadata(best_agent)
+                recruits.append({
+                    "name": meta.name,
+                    "role": meta.role,
+                    "recruited_for": skill,
+                    "skill_score": best_score,
+                    "description": meta.description
+                })
+                recruited_names.add(best_agent)
+                logger.info(f"🤝 Recruited {meta.name} (Role: {meta.role}) for {skill} (Score: {best_score})")
+
+        # 만약 모집된 인원이 너무 적으면(1명 이하), Planner를 기본 보조자로 추가
+        if len(recruits) < 2 and "Planner" not in recruited_names:
+             meta = registry.get_metadata("Planner")
+             if meta:
+                 recruits.append({
+                     "name": meta.name,
+                     "role": meta.role,
+                     "recruited_for": "Facilitation",
+                     "skill_score": 0,
+                     "description": meta.description
+                 })
+                 logger.info(f"🤝 Recruited Planner for facilitation (Fallback)")
+
+        self.participants = recruits
+        return recruits
+
+    async def conduct_dynamic_round(self, topic: str, round_idx: int, history: List[Dict[str, str]], is_debug: bool = False) -> List[Dict[str, str]]:
+        """모집된 전문가들이 각자의 전문성을 바탕으로 의견을 제시함."""
+        responses = []
+        
+        # 만약 참여자가 없으면 기존 정적 페르소나 방식으로 폴백
+        if not self.participants:
+            return await self.conduct_static_round(topic, round_idx, history, is_debug)
+
+        for expert in self.participants:
+            role_ctx = f"You are {expert['name']}, the {expert['role']}. You were recruited for your expertise in {expert['recruited_for']}."
+            
+            if is_debug:
+                 obj = "Analyze the error from your domain perspective and propose a specific fix."
+                 if round_idx > 1: obj = "Critique previous proposals and refine the fix plan."
+            else:
+                 obj = "Propose a solution to the topic based on your specialized skills."
+                 if round_idx > 1: obj = "Review other agents' ideas and suggest improvements or highlight risks."
+
+            context_str = "\n".join([f"[{m['role'].upper()}]: {m['content']}" for m in history])
+            
+            prompt = f"""{role_ctx}
+            
+            [Debate Topic]: {topic}
+            [Current Round]: {round_idx}
+            [Context]:
+            {context_str}
+            
+            Your Objective: {obj}
+            Keep it concise (under 200 words). Be highly technical.
+            """
+            
+            loop = asyncio.get_event_loop()
+            response_text = await loop.run_in_executor(None, self.backend.generate, "gemini-2.0-flash", [{"role": "user", "content": prompt}])
+            
+            entry = {"role": expert["name"], "content": response_text, "round": round_idx, "persona": expert["role"]} # UI용 persona 필드 추가
+            responses.append(entry)
+            history.append(entry)
+            
+        return responses
+
+    async def conduct_static_round(self, topic: str, round_idx: int, history: List[Dict[str, str]], is_debug: bool = False) -> List[Dict[str, str]]:
+        """(Legacy) 정적 페르소나 기반 토론"""
         responses = []
         personas = ["innovation", "stability"]
         
@@ -100,7 +189,7 @@ class SwarmAgent:
 
         try:
             response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], config)
-            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            json_match = re.search(r'\{{.*\}}', response_text, re.DOTALL)
             data = json.loads(json_match.group(0)) if json_match else json.loads(response_text)
             
             os.makedirs("logs/debates", exist_ok=True)
@@ -114,15 +203,25 @@ class SwarmAgent:
             logger.error(f"Consensus synthesis failed: {e}")
             return {"final_decision": "Failed to synthesize", "rationale": str(e), "action_plan": []}
 
-    async def run_debate(self, topic: str, rounds: int = 2, is_debug: bool = False) -> Dict[str, Any]:
-        """토론 전체 프로세스 실행"""
+    async def run_debate(self, topic: str, state: GortexState, rounds: int = 2, is_debug: bool = False) -> Dict[str, Any]:
+        """토론 전체 프로세스 실행 (Dynamic Recruitment 포함)"""
         history = []
         mode_icon = "⚔️" if not is_debug else "🩺"
+        
+        # 1. 전문가 모집
+        required_skills = ["Analysis", "Coding"] # 기본값
+        if is_debug: required_skills = ["Analysis", "Coding", "General"] # Security 대신 General로 테스트
+        
+        # 키워드 기반 필요 스킬 추론 (간이 로직)
+        if "security" in topic.lower() or "hack" in topic.lower(): required_skills.append("Security") # Security 카테고리는 Economy에 추가 필요
+        if "design" in topic.lower() or "architecture" in topic.lower(): required_skills.append("Design")
+        
         logger.info(f"{mode_icon} Starting debate on: {topic}")
+        self.recruit_experts(state, required_skills)
         
         for r in range(1, rounds + 1):
             logger.info(f"--- Round {r} ---")
-            await self.conduct_debate_round(topic, r, history, is_debug=is_debug)
+            await self.conduct_dynamic_round(topic, r, history, is_debug=is_debug)
             
         logger.info("⚖️ Synthesizing consensus...")
         consensus = self.synthesize_consensus(topic, history, is_debug=is_debug)
@@ -139,14 +238,18 @@ async def swarm_node_async(state: GortexState) -> Dict[str, Any]:
     # 2. Swarm Agent 인스턴스화
     agent = SwarmAgent()
     
-    # 3. 토론 실행 (디버그 시에는 고도로 집중된 2라운드 토론)
-    consensus = await agent.run_debate(topic, rounds=2, is_debug=is_debug)
+    # 3. 토론 실행 (State 전달)
+    consensus = await agent.run_debate(topic, state, rounds=2, is_debug=is_debug)
     
     # 4. 결과 메시지 포맷팅
     title = "⚖️ **Consensus Reached**" if not is_debug else "🩺 **Joint Diagnosis & Fix Plan Established**"
     msg = f"{title}\n\n**Decision**: {consensus.get('final_decision')}\n**Rationale**: {consensus.get('rationale')}\n"
     if consensus.get("action_plan"):
         msg += "**Action Plan**:\n" + "\n".join([f"- {step}" for step in consensus["action_plan"]])
+
+    # UI에 보여줄 참가자 정보
+    participants_info = ", ".join([f"{p['name']} ({p['role']})" for p in agent.participants])
+    msg += f"\n\n*(Participants: {participants_info})*"
 
     return {
         "messages": [("ai", msg)],

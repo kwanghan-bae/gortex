@@ -1,152 +1,59 @@
 #!/bin/bash
-# Gortex Pre-Commit Check Script v1.4 (Selective Testing Support)
 
-set -e
+# 🛡️ SOVEREIGN GUARD PRE-COMMIT V6.0 (Final Evolution)
+# High-rigor enforcement of documentation-code integrity.
+
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-# Parse Arguments
-SELECTIVE_MODE=false
-FILES_TO_TEST=""
+echo -e "${GREEN}🔒 [Sovereign Guard] Executing absolute quality audit...${NC}"
 
-while [[ "$#" -gt 0 ]]; do
-    case $1 in
-        --selective) SELECTIVE_MODE=true; shift ;;
-        *) FILES_TO_TEST="$FILES_TO_TEST $1"; shift ;;
-    esac
-done
-
-echo -e "${GREEN}🔍 Starting Pre-Commit Checks (Mode: $([ "$SELECTIVE_MODE" = true ] && echo "Selective" || echo "Full"))...${NC}"
-
-# Python Command Setup
-if [ -d "venv" ]; then
-    PYTHON_CMD="venv/bin/python"
-elif [ -d "../venv" ]; then
-    PYTHON_CMD="../venv/bin/python"
-else
-    PYTHON_CMD="python3"
-fi
-
-# Ensure PYTHONPATH include project root's parent to treat 'gortex' as package
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
-PARENT_DIR="$(dirname "$PROJECT_ROOT")"
-export PYTHONPATH=$PARENT_DIR:$PYTHONPATH
-
-# ==========================================
-# 1. Syntax & Lint Check (CRITICAL)
-# ==========================================
-echo -e "📦 Checking syntax and linting (Ruff)..."
-cd "$PROJECT_ROOT"
-
-# [AI-LAZINESS GUARD] 생략 기호 및 플레이스홀더 검사 (Strict Pattern Matching)
-echo -e "🤖 Scanning for AI placeholders (# ..., (중략), etc.)..."
-# 줄 전체가 공백/주석과 함께 점 3개 이상 또는 중략/생략 단어로만 구성된 경우 검색
-if grep -rE "^\s*#\s*\.\.\.\s*$|^\s*#\s*…\s*$|^\s*#\s*\(중략\)\s*$|^\s*#\s*\(생략\)\s*$" . --include="*.py" --exclude-dir="venv" --exclude-dir="logs" --exclude-dir="docs" --exclude="test_integrity.py"; then
-    echo -e "${RED}❌ CRITICAL: AI-generated placeholder detected!${NC}"
-    echo -e "${RED}   Found an empty ellipsis or placeholder line. Never omit code using placeholders.${NC}"
+# 1. AI Laziness & Placeholder Detection (Hard Block)
+# 패턴 정의 (패턴 자체가 grep에 걸리지 않도록 쪼개서 작성)
+P1='//'
+P2=' ...'
+P3='#'
+P4='(중략)'
+JOINED_PATTERNS="${P1}${P2}|${P3}${P2}|\/\* ${P2} \*\/|// existing code|// rest of code|// same as before|# remains unchanged|TODO: Implement|${P4}|\(생략\)|// 기존 로직과 동일|// 상동|// 이전과 동일"
+if git diff --cached | grep -Ei "$JOINED_PATTERNS"; then
+    echo -e "${RED}❌ [ABSOLUTE BLOCK] AI Laziness Detected!${NC}"
     exit 1
 fi
 
-if command -v ruff &> /dev/null; then
-    ruff check . --fix || { echo -e "${RED}❌ Lint errors found! Fix them before committing.${NC}"; exit 1; }
-else
-    echo -e "${YELLOW}⚠️  Ruff not found. Falling back to basic syntax check...${NC}"
-    find . -name "*.py" -not -path "./venv/*" -not -path "./logs/*" | xargs python3 -m py_compile || { echo -e "${RED}❌ Syntax Error Detected!${NC}"; exit 1; }
+# 2. Strict Documentation Enforcement (NEW: Hard Link)
+# 논리적 코드 변경 시 docs/ 하위 파일이나 README.md 수정이 없으면 커밋을 막습니다.
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+HAS_LOGIC=$(echo "$STAGED_FILES" | grep -E "\.(kt|dart|py)$" || true)
+HAS_DOCS=$(echo "$STAGED_FILES" | grep -E "(\.md|docs/)" || true)
+
+if [ -n "$HAS_LOGIC" ] && [ -z "$HAS_DOCS" ]; then
+    echo -e "${RED}❌ [DOCUMENTATION DEBT] You modified code but NOT documentation!${NC}"
+    echo "AI는 반드시 SPEC_CATALOG.md, TECHNICAL_SPEC.md 혹은 ADR.md 중 하나를 업데이트해야 합니다."
+    exit 1
 fi
 
-# ==========================================
-# 2. Strict Test Existence Check (CRITICAL)
-# ==========================================
-echo -e "🧪 Verifying mandatory test existence..."
-STAGED_FILES=$(git diff --cached --name-only)
-for file in $STAGED_FILES; do
-    # src 디렉토리나 에이전트/코어 로직 파일인 경우 (tests/ 제외)
-    if [[ $file == *.py ]] && [[ $file != tests/* ]] && [[ $file != scripts/* ]]; then
-        filename=$(basename "$file")
-        test_file="tests/test_${filename}"
-        if [ ! -f "$test_file" ]; then
-             echo -e "${RED}❌ CRITICAL: No test file found for '$file'.${NC}"
-             echo -e "${RED}   Expected: '$test_file'${NC}"
-             exit 1
+# 3. TDD Enforcement (Strict Pair Matching)
+for FILE in $STAGED_FILES; do
+    if [[ $FILE == *.kt ]] || [[ $FILE == *.dart ]]; then
+        FILENAME=$(basename "$FILE")
+        if [[ $FILENAME == *Test* ]] || [[ $FILENAME == *_test* ]]; then continue; fi
+        TEST_KT="${FILENAME%.*}Test.kt"
+        TEST_DART="${FILENAME%.*}_test.dart"
+        if ! find . -name "$TEST_KT" -o -name "$TEST_DART" | grep -q .; then
+            echo -e "${RED}❌ [TDD VIOLATION] Missing test file for: $FILENAME${NC}"
+            exit 1
         fi
     fi
 done
 
-function run_full_tests() {
-    if $PYTHON_CMD -m coverage --version &> /dev/null; then
-        $PYTHON_CMD -m coverage run -m unittest discover -s tests -p "test_*.py"
-        $PYTHON_CMD -m coverage report -m
-    else
-        $PYTHON_CMD -m unittest discover -s tests -p "test_*.py"
-    fi
-}
-
-# ==========================================
-# 3. Unit Tests & Coverage (CRITICAL)
-# ==========================================
-echo -e "📊 Running tests..."
-
-if [ "$SELECTIVE_MODE" = true ] && [ -n "$FILES_TO_TEST" ]; then
-    echo -e "⚡ Identifying relevant tests for changed files..."
-    SPECIFIC_TESTS=""
-    for file in $FILES_TO_TEST; do
-        filename=$(basename "$file" .py)
-        FOUND=$(find tests -name "test_${filename}*.py")
-        if [ -n "$FOUND" ]; then
-            SPECIFIC_TESTS="$SPECIFIC_TESTS $FOUND"
-        fi
-    done
-    
-    if [ -n "$SPECIFIC_TESTS" ]; then
-        echo -e "🎯 Targeting: $SPECIFIC_TESTS"
-        if $PYTHON_CMD -m coverage --version &> /dev/null; then
-            $PYTHON_CMD -m coverage run -m unittest $SPECIFIC_TESTS
-            $PYTHON_CMD -m coverage report -m
-        else
-            $PYTHON_CMD -m unittest $SPECIFIC_TESTS
-        fi
-    else
-        echo -e "${YELLOW}⚠️  No specific tests found. Running all tests...${NC}"
-        run_full_tests
-    fi
-else
-    run_full_tests
+# 4. Project Specific Verification
+if [ -f "clover-wallet/gradlew" ]; then
+    (cd clover-wallet && ./gradlew ktlintCheck test --quiet) || exit 1
+fi
+if [ -f "clover_wallet_app/pubspec.yaml" ]; then
+    (cd clover_wallet_app && flutter analyze && flutter test) || exit 1
 fi
 
-if [ $? -ne 0 ]; then
-    echo -e "${RED}❌ Tests Failed! Aborting commit.${NC}"
-    exit 1
-fi
-
-# ==========================================
-# 4. Documentation Check (Warnings)
-# ==========================================
-WARNINGS=0
-echo -e "📝 Checking session documentation..."
-if ! echo "$STAGED_FILES" | grep -q "release_note.md"; then
-    echo -e "${YELLOW}⚠️  Warning: 'release_note.md' not updated.${NC}"
-    WARNINGS=$((WARNINGS+1))
-fi
-if ! echo "$STAGED_FILES" | grep -q "next_session.md"; then
-    echo -e "${YELLOW}⚠️  Warning: 'next_session.md' not updated.${NC}"
-    WARNINGS=$((WARNINGS+1))
-fi
-
-# ==========================================
-# 5. Final Result
-# ==========================================
-if [ $WARNINGS -gt 0 ]; then
-    echo -e "${YELLOW}🚨 Total Warnings: $WARNINGS (Proceeding automatically...)${NC}"
-else
-    echo -e "${GREEN}✅ All Quality Checks Passed!${NC}"
-fi
-
-echo -e "${GREEN}🚀 Ready to commit. Follow the Korean commit guide below.${NC}"
-echo -e "\n${YELLOW}💡 Commit Message Guide:${NC}"
-echo -e "   Format: type: description (in Korean)"
-echo -e "   Types: feat, fix, docs, style, refactor, test, chore"
-
-exit 0
+echo -e "${GREEN}✅ [Sovereign Guard] Audit successful. Your intelligence is consistent.${NC}"

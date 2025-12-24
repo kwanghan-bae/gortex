@@ -245,10 +245,23 @@ class DashboardUI:
         debate_group.append(Text("⚔️ [bold red]MULTI-AGENT DEBATE IN PROGRESS[/bold red]", justify="center"))
         
         for entry in debate_data:
-            persona = entry.get("persona", "Neutral")
-            color = "magenta" if persona == "Innovation" else "cyan"
-            title = f"🎭 {persona.upper()}"
-            content = entry.get("report", "")[:500] + "..." if len(entry.get("report", "")) > 500 else entry.get("report", "")
+            # persona 필드를 우선 사용하되, 없으면 role 필드 사용 (Role은 에이전트 이름일 수 있음)
+            role_name = entry.get("role", "Unknown")
+            persona_role = entry.get("persona", role_name) # e.g., "Auditor" or "Innovation"
+            
+            # 색상 및 타이틀 결정
+            if persona_role.lower() == "innovation":
+                color = "magenta"
+                title = f"🎭 {persona_role.upper()}"
+            elif persona_role.lower() == "stability":
+                color = "cyan"
+                title = f"🎭 {persona_role.upper()}"
+            else:
+                # Expert Agent (Recruited)
+                color = "green"
+                title = f"🧑‍🔬 {role_name.upper()} ({persona_role})"
+
+            content = entry.get("content", "")[:500] + "..." if len(entry.get("content", "")) > 500 else entry.get("content", "")
             debate_group.append(Panel(content, title=title, border_style=color, padding=(0, 1)))
 
         self.layout["main"].update(Panel(Group(*debate_group), title="[bold red]⚖️ CONSENSUS DEBATE[/bold red]", border_style="red"))
@@ -590,37 +603,62 @@ class DashboardUI:
         if agent_economy:
             self.update_economy_panel(agent_economy)
 
+    def render_skill_radar(self, skills: Dict[str, int]) -> Group:
+        """스킬 포인트를 레이더 스타일(바 및 등급)로 렌더링"""
+        if not skills:
+            return Group(Text("No skills acquired.", style="dim"))
+
+        radar_group = []
+        categories = ["Coding", "Research", "Design", "Analysis"]
+        colors = {"Coding": "bold green", "Research": "bold blue", "Design": "bold magenta", "Analysis": "bold yellow"}
+        
+        for cat in categories:
+            val = skills.get(cat, 0)
+            # 등급 산출 (EconomyManager 기준과 동기화)
+            rank = "Apprentice"
+            if val >= 3000: rank = "Master"
+            elif val >= 1500: rank = "Expert"
+            elif val >= 500: rank = "Journeyman"
+            
+            # 게이지 (10칸 기준, 300점당 한 칸)
+            bars = min(10, val // 300)
+            color = colors.get(cat, "white")
+            
+            bar_str = "●" * bars + "○" * (10 - bars)
+            radar_group.append(Text.assemble(
+                (f"{cat:9} ", color),
+                (f"{bar_str} ", color),
+                (f"[{rank}]", "dim white")
+            ))
+            
+        return Group(*radar_group)
+
     def update_economy_panel(self, agent_economy: dict):
-        """에이전트 평판 및 스킬 트리 업데이트"""
+        """에이전트 평판 및 숙련도 트리를 시각화함 (Skill Radar 통합)."""
         if not agent_economy:
             self.layout["economy"].update(Panel("No data.", title="🏆 REPUTATION", border_style="dim"))
             return
 
-        # 1. Leaderboard Table
-        table = Table.grid(expand=True)
+        # 1. 상위 랭커 리더보드 (간소화)
+        leaderboard = Table.grid(expand=True)
         sorted_agents = sorted(agent_economy.items(), key=lambda x: x[1].get("points", 0), reverse=True)
         
-        for name, data in sorted_agents[:3]:
+        for name, data in sorted_agents[:2]:
             lvl = data.get("level", "B")
             pts = data.get("points", 0)
             color = "yellow" if lvl == "Gold" else ("white" if lvl == "Silver" else "magenta")
-            table.add_row(f"{name[:8]}", f"[{color}]{lvl}[/]", f"{pts}p")
+            leaderboard.add_row(f"{name[:8]}", f"[{color}]{lvl}[/]", f"{pts}p")
             
-        # 2. Skill Tree for Current Agent
-        skill_group = []
+        # 2. 현재 에이전트 상세 Skill Radar
+        skill_radar = []
         target = self.current_agent.lower()
         if target != "idle" and target in agent_economy:
             skills = agent_economy[target].get("skill_points", {})
-            if skills:
-                skill_group.append(Text(f"\n[ {target.upper()} SKILLS ]", style="bold cyan"))
-                for cat, val in skills.items():
-                    # 100점당 █ 하나 (최대 5개)
-                    bars = min(5, (val // 100) + 1) if val > 0 else 0
-                    bar_str = "█" * bars + "░" * (5 - bars)
-                    skill_group.append(Text(f"{cat:8} {bar_str} {val}", style="dim"))
+            skill_radar.append(Text(f"\n[ {target.upper()} SKILL RADAR ]", style="bold cyan", justify="center"))
+            skill_radar.append(self.render_skill_radar(skills))
 
-        economy_content = Group(table, *skill_group)
-        self.layout["economy"].update(Panel(economy_content, title="🏆 [bold yellow]REPUTATION[/]", border_style="yellow"))
+        economy_content = Group(leaderboard, *skill_radar)
+        self.layout["economy"].update(Panel(economy_content, title="🏆 [bold yellow]ECONOMY & SKILLS[/]", border_style="yellow"))
 
     def render(self):
         return self.layout

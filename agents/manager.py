@@ -117,8 +117,34 @@ class ManagerAgent(BaseAgent):
             
             if candidates:
                 agent_eco = state.get("agent_economy", {})
-                candidates.sort(key=lambda x: agent_eco.get(x, {}).get("points", 0), reverse=True)
+                
+                # [INTEGRATION] Skill-based Routing
+                # 1. 요구 능력에 따른 관련 스킬 카테고리 추론
+                skill_map = {
+                    "coding": "Coding", "code": "Coding", "patch": "Coding", "write": "Coding",
+                    "design": "Design", "plan": "Design", "architect": "Design",
+                    "analyze": "Analysis", "audit": "Analysis", "scan": "Analysis",
+                    "research": "Research", "search": "Research"
+                }
+                # 도구명이나 역할명에 키워드가 포함되어 있는지 확인
+                target_skill = "General"
+                for key, val in skill_map.items():
+                    if key in req_cap:
+                        target_skill = val
+                        break
+                
+                # 2. 해당 스킬 점수 우선 정렬 (스킬 점수 70% + 총점 30% 가중치)
+                def calculate_score(agent_name):
+                    data = agent_eco.get(agent_name.lower(), {})
+                    skill_score = data.get("skill_points", {}).get(target_skill, 0)
+                    total_score = data.get("points", 0)
+                    return (skill_score * 0.7) + (total_score * 0.3)
+
+                candidates.sort(key=calculate_score, reverse=True)
                 target_node = candidates[0]
+                
+                if target_skill != "General":
+                    logger.info(f"🎯 Routing based on skill '{target_skill}': Selected {target_node}")
             else:
                 target_node = "planner"
 

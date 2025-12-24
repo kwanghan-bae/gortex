@@ -146,6 +146,17 @@ class PlannerAgent(BaseAgent):
             if pruned_count > 0: msg += f" (⚠️ {pruned_count} steps pruned for energy)"
             if resource_alert: msg += f"\n⚠️ **High Resource Usage Predicted**: ${expected_cost:.4f} expected."
 
+            # [INTEGRATION] Update Skill Points on Success (Design category for Architect)
+            from gortex.utils.economy import get_economy_manager
+            eco_manager = get_economy_manager()
+            eco_manager.update_skill_points(
+                state, 
+                self.metadata.name, 
+                category="Design", 
+                quality_score=1.1, 
+                difficulty=1.2
+            )
+
             return {
                 "thought_process": plan_data.get("thought_process"),
                 "impact_analysis": plan_data.get("impact_analysis"),
@@ -159,7 +170,8 @@ class PlannerAgent(BaseAgent):
                     "cost": expected_cost,
                     "latency_ms": total_predicted_ms
                 },
-                "messages": [("ai", msg)]
+                "messages": [("ai", msg)],
+                "agent_economy": state.get("agent_economy")
             }
         except Exception as e:
             logger.error(f"Planner failed: {e}")
