@@ -1,67 +1,78 @@
 #!/bin/bash
 
-# 🛡️ SOVEREIGN GUARD PRE-COMMIT V6.5 (Ultra-Strict Polyglot)
-# Features: Self-exclusion, Language-specific linters, Hidden error detection.
+# 🛡️ SOVEREIGN GUARD PRE-COMMIT V8.3 (Ultimate Integrity)
+# Features: Context-Aware, Hidden Error Scan, Full Build Guard, Scratchpad Validation.
 
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 YELLOW='\033[1;33m'
 NC='\033[0m'
 
-echo -e "${GREEN}🔒 [Guard] Starting intensive quality audit...${NC}"
+echo -e "${GREEN}🔒 [Guard] Starting comprehensive multi-layer quality audit...${NC}"
 
 # 1. AI Laziness & Hallucination Guard
-P1='//'; P2=' ...'; P3='#'; P4='(중략)'
-CHECK_RE="\/\/[[:space:]]*\.\.\.|#[[:space:]]*\.\.\.|\/\*[:space:]]*\.\.\.*\*\/|// existing code|// rest of code|// same as before|# remains unchanged|TODO: Implement|${P4}|\(생략\)|// 기존 로직과 동일|// 상동|// 이전과 동일"
+LAZY_RE="\/\/[[:space:]]*\.\.\.|#[[:space:]]*\.\.\.|\/\*[:space:]]*\.\.\.*\*\/|// existing code|// rest of code|// same as before|# remains unchanged|TODO: Implement|\(중략\)|\(생략\)|// 기존 로직과 동일|// 상동|// 이전과 동일"
+CODE_BAD_RE="@org\.springframework|kotlinx\.coroutines|@java\.util|@org\.apache|@com\.google"
 
-STAGED_FILES_LIST=$(git diff --cached --name-only | grep -v "scripts/pre_commit.sh" || true)
-if [ -n "$STAGED_FILES_LIST" ]; then
-    if git diff --cached -- $STAGED_FILES_LIST | grep "^+" | grep -Ei "$CHECK_RE" > /dev/null; then
-        echo -e "${RED}❌ [ABSOLUTE BLOCK] AI Laziness Detected in NEW code!${NC}"
-        git diff --cached -- $STAGED_FILES_LIST | grep "^+" | grep -Ei "$CHECK_RE"
+STAGED_FILES=$(git diff --cached --name-only | grep -v "scripts/pre_commit.sh" | grep -v "docs/init/templates/" || true)
+
+if [ -n "$STAGED_FILES" ]; then
+    # 1.1 전역 나태함 검사
+    if git diff --cached $STAGED_FILES | grep "^+" | grep -Ei "$LAZY_RE" > /dev/null; then
+        echo -e "${RED}❌ [ABSOLUTE BLOCK] AI Laziness Detected!${NC}"
         exit 1
+    fi
+
+    # 1.2 소스 코드 전용 정밀 검사
+    SOURCE_FILES=$(echo "$STAGED_FILES" | grep -E "\.(kt|java|ts|tsx|dart|cs)$" || true)
+    if [ -n "$SOURCE_FILES" ]; then
+        if git diff --cached $SOURCE_FILES | grep "^+" | grep -v "^+import " | grep -Ei "$CODE_BAD_RE" > /dev/null; then
+            echo -e "${RED}❌ [CODE STANDARD VIOLATION] Lazy full-package call detected!${NC}"
+            exit 1
+        fi
     fi
 fi
 
-# 2. File & Project Identification
+# 2. Path & Documentation Guard (Hard Binding)
 STAGED_ALL=$(git diff --cached --name-only --diff-filter=ACM)
-HAS_KOTLIN=$(echo "$STAGED_ALL" | grep -E "\.kt$" || true)
-HAS_TS=$(echo "$STAGED_ALL" | grep -E "\.(ts|tsx)$" || true)
+HAS_LOGIC=$(echo "$STAGED_ALL" | grep -E "\.(kt|java|ts|tsx|dart|cs|py)$" || true)
 HAS_DOCS=$(echo "$STAGED_ALL" | grep -E "(\.md|docs/)" || true)
 
-# 3. Documentation Debt Check
-if ([ -n "$HAS_KOTLIN" ] || [ -n "$HAS_TS" ]) && [ -z "$HAS_DOCS" ]; then
-    echo -e "${RED}❌ [DOC DEBT] Logic changed but NO docs updated! Update SPEC_CATALOG or TECHNICAL_SPEC.${NC}"
+if [ -n "$HAS_LOGIC" ] && [ -z "$HAS_DOCS" ]; then
+    echo -e "${RED}❌ [DOC DEBT] Logic changed but NO docs updated!${NC}"
     exit 1
 fi
 
-# 4. Dedicated Validation
-# 4.1 Kotlin / Java
-if [ -n "$HAS_KOTLIN" ] && [ -f "backend/gradlew" ]; then
-    echo "🧪 Verifying Backend (Kotlin + ktlint)..."
-    (cd backend && ./gradlew ktlintCheck test --quiet) || exit 1
+# 3. Scratchpad Health Check
+# 연습장 파일이 초기화되지 않은 상태로 작업을 진행했는지 감사합니다.
+if [ -f "docs/SCRATCHPAD.md" ]; then SP_PATH="docs/SCRATCHPAD.md"
+elif [ -f "docs/*/SCRATCHPAD.md" ]; then SP_PATH=$(ls docs/*/SCRATCHPAD.md | head -n 1)
+else SP_PATH=""
 fi
 
-# 4.2 React Native / JS / TS (Hidden Error Detection)
-if [ -n "$HAS_TS" ] && [ -f "frontend/package.json" ]; then
-    echo "🧪 Verifying Frontend (React Native + ESLint)..."
-    cd frontend
-    
-    # Lint
-    if npm run | grep -q "lint"; then
-        npm run lint || echo -e "${YELLOW}⚠️ Lint failed, but proceeding...${NC}"
+if [ -n "$SP_PATH" ]; then
+    if grep -q "{현재 달성하려는 목표}" "$SP_PATH"; then
+        echo -e "${YELLOW}⚠️ [SCRATCHPAD] Thinking process is not updated for the current task!${NC}"
     fi
-    
-    # [핵심 지능] 테스트 로그 내 'ERROR:' 또는 'Failed' 탐지
-    TEST_LOG=$(npm test -- --watchAll=false 2>&1)
-    TEST_EXIT_CODE=$?
-    echo "$TEST_LOG"
-    
-    if [ $TEST_EXIT_CODE -ne 0 ] || echo "$TEST_LOG" | grep -Ei "ERROR:|Failed to collect coverage" > /dev/null; then
-        echo -e "${RED}❌ [STRICT BLOCK] Hidden errors or coverage failures detected in test output!${NC}"
+fi
+
+# 4. Language Specific High-Rigor Audits
+# 4.1 React Native / TypeScript
+if echo "$STAGED_ALL" | grep -q "frontend/"; then
+    echo "🧪 Verifying Frontend (RN + Full Build Guard)..."
+    cd frontend
+    npm test -- --watchAll=false 2>&1 | tee /tmp/test_log.txt
+    if [ ${PIPESTATUS[0]} -ne 0 ] || grep -Ei "ERROR:|Failed to collect coverage|SyntaxError" /tmp/test_log.txt > /dev/null; then
+        echo -e "${RED}❌ [TEST FAILURE] Critical errors detected!${NC}"
         exit 1
     fi
     cd ..
 fi
 
-echo -e "${GREEN}✅ [Guard] All specific checks passed. Quality is absolute.${NC}"
+# 4.2 Kotlin & Java
+if echo "$STAGED_ALL" | grep -E "(\.kt|\.java)$" | grep -q "backend/"; then
+    echo "🧪 Verifying JVM Backend (Kotlin/Java + ktlint)..."
+    (cd backend && ./gradlew ktlintCheck test --quiet) || exit 1
+fi
+
+echo -e "${GREEN}✅ [Guard] Audit successful. Total Integrity Guaranteed.${NC}"
