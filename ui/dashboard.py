@@ -13,6 +13,7 @@ from typing import Dict, Any, List, Optional
 from gortex.ui.themes.palette import Palette, get_agent_style
 from gortex.ui.components.header import AppHeader
 from gortex.ui.components.welcome import WelcomeScreen
+from gortex.ui.components.monitor import SystemMonitor
 
 logger = logging.getLogger("GortexDashboard")
 
@@ -39,6 +40,10 @@ class DashboardUI:
         self.efficiency = 100.0
         self.agent_thought = ""
         self.collab_matrix = {}
+        
+        # [Phase 3] System Inspector
+        self.monitor = SystemMonitor(console)
+        self.monitor_active = False
 
     def update_sidebar(self, agent="Idle", step="Ready", tokens=None, cost=None, rules=None, provider=None, energy=None, efficiency=None):
         if agent: self.current_agent = agent
@@ -60,6 +65,12 @@ class DashboardUI:
     def update_logs(self, log_entry: dict):
         self.recent_logs.append(log_entry)
         if len(self.recent_logs) > 8: self.recent_logs.pop(0)
+        
+    def toggle_monitor_mode(self):
+        """Toggle System Inspector overlay."""
+        self.monitor_active = not self.monitor_active
+        mode_msg = "ON" if self.monitor_active else "OFF"
+        self.chat_history.append(("system", f"🔍 System Monitor: [bold]{mode_msg}[/]"))
 
     def _render_chat(self, height: int, width: int) -> Group:
         if not self.chat_history:
@@ -109,7 +120,6 @@ class DashboardUI:
     def layout(self) -> Layout:
         width = self.console.width
         height = self.console.height
-        compact = height < 28
         
         l = Layout()
         l.split_column(
@@ -117,6 +127,22 @@ class DashboardUI:
             Layout(name="body")
         )
         
+        # 1. Header
+        header_comp = AppHeader(width, self.energy, self.provider)
+        l["header"].update(header_comp.render())
+
+        # [Phase 3] System Monitor Overlay
+        if self.monitor_active:
+            # 상태값 주입
+            state_snapshot = {
+                "agent_energy": self.energy,
+                "total_tokens": self.tokens_used,
+                "total_cost": self.total_cost
+            }
+            self.monitor.collect_metrics(state_snapshot)
+            l["body"].update(self.monitor.render())
+            return l
+
         l["body"].split_row(
             Layout(name="main", ratio=3),
             Layout(name="side", ratio=1)
@@ -127,14 +153,10 @@ class DashboardUI:
             Layout(name="thought", size=5)
         )
         
-        # 1. Header
-        header_comp = AppHeader(width, self.energy, self.provider)
-        l["header"].update(header_comp.render())
-
         # 2. Main Chat
         l["chat"].update(Panel(
             self._render_chat(height - 15, width), 
-            title=f" [{Palette.BLUE}]⚡ AGENT CORE[/] ", 
+            title=f" [bold {Palette.BLUE}]⚡ AGENT CORE[/] ", 
             border_style=Palette.BLUE, 
             box=box.ROUNDED
         ))

@@ -126,21 +126,14 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
         return "skip"
 
     elif cmd == "/status":
-        stats = observer.get_stats()
-        total_tokens = stats.get('total_tokens', 0)
-        total_cost = stats.get('total_cost', 0.0)
-        uptime = stats.get('uptime', 'N/A')
-        trace_id = stats.get('trace_id', 'N/A')
-        
-        report = f"""
-### 📊 Gortex System Status
-- **Trace ID**: `{trace_id}`
-- **Total Tokens**: {total_tokens:,}
-- **Est. Cost**: ${total_cost:.6f}
-- **Session Uptime**: {uptime}
-"""
-        ui.chat_history.append(("system", Panel(Markdown(report), title="STATUS", border_style="magenta")))
-        ui.update_main(ui.chat_history)
+        if hasattr(ui, "toggle_monitor_mode"):
+            ui.toggle_monitor_mode()
+        else:
+            # Fallback for older UI versions (safety check)
+            stats = observer.get_stats()
+            report = f"### System Status\nTokens: {stats.get('total_tokens',0):,}\nCost: ${stats.get('total_cost',0):.4f}"
+            ui.chat_history.append(("system", Panel(Markdown(report), title="STATUS", border_style="magenta")))
+            ui.update_main(ui.chat_history)
         return "skip"
 
     elif cmd == "/rca":
