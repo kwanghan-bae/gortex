@@ -113,7 +113,7 @@ class DashboardUI:
         
         l = Layout()
         l.split_column(
-            Layout(name="header", size=7 if width >= 80 else 4),
+            Layout(name="header", size=10 if width >= 100 else 6),
             Layout(name="body")
         )
         

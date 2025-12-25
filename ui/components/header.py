@@ -31,16 +31,16 @@ class AppHeader:
         color = Palette.GREEN if self.energy > 70 else (Palette.YELLOW if self.energy > 30 else Palette.RED)
         
         # Gradient simulation for Logo
-        grad_chars = " 🍀 GORTEX Agent OS " if w < 80 else SHORT_LOGO.strip("\n")
-        
-        # Simple gradient rendering for text
         header_text = Text()
-        lines = grad_chars.split("\n")
-        colors = Palette.GRADIENT_GORTEX
-        
-        for i, line in enumerate(lines):
-            c = colors[i % len(colors)]
-            header_text.append(line + "\n", style=f"bold {c}")
+        if w < 100:
+            header_text.append(f" 🍀 GORTEX Agent OS ", f"bold {Palette.GRADIENT_GORTEX[0]}")
+        else:
+            lines = SHORT_LOGO.strip("\n").split("\n")
+            colors = Palette.GRADIENT_GORTEX
+            for i, line in enumerate(lines):
+                # 라인별 색상 + 수평 그라데이션 효과 (단순화)
+                base_color = colors[i % len(colors)]
+                header_text.append(line + "\n", f"bold {base_color}")
         
         # Status Bar
         energy_val = self.energy if isinstance(self.energy, (int, float)) else 100
@@ -58,4 +58,10 @@ class AppHeader:
         header_text.append("\n")
         header_text.append(status_line)
         
-        return Panel(header_text, border_style=Palette.GRAY, box=box.HORIZONTALS, padding=(0, 1))
+        return Panel(
+            header_text,
+            border_style=Palette.GRAY,
+            box=box.ROUNDED,
+            height=9 if w >= 100 else 5,
+            padding=(0, 2)
+        )
