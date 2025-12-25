@@ -43,12 +43,18 @@ playwright install chromium
 # 5. .env 파일 체크 및 생성
 if [ ! -f ".env" ]; then
     echo -e "${YELLOW}📝 .env 설정이 필요합니다.${NC}"
-    echo -n "첫 번째 Gemini API 키를 입력하세요 (필수): "
+    echo -e "${YELLOW}💡 Gemini Key가 없으면 'Ollama Only' 모드로 동작합니다.${NC}"
+    echo -n "첫 번째 Gemini API 키를 입력하세요 (선택, 엔터로 스킵): "
     read -r API_KEY_1
     API_KEY_1=$(echo "$API_KEY_1" | xargs) # 공백 제거
-    echo -n "두 번째 Gemini API 키를 입력하세요 (선택, 엔터로 스킵): "
-    read -r API_KEY_2
-    API_KEY_2=$(echo "$API_KEY_2" | xargs) # 공백 제거
+    
+    if [ -z "$API_KEY_1" ]; then
+        echo -e "${BLUE}ℹ️ Gemini Key를 건너뜁니다. 로컬 Ollama를 사용합니다.${NC}"
+    else
+        echo -n "두 번째 Gemini API 키를 입력하세요 (선택, 엔터로 스킵): "
+        read -r API_KEY_2
+        API_KEY_2=$(echo "$API_KEY_2" | xargs) # 공백 제거
+    fi
     
     cat <<EOF > .env
 GEMINI_API_KEY_1=$API_KEY_1
@@ -57,6 +63,8 @@ WORKING_DIR=./workspace
 LOG_LEVEL=INFO
 MAX_CODER_ITERATIONS=30
 TREND_SCAN_INTERVAL_HOURS=24
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=qwen2.5-coder:7b
 EOF
     echo -e "${GREEN}✅ .env 파일이 생성되었습니다.${NC}"
 fi

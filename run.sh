@@ -16,6 +16,7 @@ else
 fi
 
 # 실행
+export PYTHONWARNINGS="ignore"
 python3 main.py "$@"
 
 # 실패 시 처리
