@@ -3,683 +3,185 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 from rich.console import Console, Group
-from rich.spinner import Spinner
-from rich.syntax import Syntax
-from rich.json import JSON
-from rich.progress import Progress, BarColumn, TextColumn, TimeElapsedColumn, SpinnerColumn
-from gortex.utils.table_detector import try_render_as_table
-from gortex.utils.asset_manager import SynapticAssetManager
-from gortex.ui.dashboard_theme import ThemeManager
+from rich.markdown import Markdown
+from rich.columns import Columns
+from rich import box
 from datetime import datetime
 import logging
-import json
+from typing import Dict, Any, List, Optional
+
+from gortex.ui.themes.palette import Palette, get_agent_style
+from gortex.ui.components.header import AppHeader
+from gortex.ui.components.welcome import WelcomeScreen
 
 logger = logging.getLogger("GortexDashboard")
 
-def render_sparkline(data: list[float]) -> str:
-    """Renders a simple unicode sparkline."""
-    if not data: return ""
-    min_val, max_val = min(data), max(data)
-    if min_val == max_val: return "█" * len(data)
-    
-    chars = "  ▂▃▄▅▆▇█"
-    steps = len(chars) - 1
-    result = ""
-    for val in data:
-        normalized = (val - min_val) / (max_val - min_val)
-        idx = int(normalized * steps)
-        result += chars[idx]
-    return result
-
-def create_layout() -> Layout:
-    """대시보드 레이아웃 생성: 헤더(Header), 콘텐츠(Content), 사이드바(Sidebar)"""
-    layout = Layout()
-    layout.split_column(
-        Layout(name="header", size=3),
-        Layout(name="body")
-    )
-    layout["body"].split_row(
-        Layout(name="content", ratio=7),
-        Layout(name="sidebar", ratio=3)
-    )
-    layout["content"].split_column(
-        Layout(name="main", ratio=7),
-        Layout(name="thought", ratio=3)
-    )
-    layout["sidebar"].split_column(
-        Layout(name="status", size=10),
-        Layout(name="stats", size=12),
-        Layout(name="auth", size=8), # [NEW] API Key Health Monitoring
-        Layout(name="economy", size=10),
-        Layout(name="registry", size=6),
-        Layout(name="impact", size=8),
-        Layout(name="collab", size=8),
-        Layout(name="evolution", size=6),
-        Layout(name="debt", size=8),
-        Layout(name="logs")
-    )
-    return layout
-
 class DashboardUI:
+    """Gortex "Agent OS" Master UI.
+
+    Inspired by gemini-cli, optimized for professional aesthetics.
+    Handles rendering of the main application layout including chat, thoughts, and stats.
+
+    Args:
+        console (Console): The rich console instance to use for rendering.
+    """
     def __init__(self, console: Console):
-        # ... (기존 초기화 코드 유지)
         self.console = console
-        self.assets = SynapticAssetManager()
-        self.theme = ThemeManager()
-        self.layout = create_layout()
         self.chat_history = []
-        self.agent_thought = ""
-        self.thought_tree = []
-        self.thought_history = [] 
-        self.current_agent = "Idle"
-        self.last_agent = "Idle"
-        self.current_step = "N/A"
-        self.current_capability = "N/A"
+        self.recent_logs = []
+        self.current_agent = "System"
+        self.current_step = "Initialized"
         self.tokens_used = 0
         self.total_cost = 0.0
-        self.active_rules_count = 0
-        self.recent_logs = []
+        self.rules_count = 0
         self.provider = "GEMINI"
-        self.call_count = 0
         self.energy = 100
         self.efficiency = 100.0
-        self.achievements = []
-        self.debt_list = []
-        self.active_debate = []
-        self.knowledge_lineage = []
-        self.suggested_actions = []
-        self.collab_matrix = {} # [NEW] 협업 통계 데이터
-        
-        self.progress = Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(bar_width=None),
-            TimeElapsedColumn(),
-            transient=True
-        )
-        self.tool_task = None
+        self.agent_thought = ""
+        self.collab_matrix = {}
 
-        self.agent_colors = {
-            "manager": "agent.manager",
-            "planner": "agent.planner",
-            "coder": "agent.coder",
-            "researcher": "agent.researcher",
-            "analyst": "agent.analyst",
-            "trend_scout": "agent.trend_scout",
-            "summarizer": "agent.summarizer",
-            "optimizer": "agent.optimizer",
-            "deployer": "agent.researcher"
-        }
-        
-        self.agent_spinners = {
-            "manager": "dots",
-            "planner": "bouncingBar",
-            "coder": "simpleDotsScrolling",
-            "researcher": "earth",
-            "analyst": "pulse",
-            "trend_scout": "moon",
-            "summarizer": "aesthetic",
-            "optimizer": "runner"
-        }
-        
-        # 초기 렌더링
-        self.update_energy_visualizer(100)
-        self.update_collaboration_heatmap({})
-        self.update_impact_panel(None, [])
-        self.update_auth_panel()
-
-    def update_auth_panel(self):
-        """API 키 풀의 실시간 건강 상태 시각화"""
-        from gortex.core.auth import GortexAuth
-        auth = GortexAuth()
-        pool = auth.get_pool_status()
-        
-        if not pool:
-            self.layout["auth"].update(Panel("No keys configured.", title="🔑 AUTH STATUS", border_style="dim"))
-            return
-
-        table = Table.grid(expand=True)
-        table.add_column("Idx", style="dim", width=3)
-        table.add_column("Stat", width=8)
-        table.add_column("S/F", justify="right")
-        
-        for info in pool:
-            status = info["status"]
-            color = "green" if status == "alive" else ("yellow" if status == "cooldown" else "red")
-            
-            # 상태 텍스트 구성
-            stat_text = f"[{color}]{status.upper()}[/]"
-            if info["cooldown"] > 0:
-                stat_text = f"[{color}]CD:{info['cooldown']}s[/]"
-                
-            table.add_row(
-                str(info["idx"]),
-                stat_text,
-                f"[green]{info['success']}[/]/[red]{info['failure']}[/]"
-            )
-
-        self.layout["auth"].update(Panel(table, title="🔑 [bold white]AUTH STATUS[/]", border_style="blue"))
-
-    def update_impact_panel(self, target_symbol: str = None, dependents: list = None):
-        """특정 심볼 변경 시 영향을 받는 의존성 목록 시각화"""
-        if not target_symbol or not dependents:
-            self.layout["impact"].update(Panel("No impact analysis.", title="🌐 IMPACT MAP", border_style="dim"))
-            return
-
-        table = Table.grid(expand=True)
-        table.add_column("Caller", style="bold cyan")
-        table.add_column("Type", justify="right")
-        
-        # 위험도 산출 (의존성 수 기반)
-        risk_color = "red" if len(dependents) > 5 else ("yellow" if len(dependents) > 2 else "green")
-        
-        for d in dependents[:3]: # 상위 3개만 표시
-            file_name = d.get("file", "").split("/")[-1]
-            d_type = d.get("type", "call")[:4].upper()
-            table.add_row(f"{file_name}", f"[dim]{d_type}[/]")
-            
-        if len(dependents) > 3:
-            table.add_row(f"[dim]+ {len(dependents)-3} more[/]", "")
-
-        title = f"🌐 [bold {risk_color}]IMPACT: {target_symbol}[/]"
-        self.layout["impact"].update(Panel(table, title=title, border_style=risk_color))
-
-    def update_collaboration_heatmap(self, matrix: Dict[str, Dict[str, int]]):
-        """에이전트 간 협업 히트맵을 매트릭스 형태로 시각화"""
-        self.collab_matrix = matrix
-        if not matrix:
-            self.layout["collab"].update(Panel("No interactions yet.", title="🌡️ COLLAB HEATMAP", border_style="dim"))
-            return
-
-        # 모든 에이전트 목록 추출 (가로/세로축)
-        agents = sorted(list(set(matrix.keys()) | set([callee for callers in matrix.values() for callee in callers])))
-        
-        table = Table(box=None, padding=(0, 0), show_header=True, header_style="bold dim")
-        table.add_column("Agent", style="bold cyan", width=8)
-        for a in agents:
-            table.add_column(a[0].upper(), justify="center") # 이니셜만 표시
-
-        for caller in agents:
-            row = [caller[:8]]
-            for callee in agents:
-                count = matrix.get(caller, {}).get(callee, 0)
-                if count == 0:
-                    row.append("[dim]·[/]")
-                else:
-                    # 빈도에 따른 색상 농도 조절
-                    intensity = "bold white" if count > 5 else ("cyan" if count > 2 else "blue")
-                    row.append(f"[{intensity}]{count}[/]")
-            table.add_row(*row)
-
-        self.layout["collab"].update(Panel(table, title="🌡️ [bold white]COLLAB HEATMAP[/]", border_style="blue"))
-
-    def update_energy_visualizer(self, energy: int):
-        """상단 헤더에 시스템 에너지 상태를 그래픽으로 렌더링"""
-        self.energy = energy
-        
-        # 에너지 수치에 따른 색상 결정
-        color = "green" if energy > 70 else ("yellow" if energy > 30 else "red")
-        
-        # 게이지 문자열 생성 (30칸 기준)
-        filled = int(energy / 100 * 30)
-        gauge = "█" * filled + "░" * (30 - filled)
-        
-        # 아이콘 결정 (충전 중/방전 중)
-        is_recovering = self.current_step == "Recovering..."
-        icon = "[blink]⚡[/]" if is_recovering else "🔋"
-        
-        energy_text = Text.assemble(
-            (f" {icon} GORTEX CORE ENERGY  ", "bold white"),
-            (f"[{gauge}]", f"bold {color}"),
-            (f" {energy}% ", f"bold {color}"),
-            (f"| STATUS: {'MAINTENANCE' if energy < 10 else 'ACTIVE'}", "dim white")
-        )
-        
-        self.layout["header"].update(Panel(energy_text, style=f"on black", border_style=color))
-
-    def update_debate_monitor(self, debate_data: list):
-        self.active_debate = debate_data
-        if not debate_data: return
-
-        debate_group = []
-        debate_group.append(Text("⚔️ [bold red]MULTI-AGENT DEBATE IN PROGRESS[/bold red]", justify="center"))
-        
-        for entry in debate_data:
-            # persona 필드를 우선 사용하되, 없으면 role 필드 사용 (Role은 에이전트 이름일 수 있음)
-            role_name = entry.get("role", "Unknown")
-            persona_role = entry.get("persona", role_name) # e.g., "Auditor" or "Innovation"
-            
-            # 색상 및 타이틀 결정
-            if persona_role.lower() == "innovation":
-                color = "magenta"
-                title = f"🎭 {persona_role.upper()}"
-            elif persona_role.lower() == "stability":
-                color = "cyan"
-                title = f"🎭 {persona_role.upper()}"
-            else:
-                # Expert Agent (Recruited)
-                color = "green"
-                title = f"🧑‍🔬 {role_name.upper()} ({persona_role})"
-
-            content = entry.get("content", "")[:500] + "..." if len(entry.get("content", "")) > 500 else entry.get("content", "")
-            debate_group.append(Panel(content, title=title, border_style=color, padding=(0, 1)))
-
-        self.layout["main"].update(Panel(Group(*debate_group), title="[bold red]⚖️ CONSENSUS DEBATE[/bold red]", border_style="red"))
-
-    def update_debt_panel(self, debt_list: list):
-        self.debt_list = debt_list
-        if not debt_list:
-            self.layout["debt"].update(Panel("No debt scanned.", title="📉 TECHNICAL DEBT", border_style="dim"))
-            return
-
-        table = Table.grid(expand=True)
-        for item in debt_list[:5]:
-            file_name = item.get("file", "").split("/")[-1]
-            score = item.get("score", 0)
-            color = "red" if score > 50 else ("yellow" if score > 20 else "green")
-            table.add_row(f"{file_name}", f"[{color}]{score}[/{color}]")
-            
-        self.layout["debt"].update(Panel(table, title="📉 [bold red]TECHNICAL DEBT[/]", border_style="red"))
+    def update_sidebar(self, agent="Idle", step="Ready", tokens=None, cost=None, rules=None, provider=None, energy=None, efficiency=None):
+        if agent: self.current_agent = agent
+        if step: self.current_step = step
+        if tokens is not None: self.tokens_used = tokens
+        if cost is not None: self.total_cost = cost
+        if rules is not None: self.rules_count = rules
+        if provider: self.provider = provider
+        if energy is not None: self.energy = energy
+        if efficiency is not None: self.efficiency = efficiency
 
     def update_main(self, messages: list):
-        if len(messages) > 50: del messages[:-50]
+        self.chat_history = messages
 
-        display_msgs = messages[-15:]
-        msg_group = []
-        
-        if len(messages) > 15:
-            msg_group.append(Text(f"⬆️ (이전 대화 기록은 /logs 또는 /history로 확인 가능)", style="dim white italic", justify="center"))
-
-        for item in display_msgs:
-            try:
-                if not isinstance(item, (list, tuple)) or len(item) < 2: continue
-                role, content = item
-            except Exception: continue
-
-            if role == "user":
-                icon = self.assets.get_icon("user")
-                msg_group.append(Panel(content, title=f"{icon} [bold green]USER[/bold green]", border_style="green", padding=(0, 1)))
-            elif role == "ai":
-                icon = self.assets.get_icon("robot")
-                msg_group.append(Panel(content, title=f"{icon} [bold blue]GORTEX[/bold blue]", border_style="blue", padding=(0, 1)))
-            elif role == "tool":
-                icon = self.assets.get_icon("info")
-                if isinstance(content, str):
-                    display_content = content
-                    if len(content) > 2000:
-                        display_content = content[:1000] + f"\n\n[... {len(content)-2000} characters truncated ...]\n\n" + content[-1000:]
-                    
-                    try:
-                        stripped = display_content.strip()
-                        if (stripped.startswith("{}") and stripped.endswith("}")) or (stripped.startswith("[") and stripped.endswith("]")):
-                            json.loads(stripped)
-                            renderable = JSON(stripped)
-                            msg_group.append(Panel(renderable, title=f"{icon} [bold yellow]OBSERVATION (JSON)[/bold yellow]", border_style="yellow", style="dim"))
-                            continue
-                    except:
-                        pass
-
-                    table_renderable = try_render_as_table(display_content)
-                    if table_renderable:
-                        msg_group.append(Panel(table_renderable, title=f"{icon} [bold yellow]OBSERVATION (TABLE)[/bold yellow]", border_style="yellow", style="dim"))
-                        continue
-
-                    code_keywords = ["import ", "def ", "class ", "void ", "public ", "{", "}", "const ", "SELECT ", "INSERT ", "UPDATE ", "DELETE ", "#!", "bash", "npm "]
-                    if any(x in display_content for x in code_keywords):
-                        lang = "python"
-                        if "SELECT " in display_content or "UPDATE " in display_content: lang = "sql"
-                        elif "void " in display_content or "public class " in display_content: lang = "java"
-                        elif "#!" in display_content or "npm " in display_content or "$ " in display_content: lang = "bash"
-                        elif "const " in display_content or "function " in display_content: lang = "javascript"
-                        
-                        syntax_content = Syntax(display_content, lang, theme="monokai", line_numbers=True, word_wrap=True)
-                        msg_group.append(Panel(syntax_content, title=f"{icon} [bold yellow]OBSERVATION ({lang.upper()})[/bold yellow]", border_style="yellow", style="dim"))
-                    else:
-                        msg_group.append(Panel(display_content, title=f"{icon} [bold yellow]OBSERVATION[/bold yellow]", border_style="yellow", style="dim"))
-                else:
-                    msg_group.append(Panel(content, title=f"{icon} [bold yellow]OBSERVATION[/bold yellow]", border_style="yellow", style="dim"))
-            elif role == "system":
-                icon = self.assets.get_icon("info")
-                if isinstance(content, str):
-                    msg_group.append(Text(f"{icon} {content}", style="dim white"))
-                else:
-                    msg_group.append(content)
-        
-        self.layout["main"].update(Panel(Group(*msg_group), title="[bold cyan]🧠 GORTEX TERMINAL[/bold cyan]", border_style="cyan"))
-
-    def render_thought_tree(self) -> Group:
-        if not self.thought_tree: return Group(Text("No thought tree available.", style="dim"))
-
-        tree_display = []
-        children = {}
-        roots = []
-        for item in self.thought_tree:
-            p_id = item.get("parent_id")
-            if not p_id:
-                roots.append(item)
-            else:
-                if p_id not in children: children[p_id] = []
-                children[p_id].append(item)
-
-        def add_node(node, indent=0):
-            prefix = "  " * indent + ("┗━ " if indent > 0 else "● ")
-            type_color = "cyan" if node["type"] == "analysis" else ("yellow" if node["type"] == "design" else "green")
-            line = Text(prefix)
-            line.append(node["text"], style=f"bold {type_color}")
-            tree_display.append(line)
-            
-            for child in children.get(node["id"], []):
-                add_node(child, indent + 1)
-
-        for root in roots:
-            add_node(root)
-            
-        return Group(*tree_display)
-
-    def update_thought(self, thought: str, agent_name: str = "agent", tree: list = None):
-        self.agent_thought = thought
-        if tree: self.thought_tree = tree
-        
-        timestamp = datetime.now().isoformat()
-        self.thought_history.append((agent_name, thought, timestamp))
-        
-        style = self.agent_colors.get(agent_name.lower(), "agent.manager")
-        title = f"💭 [{style}]AGENT REASONING ({agent_name.upper()})[/{style}]"
-        
-        if self.thought_tree:
-            thought_group = Group(
-                Text(thought, style="italic cyan"),
-                Text("\n[Thought Tree Structure]", style="bold dim"),
-                self.render_thought_tree()
-            )
-            self.layout["thought"].update(Panel(thought_group, title=title, border_style="cyan", padding=(1, 2)))
-        else:
-            self.layout["thought"].update(Panel(Text(thought, style="italic cyan"), title=title, border_style="cyan", padding=(1, 2)))
+    def update_thought(self, thought: str, agent_name: str = None):
+        if thought is not None: self.agent_thought = thought
+        if agent_name: self.current_agent = agent_name
 
     def update_logs(self, log_entry: dict):
         self.recent_logs.append(log_entry)
         if len(self.recent_logs) > 8: self.recent_logs.pop(0)
+
+    def _render_chat(self, height: int, width: int) -> Group:
+        if not self.chat_history:
+            return Group(WelcomeScreen.render(width))
             
-        log_table = Table.grid(expand=True)
-        for i, entry in enumerate(self.recent_logs):
-            agent = entry.get("agent", "Sys")
-            event = entry.get("event", "event")
-            style = self.agent_colors.get(agent.lower(), "dim white")
-            
-            if i == len(self.recent_logs) - 1:
-                log_table.add_row(f"[bold reverse {style}]{agent.upper()}[/]", f"[bold reverse white]{event}[/]")
+        elements = []
+        # Calculate limit based on available vertical space
+        limit = max(1, height // 6)
+        for role, content in self.chat_history[-limit:]:
+            if role == "user":
+                elements.append(Panel(
+                    Text(str(content), style=Palette.FOREGROUND),
+                    title=f" [bold {Palette.GREEN}]👤 USER[/] ",
+                    border_style=Palette.GREEN,
+                    box=box.ROUNDED,
+                    padding=(0, 1)
+                ))
+            elif role == "ai":
+                elements.append(Panel(
+                    Markdown(str(content)),
+                    title=f" [bold {Palette.CYAN}]🤖 GORTEX[/] ",
+                    border_style=Palette.CYAN,
+                    box=box.ROUNDED,
+                    padding=(0, 1)
+                ))
             else:
-                log_table.add_row(f"[{style}]{agent.upper()}[/{style}]", f"[dim]{event}[/dim]")
-            
-        self.layout["logs"].update(Panel(log_table, title="📜 [bold white]TRACE LOGS[/bold white]", border_style="white"))
+                elements.append(Text.from_markup(f"  [dim]• {content}[/]", style=f"dim {Palette.GRAY}"))
+        return Group(*elements)
 
-    def start_tool_progress(self, description: str):
-        if self.tool_task is None:
-            self.tool_task = self.progress.add_task(description, total=None)
-        else:
-            self.progress.update(self.tool_task, description=description)
-
-    def stop_tool_progress(self):
-        if self.tool_task is not None:
-            self.progress.remove_task(self.tool_task)
-            self.tool_task = None
-
-    def update_registry_panel(self):
-        """레지스트리에 등록된 에이전트 목록 시각화"""
-        from gortex.core.registry import registry
-        agents = registry.list_agents()
-        
-        if not agents:
-            self.layout["registry"].update(Panel("Empty registry.", title="🔌 REGISTRY", border_style="dim"))
-            return
-
+    def _render_info_table(self) -> Table:
         table = Table.grid(expand=True)
-        for name in sorted(agents):
-            meta = registry.get_metadata(name)
-            is_active = (name.lower() == self.current_agent.lower())
-            style = "bold green" if is_active else "dim white"
-            table.add_row(f"[{style}]● {name.capitalize()}[/]", f"[dim]{meta.version}[/]")
-            
-        self.layout["registry"].update(Panel(table, title="🔌 [bold cyan]AGENT REGISTRY[/]", border_style="cyan"))
-
-    def update_sidebar(self, agent: str = "Idle", step: str = "N/A", tokens: int = 0, cost: float = 0.0, rules: int = 0, provider: str = "GEMINI", call_count: int = 0, avg_latency: int = 0, energy: int = 100, efficiency: float = 100.0, knowledge_lineage: list = None, suggested_actions: list = None, agent_economy: dict = None, capability: str = "N/A", predicted_usage: dict = None):
-        """사이드바 정보 업데이트 (에이전트, 성능, 경제, 레지스트리, 예측 시각화)"""
-        self.current_agent = agent
-        self.current_step = step
-        self.current_capability = capability
-        self.tokens_used = tokens
-        self.total_cost = cost
-        self.active_rules_count = rules
-        self.provider = provider
-        self.call_count = call_count
-        self.energy = energy
-        self.efficiency = efficiency
-        if knowledge_lineage is not None: self.knowledge_lineage = knowledge_lineage
-        if suggested_actions is not None: self.suggested_actions = suggested_actions
+        table.add_column(ratio=1)
+        table.add_column(ratio=1)
         
-        # 레지스트리 패널 실시간 갱신
-        self.update_registry_panel()
+        table.add_row(
+            Text.from_markup(f" [{Palette.CYAN}]⚡ Tokens[/]\n [bold]{self.tokens_used:,}[/]"),
+            Text.from_markup(f" [{Palette.GREEN}]💰 Cost[/]\n [bold]${self.total_cost:.4f}[/]")
+        )
+        table.add_row("", "")
+        table.add_row(
+            Text.from_markup(f" [{Palette.YELLOW}]📜 Rules[/]\n [bold]{self.rules_count}[/]"),
+            Text.from_markup(f" [{Palette.MAGENTA}]📈 Efficiency[/]\n [bold]{self.efficiency:.1f}%[/]")
+        )
+        return table
+
+    @property
+    def layout(self) -> Layout:
+        width = self.console.width
+        height = self.console.height
+        compact = height < 28
         
-        # 상단 에너지 비주얼라이저 동기화
-        self.update_energy_visualizer(energy)
-
-        agent_style_name = self.agent_colors.get(agent.lower(), "dim white")
-        try:
-            border_color = self.console.get_style(agent_style_name).color.name
-        except:
-            border_color = "cyan" if agent != "Idle" else "white"
-
-        # [ECONOMY] 현재 에이전트 경제 정보
-        rep_text = ""
-        if agent_economy and agent.lower() in agent_economy:
-            eco = agent_economy[agent.lower()]
-            lvl = eco.get("level", "N/A")
-            pts = eco.get("points", 0)
-            rep_text = f" [{lvl}] {pts}pts"
-
-        # Status
-        status_text = Text()
-        status_text.append(f"Agent: ", style="bold")
-        agent_style = self.agent_colors.get(agent.lower(), "dim white")
-        agent_label = self.assets.get_agent_label(agent)
-        status_text.append(f"{agent_label}", style=agent_style if agent != "Idle" else "green")
-        if rep_text: status_text.append(rep_text, style="italic yellow")
-        status_text.append("\n")
+        l = Layout()
+        l.split_column(
+            Layout(name="header", size=7 if width >= 80 else 4),
+            Layout(name="body")
+        )
         
-        # [CAPABILITY] 현재 사용 중인 능력 표시
-        if agent != "Idle":
-            status_text.append(f"Skill: ", style="bold")
-            status_text.append(f"{capability}\n", style="italic cyan")
-
-        status_text.append(f"LLM  : ", style="bold")
-        provider_style = "bold blue" if provider == "GEMINI" else "bold green"
-        status_text.append(f"{provider}\n", style=provider_style)
+        l["body"].split_row(
+            Layout(name="main", ratio=3),
+            Layout(name="side", ratio=1)
+        )
         
-        if self.knowledge_lineage:
-            status_text.append(f"Source: ", style="bold")
-            for item in self.knowledge_lineage[:2]:
-                source = item.get("source", "N/A")
-                score = item.get("score", 0)
-                status_text.append(f"{source}({score}) ", style="italic magenta")
-            status_text.append("\n")
-
-        status_text.append(f"Load : ", style="bold")
-        bars = min(10, (call_count + 1) // 2)
-        load_color = "green" if bars < 4 else ("yellow" if bars < 8 else "red")
-        status_text.append("█" * bars, style=load_color)
-        status_text.append("░" * (10 - bars), style="dim")
-        status_text.append(f" ({call_count}/min)\n", style="dim")
-
-        status_text.append(f"Step : ", style="bold")
-        status_text.append(f"{step}\n")
+        l["main"].split_column(
+            Layout(name="chat", ratio=1),
+            Layout(name="thought", size=5)
+        )
         
-        if self.suggested_actions:
-            status_text.append(f"🚀 Next? \n", style="bold yellow")
-            for i, act in enumerate(self.suggested_actions):
-                status_text.append(f" {i+1}. {act.get('label')}\n", style="dim cyan")
+        # 1. Header
+        header_comp = AppHeader(width, self.energy, self.provider)
+        l["header"].update(header_comp.render())
 
-        status_text.append(f"Time : {datetime.now().strftime('%H:%M:%S')}", style="dim")
+        # 2. Main Chat
+        l["chat"].update(Panel(
+            self._render_chat(height - 15, width), 
+            title=f" [{Palette.BLUE}]⚡ AGENT CORE[/] ", 
+            border_style=Palette.BLUE, 
+            box=box.ROUNDED
+        ))
+
+        # 3. Thought Panel
+        agent_style = get_agent_style(self.current_agent)
+        thought_msg = self.agent_thought if self.agent_thought else "System idle. Awaiting neural input..."
+        thought_content = Text.assemble(
+            (f" {self.current_agent.upper()} ", f"bold {agent_style} reverse"),
+            (f"  {thought_msg}", f"italic {agent_style}")
+        )
+        l["thought"].update(Panel(
+            thought_content, 
+            title=" [bold italic]Thinking Scratchpad[/] ",
+            border_style=agent_style, 
+            box=box.ROUNDED,
+            padding=(1, 2)
+        ))
+
+        # 4. Sidebar
+        side_l = Layout()
+        side_l.split_column(
+            Layout(name="info", size=8),
+            Layout(name="trace", ratio=1)
+        )
         
-        status_group = [status_text]
-        if agent != "Idle":
-            spinner_style = self.agent_spinners.get(agent.lower(), "dots")
-            status_group.append(Spinner(spinner_style, text=f"[{agent_style}]{agent} is active[/{agent_style}]"))
-
-        self.layout["status"].update(Panel(Group(*status_group), title=f"📡 [bold {border_color}]SYSTEM STATUS[/]", border_style=border_color))
-
-        # Stats
-        stats_table = Table.grid(expand=True)
-        stats_table.add_row("Tokens:", f"[bold cyan]{tokens:,}[/bold cyan]")
-        stats_table.add_row("Cost  :", f"[bold green]${cost:.6f}[/bold green]")
+        logs = "\n".join([f"[{get_agent_style(log.get('agent',''))}]{log.get('agent','Sys')[:3].upper()}[/] {log.get('event','')[:20]}" for log in self.recent_logs])
         
-        latency_color = "green" if avg_latency < 3000 else ("yellow" if avg_latency < 7000 else "red")
-        stats_table.add_row("Avg Lat:", f"[{latency_color}]{avg_latency}ms[/{latency_color}]")
+        side_l["info"].update(Panel(self._render_info_table(), title=" [bold]📊 STATS[/] ", border_style=Palette.GRAY, box=box.ROUNDED))
+        side_l["trace"].update(Panel(Text.from_markup(logs), title=" [bold]🔍 TRACE[/] ", border_style=Palette.GRAY, box=box.ROUNDED))
         
-        # Energy & Efficiency Visualization
-        energy_color = "green" if energy > 70 else ("yellow" if energy > 30 else "red")
-        is_recovering = step == "Recovering..."
-        energy_suffix = " [pulse]⚡[/]" if is_recovering else f" {energy}%"
-        stats_table.add_row("Energy:", f"[{energy_color}]{'⚡' * (energy // 20)}{' ' * (5 - energy // 20)}{energy_suffix}[/{energy_color}]")
-        
-        eff_color = "cyan" if efficiency >= 80 else ("yellow" if efficiency >= 50 else "red")
-        stats_table.add_row("Effic.:", f"[{eff_color}]{efficiency:.1f}[/{eff_color}]")
-        
-        stats_group = [stats_table]
-        
-        # [PREDICTION] 예상 소모량 표시
-        if predicted_usage:
-            stats_group.append(Text("\n[ PREDICTION ]", style="bold dim"))
-            p_cost = predicted_usage.get("cost", 0.0)
-            p_time = predicted_usage.get("latency_ms", 0) / 1000
-            stats_group.append(Text(f"Exp. Cost: ${p_cost:.4f}", style="yellow" if p_cost > 0.01 else "green"))
-            stats_group.append(Text(f"Est. Time: {p_time:.1f}s", style="dim"))
+        l["side"].update(side_l)
 
-        try:
-            from gortex.utils.efficiency_monitor import EfficiencyMonitor
-            health_hist = EfficiencyMonitor().get_health_history(limit=10)
-            if health_hist:
-                scores = [h.get("score", 0) for h in reversed(health_hist)]
-                spark = render_sparkline(scores)
-                current_health = scores[-1] if scores else 0
-                trend_color = "green"
-                if len(scores) > 1:
-                    if scores[-1] < scores[-2]: trend_color = "red"
-                    elif scores[-1] == scores[-2]: trend_color = "yellow"
-                    
-                stats_group.append(Text("\nHealth: ", style="bold"))
-                stats_group.append(Text(f"{current_health:.1f} ", style=trend_color))
-                stats_group.append(Text(f"{spark}", style=f"bold {trend_color}"))
-        except Exception as e:
-            logger.error(f"Failed to render health sparkline: {e}")
+        return l
 
-        if self.tool_task is not None:
-            stats_group.append(Text("\n"))
-            stats_group.append(self.progress)
-
-        self.layout["stats"].update(Panel(Group(*stats_group), title=f"📊 [bold {border_color}]USAGE STATS[/]", border_style="green" if tokens > 0 else border_color))
-
-        # [EVOLUTION] 자가 진화 패널 업데이트
-        from gortex.utils.efficiency_monitor import EfficiencyMonitor
-        evo_history = EfficiencyMonitor().get_evolution_history(limit=3)
-        
-        evo_group = []
-        evo_group.append(Text(f"Active Rules: {rules}", style="bold magenta"))
-        
-        if evo_history:
-            evo_group.append(Text("\n[Recent Evolutions]", style="bold dim"))
-            for ev in evo_history:
-                tech = ev.get("metadata", {}).get("tech", "Unknown")
-                file = ev.get("metadata", {}).get("file", "").split("/")[-1]
-                # ID 표시 (단축형)
-                rid = ev.get("metadata", {}).get("rule_id", "NEW")[:8]
-                evo_group.append(Text(f"• {tech} -> {file} ", style="magenta"))
-                evo_group.append(Text(f"  ID: {rid}", style="dim italic"))
-        
-        if rules > 0:
-            evo_group.append(Text("\n[ /inspect ID to trace ]", style="italic dim"))
-            
-        self.layout["evolution"].update(Panel(Group(*evo_group), title=f"🧬 [bold {border_color}]EVOLUTION[/]", border_style="magenta" if rules > 0 else border_color))
-
-        if agent_economy:
-            self.update_economy_panel(agent_economy)
-
-    def render_skill_radar(self, skills: Dict[str, int]) -> Group:
-        """스킬 포인트를 레이더 스타일(바 및 등급)로 렌더링"""
-        if not skills:
-            return Group(Text("No skills acquired.", style="dim"))
-
-        radar_group = []
-        categories = ["Coding", "Research", "Design", "Analysis"]
-        colors = {"Coding": "bold green", "Research": "bold blue", "Design": "bold magenta", "Analysis": "bold yellow"}
-        
-        for cat in categories:
-            val = skills.get(cat, 0)
-            # 등급 산출 (EconomyManager 기준과 동기화)
-            rank = "Apprentice"
-            if val >= 3000: rank = "Master"
-            elif val >= 1500: rank = "Expert"
-            elif val >= 500: rank = "Journeyman"
-            
-            # 게이지 (10칸 기준, 300점당 한 칸)
-            bars = min(10, val // 300)
-            color = colors.get(cat, "white")
-            
-            bar_str = "●" * bars + "○" * (10 - bars)
-            radar_group.append(Text.assemble(
-                (f"{cat:9} ", color),
-                (f"{bar_str} ", color),
-                (f"[{rank}]", "dim white")
-            ))
-            
-        return Group(*radar_group)
-
-    def update_economy_panel(self, agent_economy: dict):
-        """에이전트 평판 및 숙련도 트리를 시각화함 (Skill Radar 통합)."""
-        if not agent_economy:
-            self.layout["economy"].update(Panel("No data.", title="🏆 REPUTATION", border_style="dim"))
-            return
-
-        # 1. 상위 랭커 리더보드 (간소화)
-        leaderboard = Table.grid(expand=True)
-        sorted_agents = sorted(agent_economy.items(), key=lambda x: x[1].get("points", 0), reverse=True)
-        
-        for name, data in sorted_agents[:2]:
-            lvl = data.get("level", "B")
-            pts = data.get("points", 0)
-            color = "yellow" if lvl == "Gold" else ("white" if lvl == "Silver" else "magenta")
-            leaderboard.add_row(f"{name[:8]}", f"[{color}]{lvl}[/]", f"{pts}p")
-            
-        # 2. 현재 에이전트 상세 Skill Radar
-        skill_radar = []
-        target = self.current_agent.lower()
-        if target != "idle" and target in agent_economy:
-            skills = agent_economy[target].get("skill_points", {})
-            skill_radar.append(Text(f"\n[ {target.upper()} SKILL RADAR ]", style="bold cyan", justify="center"))
-            skill_radar.append(self.render_skill_radar(skills))
-
-        economy_content = Group(leaderboard, *skill_radar)
-        self.layout["economy"].update(Panel(economy_content, title="🏆 [bold yellow]ECONOMY & SKILLS[/]", border_style="yellow"))
-
-    def render(self):
-        return self.layout
-
-    def set_mode(self, mode: str):
-        if mode == "coding":
-            self.layout["content"]["main"].ratio = 6
-            self.layout["content"]["thought"].ratio = 4
-            self.layout["sidebar"].ratio = 3
-        elif mode == "research":
-            self.layout["content"]["main"].ratio = 7
-            self.layout["sidebar"].ratio = 4
-        elif mode == "debugging":
-            self.layout["sidebar"]["logs"].size = 20
-            self.layout["sidebar"]["status"].size = 8
-        elif mode == "analyst":
-            self.layout["sidebar"]["stats"].size = 15
-        else:
-            self.layout["content"]["main"].ratio = 7
-            self.layout["content"]["thought"].ratio = 3
-            self.layout["sidebar"].ratio = 3
-            self.layout["sidebar"]["logs"].size = None
-            
-        logger.info(f"🎭 UI Layout adjusted to: {mode}")
+    # Stubs
+    def update_energy_visualizer(self, *args): pass
+    def update_auth_panel(self, *args): pass
+    def update_impact_panel(self, *args): pass
+    def update_collaboration_heatmap(self, m): self.collab_matrix = m
+    def update_debt_panel(self, *args): pass
+    def update_registry_panel(self, *args): pass
+    def update_economy_panel(self, *args): pass
+    def add_achievement(self, text: str): self.update_logs({"agent": "System", "event": text})
+    def add_security_event(self, s, t): self.update_logs({"agent": "Security", "event": t})
+    def set_mode(self, *args): pass
+    def set_layout_mode(self, *args): pass
+    def filter_thoughts(self, *args, **kwargs): return []
+    def add_journal_entry(self, *args): pass
+    def update_review_board(self, *args): pass
