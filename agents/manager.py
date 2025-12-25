@@ -3,10 +3,9 @@ import json
 import os
 import time
 import re
-from typing import Dict, List, Any, Optional
+from typing import Dict, Any
 from gortex.core.state import GortexState
 from gortex.core.llm.factory import LLMFactory
-from gortex.core.evolutionary_memory import EvolutionaryMemory
 from gortex.utils.log_vectorizer import SemanticLogSearch
 from gortex.utils.translator import SynapticTranslator
 from gortex.utils.vector_store import LongTermMemory

@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from gortex.core.engine import GortexEngine
 from gortex.utils.resource_monitor import ResourceMonitor
 

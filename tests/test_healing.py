@@ -1,6 +1,5 @@
 import unittest
 import os
-import json
 from gortex.utils.healing_memory import SelfHealingMemory
 
 class TestSelfHealingMemory(unittest.TestCase):

@@ -3,7 +3,7 @@ import os
 import json
 import pandas as pd
 from unittest.mock import MagicMock, patch
-from gortex.agents.analyst import AnalystAgent, analyst_node
+from gortex.agents.analyst import AnalystAgent
 from gortex.core.evolutionary_memory import EvolutionaryMemory
 
 class TestGortexAnalyst(unittest.TestCase):

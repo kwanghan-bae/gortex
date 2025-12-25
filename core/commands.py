@@ -1,8 +1,6 @@
 import os
 import json
 import logging
-import asyncio
-import shutil
 from datetime import datetime
 from rich.panel import Panel
 from rich.tree import Tree
@@ -10,11 +8,8 @@ from rich.table import Table
 from rich.text import Text
 from rich.markdown import Markdown
 
-from gortex.core.config import GortexConfig
 from gortex.core.observer import GortexObserver
-from gortex.utils.notifier import Notifier
 from gortex.utils.indexer import SynapticIndexer
-from gortex.agents.analyst import AnalystAgent
 from gortex.core.registry import registry
 
 logger = logging.getLogger("GortexCommands")
@@ -203,7 +198,7 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
     elif cmd == "/export":
         export_dir = "logs/exports"; os.makedirs(export_dir, exist_ok=True)
         export_path = f"{export_dir}/session_{thread_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        serializable = [(r, c if isinstance(c, str) else f"[Rich Object]") for r, c in ui.chat_history]
+        serializable = [(r, c if isinstance(c, str) else "[Rich Object]") for r, c in ui.chat_history]
         data = {"thread_id": thread_id, "chat_history": serializable, "file_cache": all_sessions_cache.get(thread_id, {})}
         with open(export_path, "w", encoding='utf-8') as f: json.dump(data, f, ensure_ascii=False, indent=2)
         ui.chat_history.append(("system", f"✅ Exported: {export_path}"))
@@ -266,7 +261,7 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
                 with open(save_path, "r", encoding='utf-8') as f:
                     data = json.load(f)
                     all_sessions_cache[thread_id] = data
-                ui.chat_history.append(("system", f"📂 세션 상태가 복원되었습니다."))
+                ui.chat_history.append(("system", "📂 세션 상태가 복원되었습니다."))
             except Exception as e:
                 ui.chat_history.append(("system", f"❌ 복원 실패: {e}"))
         else:

@@ -1,7 +1,7 @@
 import json
 import os
 import logging
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 logger = logging.getLogger("GortexLogVectorizer")
 
@@ -35,7 +35,7 @@ class SemanticLogSearch:
                             "text": search_text,
                             "entry": entry
                         })
-                except:
+                except Exception:
                     continue
             self.index = new_index
             logger.info(f"✅ Indexed {len(self.index)} log entries for semantic search.")

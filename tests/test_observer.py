@@ -1,8 +1,7 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 import json
 import os
-import shutil
 from gortex.core.observer import GortexObserver, FileLoggingCallbackHandler
 
 class TestGortexObserver(unittest.TestCase):

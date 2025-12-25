@@ -95,6 +95,23 @@ class GortexAuth:
     def get_provider(self) -> str:
         return self._provider.upper()
 
+    def get_current_client(self) -> Any:
+        """현재 활성화된(가장 최근 성공한) 클라이언트를 반환합니다."""
+        # 1. 살아있는 키 중 첫 번째 사용
+        key_info = self._get_available_gemini_key()
+        if key_info:
+            return key_info.client
+
+        # 2. 없으면 OpenAI 클라이언트
+        if self.openai_client:
+            return self.openai_client
+
+        # 3. 그것도 없으면 풀의 첫 번째 (에러 발생 가능성 있음)
+        if self.key_pool:
+            return self.key_pool[0].client
+
+        raise Exception("No available LLM client found.")
+
     def get_pool_status(self) -> List[Dict[str, Any]]:
         """전체 키 풀의 건강 상태 요약 반환 (UI 연동용)"""
         status_list = []

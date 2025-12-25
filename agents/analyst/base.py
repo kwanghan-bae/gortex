@@ -6,12 +6,11 @@ import math
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from gortex.core.state import GortexState
-from gortex.core.llm.factory import LLMFactory
 from gortex.core.evolutionary_memory import EvolutionaryMemory
 from gortex.utils.vector_store import LongTermMemory
 
 from gortex.agents.base import BaseAgent
-from gortex.core.registry import AgentMetadata, registry
+from gortex.core.registry import AgentMetadata
 
 logger = logging.getLogger("GortexAnalystBase")
 

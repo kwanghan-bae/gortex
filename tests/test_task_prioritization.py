@@ -1,6 +1,6 @@
 import unittest
 import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from gortex.agents.planner import PlannerAgent
 from gortex.core.state import GortexState
 

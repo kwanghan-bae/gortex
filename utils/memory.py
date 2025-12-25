@@ -1,8 +1,7 @@
-import gc
 import logging
 import os
+from typing import List, Any
 from gortex.core.state import GortexState
-from gortex.core.llm.factory import LLMFactory
 
 from gortex.core.llm.summarizer import get_summarizer
 
@@ -47,7 +46,7 @@ class ContextPruner:
         self.pinned = state.get("pinned_messages", [])
         self.plan = state.get("plan", [])
 
-    def get_semantic_scores(self, target_messages: List) -> List[float]:
+    def get_semantic_scores(self, target_messages: List[Any]) -> List[float]:
         """AnalystAgent를 통해 시맨틱 관련성 점수 획득"""
         from gortex.agents.analyst.base import AnalystAgent
         analyst = AnalystAgent()
@@ -60,7 +59,7 @@ class ContextPruner:
             
         return analyst.rank_context_relevance(formatted_msgs, self.plan)
 
-    def prune(self, target_count: int = 15) -> List:
+    def prune(self, target_count: int = 15) -> List[Any]:
         """시맨틱 관련성이 낮은 메시지를 우선적으로 제거"""
         if len(self.messages) <= target_count:
             return self.messages
@@ -68,7 +67,7 @@ class ContextPruner:
         logger.info(f"✂️ Semantic Pruning: {len(self.messages)} -> {target_count} messages.")
         
         # 무조건 보존 대상: 첫 번째 메시지, 최신 4개 메시지
-        must_keep_indices = {0} | set(range(len(self.messages)-4, len(self.messages)))
+        # must_keep_indices = {0} | set(range(len(self.messages)-4, len(self.messages)))
         
         # 평가 대상 인덱스 추출
         eval_indices = [i for i in range(1, len(self.messages)-4)]

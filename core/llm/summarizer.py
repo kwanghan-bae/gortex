@@ -1,6 +1,5 @@
 import logging
 import os
-from typing import List, Dict, Any, Tuple
 from gortex.core.state import GortexState
 from gortex.core.llm.factory import LLMFactory
 
@@ -35,7 +34,7 @@ class ContextSummarizer:
 답변은 오직 요약된 텍스트만 출력하라. 군더더기 없는 명확한 문장으로 작성하라."""
 
         if active_constraints:
-            prompt += f"\n\n[필수 준수 규칙]\n" + "\n".join([f"- {c}" for c in active_constraints])
+            prompt += "\n\n[필수 준수 규칙]\n" + "\n".join([f"- {c}" for c in active_constraints])
 
         # 메시지 정제
         formatted_msgs = [{"role": "system", "content": prompt}]

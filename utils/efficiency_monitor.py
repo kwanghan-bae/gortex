@@ -1,7 +1,6 @@
 import os
 import json
 import logging
-import time
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
 
@@ -145,16 +144,19 @@ class EfficiencyMonitor:
                     data = json.loads(line)
                     if data.get("agent") == agent_name:
                         m = data["model"]
-                        if m not in task_stats: task_stats[m] = {"s": 0, "c": 0}
+                        if m not in task_stats:
+                            task_stats[m] = {"s": 0, "c": 0}
                         task_stats[m]["c"] += 1
-                        if data["success"]: task_stats[m]["s"] += 1
+                        if data["success"]:
+                            task_stats[m]["s"] += 1
             
-            if not task_stats: return None
+            if not task_stats:
+                return None
             
             # 성공률 높은 순으로 정렬
             ranked = sorted(task_stats.items(), key=lambda x: (x[1]["s"] / x[1]["c"]), reverse=True)
             return ranked[0][0] # 최상위 모델 ID 반환
-        except:
+        except Exception:
             return None
 
     def get_persona_performance(self) -> Dict[str, Any]:
@@ -168,14 +170,16 @@ class EfficiencyMonitor:
                 for line in f:
                     data = json.loads(line)
                     persona = data.get("metadata", {}).get("persona_name", "standard")
-                    if persona not in stats: stats[persona] = {"s": 0, "c": 0}
+                    if persona not in stats:
+                        stats[persona] = {"s": 0, "c": 0}
                     stats[persona]["c"] += 1
-                    if data["success"]: stats[persona]["s"] += 1
+                    if data["success"]:
+                        stats[persona]["s"] += 1
             
             for p in stats:
                 stats[p]["rate"] = round((stats[p]["s"] / stats[p]["c"]) * 100, 1)
             return stats
-        except:
+        except Exception:
             return {}
 
     def get_evolution_history(self, limit: int = 10) -> List[Dict[str, Any]]:

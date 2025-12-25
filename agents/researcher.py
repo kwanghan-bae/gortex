@@ -2,7 +2,7 @@ import logging
 import asyncio
 import re
 import time
-from typing import Dict, Any, List
+from typing import Dict, Any
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
 from gortex.core.llm.factory import LLMFactory

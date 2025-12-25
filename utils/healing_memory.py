@@ -19,7 +19,7 @@ class SelfHealingMemory:
             try:
                 with open(self.storage_path, "r", encoding='utf-8') as f:
                     return json.load(f)
-            except:
+            except Exception:
                 return []
         return []
 

@@ -1,10 +1,9 @@
 import os
-import json
 import logging
 import math
-from typing import List, Dict, Any
+from typing import Dict, Any
 from gortex.agents.analyst.base import AnalystAgent as BaseAnalyst
-from gortex.utils.tools import archive_project_artifacts, compress_directory
+from gortex.utils.tools import archive_project_artifacts
 
 logger = logging.getLogger("GortexAnalystOrganizer")
 

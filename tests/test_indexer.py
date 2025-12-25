@@ -1,7 +1,6 @@
 import unittest
 from unittest.mock import MagicMock, patch
 from gortex.utils.indexer import SynapticIndexer
-from gortex.core.auth import GortexAuth
 
 class TestGortexSynapticIndexer(unittest.TestCase):
     def setUp(self):

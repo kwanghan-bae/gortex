@@ -1,7 +1,7 @@
 import json
 import os
 import logging
-from typing import Dict, Any, Optional
+from typing import Dict
 from gortex.core.auth import GortexAuth
 
 logger = logging.getLogger("GortexSystemTranslator")
@@ -20,7 +20,8 @@ class SystemTranslator:
         if not os.path.exists(i18n_dir): 
             # Fallback for different execution contexts
             i18n_dir = "gortex/docs/i18n"
-            if not os.path.exists(i18n_dir): return
+            if not os.path.exists(i18n_dir):
+                return
         
         for file in os.listdir(i18n_dir):
             if file.endswith(".json"):

@@ -1,9 +1,6 @@
-import json
 import logging
 from typing import Any
 from rich.console import Console
-from rich.live import Live
-from rich.panel import Panel
 from gortex.ui.dashboard import DashboardUI
 
 logger = logging.getLogger("GortexTerminal")

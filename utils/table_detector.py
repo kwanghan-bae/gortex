@@ -1,5 +1,5 @@
 import re
-from typing import List, Optional
+from typing import Optional
 from rich.table import Table
 
 def try_render_as_table(text: str, title: str = "Data Table") -> Optional[Table]:
@@ -41,7 +41,8 @@ def try_render_as_table(text: str, title: str = "Data Table") -> Optional[Table]
                 
                 count = 0
                 for line in lines[start_idx:]:
-                    if '|' not in line and '  ' not in line: continue
+                    if '|' not in line and '  ' not in line:
+                        continue
                     # 파이프로 나누기 (양 끝 파이프 제거 후)
                     row = [p.strip() for p in line.strip().strip('|').split('|')]
                     
@@ -96,7 +97,8 @@ def try_render_as_table(text: str, title: str = "Data Table") -> Optional[Table]
 
     count = 0
     for line in lines[1:]:
-        if not line.strip(): continue
+        if not line.strip():
+            continue
         # 먼저 2개 이상의 공백으로 분리 시도
         row = re.split(r'\s{2,}', line)
         

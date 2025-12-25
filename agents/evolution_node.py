@@ -3,10 +3,10 @@ import os
 import logging
 import re
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from gortex.core.state import GortexState
 from gortex.core.llm.factory import LLMFactory
-from gortex.utils.tools import read_file, write_file, execute_shell, list_files
+from gortex.utils.tools import read_file, write_file, execute_shell
 from gortex.utils.efficiency_monitor import EfficiencyMonitor
 
 logger = logging.getLogger("GortexEvolution")

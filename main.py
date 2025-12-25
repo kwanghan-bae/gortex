@@ -9,9 +9,7 @@ from rich.panel import Panel
 from rich.align import Align
 from rich.text import Text
 
-from gortex.core.state import GortexState
 from gortex.core.graph import compile_gortex_graph
-from gortex.core.auth import GortexAuth
 from gortex.core.commands import handle_command
 from gortex.core.engine import GortexEngine
 from gortex.ui.dashboard import DashboardUI
@@ -171,7 +169,8 @@ async def run_gortex():
             except Exception as e:
                 # [QUOTA UI] 유실 복구
                 if "할당량" in str(e).lower() or "exhausted" in str(e).lower():
-                    live.stop(); console.clear()
+        live.stop()
+        console.clear()
                     warning = Text.assemble(("\n🚫 API QUOTA EXHAUSTED\n\n", "bold red"), ("모든 API 키가 소진되었습니다. 대기 후 재실행하세요.\n", "white"))
                     console.print(Align.center(Panel(warning, title="EMERGENCY", border_style="red"), vertical="middle"))
                     break

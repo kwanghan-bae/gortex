@@ -1,7 +1,5 @@
 import unittest
 import os
-import shutil
-import json
 from unittest.mock import MagicMock, patch
 from gortex.core.engine import GortexEngine
 from gortex.agents.analyst.base import AnalystAgent

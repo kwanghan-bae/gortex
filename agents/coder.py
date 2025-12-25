@@ -3,7 +3,7 @@ import json
 import time
 import re
 import os
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from gortex.core.state import GortexState
 from gortex.agents.base import BaseAgent
 from gortex.core.registry import AgentMetadata, registry
