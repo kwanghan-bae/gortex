@@ -12,6 +12,7 @@ from typing import Dict, Any, List, Optional
 
 from gortex.ui.components.monitor import SystemMonitor
 from gortex.ui.components.memory_viewer import MemoryViewer
+from gortex.ui.components.trace_tree import TraceTreeRenderer
 
 logger = logging.getLogger("GortexDashboard")
 
@@ -93,6 +94,10 @@ class DashboardUI:
         self.memory_viewer = MemoryViewer(console, None) # VectorStore는 지연 주입
         self.memory_active = False
 
+        # [Phase 3] Logic Tracer
+        self.trace_renderer = TraceTreeRenderer()
+        self.trace_active = False
+
     def set_vector_store(self, store):
         self.memory_viewer.vector_store = store
 
@@ -129,15 +134,27 @@ class DashboardUI:
         if query:
             self.memory_active = True
             self.monitor_active = False
+            self.trace_active = False
             self.memory_viewer.fetch_memories(query)
         else:
             self.memory_active = not self.memory_active
             self.monitor_active = False # Exclusive
+            self.trace_active = False
 
         mode_msg = "ON" if self.memory_active else "OFF"
         self.chat_history.append(("system", f"🧠 Memory Explorer: [bold]{mode_msg}[/]"))
         if self.memory_active and not query:
              self.memory_viewer.fetch_memories("")
+
+    def toggle_trace_mode(self):
+        """Toggle Logic Tracer overlay."""
+        self.trace_active = not self.trace_active
+        if self.trace_active:
+            self.monitor_active = False
+            self.memory_active = False
+            
+        mode_msg = "ON" if self.trace_active else "OFF"
+        self.chat_history.append(("system", f"🌱 Logic Tracer: [bold]{mode_msg}[/]"))
 
     def _render_chat(self, height: int, width: int) -> Group:
         if not self.chat_history:
@@ -213,6 +230,11 @@ class DashboardUI:
         # [Phase 3] Memory Explorer Overlay
         if self.memory_active:
             l["body"].update(self.memory_viewer.render())
+            return l
+
+        # [Phase 3] Logic Tracer Overlay
+        if self.trace_active:
+            l["body"].update(self.trace_renderer.render_panel(self.recent_logs))
             return l
 
         l["body"].split_row(

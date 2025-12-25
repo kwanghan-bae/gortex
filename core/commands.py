@@ -352,6 +352,14 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
             ui.toggle_memory_mode()
         return "skip"
 
+    elif cmd == "/trace":
+        if hasattr(ui, "toggle_trace_mode"):
+            ui.toggle_trace_mode()
+        else:
+            ui.chat_history.append(("system", "❌ UI가 Trace 모드를 지원하지 않습니다."))
+            ui.update_main(ui.chat_history)
+        return "skip"
+
     elif cmd == "/provider":
         if len(cmd_parts) < 2:
             ui.chat_history.append(("system", "⚠️ 사용법: /provider [gemini|ollama|openai]"))
