@@ -2,7 +2,7 @@ import unittest
 import json
 import os
 from unittest.mock import MagicMock, patch
-from gortex.agents.evolution_node import EvolutionNode, evolution_node
+from gortex.agents.evolution_node import evolution_node
 
 class TestGortexEvolution(unittest.TestCase):
     def setUp(self):

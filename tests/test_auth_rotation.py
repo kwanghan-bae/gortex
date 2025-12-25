@@ -1,7 +1,6 @@
 import unittest
-import os
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from gortex.core.auth import GortexAuth, APIKeyInfo
 
 class TestAuthRotation(unittest.TestCase):

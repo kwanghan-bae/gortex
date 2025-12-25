@@ -1,8 +1,5 @@
 import unittest
 from gortex.core.registry import registry
-from gortex.agents.planner import PlannerAgent
-from gortex.agents.coder import CoderAgent
-from gortex.agents.analyst import AnalystAgent
 
 class TestV3Migration(unittest.TestCase):
     def test_core_agents_registration(self):

@@ -13,14 +13,17 @@ from gortex.ui.dashboard_theme import ThemeManager
 from datetime import datetime
 import logging
 import json
+from typing import Dict, List
 
 logger = logging.getLogger("GortexDashboard")
 
-def render_sparkline(data: list[float]) -> str:
+def render_sparkline(data: List[float]) -> str:
     """Renders a simple unicode sparkline."""
-    if not data: return ""
+    if not data:
+        return ""
     min_val, max_val = min(data), max(data)
-    if min_val == max_val: return "█" * len(data)
+    if min_val == max_val:
+        return "█" * len(data)
     
     chars = "  ▂▃▄▅▆▇█"
     steps = len(chars) - 1
@@ -235,11 +238,12 @@ class DashboardUI:
             (f"| STATUS: {'MAINTENANCE' if energy < 10 else 'ACTIVE'}", "dim white")
         )
         
-        self.layout["header"].update(Panel(energy_text, style=f"on black", border_style=color))
+        self.layout["header"].update(Panel(energy_text, style="on black", border_style=color))
 
     def update_debate_monitor(self, debate_data: list):
         self.active_debate = debate_data
-        if not debate_data: return
+        if not debate_data:
+            return
 
         debate_group = []
         debate_group.append(Text("⚔️ [bold red]MULTI-AGENT DEBATE IN PROGRESS[/bold red]", justify="center"))
@@ -269,19 +273,22 @@ class DashboardUI:
         self.layout["debt"].update(Panel(table, title="📉 [bold red]TECHNICAL DEBT[/]", border_style="red"))
 
     def update_main(self, messages: list):
-        if len(messages) > 50: del messages[:-50]
+        if len(messages) > 50:
+            del messages[:-50]
 
         display_msgs = messages[-15:]
         msg_group = []
         
         if len(messages) > 15:
-            msg_group.append(Text(f"⬆️ (이전 대화 기록은 /logs 또는 /history로 확인 가능)", style="dim white italic", justify="center"))
+            msg_group.append(Text("⬆️ (이전 대화 기록은 /logs 또는 /history로 확인 가능)", style="dim white italic", justify="center"))
 
         for item in display_msgs:
             try:
-                if not isinstance(item, (list, tuple)) or len(item) < 2: continue
+                if not isinstance(item, (list, tuple)) or len(item) < 2:
+                    continue
                 role, content = item
-            except Exception: continue
+            except Exception:
+                continue
 
             if role == "user":
                 icon = self.assets.get_icon("user")
@@ -303,7 +310,7 @@ class DashboardUI:
                             renderable = JSON(stripped)
                             msg_group.append(Panel(renderable, title=f"{icon} [bold yellow]OBSERVATION (JSON)[/bold yellow]", border_style="yellow", style="dim"))
                             continue
-                    except:
+                    except Exception:
                         pass
 
                     table_renderable = try_render_as_table(display_content)
@@ -314,10 +321,14 @@ class DashboardUI:
                     code_keywords = ["import ", "def ", "class ", "void ", "public ", "{", "}", "const ", "SELECT ", "INSERT ", "UPDATE ", "DELETE ", "#!", "bash", "npm "]
                     if any(x in display_content for x in code_keywords):
                         lang = "python"
-                        if "SELECT " in display_content or "UPDATE " in display_content: lang = "sql"
-                        elif "void " in display_content or "public class " in display_content: lang = "java"
-                        elif "#!" in display_content or "npm " in display_content or "$ " in display_content: lang = "bash"
-                        elif "const " in display_content or "function " in display_content: lang = "javascript"
+                        if "SELECT " in display_content or "UPDATE " in display_content:
+                            lang = "sql"
+                        elif "void " in display_content or "public class " in display_content:
+                            lang = "java"
+                        elif "#!" in display_content or "npm " in display_content or "$ " in display_content:
+                            lang = "bash"
+                        elif "const " in display_content or "function " in display_content:
+                            lang = "javascript"
                         
                         syntax_content = Syntax(display_content, lang, theme="monokai", line_numbers=True, word_wrap=True)
                         msg_group.append(Panel(syntax_content, title=f"{icon} [bold yellow]OBSERVATION ({lang.upper()})[/bold yellow]", border_style="yellow", style="dim"))
@@ -335,7 +346,8 @@ class DashboardUI:
         self.layout["main"].update(Panel(Group(*msg_group), title="[bold cyan]🧠 GORTEX TERMINAL[/bold cyan]", border_style="cyan"))
 
     def render_thought_tree(self) -> Group:
-        if not self.thought_tree: return Group(Text("No thought tree available.", style="dim"))
+        if not self.thought_tree:
+            return Group(Text("No thought tree available.", style="dim"))
 
         tree_display = []
         children = {}
@@ -345,7 +357,8 @@ class DashboardUI:
             if not p_id:
                 roots.append(item)
             else:
-                if p_id not in children: children[p_id] = []
+                if p_id not in children:
+                    children[p_id] = []
                 children[p_id].append(item)
 
         def add_node(node, indent=0):
@@ -365,7 +378,8 @@ class DashboardUI:
 
     def update_thought(self, thought: str, agent_name: str = "agent", tree: list = None):
         self.agent_thought = thought
-        if tree: self.thought_tree = tree
+        if tree:
+            self.thought_tree = tree
         
         timestamp = datetime.now().isoformat()
         self.thought_history.append((agent_name, thought, timestamp))
@@ -385,7 +399,8 @@ class DashboardUI:
 
     def update_logs(self, log_entry: dict):
         self.recent_logs.append(log_entry)
-        if len(self.recent_logs) > 8: self.recent_logs.pop(0)
+        if len(self.recent_logs) > 8:
+            self.recent_logs.pop(0)
             
         log_table = Table.grid(expand=True)
         for i, entry in enumerate(self.recent_logs):
@@ -441,8 +456,10 @@ class DashboardUI:
         self.call_count = call_count
         self.energy = energy
         self.efficiency = efficiency
-        if knowledge_lineage is not None: self.knowledge_lineage = knowledge_lineage
-        if suggested_actions is not None: self.suggested_actions = suggested_actions
+        if knowledge_lineage is not None:
+            self.knowledge_lineage = knowledge_lineage
+        if suggested_actions is not None:
+            self.suggested_actions = suggested_actions
         
         # 레지스트리 패널 실시간 갱신
         self.update_registry_panel()
@@ -453,7 +470,7 @@ class DashboardUI:
         agent_style_name = self.agent_colors.get(agent.lower(), "dim white")
         try:
             border_color = self.console.get_style(agent_style_name).color.name
-        except:
+        except Exception:
             border_color = "cyan" if agent != "Idle" else "white"
 
         # [ECONOMY] 현재 에이전트 경제 정보
@@ -466,42 +483,43 @@ class DashboardUI:
 
         # Status
         status_text = Text()
-        status_text.append(f"Agent: ", style="bold")
+        status_text.append("Agent: ", style="bold")
         agent_style = self.agent_colors.get(agent.lower(), "dim white")
         agent_label = self.assets.get_agent_label(agent)
         status_text.append(f"{agent_label}", style=agent_style if agent != "Idle" else "green")
-        if rep_text: status_text.append(rep_text, style="italic yellow")
+        if rep_text:
+            status_text.append(rep_text, style="italic yellow")
         status_text.append("\n")
         
         # [CAPABILITY] 현재 사용 중인 능력 표시
         if agent != "Idle":
-            status_text.append(f"Skill: ", style="bold")
+            status_text.append("Skill: ", style="bold")
             status_text.append(f"{capability}\n", style="italic cyan")
 
-        status_text.append(f"LLM  : ", style="bold")
+        status_text.append("LLM  : ", style="bold")
         provider_style = "bold blue" if provider == "GEMINI" else "bold green"
         status_text.append(f"{provider}\n", style=provider_style)
         
         if self.knowledge_lineage:
-            status_text.append(f"Source: ", style="bold")
+            status_text.append("Source: ", style="bold")
             for item in self.knowledge_lineage[:2]:
                 source = item.get("source", "N/A")
                 score = item.get("score", 0)
                 status_text.append(f"{source}({score}) ", style="italic magenta")
             status_text.append("\n")
 
-        status_text.append(f"Load : ", style="bold")
+        status_text.append("Load : ", style="bold")
         bars = min(10, (call_count + 1) // 2)
         load_color = "green" if bars < 4 else ("yellow" if bars < 8 else "red")
         status_text.append("█" * bars, style=load_color)
         status_text.append("░" * (10 - bars), style="dim")
         status_text.append(f" ({call_count}/min)\n", style="dim")
 
-        status_text.append(f"Step : ", style="bold")
+        status_text.append("Step : ", style="bold")
         status_text.append(f"{step}\n")
         
         if self.suggested_actions:
-            status_text.append(f"🚀 Next? \n", style="bold yellow")
+            status_text.append("🚀 Next? \n", style="bold yellow")
             for i, act in enumerate(self.suggested_actions):
                 status_text.append(f" {i+1}. {act.get('label')}\n", style="dim cyan")
 
@@ -550,8 +568,10 @@ class DashboardUI:
                 current_health = scores[-1] if scores else 0
                 trend_color = "green"
                 if len(scores) > 1:
-                    if scores[-1] < scores[-2]: trend_color = "red"
-                    elif scores[-1] == scores[-2]: trend_color = "yellow"
+                    if scores[-1] < scores[-2]:
+                        trend_color = "red"
+                    elif scores[-1] == scores[-2]:
+                        trend_color = "yellow"
                     
                 stats_group.append(Text("\nHealth: ", style="bold"))
                 stats_group.append(Text(f"{current_health:.1f} ", style=trend_color))

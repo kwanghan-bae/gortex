@@ -1,8 +1,7 @@
 import unittest
 import json
-import os
-from unittest.mock import MagicMock, patch
-from gortex.core.llm.factory import LLMFactory, HybridBackend
+from unittest.mock import patch
+from gortex.core.llm.factory import HybridBackend
 from gortex.utils.tools import repair_and_load_json
 
 class TestHybridLLM(unittest.TestCase):

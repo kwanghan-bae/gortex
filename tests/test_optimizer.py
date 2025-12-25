@@ -1,7 +1,7 @@
 import unittest
 import json
 from unittest.mock import MagicMock, patch
-from gortex.agents.optimizer import OptimizerAgent, optimizer_node
+from gortex.agents.optimizer import OptimizerAgent
 
 class TestGortexOptimizer(unittest.TestCase):
     @patch('gortex.agents.optimizer.LLMFactory')

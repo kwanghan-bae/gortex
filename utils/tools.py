@@ -8,7 +8,7 @@ import json
 import ast
 import zipfile
 from datetime import datetime
-from typing import Dict, Union, Tuple, Optional, List
+from typing import Dict, Tuple, List, Any
 
 logger = logging.getLogger("GortexTools")
 
@@ -113,7 +113,8 @@ def execute_shell(command: str, timeout: int = 300) -> str:
                 logger.warning(f"Failed to update requirements.txt: {e}")
 
         def truncate(text: str, limit: int = 2000) -> str:
-            if len(text) <= limit: return text
+            if len(text) <= limit:
+                return text
             return text[:1000] + "\n... <truncated> ...\n" + text[-1000:]
 
         output = f"Exit Code: {result.returncode}\nSTDOUT:\n{truncate(result.stdout)}"
@@ -121,7 +122,7 @@ def execute_shell(command: str, timeout: int = 300) -> str:
             output += f"\nSTDERR:\n{truncate(result.stderr)}"
         
         if fs_changed:
-            output += f"\n\n[SYSTEM HINT: File system has changed. Consider using 'list_files' or 'read_file' to update cache.]"
+            output += "\n\n[SYSTEM HINT: File system has changed. Consider using 'list_files' or 'read_file' to update cache.]"
         return output
     except subprocess.TimeoutExpired:
         return "❌ Error: Command timed out."
@@ -131,7 +132,8 @@ def execute_shell(command: str, timeout: int = 300) -> str:
 def read_file(path: str, limit: int = None, offset: int = 0) -> str:
     """파일 내용 읽기 (페이지네이션 지원)."""
     try:
-        if not os.path.exists(path): return f"Error: File not found at {path}"
+        if not os.path.exists(path):
+            return f"Error: File not found at {path}"
         with open(path, 'r', encoding='utf-8') as f:
             lines = f.readlines()
             
@@ -192,8 +194,10 @@ def get_changed_files(working_dir: str, current_cache: Dict[str, str]) -> List[s
 def apply_patch(path: str, start_line: int, end_line: int, new_content: str) -> str:
     """파일의 특정 범위를 새로운 내용으로 교체합니다."""
     try:
-        if not os.path.exists(path): return f"Error: File not found at {path}"
-        with open(path, 'r', encoding='utf-8') as f: lines = f.readlines()
+        if not os.path.exists(path):
+            return f"Error: File not found at {path}"
+        with open(path, 'r', encoding='utf-8') as f:
+            lines = f.readlines()
         if start_line < 1 or end_line > len(lines) or start_line > end_line:
             return f"Error: Invalid line range {start_line}-{end_line}"
         new_lines = lines[:start_line-1] + [new_content + "\n"] + lines[end_line:]
@@ -206,14 +210,18 @@ def register_new_node(node_name: str, function_name: str, file_name: str) -> str
     """core/graph.py를 정적으로 분석하여 새로운 에이전트 노드를 등록합니다."""
     graph_path = "core/graph.py"
     try:
-        with open(graph_path, "r", encoding='utf-8') as f: content = f.read()
+        with open(graph_path, "r", encoding='utf-8') as f:
+            content = f.read()
         import_stmt = f"from gortex.agents.{file_name} import {function_name}\n"
-        if import_stmt not in content: content = import_stmt + content
+        if import_stmt not in content:
+            content = import_stmt + content
         node_stmt = f'    workflow.add_node("{node_name}", {function_name})\n'
-        if node_stmt not in content: content = content.replace("# 노드 추가", f"# 노드 추가\n{node_stmt}")
+        if node_stmt not in content:
+            content = content.replace("# 노드 추가", f"# 노드 추가\n{node_stmt}")
         write_file(graph_path, content)
         return f"✅ Registered node '{node_name}'. Reboot required."
-    except Exception as e: return f"❌ Failed: {e}"
+    except Exception as e:
+        return f"❌ Failed: {e}"
 
 def scan_security_risks(code: str) -> List[Dict[str, str]]:
     """생성된 코드 내의 보안 취약점 패턴 스캔"""
@@ -243,7 +251,8 @@ def archive_project_artifacts(project_name: str, version: str, files: List[str])
                 shutil.move(f_path, dest)
                 moved_count += 1
         return f"✅ Archived {moved_count} artifacts to {archive_root}"
-    except Exception as e: return f"❌ Archive failed: {e}"
+    except Exception as e:
+        return f"❌ Archive failed: {e}"
 
 def backup_file_with_rotation(file_path: str, backup_dir: str = "logs/backups", max_versions: int = 5) -> str:
     """파일을 백업하고 오래된 버전을 회전(삭제)시킴."""
@@ -304,7 +313,8 @@ def repair_and_load_json(text: str) -> Dict[str, Any]:
     """
     로컬 LLM이 생성한 비정형 텍스트에서 JSON을 추출하고 흔한 오류를 복구합니다.
     """
-    if not text: return {}
+    if not text:
+        return {}
     
     # 1. Markdown 코드 블록 제거
     clean_text = re.sub(r"```json\n?|```\n?", "", text).strip()
@@ -399,9 +409,11 @@ def compress_directory(source_dir: str, output_path: str, ignore_patterns: List[
             for root, dirs, files in os.walk(source_dir):
                 dirs[:] = [d for d in dirs if d not in ignore_patterns]
                 for file in files:
-                    if any(p in file for p in ignore_patterns): continue
+                    if any(p in file for p in ignore_patterns):
+                        continue
                     full_path = os.path.join(root, file)
                     rel_path = os.path.relpath(full_path, source_dir)
                     zipf.write(full_path, rel_path)
         return f"✅ Directory compressed to {output_path}"
-    except Exception as e: return f"❌ Compression failed: {e}"
+    except Exception as e:
+        return f"❌ Compression failed: {e}"

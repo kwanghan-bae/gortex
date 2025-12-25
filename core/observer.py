@@ -27,7 +27,6 @@ class GortexObserver:
             return "Log file is already empty or missing."
 
         try:
-            from gortex.utils.tools import compress_directory
             archive_dir = "logs/archives"
             os.makedirs(archive_dir, exist_ok=True)
             

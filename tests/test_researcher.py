@@ -1,7 +1,6 @@
 import unittest
 import json
-import asyncio
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock, patch
 from gortex.agents.researcher import researcher_node
 
 class TestGortexResearcher(unittest.TestCase):

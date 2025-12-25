@@ -1,7 +1,7 @@
 import unittest
 import json
 from unittest.mock import MagicMock, patch, AsyncMock
-from gortex.agents.trend_scout import TrendScoutAgent, trend_scout_node
+from gortex.agents.trend_scout import trend_scout_node
 
 class TestGortexTrendScout(unittest.TestCase):
     @patch('gortex.agents.trend_scout.LLMFactory')

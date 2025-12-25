@@ -26,7 +26,7 @@ class PromptLoader:
                 import json
                 with open(path, 'r', encoding='utf-8') as f:
                     return json.load(f)
-            except:
+            except Exception:
                 return {}
         return {}
 
@@ -41,7 +41,8 @@ class PromptLoader:
                 try:
                     with open(path, 'r', encoding='utf-8') as f:
                         data = yaml.safe_load(f)
-                        if data: all_templates.update(data)
+                        if data:
+                            all_templates.update(data)
                 except Exception as e:
                     logger.error(f"Failed to load prompt file {file}: {e}")
         return all_templates
@@ -76,7 +77,8 @@ class PromptLoader:
             rules = evo_mem.get_active_constraints(context_text or agent_id)
             if rules:
                 dynamic_policy = "\n\n[USER-SPECIFIC EVOLVED POLICIES]\n" + "\n".join([f"- {r}" for r in rules])
-        except: pass
+        except Exception:
+            pass
         
         try:
             body = template.format(**kwargs)

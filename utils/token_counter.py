@@ -40,14 +40,16 @@ class DailyTokenTracker:
                     data = json.load(f)
                     if data.get("date") == self.today:
                         return data
-            except: pass
+            except Exception:
+                pass
         return {"date": self.today, "total_tokens": 0, "costs": 0.0}
 
     def _save_data(self):
         try:
             with open(self.storage_path, 'w', encoding='utf-8') as f:
                 json.dump(self.data, f, indent=2)
-        except: pass
+        except Exception:
+            pass
 
     def update_usage(self, tokens: int, model: str):
         now_date = datetime.now().strftime("%Y-%m-%d")
