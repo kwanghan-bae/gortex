@@ -43,7 +43,7 @@ class DistributedSaver(BaseCheckpointSaver):
             serializable_state = {
                 "v": 3,
                 "ts": time.time(),
-                "config": config,
+                "config": self._make_serializable(config), # config도 ChainMap일 수 있으므로 직렬화 필요
                 "checkpoint": self._make_serializable(checkpoint),
                 "metadata": self._make_serializable(metadata)
             }

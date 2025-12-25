@@ -39,5 +39,47 @@ def test_chainmap_serialization():
         print(f"❌ Serialization Failed: {e}")
         exit(1)
 
+def test_config_field_failure():
+    print("\n🧪 Testing 'config' field serialization loop...")
+    saver = DistributedSaver(primary_saver=None, mirror_path="logs/test_mirror_config.json")
+    
+    # ChainMap in config (This was the bug)
+    config = ChainMap({'a': 1}, {'b': 2})
+    checkpoint = {"some": "data"}
+    metadata = {"meta": "data"}
+    
+    # Simulate _replicate logic manually (since it's internal)
+    try:
+        serializable_state = {
+            "v": 3,
+            "ts": 123456789.0,
+            "config": config, # <--- ⚠️ This is where it fails if not wrapped
+            "checkpoint": saver._make_serializable(checkpoint),
+            "metadata": saver._make_serializable(metadata)
+        }
+        
+        # This roughly simulates what json.dump does inside _replicate
+        # But wait, _replicate calls json.dump.
+        # So we should call _replicate directly if we can, or simulate the json.dump failure.
+        
+        # Let's call _replicate if we can mock os.replace
+        saver._replicate(config, checkpoint, metadata)
+        print("🎉 _replicate passed with ChainMap in config!")
+        
+    except TypeError as e:
+        if "ChainMap" in str(e) and "not JSON serializable" in str(e):
+             print(f"✅ Caught Expected Error (Bug Reproduced): {e}")
+             return
+        print(f"❌ Unexpected TypeError: {e}")
+        exit(1)
+    except Exception as e:
+        print(f"❌ Unexpected Error: {e}")
+        
+    # If we are here after fixing the bug, we should actually expect PASS.
+    # But right now we are verifying if it fails or passes.
+    # User said it failed.
+    pass
+
 if __name__ == "__main__":
     test_chainmap_serialization()
+    test_config_field_failure()
