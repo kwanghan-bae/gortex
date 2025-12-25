@@ -231,6 +231,7 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
         return "skip"
 
     elif cmd == "/config":
+        return "config_ui"
         from gortex.core.auth import GortexAuth
         auth = GortexAuth()
         config_text = f"""

@@ -186,14 +186,32 @@ async def run_gortex():
             current_task = None
 
     # [LIVE UI] Perfect Full-screen Experience
-    with Live(ui.layout, console=console, refresh_per_second=10, screen=True) as live:
+    # [Fix] Input Blocking Issue: screen=False로 변경하고 입력 중에는 리프레시 중단
+    with Live(ui.layout, console=console, refresh_per_second=4, screen=False) as live:
         while True:
-            user_input = await get_user_input(console)
+            live.stop() # 입력 프롬프트를 위해 잠시 렌더링 중단 (커서 뺏김 방지)
+            try:
+                user_input = await get_user_input(console)
+            finally:
+                live.start() # 입력 완료/취소 후 다시 렌더링 재개
+            
             if user_input is None: break
             if not user_input: continue
             
             if user_input.startswith("/"):
-                await handle_command(user_input, ui, observer, {}, thread_id, None)
+                # [Fix] ConfigUI 등 TUI 충돌 방지를 위해 리턴값 처리
+                cmd_result = await handle_command(user_input, ui, observer, {}, thread_id, None)
+                if cmd_result == "config_ui":
+                    live.stop()
+                    try:
+                        from gortex.ui.components.config_manager import ConfigManagerUI
+                        config_ui = ConfigManagerUI(console)
+                        config_ui.run_menu()
+                    except Exception as e:
+                        ui.chat_history.append(("system", f"❌ Config UI Error: {e}"))
+                    finally:
+                        live.start()
+                        ui.update_main(ui.chat_history) # 복귀 후 화면 갱신
                 continue
             
             if current_task and not current_task.done():
