@@ -10,10 +10,8 @@ from datetime import datetime
 import logging
 from typing import Dict, Any, List, Optional
 
-from gortex.ui.themes.palette import Palette, get_agent_style
-from gortex.ui.components.header import AppHeader
-from gortex.ui.components.welcome import WelcomeScreen
 from gortex.ui.components.monitor import SystemMonitor
+from gortex.ui.components.memory_viewer import MemoryViewer
 
 logger = logging.getLogger("GortexDashboard")
 
@@ -45,6 +43,59 @@ class DashboardUI:
         self.monitor = SystemMonitor(console)
         self.monitor_active = False
 
+        # [Phase 3] Memory Explorer
+        self.memory_viewer = MemoryViewer(console, None) # VectorStore는 지연 주입
+        self.memory_active = False
+
+    def set_vector_store(self, store):
+        self.memory_viewer.vector_store = store
+
+    def update_sidebar(self, agent="Idle", step="Ready", tokens=None, cost=None, rules=None, provider=None, energy=None, efficiency=None):
+        if agent: self.current_agent = agent
+        if step: self.current_step = step
+from gortex.ui.themes.palette import Palette, get_agent_style
+from gortex.ui.components.header import AppHeader
+from gortex.ui.components.welcome import WelcomeScreen
+from gortex.ui.components.monitor import SystemMonitor
+from gortex.ui.components.memory_viewer import MemoryViewer
+
+logger = logging.getLogger("GortexDashboard")
+
+class DashboardUI:
+    """Gortex "Agent OS" Master UI.
+
+    Inspired by gemini-cli, optimized for professional aesthetics.
+    Handles rendering of the main application layout including chat, thoughts, and stats.
+
+    Args:
+        console (Console): The rich console instance to use for rendering.
+    """
+    def __init__(self, console: Console):
+        self.console = console
+        self.chat_history = []
+        self.recent_logs = []
+        self.current_agent = "System"
+        self.current_step = "Initialized"
+        self.tokens_used = 0
+        self.total_cost = 0.0
+        self.rules_count = 0
+        self.provider = "GEMINI"
+        self.energy = 100
+        self.efficiency = 100.0
+        self.agent_thought = ""
+        self.collab_matrix = {}
+        
+        # [Phase 3] System Inspector
+        self.monitor = SystemMonitor(console)
+        self.monitor_active = False
+
+        # [Phase 3] Memory Explorer
+        self.memory_viewer = MemoryViewer(console, None) # VectorStore는 지연 주입
+        self.memory_active = False
+
+    def set_vector_store(self, store):
+        self.memory_viewer.vector_store = store
+
     def update_sidebar(self, agent="Idle", step="Ready", tokens=None, cost=None, rules=None, provider=None, energy=None, efficiency=None):
         if agent: self.current_agent = agent
         if step: self.current_step = step
@@ -69,8 +120,24 @@ class DashboardUI:
     def toggle_monitor_mode(self):
         """Toggle System Inspector overlay."""
         self.monitor_active = not self.monitor_active
+        self.memory_active = False # Exclusive
         mode_msg = "ON" if self.monitor_active else "OFF"
         self.chat_history.append(("system", f"🔍 System Monitor: [bold]{mode_msg}[/]"))
+
+    def toggle_memory_mode(self, query=None):
+        """Toggle Memory Explorer overlay."""
+        if query:
+            self.memory_active = True
+            self.monitor_active = False
+            self.memory_viewer.fetch_memories(query)
+        else:
+            self.memory_active = not self.memory_active
+            self.monitor_active = False # Exclusive
+
+        mode_msg = "ON" if self.memory_active else "OFF"
+        self.chat_history.append(("system", f"🧠 Memory Explorer: [bold]{mode_msg}[/]"))
+        if self.memory_active and not query:
+             self.memory_viewer.fetch_memories("")
 
     def _render_chat(self, height: int, width: int) -> Group:
         if not self.chat_history:
@@ -141,6 +208,11 @@ class DashboardUI:
             }
             self.monitor.collect_metrics(state_snapshot)
             l["body"].update(self.monitor.render())
+            return l
+
+        # [Phase 3] Memory Explorer Overlay
+        if self.memory_active:
+            l["body"].update(self.memory_viewer.render())
             return l
 
         l["body"].split_row(

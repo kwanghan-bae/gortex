@@ -328,6 +328,30 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
         ui.update_main(ui.chat_history)
         return "skip"
 
+    elif cmd == "/memory":
+        # Vector Store 지연 로딩 및 주입
+        if hasattr(ui, "set_vector_store") and not ui.memory_viewer.vector_store:
+             from gortex.utils.vector_store import ChromaVectorStore
+             # Vector Store는 싱글톤이나 공유 객체로 관리하는 것이 좋으나, 
+             # 현재 명령 컨텍스트에서는 신규 인스턴스를 생성하여 주입
+             # (실제 환경에서는 GortexEngine이 사용하는 인스턴스를 참조하는 것이 이상적)
+             store = ChromaVectorStore()
+             ui.set_vector_store(store)
+
+        if len(cmd_parts) > 1:
+            subcmd = cmd_parts[1].lower()
+            if subcmd in ["explore", "view"]:
+                ui.toggle_memory_mode()
+            elif subcmd == "clear":
+                if ui.memory_active: ui.toggle_memory_mode()
+            else:
+                 # 검색 쿼리로 간주
+                 query = " ".join(cmd_parts[1:])
+                 ui.toggle_memory_mode(query=query)
+        else:
+            ui.toggle_memory_mode()
+        return "skip"
+
     elif cmd == "/provider":
         if len(cmd_parts) < 2:
             ui.chat_history.append(("system", "⚠️ 사용법: /provider [gemini|ollama|openai]"))
