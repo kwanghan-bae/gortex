@@ -1,328 +1,73 @@
-# 📘 GORTEX — 캐노니컬 카탈로그 스펙 (한글판)
+# 📘 GORTEX — Canonical Feature Catalog
 
 **Document Role**
-이 문서는 **Gortex가 무엇인지, 왜 존재하는지, 어떻게 설계되어야 하는지**를 정의하는
-**최상위 기준 스펙 문서**이다.
-
-* ❌ 실행 매뉴얼 아님
-* ❌ 하루 작업 가이드 아님
-* ✅ 사람 + 외부 AI CLI + 미래의 Gortex 자신을 위한 **참조 카탈로그**
-
----
-
-## 0. 이 문서를 읽는 방법 (중요)
-
-이 스펙은 **의도적으로 “과하다”**.
-
-* 일부 기능은 이미 구현됨
-* 일부는 부분 구현
-* 일부는 미래 지향 설계
-
-👉 이것은 오류가 아니라 **설계 철학**이다.
-
-실제 작업 절차, 세션 재개 방법, 실행 규칙은 **별도 문서**에 존재한다.
-
-> ⚠️ 외부 AI CLI(Gemini-CLI, Codex, Copilot 등)는
-> 이 문서만 보고 **작업을 시작하면 안 된다.**
-> 반드시 WORKFLOW 문서를 함께 참조해야 한다.
+이 문서는 **Gortex(Autonomous AI Swarm Framework)가 무엇인지, 어떤 에이전트들로 구성되는지, 어떤 기능을 제공하는지**를 정의하는 **최상위 기준 스펙 문서**입니다.
 
 ---
 
 ## 1. 시스템 정체성 (System Identity)
 
-### 1.1 Gortex란 무엇인가?
-
-**Gortex는 로컬에서 동작하는, 지속 가능하며, 스스로 진화하는 AI 운영 파트너다.**
-
-Gortex는 외부 API 의존성을 점진적으로 줄이고, 로컬 모델(Ollama)을 활용하여 오프라인 환경에서도 핵심 기능을 수행할 수 있는 **"하이브리드 지능형 시스템"**을 지향한다.
-
-Gortex는 다음이 아니다:
-
-* 단순 챗봇
-* 코드 생성기
-* 상태 없는 어시스턴트
-
-Gortex는 다음이다:
-
-* 터미널 기반 AI 시스템
-* 다중 에이전트 오케스트레이션 가능
-* 과거 실패를 인지하는 구조
-* 명시적 피드백으로 진화
-* 세션 중단을 전제로 설계됨
-
----
+### 1.1 Gortex란?
+**Gortex는 스스로 코드를 작성, 검증, 실행하며 진화하는 완전 자율형 AI 에이전트 군집(Swarm) 프레임워크입니다.**
+사용자의 모호한 요구사항을 구체적인 계획으로 변환하고, 다수의 전문 에이전트가 협업하여 소프트웨어 결과물을 만들어냅니다.
 
 ### 1.2 핵심 철학 (Core Philosophy)
-
-**Vibe Coding을 시스템으로 고정한다**
-
-> “프롬프트가 아니라 컨텍스트로,
-> 기억이 아니라 문서로,
-> 반복이 아니라 진화로.”
-
-핵심 원칙:
-
-1. Prompt보다 Context
-2. Memory보다 Document
-3. 반복보다 Evolution
-4. 암묵적 학습 금지
-5. 중단 복구 최우선
-6. **선제적 자가 확장 (Proactive Self-Expansion)**: 에러가 발생한 뒤에 고치는 수동적 진화를 넘어, 외부 기술 트렌드를 감지하여 필요한 새로운 전문가 에이전트를 스스로 '발명'하고 시스템에 영입한다.
+*   **Autonomy**: 인간의 개입을 최소화하고, 에이전트 스스로 판단하고 행동한다.
+*   **Evolution**: 스스로 코드를 수정하여 자신의 기능을 확장하고 버그를 고친다.
+*   **Transparency**: AI의 사고 과정(Thought Process)과 상태를 투명하게 시각화한다.
+*   **Stability**: 엄격한 타입 시스템과 테스트 주도 개발(TDD)로 안정성을 보장한다.
 
 ---
 
-## 2. 절대적 제약 조건 (Foundational Constraints)
+## 2. 에이전트 카탈로그 (Agent Roster)
 
-### 2.1 부트스트랩 현실 제약
+### 2.1 Manager (The Orchestrator)
+*   **역할**: 사용자 의도 파악, 작업 라우팅, 리소스(토큰/예산) 관리.
+*   **특징**: 시스템의 두뇌. 상황에 따라 Swarm 모드나 Optimizer 모드로 전환 결정.
 
-> **Gortex는 이제 자기 자신을 부분적으로 개발할 수 있다.** (v3.0 Milestone 달성)
+### 2.2 Planner (The Architect)
+*   **역할**: 복잡한 작업을 원자적 단계(Step-by-Step)로 분해, 의존성 관리.
+*   **특징**: 실행 가능한 구체적인 계획(Plan)을 수립하고 진척도를 추적.
 
-현재 현실:
+### 2.3 Coder (The Builder)
+*   **역할**: 실제 코드 작성, 리팩토링, 버그 수정.
+*   **특징**: CoVe(Chain of Verification) 패턴을 사용하여 작성된 코드의 무결성을 스스로 검증.
 
-* Gortex는 외부 AI CLI를 통해 개발됨
-* 이 도구들은:
+### 2.4 Analyst (The Reviewer)
+*   **역할**: 코드 리뷰, 테스트 결과 분석, 에러 원인 규명(RCA).
+*   **특징**: 비판적 시각으로 결과물을 검증하고 품질 보고서를 작성.
 
-  * 장기 기억이 없고
-  * 세션이 끊기며
-  * 파일 기반 지시만 신뢰함
-
-결론:
-
-> **모든 연속성은 파일에 기록되어야 한다.**
-
-이 제약은 다음을 결정한다:
-
-* 문서 구조
-* 워크플로우
-* 세션 기록 방식
-* 진화 시스템
+### 2.5 Researcher (The Scout)
+*   **역할**: 외부 정보 검색(Web Search), 최신 기술 문서 탐색.
+*   **특징**: 코딩에 필요한 최신 라이브러리 사용법이나 솔루션을 찾아옴.
 
 ---
 
-### 2.2 설계 결과
+## 3. 핵심 기능 (Core Features)
 
-Gortex는 처음부터 다음 상황을 전제로 한다:
+### 3.1 Interactive Dashboard
+*   **Rich UI**: 터미널 기반의 화려하고 직관적인 대시보드.
+*   **Real-time Status**: 에이전트 활동, 에너지 레벨, 비용, 토큰 사용량 실시간 표시.
+*   **Thought Tree**: 에이전트의 사고 과정을 트리 구조로 시각화.
 
-* API 키 만료
-* 배터리 방전
-* 시스템 종료
-* AI 모델 교체
-* 인간 개발자 부재
+### 3.2 Self-Healing & Evolution
+*   **Auto-Fix**: 실행 중 에러 발생 시 스스로 원인을 분석하고 코드를 수정하여 재시도.
+*   **Memory Persistence**: 세션 간 기억을 유지하여 과거의 실수를 반복하지 않음.
 
----
-
-## 3. 전체 아키텍처 개요
-
-### 3.1 매크로 구조
-
-```
-User
- ↓
-CLI Interface
- ↓
-Manager Agent
- ↓
-LangGraph Orchestration
- ↓
-Specialized Agents
- ↓
-Tools / Files / OS
-```
+### 3.3 Energy System
+*   **Resource Management**: 에이전트 활동 시 '에너지' 소모. 휴식(Idle) 시 회복.
+*   **Efficiency Metric**: 작업 효율성을 점수화하여 에이전트 성능 평가.
 
 ---
 
-### 3.2 핵심 아키텍처 축
-
-| 축                         | 역할            |
-| ------------------------- | ------------- |
-| Multi-Agent Orchestration | 작업 분해 및 라우팅   |
-| Evolutionary Memory       | 같은 실수 반복 방지   |
-| Observability             | 모든 판단의 추적 가능성 |
-| Active Intelligence       | 외부 기술 변화 인지   |
-| Energy Awareness          | 무한 루프 방지      |
-| Document Continuity       | 세션 부활         |
-| Hybrid LLM Backend        | Gemini + Ollama 협업 |
+## 4. 기술 스택 및 아키텍처
+*   **Core**: Python 3.10+, LangGraph (Orchestration).
+*   **LLM**: Google Gemini (Primary), OpenAI/Ollama (Fallback/Local).
+*   **UI**: Rich (Terminal UI).
+*   **Storage**: JSON/SQLite (Local Persistence).
 
 ---
 
-## 4. 디렉토리 & 모듈 기준 구조
-
-(구조는 의도이며, 실제 구현과 다를 수 있음)
-
-```
-/gortex
-├── main.py
-├── core/
-├── agents/
-├── utils/
-├── ui/
-└── docs/
-```
-
-각 디렉토리는 **역할 기반 분리**를 따른다.
-
----
-
-## 5. 상태(State)와 의식 모델
-
-### 5.1 GortexState 개념
-
-Gortex는 LLM의 내부 기억을 신뢰하지 않는다.
-
-“의식”은 다음의 합이다:
-
-* 명시적 State 객체
-* 파일 기반 Checkpoint
-* 요약된 메모리
-* 세션 기록 문서
-* Evolution Rule
-
-👉 모든 상태는 **검사 가능 / 직렬화 가능 / 복원 가능**해야 한다.
-
----
-
-### 5.2 메모리 계층
-
-| 계층           | 설명                 |
-| ------------ | ------------------ |
-| Short-term   | LangGraph 실행 상태    |
-| Compressed   | 요약 메모리             |
-| Persistent   | SQLite 체크포인트       |
-| Evolutionary | experience.json    |
-| Temporal     | docs/sessions/*.md |
-
----
-
-## 6. 진화 시스템 (Evolution)
-
-### 6.1 왜 명시적 진화인가?
-
-AI는 잊고
-사람도 잊는다
-**파일만이 기억한다**
-
-Gortex는 실수를 **규칙**으로 바꾼다.
-
----
-
-### 6.2 Experience Rule 구조
-
-* 트리거 조건
-* 실패 설명
-* 교정 지시
-* 심각도
-* 발생 세션
-
-이 규칙은:
-
-* Manager에 주입되고
-* 생성 전에 강제되며
-* UI에서 항상 보인다
-
----
-
-## 7. 에이전트 역할 정의 (의도 기준)
-
-> 이 섹션은 “현재 구현”이 아니라
-> **“존재 이유”를 정의한다.**
-
-* **Manager**: 전체 판단, 규칙 주입
-* **Planner**: 작업 분해 (실행 금지)
-* **Coder**: 반복 구현 + 검증
-* **Analyst**: 피드백 → 진화 추출
-* **Researcher**: 웹 조사
-* **TrendScout**: 기술 레이더
-* **Optimizer**: 성능 & 행동 교정
-
----
-
-## 8. 에너지 / 효율 인식
-
-Gortex는 다음을 추적한다:
-
-* 토큰 소비
-* 반복 횟수
-* 실패율
-* 에이전트 생산성
-
-이는:
-
-* 무한 루프 차단
-* 저가치 작업 중단
-* 에이전트 선택에 영향
-
----
-
-## 9. 관측 가능성 (Observability)
-
-모든 판단은 기록된다.
-
-* 누가(agent)
-* 왜(reason)
-* 얼마나(latency)
-* 무엇을 썼는지(tool)
-
-이는 디버깅이 아니라 **자기 인식**이다.
-
----
-
-## 10. UI 철학
-
-UI는 장식이 아니다.
-
-UI는:
-
-* 신뢰 수단
-* 사고 보조 장치
-* 디버깅 인터페이스
-
- 대시보드는 항상 다음을 보여야 한다:
-
-* 지금 무슨 일이 일어나는지
-* 왜 그렇게 되었는지
-* 어떤 규칙이 적용 중인지
-* 무엇을 배웠는지
-
----
-
-## 11. 명시적 비목표 (Non-Goals)
-
-Gortex는 다음을 하지 않는다:
-
-* 인간 흉내
-* 숨겨진 기억
-* 조용한 실패
-* 암묵적 학습
-* 통제 불가능한 자율성
-
----
-
-## 12. 반드시 참조해야 할 문서
-
-이 스펙은 **실행을 정의하지 않는다**.
-
-작업 시 반드시 참조:
-
-```
-docs/WORKFLOW.md
-docs/TECHNICAL_SPEC.md     # 구체적인 기술 명세 및 데이터 구조
-docs/sessions/
-next_session.md
-release_note.md
-```
-
----
-
-## 13. 최종 선언
-
-> **Gortex는 기억하는 AI가 아니라
-> 잊지 않도록 설계된 시스템이다.**
-
----
-
-## 14. Web UI 중단 및 TUI 우선 순위 (2025-12-21 전략)
-
-현재 시스템의 복잡도를 줄이고 코어 로직의 안정성을 극대화하기 위해 다음과 같은 전략적 결정을 내린다.
-
-*   **Web UI 개발 중단**: React/Three.js 기반의 Web 인터페이스 개발 및 리팩토링을 무기한 중단한다.
-*   **TUI(Terminal UI) 완벽화**: 모든 역량을 Rich 라이브러리 기반의 터미널 대시보드 구현에 집중한다. "터미널에서 완벽하게 동작하는 AI"를 만드는 것이 현재의 최우선 목표다.
+## 5. 참조 문서
+*   `docs/TECHNICAL_SPEC.md`: 구체적 기술 명세 (데이터 구조, 클래스)
+*   `docs/RULES.md`: 코딩 컨벤션 및 하드 규칙

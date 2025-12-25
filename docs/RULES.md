@@ -1,92 +1,51 @@
-# Gortex Project Rules & Contracts
+# 📏 Gortex Project Rules (v3.0)
 
-This document defines **hard rules** enforced by scripts and policy.
-These are NOT guidelines. They are contracts.
-
----
-
-## 0. Agent Identity: The Document Architect
-*   에이전트는 단순히 코드를 작성하는 도구가 아니라, **시스템 워크플로우와 문서의 유지보수자(Maintainer)**이다.
-*   세션 간의 모든 기억은 오직 `docs/` 내의 파일로만 유지된다. 따라서 **문서 업데이트가 없는 지식 습득은 '기억 상실'과 같다.**
-*   에이전트는 현재 규칙이 부적절하다고 판단될 경우, 언제든지 개선안을 제시하고 문서를 수정할 권한을 가진다.
+이 문서는 Gortex 프로젝트 참여 시 준수해야 하는 **하드 규칙(Hard Rules)**입니다.
 
 ---
 
-## 1. Commit Contract (CRITICAL)
+## 1. 코딩 컨벤션 (Python Standards)
 
-### 1.1 Pre-Commit Check
-Before ANY commit, the following script MUST be executed from the `gortex` directory:
-```bash
-./scripts/pre_commit.sh
-```
-*   **If the script FAILS** → Commit is **STRICTLY FORBIDDEN**. You must fix all errors first.
-*   **If the script SUCCEEDS** → You must follow the commit message guide.
-*   **Message Analysis (MANDATORY)**: 에이전트는 스크립트가 출력하는 **모든 메시지(경고, 힌트, Commit Message Guide 등)를 절대로 무시하지 말고 반드시 정독**해야 한다. 성공하더라도 출력된 내용을 바탕으로 현재 저장소의 상태와 품질을 최종 판단해야 한다.
+### 1.1 스타일 가이드
+*   **PEP 8 준수**: 모든 Python 코드는 PEP 8 스타일 가이드를 따릅니다.
+*   **Type Hints 필수**: 모든 함수 시그니처와 주요 변수에 Type Hint를 명시해야 합니다.
+    *   `def process(data: Dict[str, Any]) -> bool:`
+*   **Docstrings**: 모든 모듈, 클래스, 공개 함수에는 Google Style Docstring을 작성합니다.
 
-### 1.2 Commit Message Format
-Commit messages MUST be written in **Korean** and follow this format:
-`type: 상세 설명 (Korean)`
-
-*   **Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
-*   **Example**: `feat: 에이전트 협업을 위한 합의 프로토콜 기초 구현 (v2.3.0)`
+### 1.2 금지 패턴 (Anti-Patterns)
+*   **Wildcard Import**: `from module import *` 절대 금지.
+*   **Bare Except**: `except:` 금지. 구체적인 예외(`except ValueError:`)를 명시하거나 `except Exception:` 사용.
+*   **Magic Numbers**: 하드코딩된 숫자나 문자열 대신 상수(Constants) 사용.
+*   **Global Variables**: 전역 변수 사용 지양 (`state` 딕셔너리 활용 권장).
 
 ---
 
-## 2. Quality Assurance (High-Rigor TDD)
+## 2. 테스트 및 품질 보증 (QA)
 
-### 2.1 Test-First Principle (ABSOLUTE MANDATE)
-*   **No Test, No Code**: 어떤 기능도 테스트 코드가 먼저(혹은 동시에) 작성되지 않으면 구현 코드를 작성할 수 없다.
-*   **Vibe Coding Defense**: 환각 방지를 위해, 모든 로직은 실행 가능한 테스트 케이스로 "검증된 사실"만 남긴다.
-*   **Red-Green-Refactor**:
-    1.  실패하는 테스트 작성 (`tests/test_*.py`)
-    2.  테스트를 통과하는 최소한의 코드 구현
-    3.  리팩토링 및 안정화
+### 2.1 테스트 필수 (Test Mandatory)
+*   모든 주요 로직 변경 시 대응하는 단위 테스트(`tests/`)를 작성하거나 갱신해야 합니다.
+*   `pytest`를 사용하여 테스트를 실행하고 통과해야 커밋이 가능합니다.
 
-### 2.2 Strict Test Existence (CRITICAL)
-*   `pre_commit.sh` v1.3에 따라, 수정된 모든 로직 파일(`.py`)은 반드시 대응하는 테스트 파일(`tests/test_*.py`)을 가져야 한다.
-*   **테스트 파일 누락 시 커밋은 강제로 차단된다.**
-*   단순한 Mocking을 넘어, 실제 동작을 검증하는 **Integration Test** 비중을 늘려야 한다.
-
-### 2.3 Coverage & Edge Cases
-*   **Coverage Goal**: 핵심 모듈(core, agents, utils)의 커버리지는 **70% 이상**을 유지해야 한다.
-*   **Edge Cases**: 입력값 검증, 예외 처리, 비동기 타임아웃 등 "망가질 수 있는 상황"을 집요하게 테스트하라.
-
-### 2.4 No Placeholders (CRITICAL)
-*   **어떠한 상황에서도 소스 코드 내에 `# ...`, `(중략)`, `(생략)` 등의 플레이스홀더를 삽입할 수 없다.**
-*   코드를 수정할 때는 반드시 해당 블록의 **전체 로직을 그대로 유지**하거나, 불필요한 부분만 명확히 삭제해야 한다.
-*   설명용 텍스트와 실제 코드를 엄격히 구분하라.
+### 2.2 정적 분석
+*   **Linting**: `ruff check .` 명령어로 린트 에러가 없어야 합니다.
+*   **Formatting**: 코드 스타일 통일성을 유지합니다.
 
 ---
 
-## 3. Documentation & State Rules
+## 3. 커밋 및 문서화 (Git & Docs)
 
-### 3.1 Source of Truth
-*   AI 에이전트의 기억보다 **Repository 내부의 문서(`docs/`)**를 우선한다.
-*   세션 종료 시 다음 세 파일을 반드시 업데이트해야 세션이 완료된 것으로 간주한다:
-    1.  `docs/sessions/session_XXXX.md` (수행 기록)
-    2.  `docs/release_note.md` (변경 요약)
-    3.  `docs/next_session.md` (다음 작업 연료 주입)
+### 3.1 커밋 메시지 규칙
+*   **한국어 작성**: 커밋 메시지는 한국어로 명확하게 작성합니다.
+*   **형식**: `태그: 설명` (예: `feat: 에이전트 에너지 시스템 구현`, `fix: 무한 루프 버그 수정`)
+*   **태그 목록**: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
 
----
-
-## 4. Safety & Automation Rules
-
-### 4.1 Git Integrity
-*   모든 파일 I/O는 프로젝트 승인 도구(`utils/tools.py`)를 사용한다.
-*   **IDE 설정 배제**: `.idea/`, `.vscode/`, `.DS_Store` 등 개발 환경 및 OS 종속 파일은 절대로 커밋하지 않는다.
-*   에이전트는 작업을 시작하기 전 `.gitignore`가 최신 상태인지 확인하고, 필요한 경우 업데이트를 제안해야 한다.
-
-### 4.2 Security Guard
-*   시스템 파괴적인 셸 명령(`rm -rf /` 등)은 차단되며, 시도 시 즉시 보안 경고를 발생시킨다.
-
-### 4.3 UI Development Policy (CRITICAL)
-*   **Web UI 개발 중단**: React, Three.js, HTML/JS 기반의 모든 Web 인터페이스 개발 및 리팩토링은 무기한 중단한다.
-*   **TUI(Terminal UI) 전념**: 모든 UI 관련 역량은 `rich` 라이브러리 기반의 터미널 대시보드 고도화에 집중한다. Web 관련 코드를 추가하거나 복구하려는 시도는 규정 위반으로 간주한다.
+### 3.2 문서 동기화 (Doc-Sync)
+*   **Rule of Thumb**: 코드가 변하면 문서도 변해야 합니다.
+*   기능 추가 시 `SPEC_CATALOG.md` 업데이트.
+*   설계 변경 시 `TECHNICAL_SPEC.md` 업데이트.
 
 ---
 
-## 5. Custom Tooling Protocol
-
-*   **자율 도구 제작**: 에이전트는 기존 기능으로 해결하기 어려운 반복적/복잡한 작업이 있을 경우, 스스로 실행 가능한 스크립트나 도구를 제작할 수 있다.
-*   **지식 공유 (MANDATORY)**: 도구를 제작한 에이전트는 반드시 `docs/TOOL.md`에 그 용도와 사용법을 기록해야 한다. 기록되지 않은 도구는 Repository에 남길 수 없다.
-*   **재활용**: 모든 에이전트는 세션 시작 시 `docs/TOOL.md`를 읽고, 이미 만들어진 도구가 있다면 적극적으로 활용하여 중복 작업을 방지한다.
+## 4. 보안 (Security)
+*   **Secrets**: API Key, Password 등 민감 정보는 절대 코드에 하드코딩하지 않습니다. (환경 변수 `.env` 사용)
+*   **Safe Shell**: `run_shell_command` 사용 시 파괴적인 명령어(`rm -rf /` 등) 사용에 각별히 주의합니다.
