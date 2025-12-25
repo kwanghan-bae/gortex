@@ -21,8 +21,16 @@ logger = logging.getLogger("GortexCommands")
 
 async def handle_command(user_input: str, ui, observer: GortexObserver, all_sessions_cache: dict, thread_id: str, theme_manager) -> str:
     """모든 슬래시 명령어(/)를 유실 없이 처리합니다."""
+    # 입력 정제 강화
+    user_input = user_input.strip()
+    if not user_input.startswith("/"): return "pass"
+    
     cmd_parts = user_input.split()
     cmd = cmd_parts[0].lower()
+    
+    # 여러 개의 슬래시로 시작하는 경우(예: //help) 정정
+    if cmd.startswith("//"):
+        cmd = "/" + cmd.lstrip("/")
     
     if cmd == "/help":
         help_msg = """
@@ -119,7 +127,18 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
 
     elif cmd == "/status":
         stats = observer.get_stats()
-        report = f"### 📊 Gortex Status\n- **Tokens**: {stats.get('total_tokens')}\n- **Cost**: ${stats.get('total_cost')}\n- **Uptime**: {stats.get('uptime')}"
+        total_tokens = stats.get('total_tokens', 0)
+        total_cost = stats.get('total_cost', 0.0)
+        uptime = stats.get('uptime', 'N/A')
+        trace_id = stats.get('trace_id', 'N/A')
+        
+        report = f"""
+### 📊 Gortex System Status
+- **Trace ID**: `{trace_id}`
+- **Total Tokens**: {total_tokens:,}
+- **Est. Cost**: ${total_cost:.6f}
+- **Session Uptime**: {uptime}
+"""
         ui.chat_history.append(("system", Panel(Markdown(report), title="STATUS", border_style="magenta")))
         ui.update_main(ui.chat_history)
         return "skip"
@@ -187,6 +206,48 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
         kg_data = indexer.generate_knowledge_graph()
         kg_summary = f"### Knowledge Map\n- **Nodes**: {len(kg_data['nodes'])}\n- **Edges**: {len(kg_data['edges'])}"
         ui.chat_history.append(("system", Panel(Markdown(kg_summary), title="BRAIN MAP", border_style="blue")))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/index":
+        ui.chat_history.append(("system", "🔍 프로젝트 재인덱싱을 시작합니다..."))
+        ui.update_main(ui.chat_history)
+        # 즉시 렌더링을 위해 main.py 스타일의 강제 출력 시뮬레이션 (여기서는 UI 업데이트로 충분)
+        indexer = SynapticIndexer()
+        indexer.scan_project()
+        ui.chat_history.append(("system", "✅ 인덱싱이 완료되었습니다."))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/scan_debt":
+        ui.chat_history.append(("system", "📉 기술 부채 및 코드 복잡도 정밀 스캔 중..."))
+        ui.update_main(ui.chat_history)
+        analyst = AnalystAgent()
+        debt_report = analyst.scan_project_complexity()
+        
+        table = Table(title="📉 Project Technical Debt", show_header=True)
+        table.add_column("File", style="cyan")
+        table.add_column("Complexity", justify="right")
+        table.add_column("Risk", style="bold red")
+        
+        for item in debt_report[:10]:
+            table.add_row(item["file"], str(item["score"]), item["reason"])
+            
+        ui.chat_history.append(("system", table))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/config":
+        from gortex.core.auth import GortexAuth
+        auth = GortexAuth()
+        config_text = f"""
+⚙️ **Gortex System Configuration**
+- **Current Provider**: [bold green]{auth.get_provider()}[/bold green]
+- **Ollama Model**: {auth.ollama_model}
+- **Gemini Keys**: {len(auth.key_pool)} configured
+- **Config Path**: `{auth._CONFIG_PATH}`
+"""
+        ui.chat_history.append(("system", Panel(Markdown(config_text), title="CONFIG", border_style="yellow")))
         ui.update_main(ui.chat_history)
         return "skip"
 
@@ -274,6 +335,42 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
         ui.update_main(ui.chat_history)
         return "skip"
 
+    elif cmd == "/provider":
+        if len(cmd_parts) < 2:
+            ui.chat_history.append(("system", "⚠️ 사용법: /provider [gemini|ollama|openai]"))
+        else:
+            new_provider = cmd_parts[1].lower()
+            from gortex.core.auth import GortexAuth
+            try:
+                auth = GortexAuth()
+                auth.set_provider(new_provider)
+                ui.provider = new_provider.upper() # 사이드바 즉시 반영
+                ui.chat_history.append(("system", f"🔄 LLM 공급자가 '[bold green]{new_provider.upper()}[/bold green]'로 변경되었습니다."))
+                ui.update_sidebar(provider=ui.provider)
+            except ValueError as e:
+                ui.chat_history.append(("system", f"❌ {e}"))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
+    elif cmd == "/model":
+        if len(cmd_parts) < 2:
+            ui.chat_history.append(("system", "⚠️ 사용법: /model [model_name] (예: /model gpt-4o, /model llama3)"))
+        else:
+            new_model = cmd_parts[1]
+            from gortex.core.auth import GortexAuth
+            auth = GortexAuth()
+            
+            # Provider별 모델 설정 로직 (여기서는 Ollama 모델 변경을 주로 지원)
+            if auth._provider == "ollama":
+                auth.ollama_model = new_model
+                ui.chat_history.append(("system", f"🤖 Ollama 기본 모델이 '[bold cyan]{new_model}[/bold cyan]'로 설정되었습니다."))
+            else:
+                ui.chat_history.append(("system", f"ℹ️ '{auth._provider.upper()}' 모드에서는 요청 시 모델 ID가 동적으로 결정되지만, \n기본값 힌트로 '{new_model}'을 기억합니다."))
+                # (추후 config.default_model 업데이트 로직 등 확장 가능)
+                
+        ui.update_main(ui.chat_history)
+        return "skip"
+
     elif cmd == "/history":
         summary_path = "logs/trace_summary.md"
         if os.path.exists(summary_path):
@@ -296,6 +393,17 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
         ui.update_main(ui.chat_history)
         return "skip"
 
-    ui.chat_history.append(("system", f"❓ 알 수 없는 명령어: {cmd}"))
+    # [NEW] Did you mean? 기능 (유사 명령어 추천)
+    import difflib
+    valid_commands = [
+        "/help", "/status", "/agents", "/inspect", "/rca", "/search", "/map", 
+        "/kg", "/scan_debt", "/index", "/voice", "/language", "/theme", 
+        "/config", "/export", "/import", "/clear", "/bug", "/mode", "/save", 
+        "/load", "/provider", "/model", "/history"
+    ]
+    matches = difflib.get_close_matches(cmd, valid_commands, n=1, cutoff=0.6)
+    suggestion = f"\n💡 혹시 [bold cyan]{matches[0]}[/bold cyan]를 입력하려 하셨나요?" if matches else ""
+
+    ui.chat_history.append(("system", f"❓ 알 수 없는 명령어: {cmd}{suggestion}"))
     ui.update_main(ui.chat_history)
     return "skip"

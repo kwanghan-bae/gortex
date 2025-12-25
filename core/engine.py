@@ -104,7 +104,7 @@ class GortexEngine:
         # 5. 단순 반복 작업/저평판 에이전트 -> Ollama
         return "ollama/llama3"
 
-    async def process_node_output(self, node_name: str, output: Dict[str, Any], state: Dict[str, Any]):
+    async def process_node_output(self, node_name: str, output: Dict[str, Any], state: Dict[str, Any], latency_ms: Optional[int] = None):
         """노드 실행 결과를 처리하고 UI/관찰자에게 알림"""
         # 토큰 추적 업데이트
         tokens = count_tokens(json.dumps(output))
@@ -119,6 +119,7 @@ class GortexEngine:
                 agent=node_name, 
                 event="node_complete", 
                 payload=output, 
+                latency_ms=latency_ms,
                 cause_id=cause_id
             )
             state["last_event_id"] = res_id or event_id
@@ -127,7 +128,20 @@ class GortexEngine:
         if self.ui:
             self.ui.update_thought(output.get("thought", ""), agent_name=node_name)
             if "ui_mode" in output:
-                self.ui.set_layout_mode(output["ui_mode"])
+                self.ui.set_mode(output["ui_mode"])
+            
+            # [NEW] AI 메시지를 UI 채팅 기록에 반영 (필터링 강화)
+            if "messages" in output:
+                for msg in output["messages"]:
+                    if isinstance(msg, (list, tuple)) and msg[0] == "ai":
+                        content = str(msg[1])
+                        # 내부 기술적 에러나 단순 완료 알림은 메인 채팅에서 제외
+                        internal_keywords = ["Planning Error", "분석 오류", "All steps completed", "완료했습니다"]
+                        if not any(k in content for k in internal_keywords):
+                            self.ui.chat_history.append(msg)
+                        else:
+                            # 내부 상태는 로그로 기록
+                            self.ui.update_logs({"agent": node_name, "event": content})
             
             msg_str = str(output.get("messages", ""))
             if "완료했습니다" in msg_str:
@@ -144,8 +158,9 @@ class GortexEngine:
         # 음성 브릿지
         if self.vocal and output.get("messages"):
             last_msg = str(output["messages"][-1][1] if isinstance(output["messages"][-1], tuple) else output["messages"][-1])
-            self.vocal.text_to_speech(last_msg)
-            self.vocal.play_audio()
+            audio_path = self.vocal.text_to_speech(last_msg)
+            if audio_path:
+                self.vocal.play_audio(audio_path)
             
         # 자가 치유
         if output.get("status") == "failed":

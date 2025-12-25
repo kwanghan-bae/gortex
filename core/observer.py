@@ -62,7 +62,47 @@ class GortexObserver:
                 logger.warning(f"⚠️ Log size exceeded {max_size_mb}MB. Triggering auto-archive.")
                 self.archive_and_reset_logs()
 
-    def log_event(self, agent: str, event_type: str, payload: Any, latency_ms: Optional[int] = None, tokens: Optional[Dict[str, int]] = None, cause_id: Optional[str] = None):
+    def get_stats(self) -> Dict[str, Any]:
+        """누적 통계 데이터 반환"""
+        total_tokens = 0
+        total_cost = 0.0
+        start_time = None
+        event_count = 0
+        
+        if os.path.exists(self.log_path):
+            try:
+                with open(self.log_path, "r", encoding="utf-8") as f:
+                    for line in f:
+                        if not line.strip(): continue
+                        data = json.loads(line)
+                        event_count += 1
+                        
+                        # 토큰 및 비용 합산
+                        if "tokens" in data and data["tokens"]:
+                            if isinstance(data["tokens"], dict):
+                                total_tokens += data["tokens"].get("total", 0)
+                            elif isinstance(data["tokens"], (int, float)):
+                                total_tokens += int(data["tokens"])
+                        
+                        if not start_time:
+                            start_time = datetime.fromisoformat(data["timestamp"])
+            except Exception as e:
+                logger.warning(f"Error reading stats from log: {e}")
+
+        uptime = "N/A"
+        if start_time:
+            delta = datetime.now() - start_time
+            uptime = str(delta).split(".")[0] # HH:MM:SS 형식
+
+        return {
+            "total_tokens": total_tokens,
+            "total_cost": round(total_tokens * 0.000002, 6),
+            "uptime": uptime,
+            "event_count": event_count,
+            "trace_id": self.trace_id
+        }
+
+    def log_event(self, agent: str, event: str, payload: Any, latency_ms: Optional[int] = None, tokens: Optional[Dict[str, int]] = None, cause_id: Optional[str] = None):
         """이벤트를 JSONL 형식으로 기록 (인과 관계 추적 지원)"""
         event_id = str(uuid.uuid4())[:8]
         entry = {
@@ -70,7 +110,7 @@ class GortexObserver:
             "timestamp": datetime.now().isoformat(),
             "trace_id": self.trace_id,
             "agent": agent,
-            "event": event_type, # 'thought', 'tool_call', 'node_complete', 'error'
+            "event": event, # 'thought', 'tool_call', 'node_complete', 'error'
             "payload": payload,
             "latency_ms": latency_ms,
             "tokens": tokens,

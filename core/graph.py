@@ -80,8 +80,7 @@ def compile_gortex_graph(checkpointer=None):
     workflow.add_node("evolution", evolution_node)
 
     # 엣지 연결
-    workflow.add_edge(START, "trend_scout")
-    workflow.add_edge("trend_scout", "manager")
+    workflow.add_edge(START, "manager")
 
     # Manager의 라우팅
     workflow.add_conditional_edges(

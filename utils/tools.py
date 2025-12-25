@@ -405,3 +405,19 @@ def compress_directory(source_dir: str, output_path: str, ignore_patterns: List[
                     zipf.write(full_path, rel_path)
         return f"✅ Directory compressed to {output_path}"
     except Exception as e: return f"❌ Compression failed: {e}"
+
+def safe_json_extract(text: str) -> Dict[str, Any]:
+    """텍스트에서 JSON 블록을 안전하게 추출하고 파싱합니다."""
+    if not text: return {}
+    import re
+    import json
+    match = re.search(r'\{.*\}', text, re.DOTALL)
+    if not match: return {}
+    json_str = match.group(0)
+    try:
+        return json.loads(json_str)
+    except:
+        try:
+            return json.loads(json_str.replace("'", '"'))
+        except:
+            return {}

@@ -11,6 +11,7 @@ from gortex.agents.analyst import AnalystAgent
 from gortex.core.llm.factory import LLMFactory
 from gortex.utils.prompt_loader import PromptLoader
 from gortex.core.registry import registry
+from gortex.core.evolutionary_memory import EvolutionaryMemory
 
 logger = logging.getLogger("GortexSwarm")
 
@@ -189,8 +190,27 @@ class SwarmAgent:
 
         try:
             response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], config)
-            json_match = re.search(r'\{{.*\}}', response_text, re.DOTALL)
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
             data = json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+            
+            # [Debate Memory Integration] 합의안을 Super Rule로 승격하여 저장
+            if "unified_rule" in data and data["unified_rule"]:
+                try:
+                    memory = EvolutionaryMemory()
+                    rule = data["unified_rule"]
+                    # 필수 필드 존재 여부 확인 후 저장
+                    if rule.get("instruction") and rule.get("trigger_patterns"):
+                        memory.save_rule(
+                            instruction=rule["instruction"],
+                            trigger_patterns=rule["trigger_patterns"],
+                            category=rule.get("category"),
+                            severity=rule.get("severity", 3),
+                            source_session="swarm_debate",
+                            is_super_rule=True
+                        )
+                        logger.info(f"🚀 Swarm consensus saved as Super Rule: {rule['instruction'][:50]}...")
+                except Exception as mem_e:
+                    logger.error(f"Failed to save consensus as Super Rule: {mem_e}")
             
             os.makedirs("logs/debates", exist_ok=True)
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

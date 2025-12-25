@@ -29,7 +29,7 @@ class ResearcherAgent:
         logger.info(f"🌐 Scraping: {url}")
         
         # 캐시 확인
-        cached = self.cache.get(url)
+        cached = self.cache.get("scrape", url)
         if cached:
             logger.info("♻️  Using cached research data.")
             return cached
@@ -58,7 +58,7 @@ class ResearcherAgent:
                 text = soup.get_text(separator=' ', strip=True)
                 text = re.sub(r'\s+', ' ', text)
                 
-                self.cache.set(url, text[:10000])
+                self.cache.set("scrape", url, text[:10000])
                 return text[:5000]
         except Exception as e:
             logger.error(f"Scraping failed for {url}: {e}")

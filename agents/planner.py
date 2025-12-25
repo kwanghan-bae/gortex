@@ -100,8 +100,22 @@ class PlannerAgent(BaseAgent):
 
         try:
             response_text = self.backend.generate(model=assigned_model, messages=formatted_messages, config=config)
-            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
-            plan_data = json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+            
+            # [LOGGING] 분석을 위해 원문 기록
+            logger.debug(f"RAW Response from Planner: {response_text}")
+            
+            from gortex.utils.tools import safe_json_extract
+            plan_data = safe_json_extract(response_text)
+            
+            if not plan_data:
+                # JSON을 못 찾았거나 파싱 실패 시 기본 계획 생성
+                logger.warning("Failed to parse JSON in Planner response. Using fallback.")
+                plan_data = {
+                    "thought_process": "구조화된 계획 생성에 실패하여 복구 모드로 전환합니다.",
+                    "goal": "상태 복구",
+                    "steps": [{"id": 1, "action": "research", "target": "error", "reason": "Parsing failed", "priority_score": 10, "category": "Fix"}],
+                    "handoff_instruction": "계획을 수동으로 재수립하라."
+                }
             
             raw_steps = plan_data.get("steps", [])
             final_steps = []

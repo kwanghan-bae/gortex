@@ -1,6 +1,7 @@
 import gc
 import logging
 import os
+from typing import List
 from gortex.core.state import GortexState
 from gortex.core.llm.factory import LLMFactory
 

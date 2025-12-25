@@ -67,6 +67,10 @@ class LongTermMemory:
             clean_text = text[:2000]
             # GortexAuth를 통해 현재 활성 클라이언트 획득
             client = self.auth.get_current_client()
+            if not client:
+                logger.warning("No active client for embedding. Falling back to zero-vector.")
+                return [0.0] * 768
+
             response = client.models.embed_content(
                 model="models/embedding-001",
                 contents=clean_text

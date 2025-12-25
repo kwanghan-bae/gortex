@@ -119,27 +119,31 @@ class TrendScoutAgent:
         """웹 검색을 통해 트렌드 정보를 수집하고 분석"""
         logger.info("🚀 Scouting for new tech trends and LLM models...")
         
-        # 1. 검색 쿼리 설정
+        # [OPTIMIZATION] 쿼리 개수 축소 (지연 방지)
         queries = [
-            "latest free LLM API 2025",
-            "Gemini API updates and new models",
-            "new autonomous agent patterns and best practices python"
+            "latest LLM agent trends 2025"
         ]
         
         findings = []
         for q in queries:
-            result = await self.researcher.search_and_summarize(q)
-            findings.append(result)
+            try:
+                # Researcher 타임아웃 활용
+                result = await self.researcher.search_and_summarize(q)
+                findings.append(result)
+            except Exception as e:
+                logger.warning(f"Trend search failed for '{q}': {e}")
+
+        # 분석할 데이터가 없으면 즉시 종료
+        if not findings or not "".join(findings).strip():
+            return ["새로운 트렌드 정보를 찾지 못했습니다."]
 
         # 2. 결과 분석 및 요약 (LLM)
         analysis_prompt = f"""
-        다음은 최신 AI 트렌드 및 모델에 대한 검색 결과들이다.
-        Gortex 시스템을 강화할 수 있는 신규 모델 소식이나 에이전트 설계 기법이 있는지 분석하라.
+        다음은 AI 트렌드 검색 결과이다. Gortex 시스템을 강화할 수 있는 신규 모델이나 에이전트 기법을 JSON으로 추출하라.
         
         [Search Results]
-        {"".join(findings)}
+        {"".join(findings)[:4000]}
         
-        분석 결과를 바탕으로 'models'와 'patterns' 정보를 JSON 형식으로 추출하라.
         {{
             "models": [{{ "name": "모델명", "status": "new/updated", "note": "설명" }}],
             "patterns": [{{ "topic": "주제", "summary": "설명" }}]
@@ -328,14 +332,13 @@ def trend_scout_node(state: GortexState) -> Dict[str, Any]:
     assigned_model = state.get("assigned_model", "gemini-1.5-flash")
     
     if scout.should_scan(interval):
+        file_list = list(state.get("file_cache", {}).keys())
         # 비동기 실행 (Researcher와 동일한 패턴)
         try:
             loop = asyncio.get_event_loop()
         except RuntimeError:
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            
-        file_list = list(state.get("file_cache", {}).keys())
 
         if loop.is_running():
             import concurrent.futures

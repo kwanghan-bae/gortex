@@ -49,15 +49,15 @@ class LLMFactory:
         에이전트 등급 및 예산 상황에 최적화된 모델 할당.
         예산 소진율에 따라 자동으로 모델을 하향(Downgrade) 조정함.
         """
-        # 등급별 기본 모델 정의
+        # 등급별 기본 모델 정의 (성능과 속도의 균형 최적화)
         grade_map = {
             "Diamond": "gemini-2.0-flash", 
-            "Gold": "gemini-pro-latest",   
+            "Gold": "gemini-1.5-pro",   
             "Silver": "gemini-1.5-flash",  
-            "Bronze": "gemini-2.5-flash-lite" 
+            "Bronze": "gemini-1.5-flash" # Lite 모델보다 안정적인 Flash 선호
         }
         
-        selected_model = grade_map.get(grade, "ollama/llama3")
+        selected_model = grade_map.get(grade, "gemini-1.5-flash")
         
         # [Economic Defense] 예산 기반 하향 조정
         budget_usage = daily_cost / budget_limit if budget_limit > 0 else 0

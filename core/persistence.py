@@ -2,7 +2,7 @@ import json
 import os
 import logging
 import time
-from typing import Any, Dict, Optional, Iterator
+from typing import Any, Dict, Optional, Iterator, List, Tuple
 from langgraph.checkpoint.base import BaseCheckpointSaver, Checkpoint, CheckpointMetadata, CheckpointTuple
 from langgraph.checkpoint.memory import MemorySaver
 
@@ -23,7 +23,19 @@ class DistributedSaver(BaseCheckpointSaver):
         """기본 저장소에 기록 후 외부 저장소로 즉시 복제"""
         # 1. Primary 저장 (Memory/SQLite)
         res = self.primary.put(config, checkpoint, metadata, new_versions)
-        
+        self._replicate(config, checkpoint, metadata)
+        return res
+
+    async def aput(self, config: Dict[str, Any], checkpoint: Checkpoint, metadata: CheckpointMetadata, new_versions: Dict[str, Any]) -> Dict[str, Any]:
+        """비동기: 기본 저장소에 기록 후 외부 저장소로 즉시 복제"""
+        if hasattr(self.primary, "aput"):
+            res = await self.primary.aput(config, checkpoint, metadata, new_versions)
+        else:
+            res = self.primary.put(config, checkpoint, metadata, new_versions)
+        self._replicate(config, checkpoint, metadata)
+        return res
+
+    def _replicate(self, config, checkpoint, metadata):
         # 2. Replication (Mirroring)
         try:
             # 직렬화 가능한 상태로 변환
@@ -43,15 +55,26 @@ class DistributedSaver(BaseCheckpointSaver):
             
         except Exception as e:
             logger.error(f"Replication failed: {e}")
-            
-        return res
 
     def get_tuple(self, config: Dict[str, Any]) -> Optional[CheckpointTuple]:
         """기본 저장소에서 조회하되, 실패 시 미러로부터 강제 복구"""
         res = self.primary.get_tuple(config)
         if res:
             return res
+        return self._recover_from_mirror()
+
+    async def aget_tuple(self, config: Dict[str, Any]) -> Optional[CheckpointTuple]:
+        """비동기: 기본 저장소에서 조회하되, 실패 시 미러로부터 강제 복구"""
+        if hasattr(self.primary, "aget_tuple"):
+            res = await self.primary.aget_tuple(config)
+        else:
+            res = self.primary.get_tuple(config)
             
+        if res:
+            return res
+        return self._recover_from_mirror()
+
+    def _recover_from_mirror(self) -> Optional[CheckpointTuple]:
         # 미러 파일로부터 복구 로직 (분산 환경 핵심)
         if os.path.exists(self.mirror_path):
             logger.info("📡 Primary state lost or empty. Recovering from mirror...")
@@ -67,6 +90,29 @@ class DistributedSaver(BaseCheckpointSaver):
 
     def list(self, config: Optional[Dict[str, Any]] = None, *, filter: Optional[Dict[str, Any]] = None, before: Optional[Dict[str, Any]] = None, limit: Optional[int] = None) -> Iterator[CheckpointTuple]:
         return self.primary.list(config, filter=filter, before=before, limit=limit)
+
+    async def alist(self, config: Optional[Dict[str, Any]] = None, *, filter: Optional[Dict[str, Any]] = None, before: Optional[Dict[str, Any]] = None, limit: Optional[int] = None) -> Iterator[CheckpointTuple]:
+        if hasattr(self.primary, "alist"):
+            return [c async for c in self.primary.alist(config, filter=filter, before=before, limit=limit)]
+        else:
+            return self.primary.list(config, filter=filter, before=before, limit=limit)
+
+    async def aget(self, config: Dict[str, Any]) -> Optional[Checkpoint]:
+        if hasattr(self.primary, "aget"):
+            return await self.primary.aget(config)
+        return self.primary.get(config)
+
+    async def adelete_thread(self, config: Dict[str, Any]) -> None:
+        if hasattr(self.primary, "adelete_thread"):
+            await self.primary.adelete_thread(config)
+        else:
+            self.primary.delete_thread(config)
+
+    async def aput_writes(self, config: Dict[str, Any], writes: List[Tuple[str, Any]], task_id: str) -> None:
+        if hasattr(self.primary, "aput_writes"):
+            await self.primary.aput_writes(config, writes, task_id)
+        else:
+            self.primary.put_writes(config, writes, task_id)
 
     def _make_serializable(self, data: Any) -> Any:
         """데이터를 JSON 직렬화 가능한 형태로 재귀적 변환 (BaseMessage 등 처리)"""

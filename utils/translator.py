@@ -54,6 +54,16 @@ class SynapticTranslator:
 
     def detect_and_translate(self, text: str, target_lang: str = "Korean") -> Dict[str, str]:
         """언어를 감지하고 목표 언어로 번역"""
+        # [OPTIMIZATION] 한글이 포함되어 있으면 한국어로 간주하고 번역 스킵
+        import re
+        if re.search("[ㄱ-ㅎㅏ-ㅣ가-힣]", text):
+            return {
+                "detected_lang": "ko",
+                "is_korean": True,
+                "translated_text": text,
+                "confidence": 1.0
+            }
+
         prompt = f"""다음 텍스트의 언어를 감지하고, '{target_lang}'으로 번역하라.
         
         [Text]

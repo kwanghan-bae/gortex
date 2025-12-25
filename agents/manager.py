@@ -40,7 +40,17 @@ class ManagerAgent(BaseAgent):
         
         # 1. 언어 감지 및 번역
         last_msg_obj = state["messages"][-1]
-        raw_input = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
+        raw_input = (last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content).strip()
+        
+        # [OPTIMIZATION] 단순 인사말 필터링 (LLM 호출 없이 즉시 응답)
+        greetings = ["안녕", "hi", "hello", "반가워", "누구니", "help"]
+        if any(g in raw_input.lower() for g in greetings) and len(raw_input) < 10:
+            return {
+                "thought": "사용자의 단순 인사말에 즉시 응답합니다.",
+                "next_node": "__end__",
+                "messages": [("ai", "안녕하세요! Gortex입니다. 무엇을 도와드릴까요? 도움말이 필요하시면 /help를 입력해주세요.")]
+            }
+
         lang_info = translator.detect_and_translate(raw_input)
         internal_input = lang_info.get("translated_text", raw_input) if not lang_info.get("is_korean") else raw_input
 
@@ -61,13 +71,19 @@ class ManagerAgent(BaseAgent):
                 "messages": [("ai", f"🚀 **시스템 확장 감지**: '{agent_proposals[0]['agent_name']}' 전문가 영입을 위한 타당성 검토를 시작합니다.")]
             }
 
-        # 3. 맥락 정보 수집
-        namespace = os.path.basename(state.get("working_dir", "global"))
-        recalled_items = ltm.recall(internal_input, namespace=namespace)
-        ltm_context = "\n".join([f"- {item['content']}" for item in recalled_items])
-        
-        past_cases = log_search.search_similar_cases(internal_input)
-        case_context = "\n".join([f"Case: {c.get('agent')} - {c.get('event')}" for c in past_cases])
+        # 3. 맥락 정보 수집 (최적화: 짧은 입력은 검색 건너뜀)
+        ltm_context = ""
+        case_context = ""
+        if len(internal_input) > 15:
+            namespace = os.path.basename(state.get("working_dir", "global"))
+            try:
+                recalled_items = ltm.recall(internal_input, namespace=namespace)
+                ltm_context = "\n".join([f"- {item['content']}" for item in recalled_items])
+                
+                past_cases = log_search.search_similar_cases(internal_input)
+                case_context = "\n".join([f"Case: {c.get('agent')} - {c.get('event')}" for c in past_cases])
+            except Exception as e:
+                logger.warning(f"Context retrieval failed: {e}")
         
         available_agents = "\n".join([f"- {name}: {registry.get_metadata(name).description} (Tools: {registry.get_metadata(name).tools})" for name in registry.list_agents()])
 
@@ -109,8 +125,21 @@ class ManagerAgent(BaseAgent):
 
         try:
             response_text = self.backend.generate(model=model_id, messages=formatted_messages, config=config)
+            
+            # [LOGGING] 분석을 위해 원문 기록
+            logger.debug(f"RAW Response from {model_id}: {response_text}")
+            
             json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
-            res_data = json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+            if not json_match:
+                logger.error(f"Failed to find JSON in response: {response_text}")
+                # 원문에 텍스트만 있는 경우 response_to_user로 간주하고 Planner로 토스
+                return {
+                    "thought": "LLM이 구조화된 형식을 지키지 않았습니다. 원문을 사용자 응답으로 간주하고 계획 단계로 진행합니다.",
+                    "next_node": "planner",
+                    "messages": [("ai", response_text)]
+                }
+
+            res_data = json.loads(json_match.group(0))
             
             req_cap = res_data.get("required_capability", "").lower()
             candidates = registry.get_agents_by_tool(req_cap) or registry.get_agents_by_role(req_cap)
@@ -164,7 +193,12 @@ class ManagerAgent(BaseAgent):
             }
         except Exception as e:
             logger.error(f"Manager failed: {e}")
-            return {"next_node": "__end__", "messages": [("ai", f"❌ 분석 오류: {e}")]}
+            # 파싱 에러 등의 경우 Planner로 기본 복구 시도
+            return {
+                "thought": f"Manager 분석 중 오류({e})가 발생하여 기본 계획 단계로 진행합니다.",
+                "next_node": "planner", 
+                "messages": [("ai", "⚠️ 분석 중 사소한 오류가 있었으나, 계속 진행합니다.")]
+            }
 
 # 레지스트리 등록 및 호환성 래퍼
 manager_instance = ManagerAgent()
