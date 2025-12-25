@@ -123,10 +123,11 @@ class DistributedSaver(BaseCheckpointSaver):
         elif isinstance(data, ChainMap):
              # ChainMap을 dict로 변환 (모든 맵을 합침)
             return {k: self._make_serializable(v) for k, v in dict(data).items()}
-        elif isinstance(data, list):
+        elif isinstance(data, (list, tuple, set)): 
+            # list, tuple, set 모두 JSON 배열로 직렬화
             return [self._make_serializable(v) for v in data]
         elif hasattr(data, "content") and hasattr(data, "type"): # BaseMessage 대응
             return {"type": data.type, "content": data.content}
         elif hasattr(data, "__dict__"):
-            return str(data)
+            return str(data) # 객체는 문자열 표현으로 저장 (필요시 __dict__ 직렬화로 고도화)
         return data
