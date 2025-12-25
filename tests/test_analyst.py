@@ -11,15 +11,18 @@ class TestGortexAnalyst(unittest.TestCase):
         self.test_csv = "test_data.csv"
         df = pd.DataFrame({"A": [1, 2], "B": [3, 4]})
         df.to_csv(self.test_csv, index=False)
-        self.memory_path = "test_experience.json"
-        if os.path.exists(self.memory_path):
-            os.remove(self.memory_path)
+        self.test_mem_dir = "tests/test_memory_analyst"
+        if os.path.exists(self.test_mem_dir):
+            import shutil
+            shutil.rmtree(self.test_mem_dir)
+        os.makedirs(self.test_mem_dir, exist_ok=True)
 
     def tearDown(self):
         if os.path.exists(self.test_csv):
             os.remove(self.test_csv)
-        if os.path.exists(self.memory_path):
-            os.remove(self.memory_path)
+        if os.path.exists(self.test_mem_dir):
+            import shutil
+            shutil.rmtree(self.test_mem_dir)
 
     @patch('gortex.agents.analyst.base.LLMFactory')
     def test_analyze_data_csv(self, mock_factory):
@@ -39,7 +42,7 @@ class TestGortexAnalyst(unittest.TestCase):
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["file"], self.test_csv)
 
-    @patch('gortex.agents.analyst.base.LLMFactory')
+    @patch('gortex.core.llm.factory.LLMFactory')
     def test_analyze_feedback(self, mock_factory):
         """부정 피드백 분석 및 규칙 추출 테스트"""
         mock_backend = MagicMock()
@@ -49,10 +52,10 @@ class TestGortexAnalyst(unittest.TestCase):
             "trigger_patterns": ["naming", "변수명"],
             "severity": 4
         }])
-        mock_factory.get_default_backend.return_value = mock_backend
-
+        
         agent = AnalystAgent()
-        result = agent.analyze_feedback([MagicMock(content="변수명 왜 이래? snake_case로 해")])
+        agent.backend = mock_backend
+        result = agent.analyze_feedback("변수명 왜 이래? snake_case로 해")
         
         self.assertIsNotNone(result)
         self.assertIsInstance(result, list)
@@ -60,19 +63,19 @@ class TestGortexAnalyst(unittest.TestCase):
 
     def test_evolutionary_memory_save_and_get(self):
         """학습된 규칙 저장 및 로드 테스트"""
-        mem = EvolutionaryMemory(file_path=self.memory_path)
+        mem = EvolutionaryMemory(base_dir=self.test_mem_dir)
         mem.save_rule("Test Rule", ["test", "trigger"])
         
         rules = mem.get_active_constraints("This is a test message")
         self.assertIn("Test Rule", rules)
         
         # persistence 확인
-        mem2 = EvolutionaryMemory(file_path=self.memory_path)
+        mem2 = EvolutionaryMemory(base_dir=self.test_mem_dir)
         self.assertEqual(len(mem2.memory), 1)
 
     def test_evolutionary_memory_deduplication(self):
         """규칙 중복 저장 및 병합 테스트 (강화 횟수 포함)"""
-        mem = EvolutionaryMemory(file_path=self.memory_path)
+        mem = EvolutionaryMemory(base_dir=self.test_mem_dir)
         
         # 1. 첫 번째 규칙 저장
         mem.save_rule("Strict Typing", ["typing"], severity=2, context="Initial context")

@@ -10,13 +10,27 @@ class EvolutionaryMemory:
     """
     주제별 샤딩(Sharding) 기술을 적용하여 지능 데이터를 분산 관리하는 메모리 클래스.
     """
-    def __init__(self, base_dir: str = "logs/memory"):
-        self.base_dir = base_dir
+    def __init__(self, base_dir: Optional[str] = None, **kwargs):
+        # 하위 호환성: file_path가 kwargs로 들어오면 base_dir로 사용 (디렉토리로 취급)
+        file_path = kwargs.get("file_path")
+        self.base_dir = base_dir or (os.path.dirname(file_path) if file_path else "logs/memory") or "logs/memory"
+        
+        if not self.base_dir or self.base_dir == ".":
+             self.base_dir = "logs/memory"
+
         os.makedirs(self.base_dir, exist_ok=True)
         os.makedirs(os.path.join(self.base_dir, "snapshots"), exist_ok=True)
         self.legacy_path = "experience.json"
         self.shards: Dict[str, List[Dict[str, Any]]] = {}
         self._initialize_shards()
+
+    @property
+    def memory(self) -> List[Dict[str, Any]]:
+        """모든 샤드의 규칙을 취합하여 반환 (하위 호환성 유지)"""
+        all_rules = []
+        for cat in self.shards:
+            all_rules.extend(self.shards[cat])
+        return all_rules
 
     def detect_global_conflicts(self) -> List[Dict[str, Any]]:
         """전체 샤드를 스캔하여 트리거 중복 및 지침 모순을 감지하고 토론 의제를 설정함."""
@@ -97,22 +111,31 @@ class EvolutionaryMemory:
             return "design"
         return "general"
 
-    def save_rule(self, instruction: str, trigger_patterns: List[str], category: Optional[str] = None, severity: int = 3, source_session: Optional[str] = None, context: Optional[str] = None) -> str:
+    def save_rule(self, instruction: str, trigger_patterns: List[str], category: Optional[str] = None, severity: int = 3, source_session: Optional[str] = None, context: Optional[str] = None, is_super_rule: bool = False) -> str:
         """새로운 규칙을 특정 샤드에 저장 (ID 반환 및 밀리초 단위 식별자 사용)"""
+        # 0. 전역 중복 체크 (모든 샤드에서 검색)
+        instruction_clean = instruction.strip()
+        for cat_name, shard_list in self.shards.items():
+            for existing in shard_list:
+                if existing["learned_instruction"].strip() == instruction_clean:
+                    existing["trigger_patterns"] = list(set(existing["trigger_patterns"]).union(set(trigger_patterns)))
+                    existing["reinforcement_count"] = existing.get("reinforcement_count", 0) + 1
+                    # 메타데이터 업데이트
+                    if severity > existing.get("severity", 0):
+                        existing["severity"] = severity
+                    if context:
+                        existing["context"] = context
+                    if is_super_rule:
+                        existing["is_super_rule"] = True
+                    self._persist_shard(cat_name)
+                    return existing["id"]
+
         cat = category or self._guess_category(instruction + " " + " ".join(trigger_patterns))
         if cat not in self.shards:
             self.shards[cat] = self._load_shard(cat)
             
         shard = self.shards[cat]
-        new_patterns = set(trigger_patterns)
         
-        for existing in shard:
-            if existing["learned_instruction"].strip() == instruction.strip():
-                existing["trigger_patterns"] = list(set(existing["trigger_patterns"]).union(new_patterns))
-                existing["reinforcement_count"] = existing.get("reinforcement_count", 0) + 1
-                self._persist_shard(cat)
-                return existing["id"]
-
         # %f 추가하여 밀리초 단위 충돌 방지
         rule_id = f"RULE_{cat.upper()}_{datetime.now().strftime('%Y%m%d_%H%M%S_%f')}"
         new_rule = {
@@ -127,7 +150,8 @@ class EvolutionaryMemory:
             "usage_count": 0,
             "success_count": 0,
             "failure_count": 0,
-            "is_certified": False
+            "is_certified": False,
+            "is_super_rule": is_super_rule
         }
         shard.append(new_rule)
         self._persist_shard(cat)
@@ -156,18 +180,20 @@ class EvolutionaryMemory:
                     # usage를 1 증가시킨 가상의 점수로 정렬
                     rule["impact_score"] = float((success + 1) / (usage + 2))
                     rule["is_certified"] = is_certified
+                    rule["is_super_rule"] = bool(rule.get("is_super_rule", False))
                     
                     matching_rules.append(rule)
                     # 통계 갱신 (실제 반영은 record_rule_outcome에서 하되, 
                     # 조회 횟수 증가는 추적용으로 남길 수 있음. 여기선 생략하여 순수 조회 유지)
             
-        # [Precision Sorting] 1. 공인 여부(우선), 2. 영향력 점수, 3. 심각도 순 정렬
+        # [Precision Sorting] 1. 초월적 규칙(Super), 2. 공인 여부(Cert), 3. 영향력 점수, 4. 심각도 순 정렬
         # reverse=True -> 큰 값이 앞으로 (1 > 0, 0.8 > 0.3, 5 > 1)
         def get_sort_key(r):
+            super_val = 1 if r.get("is_super_rule") is True else 0
             cert_val = 1 if r.get("is_certified") is True else 0
             impact = float(r.get("impact_score", 0.0))
             sev = int(r.get("severity", 0))
-            return (cert_val, impact, sev)
+            return (super_val, cert_val, impact, sev)
 
         matching_rules.sort(key=get_sort_key, reverse=True)
         return [r["learned_instruction"] for r in matching_rules]
@@ -196,8 +222,8 @@ class EvolutionaryMemory:
 
     def calculate_rule_value(self, rule: Dict[str, Any]) -> float:
         """경험 규칙의 생존 가치를 평가함 (0~100)."""
-        # 1. 보호 대상: 공인 지혜 또는 생성된 지 얼마 안 된 규칙
-        if rule.get("is_certified"): return 100.0
+        # 1. 보호 대상: 초월적 규칙, 공인 지혜 또는 생성된 지 얼마 안 된 규칙
+        if rule.get("is_super_rule") or rule.get("is_certified"): return 100.0
         
         created_at = datetime.fromisoformat(rule.get("created_at", datetime.now().isoformat()))
         age_days = (datetime.now() - created_at).days
