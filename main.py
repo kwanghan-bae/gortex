@@ -212,6 +212,9 @@ async def run_gortex():
                     finally:
                         live.start()
                         ui.update_main(ui.chat_history) # 복귀 후 화면 갱신
+                
+                # [Fix] Force refresh after command execution
+                live.refresh()
                 continue
             
             if current_task and not current_task.done():
