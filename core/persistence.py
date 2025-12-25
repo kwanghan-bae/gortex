@@ -4,6 +4,7 @@ import logging
 import time
 from typing import Any, Dict, Optional, Iterator, List, Tuple
 from langgraph.checkpoint.base import BaseCheckpointSaver, Checkpoint, CheckpointMetadata, CheckpointTuple
+from collections import ChainMap
 from langgraph.checkpoint.memory import MemorySaver
 
 logger = logging.getLogger("GortexPersistence")
@@ -114,10 +115,14 @@ class DistributedSaver(BaseCheckpointSaver):
         else:
             self.primary.put_writes(config, writes, task_id)
 
+
     def _make_serializable(self, data: Any) -> Any:
         """데이터를 JSON 직렬화 가능한 형태로 재귀적 변환 (BaseMessage 등 처리)"""
         if isinstance(data, dict):
             return {k: self._make_serializable(v) for k, v in data.items()}
+        elif isinstance(data, ChainMap):
+             # ChainMap을 dict로 변환 (모든 맵을 합침)
+            return {k: self._make_serializable(v) for k, v in dict(data).items()}
         elif isinstance(data, list):
             return [self._make_serializable(v) for v in data]
         elif hasattr(data, "content") and hasattr(data, "type"): # BaseMessage 대응
