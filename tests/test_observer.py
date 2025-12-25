@@ -65,9 +65,9 @@ class TestGortexObserver(unittest.TestCase):
 
     def test_rotate_logs_moves_when_size_exceeds(self):
         self.observer.log_event("security", "alert", {"msg": "watch"})
-        with patch('gortex.core.observer.shutil.move') as mock_move:
+        with patch.object(self.observer, 'archive_and_reset_logs') as mock_archive:
             self.observer._rotate_logs(max_size_mb=0)
-            mock_move.assert_called_once()
+            mock_archive.assert_called_once()
 
     def test_callback_handler_logs_events(self):
         handler = FileLoggingCallbackHandler(self.observer)

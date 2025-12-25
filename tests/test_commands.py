@@ -4,6 +4,7 @@ import os
 import json
 from unittest.mock import MagicMock, patch, mock_open
 from gortex.core.commands import handle_command
+from gortex.core.auth import GortexAuth
 
 class TestGortexCommands(unittest.TestCase):
     def setUp(self):
@@ -149,5 +150,39 @@ class TestGortexCommands(unittest.TestCase):
         res = self.run_async(handle_command("/unknown", self.ui, self.observer, self.cache, self.thread_id, self.theme))
         self.assertIn("알 수 없는 명령어", self.ui.chat_history[-1][1])
 
-if __name__ == '__main__':
+class TestCommandHandling(unittest.TestCase):
+    def setUp(self):
+        self.mock_ui = MagicMock()
+        self.mock_ui.chat_history = []
+        self.mock_observer = MagicMock()
+        self.mock_cache = {}
+        self.thread_id = "test-thread"
+        self.mock_theme = MagicMock()
+        if hasattr(GortexAuth, "_instance"):
+            GortexAuth._instance = None
+    
+    def tearDown(self):
+        if hasattr(GortexAuth, "_instance"):
+            GortexAuth._instance = None
+
+    def test_provider_switching_command(self):
+        """/provider 명령어가 GortexAuth의 provider 설정을 변경하는지 테스트"""
+        auth = GortexAuth()
+        asyncio.run(handle_command("/provider ollama", self.mock_ui, self.mock_observer, self.mock_cache, self.thread_id, self.mock_theme))
+        self.assertEqual(auth._provider, "ollama")
+        self.mock_ui.update_sidebar.assert_called_with(provider="OLLAMA")
+        
+        asyncio.run(handle_command("/provider unknown", self.mock_ui, self.mock_observer, self.mock_cache, self.thread_id, self.mock_theme))
+        self.assertEqual(auth._provider, "ollama")
+        last_msg = self.mock_ui.chat_history[-1]
+        self.assertIn("Unknown provider", last_msg[1])
+
+    def test_model_switching_command(self):
+        """/model 명령어가 Ollama 모델 설정을 변경하는지 테스트"""
+        auth = GortexAuth()
+        auth._provider = "ollama"
+        asyncio.run(handle_command("/model qwen2.5:7b", self.mock_ui, self.mock_observer, self.mock_cache, self.thread_id, self.mock_theme))
+        self.assertEqual(auth.ollama_model, "qwen2.5:7b")
+
+if __name__ == "__main__":
     unittest.main()

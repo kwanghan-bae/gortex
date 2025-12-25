@@ -11,7 +11,7 @@ class TestGortexEngine(unittest.TestCase):
         self.ui.chat_history = []
         self.ui.add_achievement = MagicMock()
         self.ui.add_security_event = MagicMock()
-        self.ui.set_layout_mode = MagicMock()
+        self.ui.set_mode = MagicMock()
         self.observer = MagicMock()
         self.observer.log_event.return_value = "evt-1"
         self.observer.get_causal_graph.return_value = {}
@@ -60,8 +60,7 @@ class TestGortexEngine(unittest.TestCase):
         with patch("gortex.core.engine.GortexConfig") as mock_config, \
              patch("gortex.core.engine.count_tokens", return_value=4), \
              patch("gortex.core.engine.Notifier"), \
-             patch("gortex.core.engine.SelfHealingMemory") as mock_healer, \
-             patch("gortex.core.engine.ThreeJsBridge"):
+             patch("gortex.core.engine.SelfHealingMemory") as mock_healer:
             config_instance = MagicMock()
             config_instance.get.return_value = False
             mock_config.return_value = config_instance
@@ -75,8 +74,8 @@ class TestGortexEngine(unittest.TestCase):
         self.assertEqual(self.state_vars["token_credits"]["credit"], 5)
         self.assertEqual(self.state_vars["agent_energy"], 80)
         self.assertEqual(self.ui.add_achievement.call_args[0][0], "Goal Reached")
-        self.ui.set_layout_mode.assert_called_with("coding")
-        self.assertEqual(self.state_vars["session_cache"]["foo"], "bar")
+        self.ui.set_mode.assert_called_with("coding")
+        self.assertEqual(self.state_vars["file_cache"]["foo"], "bar")
         self.assertEqual(healer.get_solution_hint.call_count, 1)
         self.observer.log_event.assert_called()
 
