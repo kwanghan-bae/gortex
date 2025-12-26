@@ -264,12 +264,23 @@ class DashboardUI:
                     if scores[-1] < scores[-2]: trend_color = "red"
                     elif scores[-1] == scores[-2]: trend_color = "yellow"
                 
-                spark_text = Text("\nHealth: ", style="bold")
-                spark_text.append(f"{current_health:.1f} ", style=trend_color)
-                spark_text.append(f"{spark}", style=f"bold {trend_color}")
-                stats_group.append(spark_text)
-        except:
-            pass
+                stats_group.append(Text("\nHealth: ", style="bold"))
+                stats_group.append(Text(f"{current_health:.1f} ", style=trend_color))
+                stats_group.append(Text(f"{spark}", style=f"bold {trend_color}"))
+        except: pass
+
+        # [NEURAL BENCHMARKS] 모델별 실전 성과 랭킹 표시
+        try:
+            model_scores = EfficiencyMonitor().calculate_model_scores()
+            if model_scores:
+                stats_group.append(Text("\n\n-- NEURAL BENCHMARKS --", style="dim"))
+                # 점수 높은 순으로 상위 3개만
+                sorted_models = sorted(model_scores.items(), key=lambda x: x[1], reverse=True)
+                for model, score in sorted_models[:3]:
+                    # 모델명 축약 (예: gemini-2.0-flash -> G-Flash)
+                    m_short = model.replace("gemini-", "G-").replace("ollama/", "O-")[:10]
+                    stats_group.append(Text(f" {m_short:<10} {score:>5.1f}p", style="cyan dim"))
+        except: pass
 
         return Panel(Group(*stats_group), title=" [bold]📊 STATS[/] ", border_style=Palette.GRAY, box=box.ROUNDED)
 

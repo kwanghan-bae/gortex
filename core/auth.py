@@ -310,7 +310,21 @@ class GortexAuth:
         current_provider = self._provider.lower()
         start_time = time.time()
         
-        # 1. Gemini Strategy
+        # [ADAPTIVE ROUTING] 에이전트 성과 기반 최적 모델 자동 추천
+        target_model = model_id
+        # metadata나 context에서 에이전트 이름 추출 시도 (가정: config나 contents에 힌트가 있음)
+        # 여기서는 단순화를 위해 model_id가 "manager", "coder" 등 역할명으로 오는 경우 활용
+        from gortex.utils.efficiency_monitor import EfficiencyMonitor
+        monitor = EfficiencyMonitor()
+        
+        # 1. 탐색(Exploration) vs 활용(Exploitation) 전략 적용 (10% 확률로 다른 모델 시도)
+        if random.random() > 0.1:
+            recommended = monitor.get_best_model_for_task(model_id)
+            if recommended:
+                logger.info(f"🎯 Adaptive Router: Switching '{model_id}' -> optimized model '{recommended}'")
+                target_model = recommended
+
+        # 2. Gemini Strategy
         if current_provider == "gemini":
             if self.key_pool:
                 for _ in range(len(self.key_pool) * 2):
@@ -319,10 +333,10 @@ class GortexAuth:
                         break
                     try:
                         # contents가 이미 Part/Content 리스트인 경우 그대로 전달
-                        res = key_info.client.models.generate_content(model=model_id, contents=contents, config=config)
+                        res = key_info.client.models.generate_content(model=target_model, contents=contents, config=config)
                         self.report_key_success(key_info)
                         duration = (time.time() - start_time) * 1000
-                        logger.info(f"⚡ [Latency] Gemini ({model_id}): {duration:.2f}ms")
+                        logger.info(f"⚡ [Latency] Gemini ({target_model}): {duration:.2f}ms")
                         return res
                     except Exception as e:
                         err = str(e)
@@ -331,24 +345,24 @@ class GortexAuth:
                         continue
             # Fallback if keys are dead or empty
             logger.warning("⚠️ Gemini keys exhausted or missing. Falling back to Ollama.")
-            return self._generate_ollama(model_id, contents, config)
+            return self._generate_ollama(target_model, contents, config)
 
-        # 2. OpenAI Strategy
+        # 3. OpenAI Strategy
         elif current_provider == "openai":
             if self.openai_client:
-                res = self._generate_openai(model_id, contents, config)
+                res = self._generate_openai(target_model, contents, config)
                 duration = (time.time() - start_time) * 1000
-                logger.info(f"⚡ [Latency] OpenAI ({model_id}): {duration:.2f}ms")
+                logger.info(f"⚡ [Latency] OpenAI ({target_model}): {duration:.2f}ms")
                 return res
             else:
                 logger.warning("⚠️ OpenAI client not available. Falling back to Ollama.")
-                return self._generate_ollama(model_id, contents, config)
+                return self._generate_ollama(target_model, contents, config)
 
-        # 3. Ollama Strategy (Default)
+        # 4. Ollama Strategy (Default)
         else:
-            res = self._generate_ollama(model_id, contents, config)
+            res = self._generate_ollama(target_model, contents, config)
             duration = (time.time() - start_time) * 1000
-            logger.info(f"⚡ [Latency] Ollama ({model_id}): {duration:.2f}ms")
+            logger.info(f"⚡ [Latency] Ollama ({target_model}): {duration:.2f}ms")
             return res
 
     def _generate_ollama(self, model_id: str, contents: Any, config: Optional[Any]) -> Any:
