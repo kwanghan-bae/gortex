@@ -298,6 +298,17 @@ class DashboardUI:
                     stats_group.append(Text(f" {m_short:<10} {score:>5.1f}p", style="cyan dim"))
         except: pass
 
+        # [SYSTEM MATURITY] 성숙도 지표 시각화 (v10.1)
+        try:
+            from gortex.agents.analyst import AnalystAgent
+            maturity = AnalystAgent().calculate_system_maturity(getattr(self, "last_state", {}))
+            score = maturity["score"]
+            filled = int(score / 100 * 15)
+            gauge = "█" * filled + "░" * (15 - filled)
+            color = Palette.MAGENTA if score > 80 else (Palette.CYAN if score > 50 else Palette.YELLOW)
+            stats_group.append(Text(f"\nMATURITY: [{gauge}] {score}%", style=f"bold {color}"))
+        except: pass
+
         return Panel(Group(*stats_group), title=" [bold]📊 STATS[/] ", border_style=Palette.GRAY, box=box.ROUNDED)
 
     @property

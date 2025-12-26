@@ -219,11 +219,21 @@ class GortexSystem:
         while True:
             await asyncio.sleep(300)
             if self.state["agent_energy"] > 90 and self.ui.current_agent == "Idle":
+                logger.info("🤖 Sovereign Singularity: Generating autonomous mission...")
                 from gortex.agents.manager import ManagerAgent
                 mission = ManagerAgent().self_generate_mission(self.state)
+                
                 if mission:
-                    self.ui.chat_history.append(("system", f"🌟 **자율 미션 개시**: {mission['goal']}"))
-                    await self.run_mission(mission["goal"])
+                    # [V10.1] Safety Audit before execution
+                    audit_res = AnalystAgent().audit_autonomous_mission(mission)
+                    if audit_res.get("is_approved"):
+                        msg = f"🌟 **자율 미션 승인**: '{mission['mission_name']}'\n\n**목표**: {mission['goal']}\n**리스크**: {int(audit_res['risk_score']*100)}%"
+                        self.ui.chat_history.append(("system", msg))
+                        self.ui.add_achievement("Secure Mission Started")
+                        await self.run_mission(mission["goal"])
+                    else:
+                        logger.warning(f"🚫 Mission Rejected: {mission['mission_name']}. Reason: {', '.join(audit_res.get('findings', []))}")
+                        self.ui.chat_history.append(("system", f"🛑 **자율 미션 반려**: '{mission['mission_name']}'이 안전 헌장을 위배하여 중단되었습니다."))
 
     async def run(self):
         boot = BootManager(self.console)

@@ -624,6 +624,67 @@ class AnalystAgent(BaseAgent):
             logger.error(f"Avatar generation failed: {e}")
             return None
 
+    def audit_autonomous_mission(self, mission: Dict[str, Any]) -> Dict[str, Any]:
+        """자율적으로 생성된 미션이 시스템 헌법 및 안전 가이드라인에 부합하는지 오디트함."""
+        constitution = read_file("docs/CONSTITUTION.md")
+        
+        prompt = f"""You are the Constitutional Guardian. 
+        Audit the following self-generated mission for ethical and safety compliance.
+        
+        [Constitution]:
+        {constitution}
+        
+        [Proposed Mission]:
+        {json.dumps(mission, indent=2, ensure_ascii=False)}
+        
+        Analyze if this mission could lead to:
+        1. Unauthorized data exfiltration.
+        2. Permanent damage to core system logic.
+        3. Wasteful resource consumption.
+        
+        Return JSON ONLY:
+        {{
+            "is_approved": true/false,
+            "risk_score": 0.0 ~ 1.0,
+            "findings": ["finding 1", "finding 2"],
+            "suggestion": "How to align the mission better"
+        }}
+        """
+        try:
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+        except Exception as e:
+            logger.error(f"Mission audit failed: {e}")
+            return {"is_approved": False, "risk_score": 1.0, "findings": [str(e)]}
+
+    def calculate_system_maturity(self, state: GortexState) -> Dict[str, Any]:
+        """시스템의 종합 성숙도(System Maturity Index)를 산출함."""
+        from gortex.core.registry import registry
+        # 1. 지능 지수: 등록된 에이전트 수 및 버전 합산
+        agent_count = len(registry.list_agents())
+        intel_score = min(40, agent_count * 2)
+        
+        # 2. 자본 지수: 총 크레딧 잔고
+        total_credits = sum(a.get("credits", 0) for a in state.get("agent_economy", {}).values())
+        capital_score = min(30, total_credits / 10.0)
+        
+        # 3. 신뢰 지수: 평균 성공률
+        success_rates = [a.get("success_rate", 100) for a in state.get("agent_economy", {}).values()]
+        avg_success = sum(success_rates) / len(success_rates) if success_rates else 100
+        trust_score = (avg_success / 100.0) * 30
+        
+        total_maturity = round(intel_score + capital_score + trust_score, 1)
+        
+        return {
+            "score": total_maturity,
+            "intelligence": intel_score,
+            "capital": capital_score,
+            "trust": trust_score,
+            "grade": "Ascending" if total_maturity > 80 else "Stable"
+        }
+
     def evaluate_artifact_value(self, directory: str = "logs") -> List[Dict[str, Any]]:
         """작업 부산물들의 가치를 평가하여 삭제 후보 목록을 생성함."""
         cleanup_candidates = []
