@@ -685,6 +685,39 @@ class AnalystAgent(BaseAgent):
             "grade": "Ascending" if total_maturity > 80 else "Stable"
         }
 
+    def create_mentoring_package(self, mentor_name: str, category: str) -> Optional[Dict[str, Any]]:
+        """숙련된 에이전트의 지식을 정제하여 교육용 패키지로 만듦."""
+        # 1. 멘토의 고성과 규칙 추출
+        rules = [r for r in self.memory.shards.get(category, []) if r.get("success_count", 0) > 10 and r.get("is_certified")]
+        
+        if not rules: return None
+        
+        logger.info(f"👨‍🏫 [Mentoring] Extracting wisdom from Mentor '{mentor_name}' in {category}...")
+        
+        prompt = f"""You are the Synaptic Mentor. 
+        Compress the following certified rules from a Master '{mentor_name}' into a core 'Mentoring Syllabus' for a junior agent.
+        Focus on high-level principles and common pitfalls.
+        
+        [Rules]:
+        {json.dumps(rules, ensure_ascii=False)}
+        
+        Return JSON ONLY:
+        {{
+            "syllabus_id": "SYLLABUS_ID",
+            "mentor": "{mentor_name}",
+            "core_lessons": ["lesson 1", "lesson 2"],
+            "distilled_rules": [{{ "instruction": "...", "trigger": "..." }}]
+        }}
+        """
+        try:
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+        except Exception as e:
+            logger.error(f"Mentoring package creation failed: {e}")
+            return None
+
     def evaluate_artifact_value(self, directory: str = "logs") -> List[Dict[str, Any]]:
         """작업 부산물들의 가치를 평가하여 삭제 후보 목록을 생성함."""
         cleanup_candidates = []

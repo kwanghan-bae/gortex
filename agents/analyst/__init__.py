@@ -389,23 +389,43 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             # ...
             pass
 
-        # 9. [Sovereign Scaling] 자율 인프라 확장 및 워커 고용
+        # 9. [Sovereign Scaling] (기존 로직)
         if energy > 80:
-            logger.info("🏗️ Running Sovereign Scaling: Analyzing cluster capacity...")
+            # ...
+            pass
+
+        # 10. [Synaptic Mentoring] 에이전트 간 지식 전수 및 교육
+        if energy > 85:
+            logger.info("👨‍🏫 Running Synaptic Mentoring: Checking for knowledge transfer needs...")
             try:
-                scaling_decision = agent.analyze_infrastructure_scaling(state)
-                if scaling_decision["should_scale"]:
-                    from gortex.utils.infra import infra
-                    res = infra.spawn_local_worker()
-                    if res["status"] == "success":
-                        msg = f"🏗️ **소버린 스케일링 활성화**: 군집이 스스로를 확장했습니다.\n\n**사유**: {scaling_decision['reason']}\n**결과**: 신규 워커 가동 (PID: {res['info']['pid']})"
+                all_agents = registry.list_agents()
+                economy = state.get("agent_economy", {})
+                
+                # 1. 멘티(Novice)와 멘토(Master) 식별
+                novices = [n for n in all_agents if economy.get(n.lower(), {}).get("level") == "Bronze"]
+                masters = [m for m in all_agents if economy.get(m.lower(), {}).get("level") in ["Gold", "Diamond"]]
+                
+                if novices and masters:
+                    mentor = masters[0]
+                    mentee = novices[0]
+                    # 코딩 지식 전수 시도
+                    syllabus = agent.create_mentoring_package(mentor, "coding")
+                    if syllabus:
+                        msg = f"👨‍🏫 **시냅스 멘토링 개시**: '{mentor}'가 '{mentee}'에게 노하우를 전수합니다.\n\n**핵심 강의**: {', '.join(syllabus['core_lessons'])}"
                         state["messages"].append(("system", msg))
-                        self.ui.add_achievement("Cluster Expanded")
-                        # 확장 비용 차감 (예: $10.0 초기 고용비)
-                        for agent_id in state["agent_economy"]:
-                            state["agent_economy"][agent_id]["credits"] -= (10.0 / len(state["agent_economy"]))
+                        self.ui.add_achievement(f"Mentoring: {mentee} UP")
+                        
+                        # 멘티의 프롬프트에 동적 주입을 위한 규칙 저장
+                        for rule in syllabus["distilled_rules"]:
+                            agent.memory.save_rule(
+                                instruction=rule["instruction"],
+                                trigger_patterns=[mentee.lower(), "mentoring"],
+                                category="general",
+                                severity=3,
+                                context=f"Mentored by {mentor}"
+                            )
             except Exception as e:
-                logger.error(f"Sovereign Scaling failed: {e}")
+                logger.error(f"Mentoring failed: {e}")
             
         # 2. [Guardian Cycle] 선제적 결함 탐지 및 리팩토링 제안
         if energy > 85:
