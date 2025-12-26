@@ -2,7 +2,12 @@
 
 ## [Unreleased]
 
-### v3.5.0 (2025-12-26)
+### v3.6.5 (2025-12-26)
+- **Feature**: `Neural Distillation` 엔진 도입. 파편화된 지식을 고수준의 '최상위 원칙'으로 자동 증류하여 프롬프트 효율과 판단 정밀도를 높였습니다.
+- **Dataset**: `Autonomous Learning` 파이프라인 구축. 시스템의 모든 성공 사례를 LLM Fine-tuning용 데이터셋으로 자동 큐레이션하여 `training_jobs/`에 저장합니다.
+- **Optimization**: `PromptLoader`와 지식 베이스의 연동을 더욱 정교화하여 노이즈 없는 지식 주입을 달성했습니다.
+
+### v3.6.0 (2025-12-26)
 - **Feature**: `Multi-modal Visual Debugging` 도입. `AnalystAgent`가 시스템 화면을 캡처하여 Gemini 2.0 모델과 함께 시각적 결함을 진단할 수 있습니다.
 - **Infrastructure**: `GeminiBackend`가 이미지 데이터를 포함한 멀티모달 프롬프트를 지원합니다.
 - **Tools**: `capture_ui_screenshot` 도구를 추가하여 OS 레벨의 화면 캡처 기능을 확보했습니다.

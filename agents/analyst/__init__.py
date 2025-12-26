@@ -172,11 +172,30 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
     # [Self-Evolution & Guardian Cycle]
     energy = state.get("agent_energy", 100)
     if energy > 70 and not debate_data:
-        # 1. 지식 최적화 루틴
-        if len(agent.memory.memory) > 30: 
+        # 1. 지식 최적화 및 증류 (Knowledge Distillation)
+        if len(agent.memory.memory) > 10: 
             try: 
+                from gortex.core.llm.distiller import distiller
+                # Coding 분야의 공인 지혜 증류 시도
+                wisdom = distiller.distill_wisdom("coding")
+                if wisdom:
+                    logger.info("✨ Distilled new 최상위 원칙 for Coding.")
+                    agent.memory.save_rule(
+                        instruction=wisdom,
+                        trigger_patterns=["code", "python", "system"],
+                        category="coding",
+                        severity=5,
+                        is_super_rule=True,
+                        context="Neural Distillation from Certified Wisdom"
+                    )
+                
+                # 2. 자가 학습 데이터셋 큐레이션
+                if datetime.now().hour % 12 == 0: # 12시간마다 한 번씩
+                    distiller.prepare_training_dataset()
+                    
                 agent.synthesize_global_rules()
-            except Exception: pass
+            except Exception as e:
+                logger.error(f"Distillation loop failed: {e}")
             
         # 2. [Guardian Cycle] 선제적 결함 탐지 및 리팩토링 제안
         if energy > 85:
