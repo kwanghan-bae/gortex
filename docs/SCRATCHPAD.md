@@ -1,25 +1,21 @@
-# System 2 Scratchpad: Debate Memory Integration
+# 📝 System 2 Scratchpad
 
-## 1. Design Draft
-- **EvolutionaryMemory Extension**:
-    - `save_rule` 메서드에 `is_super_rule` 파라미터 추가.
-    - Rule 딕셔너리에 `is_super_rule` 필드 추가 (Default: False).
-    - `calculate_rule_value`에서 Super Rule은 `is_certified`와 마찬가지로 삭제되지 않도록 보호 (Value 100.0).
-    - `get_active_constraints`에서 Super Rule은 우선순위를 높게 설정 (Certified보다 높거나 같게).
+## 🎯 Current Goal: Debate Memory Integration Verification
 
-- **Swarm Integration**:
-    - Swarm 토론 결과(Consensus)가 나오면 `EvolutionaryMemory.save_rule`을 호출.
-    - 이때 `is_super_rule=True`로 설정.
-    - Trigger Pattern은 토론 주제와 관련된 키워드로 자동 추출.
+**Status Analysis:**
+- `core/evolutionary_memory.py`: 'Super Rule' structure (`is_super_rule`) and priority logic (`get_active_constraints` sort key) appear to be implemented.
+- `agents/swarm.py`: `synthesize_consensus` contains logic to save `unified_rule` as a Super Rule.
 
-## 2. Edge Cases
-- **Conflict**: Super Rule이 기존 Hard Rule과 충돌할 경우?
-    - Hard Rule(`RULES.md`)은 코드 레벨이 아니라 문서 레벨이므로, 여기서는 Memory 내의 충돌을 의미함.
-    - `detect_global_conflicts`가 이미 존재하므로, 충돌 감지 시 Super Rule이 이기도록 로직 수정 필요할 수 있음.
-- **Empty Consensus**: 합의안이 도출되지 않은 경우 저장하지 않음.
-- **Duplication**: 동일한 주제로 여러 번 토론 시 중복 저장 방지 (기존 `save_rule`의 중복 체크 로직 활용).
+**Hypothesis:**
+The implementation exists but may not be fully verified or robust.
+1. The prompt condition `If this is a Knowledge Conflict Resolution, you MUST provide a 'unified_rule' structure.` might be too restrictive.
+2. We need to ensure general consensus that yields a rule *also* gets saved, or clarify when a "Super Rule" should be formed.
 
-## 3. Implementation Plan
-1. Modify `core/evolutionary_memory.py` to support `is_super_rule`.
-2. Update `agents/swarm.py` (or wherever debate happens) to save consensus.
-3. Add tests in `tests/test_evolutionary_memory.py`.
+**Action Plan:**
+1.  **Verification Test**: Create `tests/test_swarm_memory_integration.py` to mock the LLM response with a `unified_rule` and verify it persists to `EvolutionaryMemory` with `is_super_rule=True`.
+2.  **Retrieval Test**: Verify that `EvolutionaryMemory.get_active_constraints` returns this rule at the top.
+3.  **Refinement**: If tests pass, consider relaxing the prompt constraint in `SwarmAgent` to allow more frequent Super Rule creation if beneficial, or document the specific criteria.
+
+**Exceptions & Risks:**
+- **Risk**: Over-population of Super Rules.
+- **Mitigation**: Ensure `unified_rule` is only returned when a clear, reusable principle is established.
