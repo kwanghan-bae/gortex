@@ -84,10 +84,49 @@ class GortexMessageBus:
         if self.is_connected:
             self.client.delete(f"gortex:lock:{lock_name}")
 
+    def list_active_workers(self) -> List[Dict[str, Any]]:
+        """가동 중인 모든 원격 워커의 상태 목록을 반환함"""
+        if not self.is_connected:
+            return []
+            
+        workers = []
+        try:
+            keys = self.client.keys("gortex:workers:*")
+            for k in keys:
+                data_str = self.client.get(k)
+                if data_str:
+                    workers.append(json.loads(data_str))
+        except Exception as e:
+            logger.error(f"Failed to list workers: {e}")
+            
+        return workers
+
+    def select_best_worker(self, required_cpu: float = 20.0) -> Optional[str]:
+        """부하 상태를 고려하여 가장 적합한 워커 ID를 선택함"""
+        workers = self.list_active_workers()
+        if not workers:
+            return None
+            
+        # 1. CPU 여유가 있고 태스크 수가 적은 워커 우선 (Score = (100-CPU) - (ActiveTasks * 10))
+        scored_workers = []
+        for w in workers:
+            if w.get("status") != "online": continue
+            
+            score = (100 - w.get("cpu_percent", 0)) - (w.get("active_tasks", 0) * 15)
+            # 메모리 임계치 체크 (90% 이상이면 제외)
+            if w.get("memory_percent", 0) > 90: score -= 100
+            
+            scored_workers.append((score, w["worker_id"]))
+            
+        if not scored_workers: return None
+        
+        # 점수 순 정렬 후 최고 득점 워커 반환
+        scored_workers.sort(key=lambda x: x[0], reverse=True)
+        best_worker = scored_workers[0][1]
+        logger.info(f"⚖️ Load Balancer: Selected {best_worker} (Score: {scored_workers[0][0]:.1f})")
+        return best_worker
+
     def call_remote_node(self, node_name: str, state: Dict[str, Any], timeout: int = 120) -> Optional[Dict[str, Any]]:
-        """원격 노드에 실행을 요청하고 결과를 기다림 (RPC 패턴)"""
-        results = self.call_remote_nodes_parallel([(node_name, state)], timeout=timeout)
-        return results[0] if results else None
 
     def call_remote_nodes_parallel(self, requests: List[Tuple[str, Dict[str, Any]]], timeout: int = 120) -> List[Dict[str, Any]]:
         """여러 원격 노드에 실행을 동시에 요청하고 모든 결과를 기다림 (v4.0 Parallel Swarm)"""

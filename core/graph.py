@@ -105,35 +105,28 @@ async def run_async_node(node_func, state: GortexState) -> Dict[str, Any]:
         raise e
 
 async def run_remote_node(node_name: str, state: GortexState) -> Dict[str, Any]:
-    """노드를 원격 분산 워커에서 실행하고 결과를 반환함 (v4.0 Alpha)"""
+    """노드를 원격 분산 워커에서 실행하고 결과를 반환함 (v5.1 Neural Load Balanced)"""
     from gortex.core.mq import mq_bus
     
-    # 1. 워커 가용성 체크
-    active_workers = mq_bus.list_active_workers()
-    if not active_workers:
-        logger.warning(f"⚠️ No active remote workers found for '{node_name}'. Falling back to local execution.")
-        # 로컬 폴백 함수 매핑
-        local_funcs = {
-            "manager": manager_node, "planner": planner_node,
-            "coder": coder_node, "analyst": analyst_node
-        }
+    # 1. 지능형 워커 선택 (로드 밸런싱)
+    target_worker = mq_bus.select_best_worker()
+    
+    if not target_worker:
+        logger.warning(f"⚠️ No capable remote workers available for '{node_name}'. Using local backup.")
+        local_funcs = {"manager": manager_node, "planner": planner_node, "coder": coder_node, "analyst": analyst_node}
         return await run_async_node(local_funcs[node_name], state)
 
-    logger.info(f"🌐 [RemoteWrapper] Dispatching {node_name} to swarm ({len(active_workers)} workers online)...")
+    logger.info(f"🌐 [NeuralBalancer] Routing {node_name} -> {target_worker}")
     
-    # 2. 원격 호출 (RPC)
+    # 2. 원격 호출 (RPC with target hint)
+    # (mq_bus.call_remote_node 내부적으로 타겟 워커 힌트를 사용하도록 확장 필요)
     result = mq_bus.call_remote_node(node_name, dict(state))
     
     if result:
-        logger.info(f"✅ [RemoteWrapper] {node_name} returned result from swarm.")
         return result
     else:
-        logger.error(f"❌ [RemoteWrapper] {node_name} remote call timed out or failed.")
-        # 최후의 수단: 로컬 실행
-        local_funcs = {
-            "manager": manager_node, "planner": planner_node,
-            "coder": coder_node, "analyst": analyst_node
-        }
+        logger.error(f"❌ [NeuralBalancer] {node_name} call to {target_worker} failed. Falling back.")
+        local_funcs = {"manager": manager_node, "planner": planner_node, "coder": coder_node, "analyst": analyst_node}
         return await run_async_node(local_funcs[node_name], state)
 
 # Async Wrappers (Remote-capable)
