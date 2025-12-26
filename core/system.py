@@ -198,6 +198,12 @@ class GortexSystem:
         loop.run_in_executor(None, mq_bus.listen, "gortex:notifications", handle_notification)
         # 사고 스트림 채널 청취 (추가)
         loop.run_in_executor(None, mq_bus.listen, "gortex:thought_stream", handle_notification)
+        # 원격 로그 채널 청취 (추가)
+        loop.run_in_executor(None, mq_bus.listen, "gortex:remote_logs", lambda msg: self.ui.update_logs({
+            "agent": f"Rem:{msg.get('agent','???')}", 
+            "event": msg.get("type", "log"),
+            "payload": msg.get("payload", {})
+        }))
 
     async def run(self):
         # 1. Boot Sequence

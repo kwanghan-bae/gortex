@@ -51,6 +51,10 @@ class GortexMessageBus:
         """에이전트의 현재 사고 과정을 실시간으로 스트리밍함"""
         self.publish_event("gortex:thought_stream", agent, "thought_update", {"text": thought})
 
+    def log_remote_event(self, agent: str, event: str, payload: Dict[str, Any]):
+        """원격지의 중요한 이벤트를 중앙 로그 시스템으로 전송함"""
+        self.publish_event("gortex:remote_logs", agent, event, payload)
+
     def enqueue_task(self, queue_name: str, task_data: Dict[str, Any]):
         """작업 큐에 작업을 추가함"""
         if self.is_connected:

@@ -41,6 +41,9 @@ async def process_research_task(task: dict):
         if is_docs: result = await agent.fetch_api_docs(query)
         else: result = await agent.search_and_summarize(query)
         
+        global total_tasks_done
+        total_tasks_done += 1
+        
         ltm = LongTermMemory()
         ltm.memorize(f"Async Research ({query}): {result}", {"source": "Worker", "task_id": task_id})
         mq_bus.publish_event("gortex:notifications", "Worker", "task_completed", {"task_id": task_id, "type": "research", "query": query, "summary": result[:200]})
@@ -74,6 +77,10 @@ async def process_node_execution(request: dict):
             
         # [STREAMING] 완료 알림
         mq_bus.stream_thought(node_name, f"Completed task {request_id}. Sending results back.")
+        mq_bus.log_remote_event(node_name, "node_complete", {"request_id": request_id, "status": "success"})
+        
+        global total_tasks_done
+        total_tasks_done += 1
             
         # 2. 결과 전송 (Pub/Sub)
         mq_bus.client.publish(reply_channel, json.dumps(result, ensure_ascii=False))
@@ -81,11 +88,14 @@ async def process_node_execution(request: dict):
         
     except Exception as e:
         logger.error(f"❌ Remote node execution failed: {e}")
+        mq_bus.log_remote_event(node_name, "error", {"request_id": request_id, "error": str(e)})
         mq_bus.client.publish(reply_channel, json.dumps({"error": str(e), "status": "failed"}))
 
 import psutil
 
 # ... (기존 임포트 하단)
+
+total_tasks_done = 0
 
 async def send_heartbeat(worker_id: str):
     """주기적으로 워커의 건강 상태를 Redis에 보고함"""
@@ -96,7 +106,8 @@ async def send_heartbeat(worker_id: str):
                 "status": "online",
                 "cpu_percent": psutil.cpu_percent(),
                 "memory_percent": psutil.virtual_memory().percent,
-                "active_tasks": 0, # 추후 세밀한 추적 로직 추가 가능
+                "active_tasks": 0, 
+                "total_tasks_done": total_tasks_done, # 기여도 추가
                 "last_seen": time.time(),
                 "hostname": os.uname().nodename if hasattr(os, "uname") else "unknown"
             }

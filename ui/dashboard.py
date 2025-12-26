@@ -356,8 +356,9 @@ class DashboardUI:
             for w in active_workers[:3]: # 상위 3개만 표시
                 w_id = w.get("worker_id", "???")[-4:]
                 cpu = w.get("cpu_percent", 0)
+                tasks = w.get("total_tasks_done", 0)
                 color = "green" if cpu < 50 else ("yellow" if cpu < 80 else "red")
-                swarm_table.add_row(f"🌐 ID:{w_id}", f"[{color}]{cpu}%[/]")
+                swarm_table.add_row(f"🌐 ID:{w_id} ({tasks}t)", f"[{color}]{cpu}%[/]")
         
         side_l["status"].update(self._render_status_panel())
         side_l["stats"].update(self._render_stats_panel())
