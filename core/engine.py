@@ -183,19 +183,14 @@ class GortexEngine:
                 if eco_data:
                     self.ui.update_economy_panel(eco_data)
         
-        # 음성 브릿지
+        # 음성 브릿지 (v9.0 에이전트 고유 보이스 연동)
         if self.vocal and output.get("messages"):
-            last_msg = str(output["messages"][-1][1] if isinstance(output["messages"][-1], tuple) else output["messages"][-1])
-            audio_path = self.vocal.text_to_speech(last_msg)
-            if audio_path:
-                self.vocal.play_audio(audio_path)
+            for m in output["messages"]:
+                if isinstance(m, (list, tuple)) and m[0] == "ai":
+                    last_msg = str(m[1])
+                    if self.vocal.text_to_speech(last_msg, agent_name=node_name):
+                        self.vocal.play_audio("logs/response.mp3")
             
-        # 자가 치유
-        if output.get("status") == "failed":
-            hint = self.healer.get_solution_hint("Error detected in node output")
-            if hint:
-                logger.info(f"🩹 Healing hint found: {hint}")
-
         state.update(output)
         return tokens
 

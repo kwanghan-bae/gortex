@@ -18,21 +18,30 @@ class VocalBridge:
         self.api_key = os.getenv("OPENAI_API_KEY")
         self.client = OpenAI(api_key=self.api_key) if (OpenAI and self.api_key) else None
         self.is_active = False
+        self.voice_map = {
+            "manager": "alloy",
+            "planner": "fable",
+            "coder": "onyx",
+            "analyst": "nova",
+            "researcher": "shimmer",
+            "security": "echo"
+        }
 
-    def text_to_speech(self, text: str, output_path: str = "logs/response.mp3") -> bool:
-        """텍스트를 음성으로 변환하여 파일로 저장"""
+    def text_to_speech(self, text: str, agent_name: str = "manager", output_path: str = "logs/response.mp3") -> bool:
+        """텍스트를 음성으로 변환하여 파일로 저장 (에이전트 고유 목소리 반영)"""
         if not self.client:
             return False
             
         try:
+            voice = self.voice_map.get(agent_name.lower(), "alloy")
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             response = self.client.audio.speech.create(
                 model="tts-1",
-                voice="alloy",
+                voice=voice,
                 input=text
             )
             response.stream_to_file(output_path)
-            logger.info(f"🔊 TTS: {output_path}")
+            logger.info(f"🔊 {agent_name.upper()} ({voice}): {output_path}")
             return True
         except Exception as e:
             logger.error(f"TTS failed: {e}")

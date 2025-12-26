@@ -594,6 +594,36 @@ class AnalystAgent(BaseAgent):
             "total_credits": total_credits
         }
 
+    def generate_agent_avatar(self, agent_name: str) -> Optional[str]:
+        """에이전트의 페르소나에 최적화된 고유 아바타를 생성함."""
+        from gortex.utils.prompt_loader import loader
+        persona = loader.personas.get(agent_name.lower(), {"description": f"A specialized AI agent named {agent_name}"})
+        
+        prompt = f"""Create a professional, modern avatar icon for an AI agent.
+        Name: {agent_name}
+        Role: {persona.get('role', 'Expert')}
+        Personality: {persona.get('description')}
+        Style: Cyberpunk, clean, minimalist, glowing neural pathways.
+        """
+        
+        try:
+            from openai import OpenAI
+            client = OpenAI()
+            response = client.images.generate(
+                model="dall-e-3",
+                prompt=prompt,
+                size="1024x1024",
+                quality="standard",
+                n=1,
+            )
+            image_url = response.data[0].url
+            # (실제 구현 시 URL의 이미지를 ui/assets/avatars/ 폴더에 다운로드하여 저장)
+            logger.info(f"🎨 Avatar generated for {agent_name}: {image_url}")
+            return image_url
+        except Exception as e:
+            logger.error(f"Avatar generation failed: {e}")
+            return None
+
     def evaluate_artifact_value(self, directory: str = "logs") -> List[Dict[str, Any]]:
         """작업 부산물들의 가치를 평가하여 삭제 후보 목록을 생성함."""
         cleanup_candidates = []
