@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### v3.7.5 (2025-12-26)
+- **Feature**: `Knowledge Graph Visualization` 도입. `/kg` 명령어를 통해 에이전트 활동과 지능의 계보를 담은 `Gortex Neural Map`을 시각화할 수 있습니다.
+- **Engine**: `utils/knowledge_graph.py` 엔진 구축. 시스템 로그(Trace)와 메모리로부터 실시간 노드/엣지 데이터를 추출합니다.
+- **UX**: `rich` 트리를 활용하여 에이전트별 최근 활동과 정립된 '최상위 원칙'들을 계층적으로 표현합니다.
+
 ### v3.7.0 (2025-12-26)
 - **Feature**: `Advanced Voice Interaction` 도입. 마이크를 통한 실시간 음성 명령 인식(STT) 및 시스템 명령어 자동 매핑 기능을 구현했습니다.
 - **Tools**: `VocalBridge`에 `record_audio` 및 `map_to_command` 로직을 추가하여 핸즈프리 조작 환경을 구축했습니다.

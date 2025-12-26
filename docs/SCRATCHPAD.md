@@ -1,34 +1,36 @@
 # 📝 System 2 Scratchpad
 
-## 🎯 Current Goal: Advanced Voice Interaction - COMPLETED
+## 🎯 Current Goal: Knowledge Graph (KG) Visualization - COMPLETED
 
 
 
 **Status Analysis:**
 
-- `utils/vocal_bridge.py`: Real-time recording (`pyaudio`) and Whisper STT integration implemented.
+- `utils/knowledge_graph.py`: Core engine for extracting agents, rules, and events into a graph structure.
 
-- `core/commands.py`: New `/voice` command for hands-free control.
+- `core/commands.py`: Integrated `/kg` command with real-time TUI visualization.
 
-- `gortex/core/system.py`: Integrated voice-to-command routing loop.
+- `tests/test_commands.py`: Basic command routing verified.
 
 
 
 **Outcomes:**
 
-1.  **Auditory Perception**: Gortex can now "hear" and transcribe user commands via microphone.
+1.  **Neural Map Transparency**: Users can now visualize how agents interact and which actions led to which knowledge (rules).
 
-2.  **Voice-to-Task Mapping**: Natural language voice input is automatically mapped to system slash commands.
+2.  **Intelligence Lineage**: Tracks the evolution of experience rules, showing how simple observations become Super Rules.
 
-3.  **Hands-Free Orchestration**: Users can trigger workflows or system status checks entirely through voice.
+3.  **Holistic View**: Provides a summary of total intelligence nodes and edges, offering a metric for system complexity and growth.
 
 
 
 **Verification Results:**
 
-- Verified `VocalBridge.record_audio` logic.
+- Verified `/kg` data extraction from `EvolutionaryMemory` and `trace.jsonl`.
 
-- Verified `VocalBridge.map_to_command` mapping accuracy.
+- Verified hierarchical tree rendering in Rich console.
+
+
 
 
 

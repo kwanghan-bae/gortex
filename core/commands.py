@@ -194,12 +194,36 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
         return "skip"
 
     elif cmd == "/kg":
-        ui.chat_history.append(("system", "🧠 통합 지식 그래프 생성 중..."))
+        ui.chat_history.append(("system", "🧠 **통합 지식 그래프(Knowledge Graph) 분석 중...**"))
         ui.update_main(ui.chat_history)
-        indexer = SynapticIndexer()
-        kg_data = indexer.generate_knowledge_graph()
-        kg_summary = f"### Knowledge Map\n- **Nodes**: {len(kg_data['nodes'])}\n- **Edges**: {len(kg_data['edges'])}"
-        ui.chat_history.append(("system", Panel(Markdown(kg_summary), title="BRAIN MAP", border_style="blue")))
+        
+        from gortex.utils.knowledge_graph import KnowledgeGraph
+        kg = KnowledgeGraph()
+        kg.build_from_system()
+        
+        # 1. 요약 리포트
+        summary = kg.generate_summary()
+        
+        # 2. 에이전트 중심의 지능 트리 시각화
+        root_tree = Tree("🧠 [bold magenta]GORTEX NEURAL MAP[/bold magenta]")
+        for agent_node in [n for n in kg.nodes if n["type"] == "agent"]:
+            a_tree = root_tree.add(f"🤖 [bold cyan]{agent_node['label']}[/bold cyan]")
+            
+            # 해당 에이전트가 수행한 최근 이벤트 연결
+            performed = [e for e in kg.edges if e["source"] == agent_node["id"] and e["relation"] == "performed"]
+            if performed:
+                ev_tree = a_tree.add("[dim]Recent Actions[/dim]")
+                for edge in performed[:5]:
+                    target = next((n for n in kg.nodes if n["id"] == edge["target"]), None)
+                    if target: ev_tree.add(f"[green]●[/green] {target['label']}")
+        
+        # 3. 최신 지식 원칙(Super Rules) 섹션 추가
+        sr_tree = root_tree.add("📜 [bold yellow]DISTILLED WISDOM (Super Rules)[/bold yellow]")
+        for rule_node in [n for n in kg.nodes if n["type"] == "rule"]:
+            sr_tree.add(f"[yellow]★[/yellow] {rule_node['label']}")
+
+        ui.chat_history.append(("system", Panel(summary, title="BRAIN MAP SUMMARY", border_style="blue")))
+        ui.chat_history.append(("system", root_tree))
         ui.update_main(ui.chat_history)
         return "skip"
 
