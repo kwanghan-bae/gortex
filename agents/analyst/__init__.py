@@ -170,10 +170,35 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
                 "is_recovery_mode": False
             }
 
-    # [Self-Evolution & Guardian Cycle]
+    # [Self-Evolution, Guardian & ToolSmith Cycle]
     energy = state.get("agent_energy", 100)
     if energy > 70 and not debate_data:
-        # 1. 지식 증류 및 전역 최적화 (Neural Distillation)
+        # 1. [ToolSmith Cycle] 도구 공백 탐지 및 자동 제작 시도
+        if energy > 80:
+            last_failure = state.get("last_error_log")
+            if last_failure:
+                logger.info("🛠️ Initiating ToolSmith Cycle: Analyzing tool gap for recent failure...")
+                tool_blueprint = agent.identify_tool_gap(last_failure)
+                if tool_blueprint:
+                    msg = f"🛠️ **도구 자가 증식**: '{tool_blueprint['tool_name']}' 도구 제작을 시작합니다.\n\n**설명**: {tool_blueprint['description']}\n**대상**: {tool_blueprint['target_agent']}"
+                    
+                    # Coder에게 제작 지시를 위한 계획 수립
+                    state["debate_result"] = {
+                        "final_decision": f"Forge New Tool: {tool_blueprint['tool_name']}",
+                        "action_plan": [
+                            f"Step 1: Implement Python function {tool_blueprint['tool_name']} in core/tools/forged.py",
+                            f"Step 2: Register the tool via registry.load_tools_from_module"
+                        ]
+                    }
+                    
+                    return {
+                        "messages": [("ai", msg)],
+                        "next_node": "manager",
+                        "debate_result": state["debate_result"],
+                        "agent_energy": energy - 20
+                    }
+
+        # 2. 지식 증류 및 전역 최적화 (기존 로직)
         if len(agent.memory.memory) > 10: 
             try: 
                 from gortex.core.llm.distiller import distiller

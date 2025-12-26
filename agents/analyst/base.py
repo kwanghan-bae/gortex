@@ -58,6 +58,35 @@ class AnalystAgent(BaseAgent):
         score = 100.0 / (1.0 + math.log1p(cost / 5.0))
         return round(min(100.0, score), 1)
 
+    def identify_tool_gap(self, failure_context: str) -> Optional[Dict[str, Any]]:
+        """작업 실패 맥락을 분석하여 필요한 신규 도구(Tool)를 설계함."""
+        prompt = f"""You are the Master ToolSmith. 
+        Analyze the following failure and design a NEW Python tool (function) that would prevent this in the future.
+        
+        [Failure Context]:
+        {failure_context}
+        
+        [Current Tools]: {tool_registry.list_tools()}
+        
+        Design a reusable tool. Return JSON ONLY:
+        {{
+            "tool_name": "reusable_tool_name",
+            "description": "What it does",
+            "parameters": {{"param1": "type", "param2": "type"}},
+            "logic_blueprint": "Step-by-step logic for the function",
+            "target_agent": "Which agent should receive this tool"
+        }}
+        """
+        try:
+            from gortex.core.tools.registry import tool_registry
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+        except Exception as e:
+            logger.error(f"Tool gap analysis failed: {e}")
+            return None
+
     def resolve_knowledge_conflict(self, conflict: Dict[str, Any], model_id: str = "gemini-2.0-flash") -> Optional[Dict[str, Any]]:
         """두 샤드 간의 상충되는 지식을 하나로 통합하거나 우선순위를 결정함."""
         rule_a = conflict["rule_a"]

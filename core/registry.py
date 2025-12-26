@@ -65,16 +65,26 @@ class AgentRegistry:
 
     def is_tool_permitted(self, agent_name: str, tool_name: str, agent_economy: Dict[str, Any]) -> bool:
         """에이전트의 숙련도에 따라 특정 도구의 사용 가능 여부를 판별함."""
-        # 1. 고급 도구별 필요 스킬 포인트 정의
+        # 1. 도구 존재 여부 확인 (동적 도구 포함)
+        from gortex.core.tools.registry import tool_registry
+        if tool_name not in tool_registry.list_tools():
+            logger.warning(f"❓ Tool '{tool_name}' not found in registry.")
+            # 레지스트리에 없더라도 메타데이터에 정의되어 있다면 허용 (하위 호환성)
+            meta = self.get_metadata(agent_name)
+            if not meta or tool_name not in meta.tools:
+                return False
+
+        # 2. 고급 도구별 필요 스킬 포인트 정의
         advanced_tools = {
             "apply_patch": {"cat": "Coding", "pts": 500},
             "audit_architecture": {"cat": "Analysis", "pts": 1000},
             "spawn_new_agent": {"cat": "Analysis", "pts": 2000},
-            "execute_shell": {"cat": "General", "pts": 300}
+            "execute_shell": {"cat": "General", "pts": 300},
+            "git_push": {"cat": "General", "pts": 1000}
         }
         
         if tool_name not in advanced_tools:
-            return True # 일반 도구는 무조건 허용
+            return True # 일반/신규 도구는 기본적으로 허용 (또는 별도 권한 체계 적용)
             
         # 2. 에이전트의 현재 스킬 점수 확인
         required = advanced_tools[tool_name]
