@@ -384,17 +384,28 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             # ... (기존 로직 수행)
             pass
 
-        # 8. [Neural Garbage Collection] 시스템 엔트로피 관리 및 자율 도태
+        # 8. [Neural Garbage Collection] (기존 로직)
         if energy > 90 and len(registry.list_agents()) > 15:
-            logger.info("🧹 Running Neural GC: Managing system entropy...")
+            # ...
+            pass
+
+        # 9. [Sovereign Scaling] 자율 인프라 확장 및 워커 고용
+        if energy > 80:
+            logger.info("🏗️ Running Sovereign Scaling: Analyzing cluster capacity...")
             try:
-                dormant = agent.identify_dormant_assets()
-                for a_name in dormant.get("agents", []):
-                    if registry.deregister(a_name):
-                        state["messages"].append(("system", f"🗑️ **Neural GC**: 저성과 에이전트 '{a_name}'을 시스템에서 도태시키고 아카이빙했습니다."))
-                        self.ui.add_achievement(f"GC: {a_name} Offboarded")
+                scaling_decision = agent.analyze_infrastructure_scaling(state)
+                if scaling_decision["should_scale"]:
+                    from gortex.utils.infra import infra
+                    res = infra.spawn_local_worker()
+                    if res["status"] == "success":
+                        msg = f"🏗️ **소버린 스케일링 활성화**: 군집이 스스로를 확장했습니다.\n\n**사유**: {scaling_decision['reason']}\n**결과**: 신규 워커 가동 (PID: {res['info']['pid']})"
+                        state["messages"].append(("system", msg))
+                        self.ui.add_achievement("Cluster Expanded")
+                        # 확장 비용 차감 (예: $10.0 초기 고용비)
+                        for agent_id in state["agent_economy"]:
+                            state["agent_economy"][agent_id]["credits"] -= (10.0 / len(state["agent_economy"]))
             except Exception as e:
-                logger.error(f"Neural GC failed: {e}")
+                logger.error(f"Sovereign Scaling failed: {e}")
             
         # 2. [Guardian Cycle] 선제적 결함 탐지 및 리팩토링 제안
         if energy > 85:

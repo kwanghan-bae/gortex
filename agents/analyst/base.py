@@ -568,6 +568,32 @@ class AnalystAgent(BaseAgent):
         
         return {"agents": dormant_agents}
 
+    def analyze_infrastructure_scaling(self, state: GortexState) -> Dict[str, Any]:
+        """경제적 상태와 부하를 분석하여 인프라 확장 여부를 결정함."""
+        from gortex.utils.infra import infra
+        load = infra.check_cluster_load()
+        
+        # 전체 예산 합산
+        total_credits = sum(a.get("credits", 0) for a in state.get("agent_economy", {}).values())
+        
+        should_scale = False
+        reason = ""
+        
+        # 조건: 평균 CPU가 70% 이상이고, 총 잔고가 $100 이상일 때
+        if load["avg_cpu"] > 70 and total_credits > 100.0:
+            should_scale = True
+            reason = f"High cluster load ({load['avg_cpu']:.1f}%) with healthy budget (${total_credits:.2f})"
+        elif load["count"] == 0:
+            should_scale = True
+            reason = "No remote workers active. Establishing baseline capacity."
+            
+        return {
+            "should_scale": should_scale,
+            "reason": reason,
+            "current_load": load,
+            "total_credits": total_credits
+        }
+
     def evaluate_artifact_value(self, directory: str = "logs") -> List[Dict[str, Any]]:
         """작업 부산물들의 가치를 평가하여 삭제 후보 목록을 생성함."""
         cleanup_candidates = []
