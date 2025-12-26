@@ -2,6 +2,7 @@ import logging
 import asyncio
 import re
 import time
+import uuid
 from typing import Dict, Any
 from bs4 import BeautifulSoup
 from playwright.async_api import async_playwright
@@ -137,6 +138,25 @@ def researcher_node(state: GortexState) -> Dict[str, Any]:
         req_info = {"is_docs_needed": False, "query": last_msg}
         query = last_msg
 
+    # [DISTRIBUTED WORKFLOW] Redis를 통한 비동기 작업 위임 시도
+    from gortex.core.mq import mq_bus
+    if mq_bus.is_connected:
+        task_id = str(uuid.uuid4())[:8]
+        mq_bus.enqueue_task("gortex:tasks:research", {
+            "task_id": task_id,
+            "query": query,
+            "is_docs_needed": req_info.get("is_docs_needed", False),
+            "thread_id": state.get("thread_id", "global")
+        })
+        logger.info(f"🚀 Research task delegated to distributed worker: {task_id}")
+        
+        return {
+            "messages": [("ai", f"🔍 **리서치 위임**: '{query}'에 대한 조사를 백그라운드 워커에게 맡겼습니다. 결과가 나오면 즉시 알려드리겠습니다.")],
+            "next_node": "manager",
+            "active_tasks": state.get("active_tasks", []) + [{"id": task_id, "type": "research"}]
+        }
+
+    # [FALLBACK] Redis가 없는 경우 기존 동기 방식 유지
     try:
         loop = asyncio.get_event_loop()
     except RuntimeError:

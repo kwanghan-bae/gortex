@@ -152,6 +152,27 @@ class GortexSystem:
                     logger.error(f"Trend scout error: {e}")
             await asyncio.sleep(3600)
 
+    async def notification_listener_loop(self):
+        """Listen for MQ notifications from distributed workers."""
+        from gortex.core.mq import mq_bus
+        if not mq_bus.is_connected:
+            return
+
+        def handle_notification(msg):
+            event_type = msg.get("type")
+            payload = msg.get("payload", {})
+            if event_type == "task_completed":
+                task_type = payload.get("type", "Task").upper()
+                msg_text = f"✨ **{task_type} Done**: {payload.get('query')}"
+                self.ui.add_achievement(msg_text)
+                self.ui.chat_history.append(("system", f"🔔 {msg_text}\nSummary: {payload.get('summary')}"))
+            elif event_type == "task_failed":
+                self.ui.add_achievement(f"❌ Task Failed: {payload.get('task_id')}")
+
+        # Non-blocking listen via executor
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(None, mq_bus.listen, "gortex:notifications", handle_notification)
+
     async def run(self):
         # 1. Boot Sequence
         boot = BootManager(self.console)
@@ -160,6 +181,7 @@ class GortexSystem:
         workflow = compile_gortex_graph()
         recovery_task = asyncio.create_task(self.energy_recovery_loop())
         trend_task = asyncio.create_task(self.trend_scout_loop())
+        notify_task = asyncio.create_task(self.notification_listener_loop())
 
         current_task = None
 
