@@ -434,6 +434,27 @@ class AnalystAgent(BaseAgent):
         logger.warning(f"🚨 [ImmuneSystem] Infection detected in {len(infections)} files!")
         return {"status": "infected", "infections": infections}
 
+    def generate_strategic_roadmap(self) -> str:
+        """테크 레이더 데이터를 분석하여 중장기 기술적 진화 로드맵을 생성함."""
+        from gortex.utils.tech_radar import radar
+        advice = radar.get_strategic_advice()
+        
+        prompt = f"""You are the Chief Technology Officer. 
+        Based on the current Tech Radar data, design a STRATEGIC ROADMAP for the next 10 Gortex sessions.
+        Focus on phasing out 'hold' status tech and accelerating 'assess/trial' tech.
+        
+        [Tech Radar Info]:
+        {json.dumps(radar.technologies, indent=2)}
+        
+        Return a high-level roadmap in Markdown format.
+        """
+        try:
+            roadmap = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}])
+            return f"{advice}\n\n{roadmap}"
+        except Exception as e:
+            logger.error(f"Strategic roadmap failed: {e}")
+            return "Failed to generate roadmap."
+
     def evaluate_artifact_value(self, directory: str = "logs") -> List[Dict[str, Any]]:
         """작업 부산물들의 가치를 평가하여 삭제 후보 목록을 생성함."""
         cleanup_candidates = []
