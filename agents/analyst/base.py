@@ -404,6 +404,49 @@ class AnalystAgent(BaseAgent):
             "message": f"System maintenance complete. 10 knowledge versions kept. Logs archived to {zip_path}"
         }
 
+    def propose_proactive_refactoring(self) -> List[Dict[str, Any]]:
+        """복잡도가 높은 파일을 분석하여 선제적 리팩토링 계획을 제안함."""
+        # 1. 고복잡도 파일 식별
+        complex_files = self.scan_project_complexity()
+        if not complex_files:
+            return []
+            
+        proposals = []
+        for item in complex_files[:2]: # 과부하 방지를 위해 상위 2개만 처리
+            file_path = item["file"]
+            content = read_file(file_path)
+            
+            prompt = f"""You are the Guardian Architect. 
+            Analyze the following complex code and propose a PROACTIVE refactoring to improve maintainability and prevent future bugs.
+            
+            [File]: {file_path}
+            [Complexity Score]: {item['score']}
+            [Issue]: {item['issue']}
+            [Code]:
+            {content[:3000]}
+            
+            Return JSON ONLY:
+            {{
+                "target_file": "{file_path}",
+                "reason": "Specific technical justification",
+                "action_plan": ["Step 1: ...", "Step 2: ..."],
+                "risk_level": "Low/Medium/High",
+                "expected_gain": "e.g., Reduced cyclomatic complexity"
+            }}
+            """
+            try:
+                response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+                import re
+                json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+                res_data = json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+                
+                proposals.append(res_data)
+                logger.info(f"🛡️ Proactive refactoring proposed for: {file_path}")
+            except Exception as e:
+                logger.error(f"Failed to generate proactive refactoring for {file_path}: {e}")
+                
+        return proposals
+
     def scan_project_complexity(self, directory: str = ".") -> List[Dict[str, Any]]:
         debt_list = []
         ignore_dirs = {'.git', 'venv', '__pycache__', 'logs', 'site-packages'}

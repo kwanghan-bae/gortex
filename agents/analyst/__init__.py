@@ -169,15 +169,42 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
                 "is_recovery_mode": False
             }
 
-    # [Self-Evolution]
+    # [Self-Evolution & Guardian Cycle]
     energy = state.get("agent_energy", 100)
     if energy > 70 and not debate_data:
+        # 1. 지식 최적화 루틴
         if len(agent.memory.memory) > 30: 
             try: 
                 agent.synthesize_global_rules()
-            except Exception:
-                pass
+            except Exception: pass
             
+        # 2. [Guardian Cycle] 선제적 결함 탐지 및 리팩토링 제안
+        if energy > 85:
+            logger.info("🛡️ Initiating Guardian Cycle: Scanning for proactive refactoring...")
+            try:
+                guardian_proposals = agent.propose_proactive_refactoring()
+                if guardian_proposals:
+                    # 가장 리스크가 높은 제안 하나를 선택하여 진행
+                    top_p = guardian_proposals[0]
+                    msg = f"🛡️ **가디언 모드 활성화**: 잠재적 결함이 발견되었습니다.\n\n**대상**: `{top_p['target_file']}`\n**이유**: {top_p['reason']}\n**기대 효과**: {top_p['expected_gain']}"
+                    
+                    # Swarm의 복구 모드와 유사한 흐름으로 Manager에게 전달
+                    state["debate_result"] = {
+                        "final_decision": f"Proactive Refactoring: {top_p['reason']}",
+                        "action_plan": top_p["action_plan"]
+                    }
+                    
+                    return {
+                        "messages": [("ai", msg)],
+                        "next_node": "manager",
+                        "debate_result": state["debate_result"],
+                        "agent_energy": energy - 15,
+                        "is_guardian_mode": True # 선제적 최적화 모드 표시
+                    }
+            except Exception as e:
+                logger.error(f"Guardian Cycle failed: {e}")
+
+        # 3. 버전 관리 및 페르소나 진화 (기존 로직)
         if datetime.now().minute % 30 == 0:
             try:
                 agent.generate_release_note()

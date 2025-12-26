@@ -56,30 +56,35 @@ class ManagerAgent(BaseAgent):
         energy = state.get("agent_energy", 100)
         roadmap = state.get("evolution_roadmap", [])
 
-        # 2. Swarm 토론 결과 처리 (합의안을 계획으로 전환)
+        # 2. Swarm 토론 및 Guardian Cycle 결과 처리 (합의안을 계획으로 전환)
         debate_res = state.get("debate_result")
         if debate_res and debate_res.get("action_plan"):
-            logger.info("⚖️ Translating Swarm Consensus into executable plan...")
+            is_recovery = state.get("is_recovery_mode", False)
+            is_guardian = state.get("is_guardian_mode", False)
+            
+            mode_title = "🩺 **긴급 복구 모드 활성화**" if is_recovery else "🛡️ **선제적 가디언 모드 활성화**"
+            mode_desc = "Swarm 합의안" if not is_guardian else "가디언 최적화 안"
+            
+            logger.info(f"⚖️ Translating {mode_desc} into executable plan...")
             action_plan = debate_res["action_plan"]
             
-            # 합의안의 각 단계를 JSON 문자열 계획으로 변환
             new_plan = []
             for step in action_plan:
                 new_plan.append(json.dumps({
-                    "action": "execute_shell" if "run" in step.lower() or "test" in step.lower() else "apply_patch",
-                    "target": "Detected via Swarm Analysis",
+                    "action": "execute_shell" if any(k in step.lower() for k in ["run", "test", "check"]) else "apply_patch",
+                    "target": "Detected via Proactive Analysis",
                     "description": step
                 }, ensure_ascii=False))
             
-            # [HOTFIX] Coder에게 즉시 할당
             return {
-                "thought": f"Swarm의 합의안({debate_res.get('final_decision')[:50]}...)을 실행 계획으로 전환했습니다.",
+                "thought": f"시스템 최적화 제안({debate_res.get('final_decision')[:50]}...)을 실행 계획으로 전환했습니다.",
                 "next_node": "coder",
                 "plan": new_plan,
                 "current_step": 0,
-                "debate_result": None, # 처리 완료 후 초기화
-                "is_recovery_mode": True, # 복구 모드 활성화
-                "messages": [("ai", f"🩺 **긴급 복구 모드 활성화**: Swarm 합의안에 따라 복구 계획을 수립했습니다.\n\n**결정**: {debate_res.get('final_decision')}")]
+                "debate_result": None, 
+                "is_recovery_mode": is_recovery,
+                "is_guardian_mode": is_guardian,
+                "messages": [("ai", f"{mode_title}: {mode_desc}에 따라 코드 개선을 시작합니다.\n\n**목표**: {debate_res.get('final_decision')}")]
             }
 
         # 3. 선제적 확장(Proactive Expansion) 처리
