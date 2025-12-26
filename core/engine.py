@@ -85,45 +85,61 @@ class GortexEngine:
             logger.error(f"❌ Defense generation failed for {target['file']}: {res.get('error') or res.get('reason')}")
 
     def select_optimal_model(self, state: GortexState, agent_name: str) -> str:
-        """에이전트 평판, 작업 위험도, 일일 예산을 고려하여 최적 모델 선택"""
+        """에이전트 평판, 지갑 잔고, 작업 위험도를 고려하여 최적 모델 선택"""
         risk = state.get("risk_score", 0.5)
         budget_status = self.tracker.get_budget_status()
-        economy = state.get("agent_economy", {}).get(agent_name.lower(), {}) # Lowercase key safety
+        economy = state.get("agent_economy", {}).get(agent_name.lower(), {})
+        
         points = economy.get("points", 0)
+        credits = economy.get("credits", 0.0) # [NEW] 지불 능력 확인
         
-        # 스킬 마스터리 체크 (가장 높은 스킬 점수 확인)
-        skills = economy.get("skill_points", {})
-        max_skill_score = max(skills.values()) if skills else 0
-        
-        # 1. 예산 고갈 상태 (80% 이상 소모) -> 강제 Ollama 다운그레이드
-        if budget_status > 0.8:
-            logger.warning(f"🔋 Budget critical ({budget_status:.1%}). Downgrading to Ollama.")
+        # 1. 예산 고갈 상태 (시스템 전체)
+        if budget_status > 0.9:
             return "ollama/llama3"
             
-        # 2. [Rule] Master 등급(2500+)은 고위험 작업에서 Pro 모델 보장
-        if max_skill_score >= 2500 and risk > 0.5:
-             logger.info(f"💎 Agent {agent_name} is a Master ({max_skill_score} pts). Assigning Pro model.")
-             return "gemini-1.5-pro"
+        # 2. [ECONOMY] 지불 능력 기반 필터링
+        # Gemini Pro는 최소 $1.0의 잔고가 있어야 시도 가능
+        can_afford_pro = credits >= 1.0
+        # Gemini Flash는 최소 $0.1의 잔고 필요
+        can_afford_flash = credits >= 0.1
 
-        # 3. 고위험/에픽 작업 + 엘리트 에이전트(총점 기준) -> Gemini Pro
-        if risk > 0.8 and points > 1000:
+        # 3. 모델 할당 로직
+        if risk > 0.8 and points > 1000 and can_afford_pro:
             return "gemini-1.5-pro"
             
-        # 4. 일반 전문 작업 -> Gemini Flash
-        if points > 500 or risk > 0.4:
+        if (points > 500 or risk > 0.4) and can_afford_flash:
             return "gemini-2.0-flash"
             
-        # 5. 단순 반복 작업/저평판 에이전트 -> Ollama
+        # 4. 잔고 부족 시 강제 다운그레이드
+        if not can_afford_flash:
+            logger.info(f"💸 Agent {agent_name} is under-funded (${credits:.4f}). Downgrading to Ollama.")
+            
         return "ollama/llama3"
 
     async def process_node_output(self, node_name: str, output: Dict[str, Any], state: Dict[str, Any], latency_ms: Optional[int] = None):
-        """노드 실행 결과를 처리하고 UI/관찰자에게 알림"""
-        # 토큰 추적 업데이트
+        """노드 실행 결과를 처리하고 실시간 경제 정산 및 UI 업데이트 수행"""
+        # 1. 토큰 추적 및 비용 계산
         tokens = count_tokens(json.dumps(output))
         model = state.get("assigned_model", "flash")
         self.tracker.update_usage(tokens, model)
         
-        # 인과 관계 및 관찰자 기록
+        from gortex.utils.token_counter import estimate_cost
+        cost = estimate_cost(tokens, model)
+        
+        # 2. [ECONOMIC SOWEREIGNTY] 자동 결제 (Auto-Billing)
+        from gortex.utils.economy import get_economy_manager
+        eco_manager = get_economy_manager()
+        
+        # 사용료 차감
+        eco_manager.deduct_credits(state, node_name, cost)
+        
+        # 성공 시 상금 지급 (비용의 1.5배 보너스 또는 고정 수익)
+        if output.get("status") == "success" or "❌" not in str(output.get("messages", "")):
+            reward = cost * 1.2 + 0.001 # 최소 수익 보장
+            eco_manager.add_credits(state, node_name, reward)
+            logger.info(f"💰 Agent '{node_name}' earned ${reward:.6f} (ROI: +20%)")
+
+        # 3. 인과 관계 및 관찰자 기록 (기존 로직)
         event_id = str(uuid.uuid4())
         if self.observer:
             cause_id = state.get("last_event_id")

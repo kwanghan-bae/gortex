@@ -19,6 +19,7 @@ class EconomyManager:
         if agent_id not in economy:
             economy[agent_id] = {
                 "points": 100,
+                "credits": 50.0, # [NEW] 가상 화폐 잔고 ($)
                 "level": "Bronze",
                 "achievements": [],
                 "success_rate": 100.0,
@@ -31,6 +32,27 @@ class EconomyManager:
                     "General": 0
                 }
             }
+
+    def deduct_credits(self, state: GortexState, agent_name: str, amount: float):
+        """에이전트의 지갑에서 비용 차감"""
+        economy = state.get("agent_economy", {})
+        agent_id = agent_name.lower()
+        self.initialize_agent(economy, agent_name)
+        
+        old_balance = economy[agent_id].get("credits", 0.0)
+        new_balance = max(0.0, old_balance - amount)
+        economy[agent_id]["credits"] = round(new_balance, 6)
+        
+        if new_balance < 0.01 and old_balance >= 0.01:
+            logger.warning(f"💸 Agent '{agent_name}' is now BROKE. Balance: ${new_balance}")
+
+    def add_credits(self, state: GortexState, agent_name: str, amount: float):
+        """에이전트의 지갑에 수익 추가"""
+        economy = state.get("agent_economy", {})
+        agent_id = agent_name.lower()
+        self.initialize_agent(economy, agent_name)
+        
+        economy[agent_id]["credits"] = round(economy[agent_id].get("credits", 0.0) + amount, 6)
 
     def update_skill_points(self, state: GortexState, agent_name: str, category: str, quality_score: float, difficulty: float):
         """특정 분야의 숙련도 포인트 업데이트 및 랭크업 관리"""

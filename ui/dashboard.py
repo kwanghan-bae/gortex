@@ -213,7 +213,12 @@ class DashboardUI:
             eco = self.agent_economy[agent_id]
             lvl = eco.get("level", "N/A")
             pts = eco.get("points", 0)
+            balance = eco.get("credits", 0.0)
+            
+            # [WALLET] 잔고 표시
+            balance_color = Palette.GREEN if balance > 1.0 else (Palette.YELLOW if balance > 0.1 else Palette.RED)
             status_text.append(f" [{lvl}] {pts}pts", style="italic yellow")
+            status_text.append(f" | 💰 ${balance:.4f}", style=f"bold {balance_color}")
             
             # [TRUST BADGE] 신뢰 지수 시각화
             from gortex.utils.economy import get_economy_manager
