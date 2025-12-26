@@ -238,6 +238,19 @@ class GortexSystem:
             "event": msg.get("type", "log"),
             "payload": msg.get("payload", {})
         }))
+        
+        # [SECURITY ALERTS] 보안 위반 실시간 감시
+        def handle_security(msg):
+            payload = msg.get("payload", {})
+            agent = msg.get("agent", "Unknown")
+            violation = payload.get("violation", "Unknown Policy")
+            
+            self.ui.add_security_event("CRITICAL", f"Blocked {agent}: {violation}")
+            self.ui.chat_history.append(("system", f"🛑 **SECURITY ALERT**: Agent '{agent}' tried to violate policy: {violation}"))
+            # Analyst가 다음에 분석할 수 있도록 저장
+            self.state["last_security_alert"] = payload
+
+        loop.run_in_executor(None, mq_bus.listen, "gortex:security_alerts", handle_security)
 
     async def run(self):
         # 1. Boot Sequence

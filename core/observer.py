@@ -103,17 +103,21 @@ class GortexObserver:
 
     def log_event(self, agent: str, event: str, payload: Any, latency_ms: Optional[int] = None, tokens: Optional[Dict[str, int]] = None, cause_id: Optional[str] = None):
         """이벤트를 JSONL 형식으로 기록 (인과 관계 추적 지원)"""
+        # [SECURITY] 도구 호출 시 사전 검증 수행 (Neural Firewall)
+        if event == "tool_call":
+            self.validate_tool_call(agent, payload)
+            
         event_id = str(uuid.uuid4())[:8]
         entry = {
             "id": event_id,
             "timestamp": datetime.now().isoformat(),
             "trace_id": self.trace_id,
             "agent": agent,
-            "event": event, # 'thought', 'tool_call', 'node_complete', 'error'
+            "event": event,
             "payload": payload,
             "latency_ms": latency_ms,
             "tokens": tokens,
-            "cause_id": cause_id # 원인이 된 이전 이벤트 ID
+            "cause_id": cause_id
         }
         
         try:
@@ -122,6 +126,30 @@ class GortexObserver:
         except Exception as e:
             logger.error(f"Failed to write trace log: {e}")
         return event_id
+
+    def validate_tool_call(self, agent: str, payload: Any):
+        """도구 호출의 보안 정책 위반 여부를 실시간 검사함"""
+        from gortex.core.evolutionary_memory import EvolutionaryMemory
+        memory = EvolutionaryMemory()
+        
+        # 1. 전역 보안 정책(Super Rules) 가져오기
+        security_rules = [r for r in memory.memory if r.get("is_super_rule") and r.get("severity", 0) >= 4]
+        
+        # 2. 페이로드 문자열 분석 (위험 명령어 등)
+        payload_str = str(payload).lower()
+        for rule in security_rules:
+            for pattern in rule.get("trigger_patterns", []):
+                if pattern.lower() in payload_str:
+                    logger.critical(f"🛑 [Sentinel] Security Violation! Agent '{agent}' tried to violate rule: {rule['learned_instruction']}")
+                    # [EVENT] 보안 경고 전파
+                    from gortex.core.mq import mq_bus
+                    mq_bus.publish_event("gortex:security_alerts", agent, "security_violation", {
+                        "rule_id": rule["id"],
+                        "violation": rule["learned_instruction"],
+                        "payload": payload
+                    })
+                    # 실제 실행 차단을 위해 예외 발생
+                    raise PermissionError(f"Security Policy Violation: {rule['learned_instruction']}")
 
     def get_causal_chain(self, start_event_id: str) -> List[Dict[str, Any]]:
         """특정 이벤트 ID로부터 루트까지 인과 관계 체인을 역추적"""

@@ -205,11 +205,31 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
                             "is_recovery_mode": False,
                             "active_branch": None # 작업 완료 후 초기화
                         }
-    # [Self-Evolution, Guardian, ToolSmith & Swarm Expansion]
+    # [Self-Evolution, Guardian, ToolSmith & Security Sentinel]
     energy = state.get("agent_energy", 100)
     if energy > 70 and not debate_data:
-        # 1. [Swarm Expansion] 신규 전문가 에이전트 자가 증식 시도
-        if energy > 90 and state.get("coder_iteration", 0) > 5:
+        # 1. [Security Analysis] 차단된 위협 분석 및 방어 규칙 강화
+        last_security_alert = state.get("last_security_alert")
+        if last_security_alert:
+            logger.info("🛡️ Initiating Neural Firewall Analysis: Learning from blocked attack...")
+            # 위협 분석 및 재발 방지 규칙 생성
+            defensive_rule = agent.generate_anti_failure_rule(
+                error_log=last_security_alert["violation"],
+                context=f"Payload: {last_security_alert['payload']}"
+            )
+            if defensive_rule:
+                agent.memory.save_rule(
+                    instruction=defensive_rule["instruction"],
+                    trigger_patterns=defensive_rule["trigger_patterns"],
+                    category="general",
+                    severity=5,
+                    is_super_rule=True,
+                    context=f"Auto-Firewall Reinforcement: {last_security_alert['violation']}"
+                )
+                state["messages"].append(("system", f"🛡️ **Neural Firewall Reinforced**: '{defensive_rule['instruction']}' 방어 정책이 강화되었습니다."))
+                state["last_security_alert"] = None # 처리 완료
+
+        # 2. [Swarm Expansion] (기존 로직)
             logger.info("🧬 Initiating Swarm Expansion: Designing a new specialist...")
             last_error = str(state.get("messages", [])[-1])
             agent_blueprint = agent.identify_capability_gap(error_log=last_error)
