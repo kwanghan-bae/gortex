@@ -167,8 +167,12 @@ class DashboardUI:
         limit = max(1, height // 10)
         max_content_lines = max(2, height // 4)
 
-        for role, content in self.chat_history[-limit:]:
             content_str = str(content)
+            # [MULTILINGUAL] 사용자 언어에 맞는 번역본이 있다면 교체
+            if isinstance(content, dict) and self.target_language in content:
+                content_str = f"🌐 [italic]{content[self.target_language]}[/]"
+            
+            # 줄 바꿈 처리 (기존 로직)
             lines = content_str.split("\n")
             if len(lines) > max_content_lines:
                 content_str = "\n".join(lines[:max_content_lines]) + "\n[dim]...(Content truncated for UI stability)[/]"

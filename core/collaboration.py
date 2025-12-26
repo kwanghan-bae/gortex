@@ -18,17 +18,30 @@ class SwarmAmbassador:
         self.memory = EvolutionaryMemory()
 
     def broadcast_wisdom(self, category: str = "coding"):
-        """로컬의 고성과 Super Rule을 연합 네트워크에 공유함 (유료/무료 구분 가능)"""
+        """로컬의 고성과 Super Rule을 연합 네트워크에 다국어로 공유함"""
         if not mq_bus.is_connected: return
         
+        # 1. 고가치 지식 선별
         wisdom = [r for r in self.memory.shards.get(category, []) if r.get("is_super_rule") and r.get("severity") >= 4]
         
         if wisdom:
-            logger.info(f"🌌 [Ambassador] Offering {len(wisdom)} rules to Galactic Market.")
+            logger.info(f"🌌 [Ambassador] Distilling and Translating {len(wisdom)} rules for Galactic Swarm...")
+            
+            from gortex.utils.translator import SynapticTranslator
+            translator = SynapticTranslator()
+            
+            translated_wisdom = []
+            for rule in wisdom[:3]: # 과부하 방지: 상위 3개만
+                # 다국어 번역본 생성
+                translations = translator.translate_knowledge_shard(rule)
+                rule_copy = rule.copy()
+                rule_copy["translations"] = translations
+                translated_wisdom.append(rule_copy)
+
             mq_bus.publish_event("gortex:galactic:wisdom", self.swarm_id, "wisdom_offered", {
                 "category": category,
-                "rules": wisdom,
-                "price": 5.0 # 지식 묶음당 가격 ($)
+                "rules": translated_wisdom,
+                "price": 5.0
             })
 
     def purchase_remote_wisdom(self, seller_id: str, rules: List[Dict[str, Any]], price: float, state: GortexState):

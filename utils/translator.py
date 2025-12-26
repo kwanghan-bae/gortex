@@ -103,6 +103,30 @@ class SynapticTranslator:
             logger.error(f"Response translation failed: {e}")
             return text
 
+    def translate_knowledge_shard(self, rule: Dict[str, Any], target_langs: List[str] = ["en", "ja", "zh"]) -> Dict[str, str]:
+        """하나의 지식(Rule)을 여러 언어로 일괄 번역함"""
+        translations = {"ko": rule["learned_instruction"]}
+        
+        prompt = f"""You are the Galactic Knowledge Translator. 
+        Translate the following Gortex Super Rule into these languages: {target_langs}.
+        Maintain technical integrity and don't translate placeholders or technical IDs.
+        
+        [Rule]: {rule['learned_instruction']}
+        
+        Return JSON ONLY:
+        {{ "en": "...", "ja": "...", "zh": "..." }}
+        """
+        try:
+            response = self.auth.generate("gemini-1.5-flash", [("user", prompt)], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\{.*\}', response.text, re.DOTALL)
+            res_data = json.loads(json_match.group(0)) if json_match else json.loads(response.text)
+            translations.update(res_data)
+            return translations
+        except Exception as e:
+            logger.error(f"Knowledge translation failed: {e}")
+            return translations
+
     def translate_batch(self, texts: Dict[str, str], target_lang_code: str) -> Dict[str, str]:
         """여러 텍스트 항목을 한 번에 번역"""
         if target_lang_code == "ko" or not texts:
