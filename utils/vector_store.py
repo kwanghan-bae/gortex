@@ -12,23 +12,59 @@ logger = logging.getLogger("GortexVectorStore")
 class LongTermMemory:
     """
     세션이 종료되어도 유지되는 의미 기반 지식 저장소 (장기 기억).
-    프로젝트별 샤딩(Sharding)을 통해 대규모 지식을 효율적으로 관리합니다.
+    Redis와 연동하여 분산 환경에서 지식을 실시간 동기화합니다.
     """
     def __init__(self, store_dir: str = "logs/memory"):
         self.store_dir = store_dir
         os.makedirs(self.store_dir, exist_ok=True)
         self.auth = GortexAuth()
-        self.shards: Dict[str, List[Dict[str, Any]]] = {} # 메모리 내 샤드 캐시
+        self.shards: Dict[str, List[Dict[str, Any]]] = {}
+        
+        # [DISTRIBUTED] MQ 연동 및 백그라운드 리스너 시작
+        from gortex.core.mq import mq_bus
+        self.mq = mq_bus
+        if self.mq.is_connected:
+            self._start_sync_listener()
 
-    def _get_shard_path(self, namespace: str) -> str:
-        # 안전한 파일명을 위해 정규화
-        safe_name = "".join([c if c.isalnum() else "_" for c in namespace])
-        return os.path.join(self.store_dir, f"shard_{safe_name}.json")
+    def _start_sync_listener(self):
+        """실시간 지식 동기화를 위한 백그라운드 스레드 시작"""
+        import threading
+        
+        def _listen():
+            def handle_sync(msg):
+                payload = msg.get("payload", {})
+                namespace = payload.get("namespace")
+                if namespace:
+                    logger.debug(f"♻️ Received knowledge sync for '{namespace}'. Refreshing...")
+                    # 로컬 샤드 캐시 무효화 (다음 로드 시 Redis/파일에서 최신본 읽음)
+                    if namespace in self.shards:
+                        del self.shards[namespace]
+            
+            try:
+                self.mq.listen("gortex:memory_sync", handle_sync)
+            except Exception as e:
+                logger.error(f"Memory sync listener failed: {e}")
+
+        thread = threading.Thread(target=_listen, daemon=True)
+        thread.start()
 
     def _load_shard(self, namespace: str) -> List[Dict[str, Any]]:
         if namespace in self.shards:
             return self.shards[namespace]
             
+        # 1. Redis 전역 저장소 확인
+        if self.mq.is_connected:
+            try:
+                redis_key = f"gortex:ltm:shard:{namespace}"
+                data_str = self.mq.client.get(redis_key)
+                if data_str:
+                    data = json.loads(data_str)
+                    self.shards[namespace] = data
+                    return data
+            except Exception as e:
+                logger.warning(f"Failed to load LTM shard from Redis: {e}")
+
+        # 2. 로컬 파일 (Fallback)
         path = self._get_shard_path(namespace)
         if os.path.exists(path):
             try:
@@ -43,9 +79,22 @@ class LongTermMemory:
     def _save_shard(self, namespace: str):
         if namespace not in self.shards:
             return
+        data = self.shards[namespace]
+        
+        # 1. Redis 전역 싱크
+        if self.mq.is_connected:
+            try:
+                redis_key = f"gortex:ltm:shard:{namespace}"
+                self.mq.client.set(redis_key, json.dumps(data, ensure_ascii=False, indent=2), ex=3600*48)
+                # 동기화 이벤트 발행
+                self.mq.publish_event("gortex:memory_sync", "Memory", "ltm_updated", {"namespace": namespace})
+            except Exception as e:
+                logger.error(f"Failed to sync LTM to Redis: {e}")
+
+        # 2. 로컬 파일 저장
         path = self._get_shard_path(namespace)
         with open(path, "w", encoding='utf-8') as f:
-            json.dump(self.shards[namespace], f, ensure_ascii=False, indent=2)
+            json.dump(data, f, ensure_ascii=False, indent=2)
 
     @property
     def memory(self) -> List[Dict[str, Any]]:
@@ -97,6 +146,27 @@ class LongTermMemory:
         self.shards[namespace] = shard
         self._save_shard(namespace)
         logger.info(f"🧠 Knowledge memorized in shard: {namespace}")
+
+    def search(self, query: str = "", limit: int = 10, namespace: str = "global") -> List[Dict[str, Any]]:
+        """UI와 호환되는 검색 인터페이스 (recall의 별칭 및 확장)"""
+        if not query:
+            # 쿼리가 없으면 최근 지식 반환
+            shard = self._load_shard(namespace)
+            results = []
+            for item in shard[-limit:]:
+                results.append({
+                    "id": item["id"],
+                    "content": item["content"],
+                    "metadata": item.get("metadata", {}),
+                    "score": 1.0,
+                    "is_global": self.mq.is_connected
+                })
+            return list(reversed(results))
+            
+        results = self.recall(query, limit=limit, namespace=namespace)
+        for r in results:
+            r["is_global"] = self.mq.is_connected
+        return results
 
     def recall(self, query: str, limit: int = 3, namespace: str = "global") -> List[Dict[str, Any]]:
         """특정 네임스페이스(샤드)에서 지식 소환"""

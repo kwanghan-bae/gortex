@@ -16,7 +16,12 @@
   - commands.py: 실시간 Neural Map 트리 시각화 로직 통합  
   - Release Note 및 Scratchpad 업데이트  
 
-**v3.7.0 (2023-09-25)**  
+### v3.9.0 (2025-12-26)
+- **Feature**: `Cross-Machine Vector Sync` 도입. Redis를 활용하여 분산 장비 간 장기 기억(LTM)을 실시간으로 동기화합니다.
+- **UI**: Memory Explorer에 동기화 상태(🌐/🏠) 아이콘을 추가하여 지식의 무결성을 시각적으로 확인 가능합니다.
+- **Robustness**: 모든 에이전트 노드의 들여쓰기 및 구문 오류를 전수 교정하고, 분산 환경에서의 상태 복구 신뢰도를 높였습니다.
+
+### v3.7.0 (2025-12-26)  
 - 🎤 **실시간 음성 명령 인식 및 보이스 라우팅**  
   - VocalBridge: pyaudio + Whisper STT 연동  
   - /voice 명령어 추가 (음성 입력 토글)  

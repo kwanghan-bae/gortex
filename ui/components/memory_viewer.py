@@ -44,6 +44,7 @@ class MemoryViewer:
                       box=box.SIMPLE_HEAD, expand=True)
 
         table.add_column("ID", style="dim", width=8)
+        table.add_column("Sync", justify="center", width=6)
         table.add_column("Content", style="cyan", ratio=3)
         table.add_column("Type", style="yellow", width=10)
         table.add_column("Date", style="green", width=12)
@@ -51,14 +52,18 @@ class MemoryViewer:
         for mem in self.memories:
             meta = mem.get("metadata", {})
             content = mem.get("content", "")
+            is_global = mem.get("is_global", False)
+            sync_icon = f"[bold {Palette.GREEN}]🌐[/]" if is_global else f"[{Palette.GRAY}]🏠[/]"
+            
             # 긴 내용 자르기
             if len(content) > 80: content = content[:77] + "..."
             
             table.add_row(
                 str(mem.get("id", "N/A"))[:8],
+                sync_icon,
                 content,
                 meta.get("type", "General"),
-                meta.get("created_at", "")[:10]
+                meta.get("created_at", meta.get("timestamp", ""))[:10]
             )
 
         return Panel(
