@@ -139,15 +139,19 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
                 return {"messages": [("ai", f"🛡️ [Validation Alert] {val_res.get('reason')}")], "next_node": "planner"}
             
             if state.get("awaiting_review"):
-                # [ARCHITECTURAL GUARD] 플래너의 청사진과 대조
-                blueprint = state.get("diagram_code")
+                # 1. 기술적 품질 리뷰 (기존 로직)
                 review_res = agent.perform_peer_review(state.get("review_target", "code"), last_ai_msg)
                 score = review_res.get("score", 70)
                 
-                # 청사진 위반 여부 추가 검증 (간소화된 로직)
-                if blueprint and "class" in last_ai_msg:
-                    # (실제 구현 시 LLM을 사용하여 소스 코드와 Mermaid 다이어그램의 일치 여부 확인)
-                    logger.info("📐 Cross-referencing implementation with architectural blueprint...")
+                # 2. [NEW] 헌장 준수 및 가치 정렬 검증 (Alignment Check)
+                alignment_res = agent.validate_alignment_with_constitution(last_ai_msg)
+                if not alignment_res.get("is_aligned", True):
+                    msg = f"🛑 **Constitutional Violation**: 제안된 작업이 시스템 헌장을 위반합니다.\n\n**위반 사항**: {', '.join(alignment_res['violations'])}\n**조치**: {alignment_res['corrective_action']}"
+                    return {
+                        "messages": [("ai", msg)],
+                        "next_node": "planner", # 헌장에 맞게 계획 재수립 지시
+                        "awaiting_review": False
+                    }
                 
                 if not review_res.get("is_approved", True) or score < 70:
                     issue_report = f"[CRITICAL ERROR DETECTED]\nType: Peer Review Rejected\nScore: {score}\nComment: {review_res.get('comment')}\nTarget: {state.get('review_target', 'Unknown')}"

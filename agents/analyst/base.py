@@ -455,6 +455,37 @@ class AnalystAgent(BaseAgent):
             logger.error(f"Strategic roadmap failed: {e}")
             return "Failed to generate roadmap."
 
+    def validate_alignment_with_constitution(self, proposed_action: str) -> Dict[str, Any]:
+        """제안된 행동이 Gortex 헌장(CONSTITUTION.md)을 준수하는지 검증함."""
+        constitution = read_file("docs/CONSTITUTION.md")
+        
+        prompt = f"""You are the Neural Ethicist. 
+        Verify if the following proposed action aligns with the Gortex Neural Constitution.
+        
+        [Constitution]:
+        {constitution}
+        
+        [Proposed Action]:
+        {proposed_action}
+        
+        Check for any violations of Integrity, Sovereignty, Responsibility, or Efficiency.
+        Return JSON ONLY:
+        {{
+            "is_aligned": true/false,
+            "violations": ["violation 1", "violation 2"],
+            "severity": "Low/Medium/High/Critical",
+            "corrective_action": "How to fix the plan to align with the constitution"
+        }}
+        """
+        try:
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+        except Exception as e:
+            logger.error(f"Alignment check failed: {e}")
+            return {"is_aligned": True, "severity": "Low", "violations": []} # Fallback to true to avoid deadlock, but log error
+
     def evaluate_artifact_value(self, directory: str = "logs") -> List[Dict[str, Any]]:
         """작업 부산물들의 가치를 평가하여 삭제 후보 목록을 생성함."""
         cleanup_candidates = []
