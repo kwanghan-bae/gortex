@@ -286,13 +286,30 @@ class GortexSystem:
                 "last_efficiency": self.state["last_efficiency"]
             }
             try:
-                async for event in workflow.astream(initial_state, config={"configurable": {"thread_id": self.thread_id}}):
-                    for node_name, output in event.items():
-                        self.ui.update_sidebar(agent=node_name, step="Processing")
-                        
-                        node_tokens = await self.engine.process_node_output(node_name, output, self.state)
-                        self.state["total_tokens"] += node_tokens
-                        self.state["total_cost"] += estimate_cost(node_tokens)
+                                        async for event in workflow.astream(initial_state, config={"configurable": {"thread_id": self.thread_id}}):
+                                            for node_name, output in event.items():
+                                                self.ui.update_sidebar(agent=node_name, step="Processing")
+                                                
+                                                try:
+                                                    node_tokens = await self.engine.process_node_output(node_name, output, self.state)
+                                                except PermissionError as pe:
+                                                    # [MULTI-SIG WORKFLOW] 보안 위반 감지 시 투표 개시
+                                                    self.ui.chat_history.append(("system", f"⚠️ **Approval Required**: {pe}"))
+                                                    self.ui.update_main(self.ui.chat_history)
+                                                    
+                                                    from gortex.agents.swarm import SwarmAgent
+                                                    vote_res = await SwarmAgent().run_security_vote(str(pe), self.state, output.get("action_payload", {}))
+                                                    
+                                                    if vote_res.get("is_approved"):
+                                                        self.ui.chat_history.append(("system", f"✅ **Swarm Approved**: {vote_res['rationale']}"))
+                                                        # 승인됨: 엔진에게 강제 실행 지시 (bypass_sentinel=True 등의 플래그 필요)
+                                                        # (여기서는 데모 흐름을 위해 메시지 기록 위주로 처리)
+                                                        node_tokens = 0
+                                                    else:
+                                                        self.ui.chat_history.append(("system", f"🛑 **Swarm Rejected**: {vote_res['rationale']}"))
+                                                        continue
+                
+                                                self.state["total_tokens"] += node_tokens                        self.state["total_cost"] += estimate_cost(node_tokens)
 
                         if node_name == "manager" and output.get("question_to_user"):
                             self.state["last_question"] = output["question_to_user"]

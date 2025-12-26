@@ -283,6 +283,31 @@ class SwarmAgent:
             logger.error(f"Consensus synthesis failed: {e}")
             return {"final_decision": "Failed to synthesize", "rationale": str(e), "action_plan": []}
 
+    async def run_security_vote(self, topic: str, state: GortexState, tool_call: Dict[str, Any]) -> Dict[str, Any]:
+        """고위험 도구 호출에 대한 분산 승인 투표를 수행함."""
+        logger.info(f"🛡️ [Multi-Sig] Initiating security vote for: {tool_call.get('action')}")
+        
+        # 1. 전문가 소집 (보안 및 분석 전문가 위주)
+        self.recruit_experts(state, ["Analysis", "General"])
+        
+        history = [{"role": "system", "content": f"Agent is requesting to execute: {json.dumps(tool_call)}. Approve or Reject?"}]
+        
+        # 2. 한 라운드의 고속 투표 진행
+        await self.conduct_dynamic_round(topic, 1, history, is_debug=True)
+        
+        # 3. 가중 합의 도출
+        consensus = self.synthesize_consensus(f"Security Vote: {topic}", history, is_debug=True)
+        
+        # 합의 결과 분석
+        decision = consensus.get("final_decision", "").lower()
+        is_approved = "approve" in decision or "accept" in decision
+        
+        return {
+            "is_approved": is_approved,
+            "rationale": consensus.get("rationale"),
+            "voting_summary": consensus.get("tradeoffs")
+        }
+
     async def run_debate(self, topic: str, state: GortexState, rounds: int = 2, is_debug: bool = False) -> Dict[str, Any]:
         """토론 전체 프로세스 실행 (Dynamic Recruitment 포함)"""
         history = []

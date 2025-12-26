@@ -128,27 +128,41 @@ class GortexObserver:
         return event_id
 
     def validate_tool_call(self, agent: str, payload: Any):
-        """도구 호출의 보안 정책 위반 여부를 실시간 검사함"""
+        """도구 호출의 보안 정책 위반 여부를 실시간 검사함 (다중 서명 지원)"""
         from gortex.core.evolutionary_memory import EvolutionaryMemory
         memory = EvolutionaryMemory()
         
-        # 1. 전역 보안 정책(Super Rules) 가져오기
+        # 1. 전역 보안 정책 및 고위험 도구 식별
         security_rules = [r for r in memory.memory if r.get("is_super_rule") and r.get("severity", 0) >= 4]
         
-        # 2. 페이로드 문자열 분석 (위험 명령어 등)
+        # [NEW] 다중 서명이 필요한 초고위험 도구 리스트
+        multi_sig_tools = ["execute_shell", "git_push", "delete_branch", "ingest_remote_agent"]
+        tool_name = str(payload.get("action", "")) if isinstance(payload, dict) else ""
+        
+        # 2. 다중 서명 체크
+        if tool_name in multi_sig_tools:
+            logger.info(f"🔑 [Multi-Sig] Tool '{tool_name}' requested by {agent}. Initiating swarm approval...")
+            # [EVENT] 승인 요청 발행
+            from gortex.core.mq import mq_bus
+            mq_bus.publish_event("gortex:security_alerts", agent, "approval_requested", {
+                "tool": tool_name,
+                "payload": payload,
+                "required_trust": 1.5 # 합산 신뢰도 임계치
+            })
+            # (실제 동기적 대기 로직은 엔진과 Swarm 연동 필요 - 현재는 흐름 구축)
+            
+        # 3. 페이로드 문자열 분석 (기존 로직)
         payload_str = str(payload).lower()
         for rule in security_rules:
             for pattern in rule.get("trigger_patterns", []):
                 if pattern.lower() in payload_str:
                     logger.critical(f"🛑 [Sentinel] Security Violation! Agent '{agent}' tried to violate rule: {rule['learned_instruction']}")
-                    # [EVENT] 보안 경고 전파
                     from gortex.core.mq import mq_bus
                     mq_bus.publish_event("gortex:security_alerts", agent, "security_violation", {
                         "rule_id": rule["id"],
                         "violation": rule["learned_instruction"],
                         "payload": payload
                     })
-                    # 실제 실행 차단을 위해 예외 발생
                     raise PermissionError(f"Security Policy Violation: {rule['learned_instruction']}")
 
     def get_causal_chain(self, start_event_id: str) -> List[Dict[str, Any]]:
