@@ -158,10 +158,15 @@ class GortexSystem:
         if not mq_bus.is_connected:
             return
 
+        from gortex.core.web_api import manager as web_manager
+        
         def handle_notification(msg):
             event_type = msg.get("type")
             payload = msg.get("payload", {})
             agent = msg.get("agent", "Unknown")
+            
+            # [WEB BROADCAST] 실시간 웹 스트리밍
+            asyncio.create_task(web_manager.broadcast(json.dumps(msg, ensure_ascii=False)))
             
             # [THOUGHT STREAM] 실시간 사고 중계 처리
             if msg.get("type") == "thought_update":
@@ -238,6 +243,11 @@ class GortexSystem:
         # 1. Boot Sequence
         boot = BootManager(self.console)
         await boot.run_sequence()
+
+        # 2. Start Web API Server (v5.7.0 New)
+        from gortex.core.web_api import start_web_server
+        asyncio.create_task(start_web_server(port=8000))
+        logger.info("📡 Web API Server started at http://localhost:8000")
 
         workflow = compile_gortex_graph()
         recovery_task = asyncio.create_task(self.energy_recovery_loop())

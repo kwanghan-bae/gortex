@@ -14,3 +14,7 @@ pydantic
 pydantic-settings
 pyaudio
 wave
+redis
+fastapi
+uvicorn
+python-multipart
