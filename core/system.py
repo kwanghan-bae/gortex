@@ -256,6 +256,12 @@ class GortexSystem:
         # 1. Boot Sequence
         boot = BootManager(self.console)
         await boot.run_sequence()
+        
+        # [IMMUNE SYSTEM] Generate initial master signature
+        from gortex.utils.integrity import guard
+        if not os.path.exists(guard.signature_path):
+            logger.info("🛡️ First boot detected. Establishing master system signature...")
+            guard.generate_master_signature()
 
         # 2. Start Web API Server (v5.7.0 New)
         from gortex.core.web_api import start_web_server

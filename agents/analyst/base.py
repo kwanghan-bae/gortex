@@ -416,6 +416,24 @@ class AnalystAgent(BaseAgent):
             logger.error(f"Persona optimization failed for {agent_name}: {e}")
             return None
 
+    def scan_system_infection(self) -> Dict[str, Any]:
+        """시스템 코드베이스의 무결성을 검사하여 비정상적인 오염(Infection)을 탐지함."""
+        from gortex.utils.integrity import guard
+        modified, deleted = guard.check_integrity()
+        
+        if not modified and not deleted:
+            return {"status": "healthy", "infections": []}
+            
+        infections = []
+        # (실제 구현 시 현재 진행 중인 '승인된 미션'의 타겟 파일 목록과 대조하여 오탐 방지)
+        for path in modified:
+            infections.append({"path": path, "type": "modified", "severity": "High"})
+        for path in deleted:
+            infections.append({"path": path, "type": "deleted", "severity": "Critical"})
+            
+        logger.warning(f"🚨 [ImmuneSystem] Infection detected in {len(infections)} files!")
+        return {"status": "infected", "infections": infections}
+
     def evaluate_artifact_value(self, directory: str = "logs") -> List[Dict[str, Any]]:
         """작업 부산물들의 가치를 평가하여 삭제 후보 목록을 생성함."""
         cleanup_candidates = []

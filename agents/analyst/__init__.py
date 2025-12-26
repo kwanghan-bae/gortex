@@ -307,10 +307,35 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             # ... (기존 Doc-Evolver 로직)
             pass
 
-        # 5. [Architecture Optimization] 워크플로우 병목 분석 및 자율 개선 (기존 로직)
+        # 5. [Architecture Optimization] (기존 로직)
         if energy > 75:
-            # ... (기존 로직 수행)
+            # ... (기존 로직)
             pass
+
+        # 6. [Immune System] 시스템 무결성 검사 및 자율 복구
+        if energy > 80:
+            logger.info("🛡️ Running Immune System: Scanning for unauthorized modifications...")
+            try:
+                infection_report = agent.scan_system_infection()
+                if infection_report["status"] == "infected":
+                    targets = [i["path"] for i in infection_report["infections"]]
+                    msg = f"🚨 **면역 체계 반응 활성화**: 시스템 오염이 감지되었습니다.\n\n**오염 구역**: {', '.join(targets)}\n**조치**: 마스터 서명을 바탕으로 자율 복구를 시작합니다."
+                    
+                    # 복구 계획 수립 (마스터 해시 기반 원복 지시)
+                    state["debate_result"] = {
+                        "final_decision": "Rollback unauthorized changes to restore system purity.",
+                        "action_plan": [f"Step 1: Restore {t} from system backups" for t in targets]
+                    }
+                    
+                    return {
+                        "messages": [("ai", msg)],
+                        "next_node": "manager",
+                        "debate_result": state["debate_result"],
+                        "is_recovery_mode": True,
+                        "agent_energy": energy - 40 # 면역 반응은 큰 에너지를 소모함
+                    }
+            except Exception as e:
+                logger.error(f"Immune response failed: {e}")
 
         # 6. [Persona Evolution] 에이전트 페르소나 자율 튜닝
         if energy > 95:
