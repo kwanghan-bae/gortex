@@ -153,7 +153,7 @@ class GortexSystem:
             await asyncio.sleep(3600)
 
     async def notification_listener_loop(self):
-        """Listen for MQ notifications from distributed workers."""
+        """Listen for MQ notifications and thought streams from distributed workers."""
         from gortex.core.mq import mq_bus
         if not mq_bus.is_connected:
             return
@@ -161,7 +161,14 @@ class GortexSystem:
         def handle_notification(msg):
             event_type = msg.get("type")
             payload = msg.get("payload", {})
+            agent = msg.get("agent", "Unknown")
             
+            # [THOUGHT STREAM] 실시간 사고 중계 처리
+            if msg.get("type") == "thought_update":
+                thought_text = payload.get("text", "")
+                self.ui.update_thought(f"[Distributed] {thought_text}", agent_name=agent)
+                return
+
             if event_type == "task_completed":
                 task_type = payload.get("type", "Task").upper()
                 msg_text = f"✨ **{task_type} Done**: {payload.get('query')}"
@@ -182,13 +189,15 @@ class GortexSystem:
                 self.ui.add_achievement(f"❌ Task Failed: {payload.get('task_id')}")
             
             elif event_type == "worker_heartbeat":
-                # 하트비트 수신 시 별도 메시지는 생략하되, UI 갱신을 위해 힌트만 제공
-                # (list_active_workers를 통해 UI 렌더링 시점에 최신화됨)
                 pass
 
-        # Non-blocking listen via executor
+        # 멀티 채널 구독을 위해 listen 메서드 수정이 필요할 수 있으나, 
+        # 현재 구현상 gortex:thought_stream과 gortex:notifications를 모두 감시해야 함
         loop = asyncio.get_running_loop()
-        await loop.run_in_executor(None, mq_bus.listen, "gortex:notifications", handle_notification)
+        # 공통 알림 채널 청취
+        loop.run_in_executor(None, mq_bus.listen, "gortex:notifications", handle_notification)
+        # 사고 스트림 채널 청취 (추가)
+        loop.run_in_executor(None, mq_bus.listen, "gortex:thought_stream", handle_notification)
 
     async def run(self):
         # 1. Boot Sequence

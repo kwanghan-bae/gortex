@@ -39,12 +39,17 @@ class GortexMessageBus:
             "id": str(uuid.uuid4()),
             "agent": agent,
             "type": event_type,
-            "payload": payload
+            "payload": payload,
+            "timestamp": time.time()
         }
         if self.is_connected:
             self.client.publish(channel, json.dumps(message))
         else:
             logger.debug(f"[DummyMQ] Broadcast on {channel}: {event_type}")
+
+    def stream_thought(self, agent: str, thought: str):
+        """에이전트의 현재 사고 과정을 실시간으로 스트리밍함"""
+        self.publish_event("gortex:thought_stream", agent, "thought_update", {"text": thought})
 
     def enqueue_task(self, queue_name: str, task_data: Dict[str, Any]):
         """작업 큐에 작업을 추가함"""

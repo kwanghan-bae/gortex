@@ -57,6 +57,9 @@ async def process_node_execution(request: dict):
     
     logger.info(f"⚡ Executing remote node: {node_name} (Req: {request_id})")
     
+    # [STREAMING] 실행 시작 알림
+    mq_bus.stream_thought(node_name, f"Starting remote execution for request {request_id}...")
+    
     try:
         node_func = NODE_MAP.get(node_name.lower())
         if not node_func:
@@ -68,6 +71,9 @@ async def process_node_execution(request: dict):
         else:
             loop = asyncio.get_running_loop()
             result = await loop.run_in_executor(None, node_func, state)
+            
+        # [STREAMING] 완료 알림
+        mq_bus.stream_thought(node_name, f"Completed task {request_id}. Sending results back.")
             
         # 2. 결과 전송 (Pub/Sub)
         mq_bus.client.publish(reply_channel, json.dumps(result, ensure_ascii=False))
