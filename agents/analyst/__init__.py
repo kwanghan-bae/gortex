@@ -161,15 +161,35 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             eco_manager.record_success(state, target_agent, quality_score=quality, difficulty=difficulty)
             eco_manager.update_skill_points(state, target_agent, category="Coding", quality_score=quality, difficulty=difficulty)
             
-            return {
-                "messages": [("ai", i18n.t("analyst.review_complete", risk_count=0))],
-                "agent_economy": state.get("agent_economy"), 
-                "token_credits": state.get("token_credits"), 
-                "next_node": "manager", 
-                "awaiting_review": False,
-                "is_recovery_mode": False
-            }
-
+                        # [GIT] 자율 커밋 및 병합 (v4.0 Alpha)
+                        active_branch = state.get("active_branch")
+                        if active_branch and score >= 90:
+                            from gortex.utils.git_tool import GitTool
+                            git = GitTool()
+                            try:
+                                if git.is_repo():
+                                    git.add_all()
+                                    commit_msg = f"fix: 자율 복구 완료 (Score: {score})\n\nIssue: {state.get('current_issue', 'N/A')}\nRationale: {review_res.get('comment')}"
+                                    git.commit(commit_msg)
+                                    
+                                    # main으로 병합 시도 (안전장치: main으로 체크아웃 후 머지)
+                                    git.checkout("main")
+                                    git.merge(active_branch)
+                                    state["messages"].append(("system", f"📦 **Git Auto-Merge**: `{active_branch}`가 `main`에 성공적으로 병합되었습니다."))
+                                    self.ui.add_achievement(f"Auto-Merge Success")
+                            except Exception as ge:
+                                logger.error(f"Git auto-commit failed: {ge}")
+                                state["messages"].append(("system", f"⚠️ **Git Warning**: 커밋 중 오류가 발생했으나 코드는 보존되었습니다."))
+            
+                        return {
+                            "messages": [("ai", i18n.t("analyst.review_complete", risk_count=0))], 
+                            "agent_economy": state.get("agent_economy"), 
+                            "token_credits": state.get("token_credits"), 
+                            "next_node": "manager", 
+                            "awaiting_review": False,
+                            "is_recovery_mode": False,
+                            "active_branch": None # 작업 완료 후 초기화
+                        }
     # [Self-Evolution, Guardian & ToolSmith Cycle]
     energy = state.get("agent_energy", 100)
     if energy > 70 and not debate_data:

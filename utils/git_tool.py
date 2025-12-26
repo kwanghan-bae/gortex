@@ -44,6 +44,26 @@ class GitTool:
     def get_current_branch(self) -> str:
         return self._run_git(["rev-parse", "--abbrev-ref", "HEAD"])
 
+    def create_branch(self, branch_name: str):
+        """새로운 브랜치 생성 및 체크아웃"""
+        return self._run_git(["checkout", "-b", branch_name])
+
+    def checkout(self, branch_name: str):
+        """특정 브랜치로 전환"""
+        return self._run_git(["checkout", branch_name])
+
+    def merge(self, source_branch: str):
+        """현재 브랜치로 다른 브랜치 병합"""
+        return self._run_git(["merge", source_branch])
+
+    def get_diff(self, base: str = "main", head: str = "HEAD") -> str:
+        """브랜치 간의 차이점 반환"""
+        return self._run_git(["diff", f"{base}...{head}"])
+
+    def delete_branch(self, branch_name: str):
+        """브랜치 삭제"""
+        return self._run_git(["branch", "-D", branch_name])
+
     def is_repo(self) -> bool:
         return os.path.exists(os.path.join(self.repo_path, ".git"))
 

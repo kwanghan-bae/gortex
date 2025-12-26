@@ -65,6 +65,21 @@ class ManagerAgent(BaseAgent):
             mode_title = "🩺 **긴급 복구 모드 활성화**" if is_recovery else "🛡️ **선제적 가디언 모드 활성화**"
             mode_desc = "Swarm 합의안" if not is_guardian else "가디언 최적화 안"
             
+            # [GIT] 자율 브랜치 생성
+            from gortex.utils.git_tool import GitTool
+            git = GitTool()
+            branch_prefix = "fix" if is_recovery else "feat"
+            mission_id = str(uuid.uuid4())[:6]
+            new_branch = f"{branch_prefix}/gortex-{mission_id}"
+            
+            git_msg = ""
+            try:
+                if git.is_repo():
+                    git.create_branch(new_branch)
+                    git_msg = f"\n📦 **Git Isolated**: Created branch `{new_branch}`"
+            except Exception as ge:
+                logger.warning(f"Git branching failed: {ge}")
+
             logger.info(f"⚖️ Translating {mode_desc} into executable plan...")
             action_plan = debate_res["action_plan"]
             
@@ -84,7 +99,8 @@ class ManagerAgent(BaseAgent):
                 "debate_result": None, 
                 "is_recovery_mode": is_recovery,
                 "is_guardian_mode": is_guardian,
-                "messages": [("ai", f"{mode_title}: {mode_desc}에 따라 코드 개선을 시작합니다.\n\n**목표**: {debate_res.get('final_decision')}")]
+                "active_branch": new_branch,
+                "messages": [("ai", f"{mode_title}: {mode_desc}에 따라 코드 개선을 시작합니다.{git_msg}\n\n**목표**: {debate_res.get('final_decision')}")]
             }
 
         # 3. 선제적 확장(Proactive Expansion) 처리
