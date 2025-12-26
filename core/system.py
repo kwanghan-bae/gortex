@@ -205,6 +205,28 @@ class GortexSystem:
         loop.run_in_executor(None, mq_bus.listen, "gortex:notifications", handle_notification)
         # 사고 스트림 채널 청취 (추가)
         loop.run_in_executor(None, mq_bus.listen, "gortex:thought_stream", handle_notification)
+        
+        # [WORKSPACE SYNC] 실시간 파일 동기화 리스너
+        def handle_sync(msg):
+            payload = msg.get("payload", {})
+            if msg.get("type") == "file_changed":
+                path = payload.get("path")
+                content = payload.get("content")
+                new_hash = payload.get("hash")
+                
+                if path and content:
+                    # 무한 루프 방지: 현재 파일 해시와 다를 때만 쓰기
+                    from gortex.utils.tools import get_file_hash
+                    if get_file_hash(path) != new_hash:
+                        logger.info(f"📥 Syncing remote file change: {path}")
+                        # 원자적 쓰기 (이벤트 재발행 방지를 위해 직접 쓰기 또는 플래그 사용)
+                        os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
+                        with open(path, "w", encoding="utf-8") as f:
+                            f.write(content)
+                        self.ui.update_logs({"agent": "Sync", "event": f"Synced {os.path.basename(path)}"})
+
+        loop.run_in_executor(None, mq_bus.listen, "gortex:workspace_sync", handle_sync)
+        
         # 원격 로그 채널 청취 (추가)
         loop.run_in_executor(None, mq_bus.listen, "gortex:remote_logs", lambda msg: self.ui.update_logs({
             "agent": f"Rem:{msg.get('agent','???')}", 

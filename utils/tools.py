@@ -52,6 +52,17 @@ def write_file(path: str, content: str) -> str:
         with open(tmp_path, 'w', encoding='utf-8') as f:
             f.write(content)
         os.replace(tmp_path, path)
+        
+        # [DISTRIBUTED SYNC] 변경 사항 전파
+        try:
+            from gortex.core.mq import mq_bus
+            if mq_bus.is_connected:
+                file_hash = hashlib.md5(content.encode()).hexdigest()
+                mq_bus.broadcast_file_change(path, content, file_hash)
+                logger.debug(f"🌐 Broadcasted file change: {path}")
+        except Exception as sync_e:
+            logger.warning(f"Failed to broadcast file change: {sync_e}")
+            
         return f"Successfully wrote to {path}"
     except Exception as e:
         return f"Error writing file {path}: {str(e)}"

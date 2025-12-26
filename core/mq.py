@@ -51,6 +51,15 @@ class GortexMessageBus:
         """에이전트의 현재 사고 과정을 실시간으로 스트리밍함"""
         self.publish_event("gortex:thought_stream", agent, "thought_update", {"text": thought})
 
+    def broadcast_file_change(self, file_path: str, content: str, file_hash: str):
+        """워크스페이스 파일 변경 사항을 분산 군집 전체에 전파함"""
+        self.publish_event("gortex:workspace_sync", "System", "file_changed", {
+            "path": file_path,
+            "content": content,
+            "hash": file_hash,
+            "timestamp": time.time()
+        })
+
     def log_remote_event(self, agent: str, event: str, payload: Dict[str, Any]):
         """원격지의 중요한 이벤트를 중앙 로그 시스템으로 전송함"""
         self.publish_event("gortex:remote_logs", agent, event, payload)

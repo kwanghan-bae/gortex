@@ -125,8 +125,26 @@ async def main():
     worker_id = f"worker_{os.uname().nodename}_{str(uuid.uuid4())[:4]}" if hasattr(os, "uname") else f"worker_win_{str(uuid.uuid4())[:4]}"
     logger.info(f"🚀 Gortex Distributed Swarm Worker (v4.0 Alpha) is active: {worker_id}")
     
-    # 하트비트 태스크 시작
+    # 1. 하트비트 태스크 시작
     asyncio.create_task(send_heartbeat(worker_id))
+    
+    # 2. [WORKSPACE SYNC] 파일 동기화 리스너 시작
+    def handle_file_sync(msg):
+        if msg.get("type") == "file_changed":
+            payload = msg.get("payload", {})
+            path = payload.get("path")
+            content = payload.get("content")
+            new_hash = payload.get("hash")
+            
+            from gortex.utils.tools import get_file_hash
+            if path and get_file_hash(path) != new_hash:
+                logger.info(f"📥 Syncing file change from swarm: {path}")
+                os.makedirs(os.path.dirname(path) if os.path.dirname(path) else ".", exist_ok=True)
+                with open(path, "w", encoding="utf-8") as f:
+                    f.write(content)
+
+    loop = asyncio.get_running_loop()
+    loop.run_in_executor(None, mq_bus.listen, "gortex:workspace_sync", handle_file_sync)
     
     logger.info("Monitoring 'gortex:tasks:research' and 'gortex:node_tasks'...")
     
