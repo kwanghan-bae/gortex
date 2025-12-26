@@ -70,6 +70,11 @@ def route_coder(state: GortexState) -> Literal["coder", "analyst", "swarm", "man
     else:
         last_msg = str(messages[-1][1] if isinstance(messages[-1], tuple) else messages[-1].content if hasattr(messages[-1], 'content') else str(messages[-1]))
     
+    # 0. 병렬 작업 감지 (v6.0 New)
+    if state.get("parallel_branches"):
+        logger.info("🐉 Parallel branches detected. Routing to HydraNode.")
+        return "hydra"
+
     # 1. 반복 실패 감지 -> Swarm 집단 지성 요청
     if state.get("coder_iteration", 0) > 3:
         logger.warning("🚑 Coder repeated failure. Escalating to Swarm Debug.")
@@ -169,13 +174,52 @@ async def async_optimizer_node(state: GortexState):
 async def async_evolution_node(state: GortexState):
     return await run_async_node(evolution_node, state)
 
+async def hydra_node(state: GortexState) -> Dict[str, Any]:
+    """병렬 브랜치들을 동시에 실행하는 오케스트레이션 노드 (v6.0 Hydra Protocol)"""
+    branches = state.get("parallel_branches", [])
+    if not branches:
+        return {"next_node": "coder"}
+
+    from gortex.core.mq import mq_bus
+    logger.info(f"🐉 [HydraNode] Spawning {len(branches)} parallel sub-workflows...")
+    
+    requests = []
+    for b in branches:
+        # 각 브랜치를 독립적인 실행 요청으로 구성
+        sub_state = dict(state)
+        sub_state["plan"] = b.get("steps", [])
+        sub_state["assigned_persona"] = b.get("assigned_role", "standard")
+        sub_state["current_step"] = 0
+        
+        # 병렬 실행을 위해 MQ 요청 리스트 생성
+        requests.append(("coder", sub_state))
+
+    # 병렬 호출 실행
+    loop = asyncio.get_running_loop()
+    results = await loop.run_in_executor(None, mq_bus.call_remote_nodes_parallel, requests)
+    
+    # 결과 집계
+    combined_messages = []
+    for res in results:
+        combined_messages.extend(res.get("messages", []))
+        
+    logger.info(f"✅ [HydraNode] All {len(results)} branches merged.")
+    
+    return {
+        "messages": combined_messages + [("ai", f"🐉 **하이드라 병합 완료**: {len(results)}개의 병렬 작업이 성공적으로 통합되었습니다.")],
+        "next_node": "analyst", # 결과물 검증을 위해 Analyst로 보냄
+        "parallel_branches": [] # 처리 완료 후 초기화
+    }
+
 
 def compile_gortex_graph(checkpointer=None):
     """Gortex 시스템의 모든 에이전트를 연결하여 그래프 컴파일"""
     from gortex.core.registry import registry
     workflow = StateGraph(GortexState)
 
-    # 1. 레지스트리로부터 동적으로 노드 추가
+    # 1. 노드 추가
+    workflow.add_node("hydra", hydra_node) # 하이드라 노드 추가
+    
     all_agents = registry.list_agents()
     logger.info(f"🕸️ Building graph with {len(all_agents)} registered agents...")
     

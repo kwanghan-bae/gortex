@@ -84,6 +84,18 @@ class PlannerAgent(BaseAgent):
                         }
                     }
                 },
+                "parallel_branches": {
+                    "type": "ARRAY",
+                    "items": {
+                        "type": "OBJECT",
+                        "properties": {
+                            "branch_name": {"type": "STRING"},
+                            "goal": {"type": "STRING"},
+                            "steps": {"type": "ARRAY", "items": {"type": "STRING"}},
+                            "assigned_role": {"type": "STRING"}
+                        }
+                    }
+                },
                 "handoff_instruction": {"type": "STRING"}
             },
             "required": ["thought_process", "goal", "steps", "handoff_instruction"]
@@ -176,6 +188,7 @@ class PlannerAgent(BaseAgent):
                 "impact_analysis": plan_data.get("impact_analysis"),
                 "thought_tree": plan_data.get("thought_tree"),
                 "plan": plan_steps,
+                "parallel_branches": plan_data.get("parallel_branches", []),
                 "current_step": 0,
                 "next_node": "coder",
                 "handoff_instruction": plan_data.get("handoff_instruction", ""),
