@@ -4,61 +4,15 @@ from rich.table import Table
 from rich.text import Text
 from rich.console import Console, Group
 from rich.markdown import Markdown
-from rich.columns import Columns
 from rich import box
-from datetime import datetime
 import logging
-from typing import Dict, Any, List, Optional
 
-from gortex.ui.components.monitor import SystemMonitor
-from gortex.ui.components.memory_viewer import MemoryViewer
-from gortex.ui.components.trace_tree import TraceTreeRenderer
-
-logger = logging.getLogger("GortexDashboard")
-
-class DashboardUI:
-    """Gortex "Agent OS" Master UI.
-
-    Inspired by gemini-cli, optimized for professional aesthetics.
-    Handles rendering of the main application layout including chat, thoughts, and stats.
-
-    Args:
-        console (Console): The rich console instance to use for rendering.
-    """
-    def __init__(self, console: Console):
-        self.console = console
-        self.chat_history = []
-        self.recent_logs = []
-        self.current_agent = "System"
-        self.current_step = "Initialized"
-        self.tokens_used = 0
-        self.total_cost = 0.0
-        self.rules_count = 0
-        self.provider = "GEMINI"
-        self.energy = 100
-        self.efficiency = 100.0
-        self.agent_thought = ""
-        self.collab_matrix = {}
-        
-        # [Phase 3] System Inspector
-        self.monitor = SystemMonitor(console)
-        self.monitor_active = False
-
-        # [Phase 3] Memory Explorer
-        self.memory_viewer = MemoryViewer(console, None) # VectorStore는 지연 주입
-        self.memory_active = False
-
-    def set_vector_store(self, store):
-        self.memory_viewer.vector_store = store
-
-    def update_sidebar(self, agent="Idle", step="Ready", tokens=None, cost=None, rules=None, provider=None, energy=None, efficiency=None):
-        if agent: self.current_agent = agent
-        if step: self.current_step = step
 from gortex.ui.themes.palette import Palette, get_agent_style
 from gortex.ui.components.header import AppHeader
 from gortex.ui.components.welcome import WelcomeScreen
 from gortex.ui.components.monitor import SystemMonitor
 from gortex.ui.components.memory_viewer import MemoryViewer
+from gortex.ui.components.trace_tree import TraceTreeRenderer
 
 logger = logging.getLogger("GortexDashboard")
 
@@ -102,25 +56,36 @@ class DashboardUI:
         self.memory_viewer.vector_store = store
 
     def update_sidebar(self, agent="Idle", step="Ready", tokens=None, cost=None, rules=None, provider=None, energy=None, efficiency=None):
-        if agent: self.current_agent = agent
-        if step: self.current_step = step
-        if tokens is not None: self.tokens_used = tokens
-        if cost is not None: self.total_cost = cost
-        if rules is not None: self.rules_count = rules
-        if provider: self.provider = provider
-        if energy is not None: self.energy = energy
-        if efficiency is not None: self.efficiency = efficiency
+        if agent:
+            self.current_agent = agent
+        if step:
+            self.current_step = step
+        if tokens is not None:
+            self.tokens_used = tokens
+        if cost is not None:
+            self.total_cost = cost
+        if rules is not None:
+            self.rules_count = rules
+        if provider:
+            self.provider = provider
+        if energy is not None:
+            self.energy = energy
+        if efficiency is not None:
+            self.efficiency = efficiency
 
     def update_main(self, messages: list):
         self.chat_history = messages
 
     def update_thought(self, thought: str, agent_name: str = None):
-        if thought is not None: self.agent_thought = thought
-        if agent_name: self.current_agent = agent_name
+        if thought is not None:
+            self.agent_thought = thought
+        if agent_name:
+            self.current_agent = agent_name
 
     def update_logs(self, log_entry: dict):
         self.recent_logs.append(log_entry)
-        if len(self.recent_logs) > 8: self.recent_logs.pop(0)
+        if len(self.recent_logs) > 8:
+            self.recent_logs.pop(0)
         
     def toggle_monitor_mode(self):
         """Toggle System Inspector overlay."""
@@ -162,26 +127,36 @@ class DashboardUI:
             
         elements = []
         # Calculate limit based on available vertical space
-        limit = max(1, height // 6)
+        # [Fix] 패널 하나가 너무 클 경우를 대비해 메시지 수와 개별 메시지 길이를 모두 제한
+        limit = max(1, height // 10) # 메시지 개수를 더 줄임
+        max_content_lines = max(2, height // 4) # 개별 메시지의 최대 줄 수
+
         for role, content in self.chat_history[-limit:]:
+            content_str = str(content)
+            # 줄 바꿈이 너무 많으면 잘라냄
+            lines = content_str.split("\n")
+            if len(lines) > max_content_lines:
+                content_str = "\n".join(lines[:max_content_lines]) + "\n[dim]...(Content truncated for UI stability)[/]"
+
             if role == "user":
                 elements.append(Panel(
-                    Text(str(content), style=Palette.FOREGROUND),
+                    Text(content_str, style=Palette.FOREGROUND),
                     title=f" [bold {Palette.GREEN}]👤 USER[/] ",
                     border_style=Palette.GREEN,
                     box=box.ROUNDED,
                     padding=(0, 1)
                 ))
             elif role == "ai":
+                # Markdown도 문자열로 변환하여 길이 체크 후 다시 Markdown으로 감싸거나 Text로 표시
                 elements.append(Panel(
-                    Markdown(str(content)),
+                    Markdown(content_str),
                     title=f" [bold {Palette.CYAN}]🤖 GORTEX[/] ",
                     border_style=Palette.CYAN,
                     box=box.ROUNDED,
                     padding=(0, 1)
                 ))
             else:
-                elements.append(Text.from_markup(f"  [dim]• {content}[/]", style=f"dim {Palette.GRAY}"))
+                elements.append(Text.from_markup(f"  [dim]• {content_str[:100]}[/]", style=f"dim {Palette.GRAY}"))
         return Group(*elements)
 
     def _render_info_table(self) -> Table:
@@ -205,15 +180,15 @@ class DashboardUI:
         width = self.console.width
         height = self.console.height
         
-        l = Layout()
-        l.split_column(
+        main_layout = Layout()
+        main_layout.split_column(
             Layout(name="header", size=10 if width >= 100 else 6),
             Layout(name="body")
         )
         
         # 1. Header
         header_comp = AppHeader(width, self.energy, self.provider)
-        l["header"].update(header_comp.render())
+        main_layout["header"].update(header_comp.render())
 
         # [Phase 3] System Monitor Overlay
         if self.monitor_active:
@@ -224,31 +199,31 @@ class DashboardUI:
                 "total_cost": self.total_cost
             }
             self.monitor.collect_metrics(state_snapshot)
-            l["body"].update(self.monitor.render())
-            return l
+            main_layout["body"].update(self.monitor.render())
+            return main_layout
 
         # [Phase 3] Memory Explorer Overlay
         if self.memory_active:
-            l["body"].update(self.memory_viewer.render())
-            return l
+            main_layout["body"].update(self.memory_viewer.render())
+            return main_layout
 
         # [Phase 3] Logic Tracer Overlay
         if self.trace_active:
-            l["body"].update(self.trace_renderer.render_panel(self.recent_logs))
-            return l
+            main_layout["body"].update(self.trace_renderer.render_panel(self.recent_logs))
+            return main_layout
 
-        l["body"].split_row(
+        main_layout["body"].split_row(
             Layout(name="main", ratio=3),
             Layout(name="side", ratio=1)
         )
         
-        l["main"].split_column(
+        main_layout["main"].split_column(
             Layout(name="chat", ratio=1),
             Layout(name="thought", size=5)
         )
         
         # 2. Main Chat
-        l["chat"].update(Panel(
+        main_layout["chat"].update(Panel(
             self._render_chat(height - 15, width), 
             title=f" [bold {Palette.BLUE}]⚡ AGENT CORE[/] ", 
             border_style=Palette.BLUE, 
@@ -262,7 +237,7 @@ class DashboardUI:
             (f" {self.current_agent.upper()} ", f"bold {agent_style} reverse"),
             (f"  {thought_msg}", f"italic {agent_style}")
         )
-        l["thought"].update(Panel(
+        main_layout["thought"].update(Panel(
             thought_content, 
             title=" [bold italic]Thinking Scratchpad[/] ",
             border_style=agent_style, 
@@ -282,9 +257,9 @@ class DashboardUI:
         side_l["info"].update(Panel(self._render_info_table(), title=" [bold]📊 STATS[/] ", border_style=Palette.GRAY, box=box.ROUNDED))
         side_l["trace"].update(Panel(Text.from_markup(logs), title=" [bold]🔍 TRACE[/] ", border_style=Palette.GRAY, box=box.ROUNDED))
         
-        l["side"].update(side_l)
+        main_layout["side"].update(side_l)
 
-        return l
+        return main_layout
 
     # Stubs
     def update_energy_visualizer(self, *args): pass

@@ -19,7 +19,7 @@ class VocalBridge:
     def text_to_speech(self, text: str, output_path: str = "logs/response.mp3") -> bool:
         """텍스트를 음성으로 변환하여 파일로 저장"""
         if not self.client:
-            logger.warning("OpenAI client not configured for TTS.")
+            logger.debug("OpenAI client not configured for TTS.")
             return False
             
         try:
