@@ -236,6 +236,7 @@ def compile_gortex_graph(checkpointer=None):
 
     # 1. 노드 추가
     workflow.add_node("hydra", hydra_node) # 하이드라 노드 추가
+    workflow.add_node("swarm", async_swarm_node) # 스웜 노드 명시적 추가
     
     all_agents = registry.list_agents()
     logger.info(f"🕸️ Building graph with {len(all_agents)} registered agents...")

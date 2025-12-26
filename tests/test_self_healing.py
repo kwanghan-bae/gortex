@@ -1,5 +1,4 @@
 import unittest
-import asyncio
 import json
 from unittest.mock import MagicMock, patch
 from gortex.agents.manager import ManagerAgent

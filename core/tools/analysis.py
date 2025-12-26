@@ -1,7 +1,6 @@
 
 import os
 import ast
-from typing import List
 from .base import BaseTool
 
 class OutlineVisitor(ast.NodeVisitor):

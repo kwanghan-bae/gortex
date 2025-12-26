@@ -1,10 +1,8 @@
 import json
 import os
 import logging
-import subprocess
-import time
 from datetime import datetime
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any
 
 logger = logging.getLogger("GortexTrainer")
 

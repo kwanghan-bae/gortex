@@ -1,9 +1,8 @@
 import pytest
 import asyncio
 import time
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import MagicMock
 from gortex.core.engine import GortexEngine
-from gortex.core.state import GortexState
 
 @pytest.mark.asyncio
 async def test_engine_process_node_output_non_blocking():

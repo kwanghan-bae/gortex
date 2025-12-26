@@ -1,9 +1,6 @@
 
 import unittest
-import os
-import shutil
-import tempfile
-from gortex.core.task import TaskManager, Task, TaskStatus
+from gortex.core.task import TaskManager, TaskStatus
 
 class TestTaskManager(unittest.TestCase):
     def setUp(self):

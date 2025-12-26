@@ -2,7 +2,7 @@ from rich.panel import Panel
 from rich.text import Text
 from rich import box
 from datetime import datetime
-from gortex.ui.components.ascii_art import SHORT_LOGO, TINY_LOGO, get_ascii_width
+from gortex.ui.components.ascii_art import SHORT_LOGO, TINY_LOGO
 from gortex.ui.themes.palette import Palette
 
 class AppHeader:
@@ -33,7 +33,7 @@ class AppHeader:
         # Gradient simulation for Logo
         header_text = Text()
         if w < 100:
-            header_text.append(f" 🍀 GORTEX Agent OS ", f"bold {Palette.GRADIENT_GORTEX[0]}")
+            header_text.append(" 🍀 GORTEX Agent OS ", f"bold {Palette.GRADIENT_GORTEX[0]}")
         else:
             lines = SHORT_LOGO.strip("\n").split("\n")
             colors = Palette.GRADIENT_GORTEX

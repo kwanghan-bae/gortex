@@ -4,7 +4,6 @@ import json
 import shutil
 from unittest.mock import MagicMock, patch
 from gortex.core.llm.distiller import NeuralDistiller
-from gortex.core.evolutionary_memory import EvolutionaryMemory
 
 class TestNeuralDistiller(unittest.TestCase):
     def setUp(self):

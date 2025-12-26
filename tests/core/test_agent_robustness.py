@@ -3,7 +3,6 @@ import unittest
 import json
 from unittest.mock import MagicMock, patch
 from gortex.agents.coder import CoderAgent
-from gortex.core.state import GortexState
 
 class TestAgentRobustness(unittest.TestCase):
     def setUp(self):

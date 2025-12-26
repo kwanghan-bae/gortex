@@ -2,7 +2,7 @@ import logging
 import importlib.util
 import inspect
 import os
-from typing import Dict, Any, Callable, List, Optional
+from typing import Dict, Callable, List, Optional
 
 logger = logging.getLogger("GortexToolRegistry")
 

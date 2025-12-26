@@ -3,7 +3,6 @@ import asyncio
 import logging
 import sys
 import os
-import shutil
 
 # 로깅 설정
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')

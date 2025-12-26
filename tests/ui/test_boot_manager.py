@@ -1,6 +1,5 @@
 import unittest
 import asyncio
-from unittest.mock import MagicMock, patch
 from rich.console import Console
 from gortex.ui.components.boot import BootManager
 

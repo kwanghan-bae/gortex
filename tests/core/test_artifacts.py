@@ -3,7 +3,6 @@ import unittest
 import os
 import shutil
 import tempfile
-import json
 from gortex.core.artifacts.base import BaseArtifact
 from gortex.core.artifacts.store import FileSystemArtifactStore
 

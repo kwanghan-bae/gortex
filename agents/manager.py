@@ -151,7 +151,7 @@ class ManagerAgent(BaseAgent):
                     "plan": new_plan,
                     "current_step": 0,
                     "debate_result": None,
-                    "messages": [("ai", f"⚛️ **뉴럴 퓨전 가동**: 두 지능이 하나로 결합되는 고차원 진화 공정을 시작합니다.")]
+                    "messages": [("ai", "⚛️ **뉴럴 퓨전 가동**: 두 지능이 하나로 결합되는 고차원 진화 공정을 시작합니다.")]
                 }
 
             # [AGENT SPAWNING] (기존 로직)

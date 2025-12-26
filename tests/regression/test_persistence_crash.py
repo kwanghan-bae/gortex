@@ -2,8 +2,6 @@
 import unittest
 import json
 import os
-import shutil
-from collections import ChainMap
 from gortex.core.persistence import DistributedSaver
 
 class UnserializableObject:

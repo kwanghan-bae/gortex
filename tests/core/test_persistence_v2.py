@@ -2,7 +2,6 @@
 import unittest
 import json
 import os
-import shutil
 from collections import ChainMap
 from dataclasses import dataclass
 from gortex.core.persistence import DistributedSaver

@@ -91,7 +91,6 @@ async def process_node_execution(request: dict):
         mq_bus.log_remote_event(node_name, "error", {"request_id": request_id, "error": str(e)})
         mq_bus.client.publish(reply_channel, json.dumps({"error": str(e), "status": "failed"}))
 
-import psutil
 
 # ... (기존 임포트 하단)
 

@@ -1,7 +1,7 @@
 import json
 import os
 import logging
-from typing import List, Dict, Any
+from typing import Dict, Any
 from datetime import datetime
 
 logger = logging.getLogger("GortexTechRadar")

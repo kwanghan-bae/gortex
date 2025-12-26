@@ -1,6 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, patch
-import asyncio
+from unittest.mock import patch
 from gortex.core.system import GortexSystem
 # GortexState is now a TypedDict, so we can't assertIsInstance(obj, GortexState) easily if it's just a dict at runtime.
 # We will check keys.

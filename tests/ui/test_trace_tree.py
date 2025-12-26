@@ -1,8 +1,6 @@
 
 import unittest
-from unittest.mock import MagicMock
 from rich.tree import Tree
-from rich.console import Console
 from gortex.ui.components.trace_tree import TraceTreeRenderer
 
 class TestTraceTreeRenderer(unittest.TestCase):

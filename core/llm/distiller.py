@@ -2,7 +2,7 @@ import json
 import os
 import logging
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import Optional
 from gortex.core.evolutionary_memory import EvolutionaryMemory
 from gortex.core.llm.factory import LLMFactory
 

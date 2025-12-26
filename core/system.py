@@ -5,17 +5,13 @@ import os
 import re
 import json
 import warnings
-from typing import Optional, List, Dict, Any
+from typing import Optional
 
 from rich.console import Console
 from rich.live import Live
-from rich.panel import Panel
-from rich.align import Align
-from rich.text import Text
 
 # prompt_toolkit for autocomplete
 from prompt_toolkit import PromptSession
-from prompt_toolkit.completion import Completer, Completion
 from prompt_toolkit.history import FileHistory
 from prompt_toolkit.styles import Style as PromptStyle
 
@@ -27,13 +23,10 @@ from gortex.core.engine import GortexEngine
 from gortex.ui.dashboard import DashboardUI
 from gortex.ui.dashboard_theme import ThemeManager
 from gortex.core.observer import GortexObserver
-from gortex.utils.token_counter import estimate_cost
 from gortex.utils.tools import deep_integrity_check
 from gortex.utils.vocal_bridge import VocalBridge
-from gortex.utils.translator import i18n
 from gortex.agents.analyst import AnalystAgent
 from gortex.ui.components.boot import BootManager
-from gortex.ui.themes.palette import Palette
 
 logger = logging.getLogger("GortexSystem")
 

@@ -3,7 +3,6 @@ import asyncio
 import logging
 import os
 import shutil
-import time
 from gortex.core.task import TaskManager, TaskStatus
 from gortex.core.artifacts.base import BaseArtifact
 from gortex.core.artifacts.store import FileSystemArtifactStore

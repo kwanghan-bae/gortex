@@ -1,7 +1,6 @@
 import unittest
 import importlib
 import importlib.metadata # [NEW] pkg_resources 대체
-import sys
 import os
 import stat
 

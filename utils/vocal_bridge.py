@@ -1,8 +1,7 @@
 import os
 import logging
-import time
 import wave
-from typing import Optional, List
+from typing import Optional
 try:
     from openai import OpenAI
 except ImportError:

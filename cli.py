@@ -2,7 +2,6 @@ import typer
 import os
 import sys
 import asyncio
-from typing import Optional
 from rich.console import Console
 from rich.prompt import Prompt
 
@@ -127,7 +126,6 @@ def inherit(
     console.print(f"[bold magenta]🌌 Inheriting Intelligence from {os.path.basename(seed_path)}...[/bold magenta]")
     
     import zipfile
-    import shutil
     try:
         with zipfile.ZipFile(seed_path, 'r') as zipf:
             # 1. 지식 복원

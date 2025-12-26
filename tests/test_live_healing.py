@@ -1,10 +1,7 @@
 import unittest
-import asyncio
-import json
 from unittest.mock import MagicMock, patch
 from gortex.agents.analyst import analyst_node
 from gortex.agents.manager import manager_node
-from gortex.agents.swarm import swarm_node_async
 from gortex.core.state import GortexState
 
 class TestLiveHealingWorkflow(unittest.TestCase):

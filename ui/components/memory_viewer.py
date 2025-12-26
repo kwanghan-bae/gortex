@@ -1,9 +1,9 @@
 
-from typing import List, Dict, Optional
+from typing import List, Dict
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
-from rich.console import Console, Group
+from rich.console import Console
 from rich import box
 from gortex.ui.themes.palette import Palette
 
@@ -30,7 +30,7 @@ class MemoryViewer:
             # 여기서는 인터페이스 추상화에 의존.
             self.memories = self.vector_store.search(query=query, limit=limit)
             return self.memories
-        except Exception as e:
+        except Exception:
             self.memories = []
             return []
 

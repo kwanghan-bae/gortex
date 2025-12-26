@@ -2,7 +2,6 @@ import unittest
 import os
 import shutil
 import json
-from datetime import datetime, timedelta
 from unittest.mock import patch, MagicMock
 from gortex.core.evolutionary_memory import EvolutionaryMemory
 

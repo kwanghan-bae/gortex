@@ -73,99 +73,93 @@ class GortexMessageBus:
 
     def acquire_lock(self, lock_name: str, timeout: int = 10) -> bool:
         """분산 락 획득 시도 (NX 옵션 사용)"""
-        if not self.is_connected:
-            return True # Dummy mode: 항상 성공
-        
-        # 락 획득 시도 (10초 후 자동 해제)
+        if not self.is_connected: return True
         return bool(self.client.set(f"gortex:lock:{lock_name}", "locked", ex=timeout, nx=True))
 
     def release_lock(self, lock_name: str):
         """분산 락 해제"""
-        if self.is_connected:
-            self.client.delete(f"gortex:lock:{lock_name}")
+        if self.is_connected: self.client.delete(f"gortex:lock:{lock_name}")
 
-    # [GALACTIC SWARM] 군집 간 협업 기능
-    def announce_presence(self, swarm_id: str, capabilities: List[str]):
-        """다른 Gortex 군집에게 자신의 존재와 능력을 알림"""
-        message = {
-            "swarm_id": swarm_id,
-            "status": "online",
-            "capabilities": capabilities,
-            "timestamp": time.time()
-        }
-        self.publish_event("gortex:galactic:discovery", "Master", "swarm_online", message)
-
-    def list_remote_swarms(self) -> List[Dict[str, Any]]:
-        """연합된 다른 Gortex 군집 목록 조회"""
+    def list_active_workers(self) -> List[Dict[str, Any]]:
+        """가동 중인 모든 원격 워커의 상태 목록을 반환함"""
         if not self.is_connected: return []
-        swarms = []
+        workers = []
         try:
-            # 타 스웜의 하트비트/프레즌스 정보 수집 로직 (간소화)
-            pass
-        except Exception: pass
-        return swarms
+            keys = self.client.keys("gortex:workers:*")
+            for k in keys:
+                data = self.client.get(k)
+                if data: workers.append(json.loads(data))
+        except: pass
+        return workers
+
+    def select_best_worker(self, required_cpu: float = 20.0) -> Optional[str]:
+        """부하 상태를 고려하여 가장 적합한 워커 ID를 선택함"""
+        workers = self.list_active_workers()
+        if not workers: return None
+        scored = []
+        for w in workers:
+            score = (100 - w.get("cpu_percent", 0)) - (w.get("active_tasks", 0) * 15)
+            scored.append((score, w["worker_id"]))
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return scored[0][1] if scored else None
+
+    def auction_task(self, node_name: str, state: Dict[str, Any], timeout: int = 5) -> Optional[str]:
+        """분산 군집에 작업을 공고하고 가장 적합한 워커의 ID를 낙찰받음"""
+        if not self.is_connected: return None
+        auction_id = str(uuid.uuid4())[:6]
+        bid_chan = f"gortex:bids:{auction_id}"
+        pubsub = self.client.pubsub()
+        pubsub.subscribe(bid_chan)
+        self.publish_event("gortex:auctions", "Master", "auction_started", {"auction_id": auction_id, "node": node_name, "reply_to": bid_chan})
+        
+        bids = []
+        start = time.time()
+        while time.time() - start < timeout:
+            msg = pubsub.get_message(ignore_subscribe_messages=True, timeout=0.2)
+            if msg:
+                bids.append(json.loads(msg['data']))
+                if len(bids) >= 3: break
+        pubsub.unsubscribe(bid_chan)
+        if not bids: return self.select_best_worker()
+        bids.sort(key=lambda x: x["bid_score"], reverse=True)
+        return bids[0]["worker_id"]
 
     def call_remote_node(self, node_name: str, state: Dict[str, Any], timeout: int = 120) -> Optional[Dict[str, Any]]:
+        """원격 노드에 실행을 요청하고 결과를 기다림"""
+        results = self.call_remote_nodes_parallel([(node_name, state)], timeout=timeout)
+        return results[0] if results else None
 
     def call_remote_nodes_parallel(self, requests: List[Tuple[str, Dict[str, Any]]], timeout: int = 120) -> List[Dict[str, Any]]:
-        """여러 원격 노드에 실행을 동시에 요청하고 모든 결과를 기다림 (v4.0 Parallel Swarm)"""
-        if not self.is_connected or not requests:
-            return []
-
-        pending_reqs = {}
+        """여러 원격 노드를 동시에 호출"""
+        if not self.is_connected or not requests: return []
+        pending = {}
         pubsub = self.client.pubsub()
-        
-        # 1. 모든 요청에 대해 채널 생성 및 구독
-        for node_name, state in requests:
+        for node, state in requests:
             req_id = str(uuid.uuid4())[:8]
             resp_chan = f"gortex:resp:{req_id}"
-            
-            message = {
-                "id": req_id, "node": node_name, "state": state,
-                "reply_to": resp_chan, "timestamp": time.time()
-            }
-            
             pubsub.subscribe(resp_chan)
-            pending_reqs[resp_chan] = {"node": node_name, "id": req_id, "done": False, "result": None}
-            
-            # 요청 전송
-            self.client.rpush("gortex:node_tasks", json.dumps(message))
-            logger.info(f"📤 Parallel Dispatch: {node_name} (Req: {req_id})")
-
-        # 2. 결과 집계 대기
-        try:
-            start_time = time.time()
-            while time.time() - start_time < timeout:
-                if all(r["done"] for r in pending_reqs.values()):
-                    break
-                    
-                msg = pubsub.get_message(ignore_subscribe_messages=True, timeout=0.5)
-                if msg:
-                    chan = msg['channel']
-                    if chan in pending_reqs:
-                        pending_reqs[chan]["result"] = json.loads(msg['data'])
-                        pending_reqs[chan]["done"] = True
-                        logger.info(f"📥 Received parallel result for {pending_reqs[chan]['node']}")
-                time.sleep(0.05)
-        finally:
-            pubsub.close()
-
-        return [r["result"] for r in pending_reqs.values() if r["done"]]
+            pending[resp_chan] = {"done": False, "result": None}
+            self.client.rpush("gortex:node_tasks", json.dumps({"id": req_id, "node": node, "state": state, "reply_to": resp_chan}))
+        
+        start = time.time()
+        while time.time() - start < timeout:
+            if all(r["done"] for r in pending.values()): break
+            msg = pubsub.get_message(ignore_subscribe_messages=True, timeout=0.5)
+            if msg and msg['channel'] in pending:
+                pending[msg['channel']]["result"] = json.loads(msg['data'])
+                pending[msg['channel']]["done"] = True
+        pubsub.close()
+        return [r["result"] for r in pending.values() if r["done"]]
 
     def listen(self, channel: str, callback: Callable[[Dict[str, Any]], None]):
-        """특정 채널의 메시지를 구독함 (Blocking)"""
-        if not self.is_connected:
-            logger.error("MQ is in dummy mode. Cannot listen.")
-            return
-
+        if not self.is_connected: return
         pubsub = self.client.pubsub()
         pubsub.subscribe(channel)
-        logger.info(f"👂 Listening on channel: {channel}")
-        
-        for message in pubsub.listen():
-            if message['type'] == 'message':
-                data = json.loads(message['data'])
-                callback(data)
+        for msg in pubsub.listen():
+            if msg['type'] == 'message': callback(json.loads(msg['data']))
 
-# 글로벌 싱글톤 인스턴스
+    def announce_presence(self, swarm_id: str, capabilities: List[str]):
+        self.publish_event("gortex:galactic:discovery", "Master", "swarm_online", {"swarm_id": swarm_id, "capabilities": capabilities})
+
+# 글로벌 인스턴스
 mq_bus = GortexMessageBus()

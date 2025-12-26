@@ -33,6 +33,7 @@ class AnalystAgent(ReflectionAnalyst, WorkspaceOrganizer):
         """
         try:
             response_text = self.backend.generate(model_id, [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
             json_match = re.search(r'{{.*}}', response_text, re.DOTALL)
             return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
         except Exception as e:
@@ -128,38 +129,8 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             "debate_context": []
         }
 
-    # [Cross-Validation / Peer Review / Dependency Healing]
-    if state.get("next_node") == "analyst" or state.get("awaiting_review") or "ImportError" in last_msg:
-        # [NEW] 의존성 누락 감지 및 자동 치유 (v12.0)
-        if "ImportError" in last_msg or "ModuleNotFoundError" in last_msg:
-            # 패키지명 추출 (예: No module named 'numpy' -> numpy)
-            pkg_match = re.search(r"module named '([^']+)'", last_msg)
-            if pkg_match:
-                package_name = pkg_match.group(1)
-                logger.info(f"💊 [Enclosure] Detected missing dependency: {package_name}")
-                
-                # 보안 오디트
-                audit_res = agent.audit_dependency(package_name)
-                if audit_res.get("is_approved"):
-                    msg = f"💊 **의존성 자동 치유**: `{package_name}` 패키지 누락을 감지하여 설치를 시작합니다.\n\n**보안 검수**: {audit_res.get('risk_level')}\n**의견**: {audit_res.get('recommendation')}"
-                    
-                    state["debate_result"] = {
-                        "final_decision": f"Install approved dependency: {package_name}",
-                        "action_plan": [
-                            f"Step 1: execute_shell pip install {package_name}",
-                            f"Step 2: Update requirements.txt",
-                            f"Step 3: Refresh system signature"
-                        ]
-                    }
-                    return {
-                        "messages": [("ai", msg)],
-                        "next_node": "manager",
-                        "debate_result": state["debate_result"],
-                        "agent_energy": energy - 10
-                    }
-                else:
-                    return {"messages": [("ai", f"🛑 **보안 반려**: `{package_name}` 설치가 거부되었습니다. (사유: {audit_res.get('findings')[0]})")], "next_node": "planner"}
-
+    # [Cross-Validation / Peer Review]
+    if state.get("next_node") == "analyst" or state.get("awaiting_review"):
         ai_outputs = [m for m in state["messages"] if (isinstance(m, tuple) and m[0] == "ai") or (hasattr(m, 'type') and m.type == "ai")]
         if ai_outputs:
             last_ai_msg = ai_outputs[-1][1] if isinstance(ai_outputs[-1], tuple) else ai_outputs[-1].content
@@ -169,29 +140,33 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
                 return {"messages": [("ai", f"🛡️ [Validation Alert] {val_res.get('reason')}")], "next_node": "planner"}
             
             if state.get("awaiting_review"):
-                # 1. 기술적 품질 리뷰 (기존 로직)
+                # 1. 기술적 품질 리뷰
                 review_res = agent.perform_peer_review(state.get("review_target", "code"), last_ai_msg)
                 score = review_res.get("score", 70)
                 
-                # 2. [NEW] 헌장 준수 및 가치 정렬 검증 (기존 로직)
+                # 2. 헌장 준수 및 가치 정렬 검증 (Alignment Check)
                 alignment_res = agent.validate_alignment_with_constitution(last_ai_msg)
-                # ... (기존 로직)
+                if not alignment_res.get("is_aligned", True):
+                    msg = f"🛑 **Constitutional Violation**: 제안된 작업이 시스템 헌장을 위반합니다.\n\n**위반 사항**: {', '.join(alignment_res['violations'])}\n**조치**: {alignment_res['corrective_action']}"
+                    return {
+                        "messages": [("ai", msg)],
+                        "next_node": "planner", 
+                        "awaiting_review": False
+                    }
                 
-                # 3. [NEW] 오라클 루프: 선제적 장애 예측 (Pre-emptive Healing)
+                # 3. 오라클 루프: 선제적 장애 예측 (Pre-emptive Healing)
                 oracle_res = agent.predict_runtime_errors(last_ai_msg, state.get("review_target", "unknown"))
                 if oracle_res.get("risk_probability", 0) > 0.7:
                     msg = f"🔮 **장애 예지 활성화**: 런타임 오류 가능성({int(oracle_res['risk_probability']*100)}%)이 감지되었습니다.\n\n**예상 에러**: {oracle_res['predicted_error_type']}\n**사유**: {oracle_res['reason']}"
                     state["messages"].append(("system", msg))
                     self.ui.add_achievement("Oracle: Crash Prevented")
-                    
-                    # 장애가 발생하기 전에 미리 수정 지시 (계획 재수립)
                     return {
                         "messages": [("ai", f"🛡️ **선제적 수리 개시**: 장애 방지를 위해 다음 조치를 취합니다: {oracle_res['preemptive_fix']}")],
                         "next_node": "coder",
                         "handoff_instruction": f"PREEMPTIVE_FIX: {oracle_res['preemptive_fix']}",
                         "awaiting_review": False
                     }
-                
+
                 if not review_res.get("is_approved", True) or score < 70:
                     issue_report = f"[CRITICAL ERROR DETECTED]\nType: Peer Review Rejected\nScore: {score}\nComment: {review_res.get('comment')}\nTarget: {state.get('review_target', 'Unknown')}"
                     return {
@@ -207,16 +182,29 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             if state.get("is_visual_recovery"):
                 from gortex.utils.multimodal import capture_ui_screenshot
                 new_screenshot = capture_ui_screenshot()
-                logger.info(f"📸 Visual verification: Captured new state at {new_screenshot}")
-                
-                analysis_msg = f"시각적 복구 작업이 완료되었습니다. 이전 결함이 해결되었는지 다음 새 스크린샷을 분석하라. image:{new_screenshot}"
+                analysis_msg = f"시각적 복구 작업 완료. image:{new_screenshot}"
                 return {
-                    "messages": [("ai", "👁️ **시각적 최종 검증 시작**: 수정 후의 화면 상태를 분석 중입니다.")],
+                    "messages": [("ai", "👁️ **시각적 최종 검증 시작**: 수정 후 화면 상태를 분석 중입니다.")],
                     "next_node": "analyst",
                     "handoff_instruction": analysis_msg,
                     "awaiting_visual_diagnosis": True,
-                    "is_visual_recovery": False # 검증 진입 시 모드 해제 (결과에 따라 재설정)
+                    "is_visual_recovery": False 
                 }
+
+            # [GIT] 자율 커밋 및 병합
+            active_branch = state.get("active_branch")
+            if active_branch and score >= 90:
+                from gortex.utils.git_tool import GitTool
+                git = GitTool()
+                try:
+                    if git.is_repo():
+                        git.add_all()
+                        commit_msg = f"fix: 자율 복구 완료 (Score: {score})\n\nIssue: {state.get('current_issue', 'N/A')}"
+                        git.commit(commit_msg)
+                        git.checkout("main")
+                        git.merge(active_branch)
+                        state["messages"].append(("system", f"📦 **Git Auto-Merge**: `{active_branch}`가 `main`에 병합되었습니다."))
+                except Exception: pass
 
             from gortex.utils.economy import get_economy_manager
             eco_manager = get_economy_manager()
@@ -227,292 +215,96 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             eco_manager.record_success(state, target_agent, quality_score=quality, difficulty=difficulty)
             eco_manager.update_skill_points(state, target_agent, category="Coding", quality_score=quality, difficulty=difficulty)
             
-                        # [GIT] 자율 커밋 및 병합 (v4.0 Alpha)
-                        active_branch = state.get("active_branch")
-                        if active_branch and score >= 90:
-                            from gortex.utils.git_tool import GitTool
-                            git = GitTool()
-                            try:
-                                if git.is_repo():
-                                    git.add_all()
-                                    commit_msg = f"fix: 자율 복구 완료 (Score: {score})\n\nIssue: {state.get('current_issue', 'N/A')}\nRationale: {review_res.get('comment')}"
-                                    git.commit(commit_msg)
-                                    
-                                    # main으로 병합 시도 (안전장치: main으로 체크아웃 후 머지)
-                                    git.checkout("main")
-                                    git.merge(active_branch)
-                                    state["messages"].append(("system", f"📦 **Git Auto-Merge**: `{active_branch}`가 `main`에 성공적으로 병합되었습니다."))
-                                    self.ui.add_achievement(f"Auto-Merge Success")
-                            except Exception as ge:
-                                logger.error(f"Git auto-commit failed: {ge}")
-                                state["messages"].append(("system", f"⚠️ **Git Warning**: 커밋 중 오류가 발생했으나 코드는 보존되었습니다."))
-            
-                                    return {
-                                        "messages": [("ai", i18n.t("analyst.review_complete", risk_count=0))],
-                                        "agent_economy": state.get("agent_economy"),
-                                        "token_credits": state.get("token_credits"),
-                                        "next_node": "manager",
-                                        "awaiting_review": False,
-                                        "is_recovery_mode": False,
-                                        "active_branch": None 
-                                    }
-                        
-                            # [STRATEGIC HANDOFF] 세션 종료 또는 주기적 지식 전이
-                            if energy < 20 or last_msg.lower() in ["exit", "bye", "shutdown"]:
-                                logger.info("📡 Running Strategic Handoff: Preparing docs/next_session.md...")
-                                try:
-                                    strategic_roadmap = agent.generate_strategic_roadmap()
-                                    # 세션 이력 반영하여 handoff 문서 작성
-                                    handoff_content = f"""# 📡 Strategic Handoff: Next Steps
-                        
-                        ## 🎯 Current Intelligence Status
-                        {strategic_roadmap}
-                        
-                        ## 🚀 Recommended Tactical Actions
-                        1. Complete any pending refactoring proposed in the Guardian Cycle.
-                        2. Review the latest Super Rules established in this session.
-                        3. Scale the distributed swarm if aggregate CPU load is high.
-                        
-                        > Generated by Gortex Strategic Analyst at {datetime.now()}
-                        """
-                                    from gortex.utils.tools import write_file
-                                    write_file("docs/next_session.md", handoff_content)
-                                    self.ui.add_achievement("Intelligence Handed Off")
-                                except Exception as e:
-                                    logger.error(f"Handoff failed: {e}")
-                        
-                            # [Self-Evolution, Guardian, ToolSmith & Security Sentinel] (기존 로직)    energy = state.get("agent_energy", 100)
+            return {
+                "messages": [("ai", i18n.t("analyst.review_complete", risk_count=0))], 
+                "agent_economy": state.get("agent_economy"), 
+                "token_credits": state.get("token_credits"), 
+                "next_node": "manager", 
+                "awaiting_review": False,
+                "is_recovery_mode": False
+            }
+
+    # [Self-Evolution & Guardian Cycle]
+    energy = state.get("agent_energy", 100)
     if energy > 70 and not debate_data:
-        # 1. [Security Analysis] 차단된 위협 분석 및 방어 규칙 강화
+        # 1. [Security Analysis]
         last_security_alert = state.get("last_security_alert")
         if last_security_alert:
-            logger.info("🛡️ Initiating Neural Firewall Analysis: Learning from blocked attack...")
-            # 위협 분석 및 재발 방지 규칙 생성
-            defensive_rule = agent.generate_anti_failure_rule(
-                error_log=last_security_alert["violation"],
-                context=f"Payload: {last_security_alert['payload']}"
-            )
+            defensive_rule = agent.generate_anti_failure_rule(last_security_alert["violation"], str(last_security_alert["payload"]))
             if defensive_rule:
-                agent.memory.save_rule(
-                    instruction=defensive_rule["instruction"],
-                    trigger_patterns=defensive_rule["trigger_patterns"],
-                    category="general",
-                    severity=5,
-                    is_super_rule=True,
-                    context=f"Auto-Firewall Reinforcement: {last_security_alert['violation']}"
-                )
-                state["messages"].append(("system", f"🛡️ **Neural Firewall Reinforced**: '{defensive_rule['instruction']}' 방어 정책이 강화되었습니다."))
-                state["last_security_alert"] = None # 처리 완료
+                agent.memory.save_rule(defensive_rule["instruction"], defensive_rule["trigger_patterns"], category="general", severity=5, is_super_rule=True)
+                state["messages"].append(("system", f"🛡️ **Neural Firewall Reinforced**: '{defensive_rule['instruction']}'"))
+                state["last_security_alert"] = None
 
-        # 2. [Swarm Expansion] (기존 로직)
-            logger.info("🧬 Initiating Swarm Expansion: Designing a new specialist...")
-            last_error = str(state.get("messages", [])[-1])
-            agent_blueprint = agent.identify_capability_gap(error_log=last_error)
-            
+        # 2. [Swarm Expansion]
+        if energy > 90 and state.get("coder_iteration", 0) > 5:
+            agent_blueprint = agent.identify_capability_gap(error_log=str(state.get("messages", [])[-1]))
             if agent_blueprint:
-                new_name = agent_blueprint["agent_name"]
-                msg = f"🧬 **에이전트 자가 증식**: 신규 전문가 '{new_name}'을 설계했습니다.\n\n**역할**: {agent_blueprint['role']}\n**이유**: 현재 인력으로 해결하기 어려운 전문 분야 대응"
-                
-                state["debate_result"] = {
-                    "final_decision": f"Spawn New Specialist: {new_name}",
-                    "action_plan": [
-                        f"Step 1: Implement agent class in agents/auto_spawned_{new_name.lower()}.py",
-                        f"Step 2: Register the new agent to AgentRegistry"
-                    ],
-                    "agent_blueprint": agent_blueprint
-                }
-                
-                return {
-                    "messages": [("ai", msg)],
-                    "next_node": "manager",
-                    "debate_result": state["debate_result"],
-                    "agent_energy": energy - 30
-                }
+                state["debate_result"] = {"final_decision": f"Spawn: {agent_blueprint['agent_name']}", "action_plan": ["Implement agent"], "agent_blueprint": agent_blueprint}
+                return {"messages": [("ai", f"🧬 **에이전트 자가 증식**: '{agent_blueprint['agent_name']}' 설계 완료")], "next_node": "manager", "debate_result": state["debate_result"]}
 
-        # 2. [ToolSmith Cycle] 도구 공백 탐지 (기존 로직)
+        # 3. [ToolSmith Cycle]
+        if energy > 80:
+            last_failure = state.get("last_error_log")
+            if last_failure:
+                tool_blueprint = agent.identify_tool_gap(last_failure)
+                if tool_blueprint:
+                    state["debate_result"] = {"final_decision": f"Forge: {tool_blueprint['tool_name']}", "action_plan": ["Implement tool"]}
+                    return {"messages": [("ai", f"🛠️ **도구 자가 증식**: '{tool_blueprint['tool_name']}' 제작 개시")], "next_node": "manager", "debate_result": state["debate_result"]}
 
-        # 2. 지식 증류 및 전역 최적화 (기존 로직)
+        # 4. [Neural Distillation]
         if len(agent.memory.memory) > 10: 
             try: 
                 from gortex.core.llm.distiller import distiller
-                # 분야별 공인 지혜 증류 (Coding, Analysis 등)
-                for cat in ["coding", "general"]:
-                    wisdom = distiller.distill_wisdom(cat)
-                    if wisdom:
-                        logger.info(f"✨ Distilled new '최상위 원칙' for {cat.capitalize()}.")
-                        agent.memory.save_rule(
-                            instruction=wisdom,
-                            trigger_patterns=[cat, "system", "rule"],
-                            category=cat,
-                            severity=5,
-                            is_super_rule=True,
-                            context=f"Neural Distillation from {cat} shard"
-                        )
-                
-                # 2. 자가 학습 데이터셋 큐레이션 및 학습 트리거
-                if datetime.now().hour % 12 == 0: 
-                    dataset_path = distiller.prepare_training_dataset()
-                    if dataset_path:
-                        with open(dataset_path, 'r') as f:
-                            sample_count = sum(1 for _ in f)
-                        
-                        if sample_count >= 50:
-                            logger.info(f"🧠 Dataset reached {sample_count} samples. Triggering autonomous training!")
-                            from gortex.core.llm.trainer import trainer
-                            job_id = trainer.create_training_job(dataset_path)
-                            trainer.start_job(job_id)
-                            state["messages"].append(("system", f"🚀 **자가 학습 개시**: {sample_count}개의 데이터를 기반으로 SLM 학습을 시작합니다. (Job: {job_id})"))
-            except Exception as e:
-                logger.error(f"Intelligence refinement failed: {e}")
+                wisdom = distiller.distill_wisdom("coding")
+                if wisdom:
+                    agent.memory.save_rule(wisdom, ["code", "python"], category="coding", severity=5, is_super_rule=True)
+                if datetime.now().hour % 12 == 0: distiller.prepare_training_dataset()
+            except Exception: pass
 
-        # 3. 가비지 컬렉션 및 정적 최적화
-        agent.garbage_collect_knowledge()
-        agent.synthesize_global_rules()
-        
-        # 4. [Doc-Evolver] 문서 정합성 자가 치유
-        if energy > 60:
-            # ... (기존 Doc-Evolver 로직)
-            pass
-
-        # 5. [Architecture Optimization] (기존 로직)
-        if energy > 75:
-            # ... (기존 로직)
-            pass
-
-        # 6. [Immune System] 시스템 무결성 검사 및 자율 복구
+        # 5. [Immune System]
         if energy > 80:
-            logger.info("🛡️ Running Immune System: Scanning for unauthorized modifications...")
             try:
                 infection_report = agent.scan_system_infection()
                 if infection_report["status"] == "infected":
-                    targets = [i["path"] for i in infection_report["infections"]]
-                    msg = f"🚨 **면역 체계 반응 활성화**: 시스템 오염이 감지되었습니다.\n\n**오염 구역**: {', '.join(targets)}\n**조치**: 마스터 서명을 바탕으로 자율 복구를 시작합니다."
-                    
-                    # 복구 계획 수립 (마스터 해시 기반 원복 지시)
-                    state["debate_result"] = {
-                        "final_decision": "Rollback unauthorized changes to restore system purity.",
-                        "action_plan": [f"Step 1: Restore {t} from system backups" for t in targets]
-                    }
-                    
-                    return {
-                        "messages": [("ai", msg)],
-                        "next_node": "manager",
-                        "debate_result": state["debate_result"],
-                        "is_recovery_mode": True,
-                        "agent_energy": energy - 40 # 면역 반응은 큰 에너지를 소모함
-                    }
-            except Exception as e:
-                logger.error(f"Immune response failed: {e}")
+                    state["debate_result"] = {"final_decision": "Restore integrity", "action_plan": ["Rollback changes"]}
+                    return {"messages": [("ai", "🚨 **면역 체계 반응 활성화**")], "next_node": "manager", "debate_result": state["debate_result"], "is_recovery_mode": True}
+            except Exception: pass
 
-        # 6. [Persona Evolution] (기존 로직)
-        if energy > 95:
-            # ... (기존 로직 수행)
-            pass
+        # 6. [Synaptic Mentoring]
+        if energy > 85:
+            try:
+                all_agents = registry.list_agents()
+                masters = [m for m in all_agents if state.get("agent_economy", {}).get(m.lower(), {}).get("level") in ["Gold", "Diamond"]]
+                if masters:
+                    syllabus = agent.create_mentoring_package(masters[0], "coding")
+                    if syllabus: state["messages"].append(("system", f"👨‍🏫 **시냅스 멘토링 개시**: {masters[0]} 교육 패키지 생성"))
+            except Exception: pass
 
-        # 7. [Neural Fusion] (기존 로직)
-        if energy > 98:
-            # ... (기존 로직 수행)
-            pass
+        # 7. [Doc-Evolver]
+        if energy > 60:
+            try:
+                agent.check_documentation_drift("gortex/core/state.py", "docs/TECHNICAL_SPEC.md", "GortexState")
+            except Exception: pass
 
-        # 8. [Neural Garbage Collection] (기존 로직)
-        if energy > 90 and len(registry.list_agents()) > 15:
-            # ...
-            pass
-
-        # 9. [Sovereign Scaling] (기존 로직)
+        # 8. [Sovereign Scaling]
         if energy > 80:
-            # ...
-            pass
-
-        # 10. [Synaptic Mentoring] (기존 로직)
-        if energy > 85:
-            # ...
-            pass
-
-        # 11. [Neural Seeding] (기존 로직)
-        if energy > 95:
-            # ...
-            pass
-
-        # 12. [Chaos Engineering] 자율 카오스 테스트 및 부활 (v13.0 New)
-        if energy > 99: # 에너지가 충만할 때만 단련 시도
-            logger.info("🔥 Running Neural Chaos: Testing system antifragility...")
             try:
-                from gortex.utils.chaos import chaos
-                fault = chaos.inject_random_fault()
-                if fault["type"] != "none":
-                    msg = f"🔥 **카오스 엔진 가동**: 시스템의 강건함을 테스트하기 위해 '{fault['type']}' 결함을 주입했습니다.\n\n**대상**: {fault['target']}\n**목표**: 자율 부활(Resurrection) 능력 검증"
-                    state["messages"].append(("system", msg))
-                    self.ui.add_achievement("Chaos Initiated")
-                    # 즉시 복구 모드 활성화
-                    return {
-                        "messages": [("ai", "🩺 **부활 루프(Resurrection) 가동**: 주입된 결함을 감지하고 자율 수복을 시작합니다.")],
-                        "next_node": "analyst", # 원인 분석을 위해 다시 분석
-                        "is_recovery_mode": True,
-                        "current_issue": f"Chaos Injection: {fault['type']} at {fault['target']}"
-                    }
-            except Exception as e:
-                logger.error(f"Chaos injection failed: {e}")
-            
-        # 2. [Guardian Cycle] 선제적 결함 탐지 및 리팩토링 제안
-        if energy > 85:
-            logger.info("🛡️ Initiating Guardian Cycle: Scanning for proactive refactoring...")
-            try:
-                guardian_proposals = agent.propose_proactive_refactoring()
-                if guardian_proposals:
-                    # 가장 리스크가 높은 제안 하나를 선택하여 진행
-                    top_p = guardian_proposals[0]
-                    msg = f"🛡️ **가디언 모드 활성화**: 잠재적 결함이 발견되었습니다.\n\n**대상**: `{top_p['target_file']}`\n**이유**: {top_p['reason']}\n**기대 효과**: {top_p['expected_gain']}"
-                    
-                    # Swarm의 복구 모드와 유사한 흐름으로 Manager에게 전달
-                    state["debate_result"] = {
-                        "final_decision": f"Proactive Refactoring: {top_p['reason']}",
-                        "action_plan": top_p["action_plan"]
-                    }
-                    
-                    return {
-                        "messages": [("ai", msg)],
-                        "next_node": "manager",
-                        "debate_result": state["debate_result"],
-                        "agent_energy": energy - 15,
-                        "is_guardian_mode": True # 선제적 최적화 모드 표시
-                    }
-            except Exception as e:
-                logger.error(f"Guardian Cycle failed: {e}")
+                scaling = agent.analyze_infrastructure_scaling(state)
+                if scaling["should_scale"]:
+                    from gortex.utils.infra import infra
+                    infra.spawn_local_worker()
+                    state["messages"].append(("system", "🏗️ **소버린 스케일링 활성화**"))
+            except Exception: pass
 
-        # 3. 버전 관리 및 페르소나 진화 (기존 로직)
-        if datetime.now().minute % 30 == 0:
+        # 9. [Neural GC]
+        if energy > 90 and len(registry.list_agents()) > 15:
             try:
-                agent.generate_release_note()
-                new_v = agent.bump_version()
-                state["messages"].append(("system", f"🚀 **System Released**: Version {new_v} updated."))
-                if datetime.now().hour % 6 == 0: 
-                    agent.evolve_personas()
-                agent.reinforce_successful_personas()
-            except Exception:
-                pass
+                dormant = agent.identify_dormant_assets()
+                for a_name in dormant.get("agents", []): registry.deregister(a_name)
+            except Exception: pass
 
-        if len(agent.memory.memory) > 20: 
-            try: 
-                agent.memory.prune_memory()
-            except Exception:
-                pass
-            
-        try:
-            proposals = agent.propose_test_generation()
-            if proposals:
-                updates = {"messages": [], "agent_energy": energy - 10}
-                for p in proposals:
-                    from gortex.utils.tools import write_file, execute_shell
-                    write_file(p["target_file"], p["content"])
-                    if "Ready to commit" in execute_shell(f"./scripts/pre_commit.sh --selective {p['target_file']}"):
-                        updates["messages"].append(("ai", f"🧪 **테스트 자가 증식**: {p['target_file']} 생성 완료"))
-                    else:
-                        if os.path.exists(p["target_file"]): os.remove(p["target_file"])
-                if updates["messages"]:
-                    updates["next_node"] = "manager"
-                    return updates
-        except Exception: 
-            pass
+        agent.garbage_collect_knowledge()
+        agent.synthesize_global_rules()
 
     return {"messages": [("ai", "분석을 마쳤습니다.")], "next_node": "manager"}

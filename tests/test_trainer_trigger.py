@@ -2,7 +2,7 @@ import unittest
 import os
 import json
 import shutil
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from gortex.agents.analyst import analyst_node
 from gortex.core.state import GortexState
 

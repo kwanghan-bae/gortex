@@ -352,6 +352,11 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
         ui.update_main(ui.chat_history)
         return "voice_input"
 
+    elif cmd == "/bug":
+        ui.chat_history.append(("system", "🐞 **이슈 리포트**: 발견된 버그나 피드백을 기록합니다. 상세 내용을 입력해주세요."))
+        ui.update_main(ui.chat_history)
+        return "skip"
+
     elif cmd == "/mode":
         if len(cmd_parts) < 2:
             ui.chat_history.append(("system", "⚠️ 사용 가능한 모드: coding, research, debugging, analyst, standard"))

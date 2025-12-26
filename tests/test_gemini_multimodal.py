@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 import os
 from gortex.core.llm.gemini_client import GeminiBackend
 

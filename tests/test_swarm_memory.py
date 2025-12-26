@@ -1,12 +1,10 @@
 import unittest
-import asyncio
 import os
 import shutil
 import json
 from unittest.mock import MagicMock, patch
 from gortex.agents.swarm import SwarmAgent
 from gortex.core.evolutionary_memory import EvolutionaryMemory
-from gortex.core.state import GortexState
 
 class TestSwarmMemoryIntegration(unittest.TestCase):
     def setUp(self):

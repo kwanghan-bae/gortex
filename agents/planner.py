@@ -1,7 +1,6 @@
 import logging
 import json
 import time
-import re
 from typing import Dict, Any
 from gortex.core.state import GortexState
 from gortex.agents.base import BaseAgent

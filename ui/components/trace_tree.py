@@ -1,12 +1,10 @@
 
-from typing import List, Dict, Optional
+from typing import List, Dict
 from rich.tree import Tree
 from rich.text import Text
 from rich.panel import Panel
-from rich.syntax import Syntax
 from rich import box
 from gortex.ui.themes.palette import Palette, get_agent_style
-import json
 
 class TraceTreeRenderer:
     """에이전트 로그를 Rich Tree 구조로 시각화하는 렌더러"""

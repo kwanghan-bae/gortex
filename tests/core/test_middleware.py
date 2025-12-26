@@ -1,6 +1,5 @@
 
 import unittest
-from typing import Dict, Any
 from gortex.core.middleware import HealingMiddleware
 
 class TestHealingMiddleware(unittest.TestCase):

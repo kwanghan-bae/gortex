@@ -1,8 +1,7 @@
 import json
 import os
 import logging
-from typing import List, Dict, Any, Set
-from datetime import datetime
+from typing import Dict, Any
 
 logger = logging.getLogger("GortexKnowledgeGraph")
 

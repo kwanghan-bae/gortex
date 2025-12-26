@@ -3,7 +3,7 @@ import psutil
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
-from rich.console import Console, Group
+from rich.console import Console
 from rich import box
 from gortex.ui.themes.palette import Palette
 
@@ -34,7 +34,7 @@ class SystemMonitor:
                 "cost": cost
             }
             return self.latest_metrics
-        except Exception as e:
+        except Exception:
             # 오류 발생 시 기본값 반환
             return {
                 "cpu": 0.0,
@@ -62,14 +62,14 @@ class SystemMonitor:
         energy_gauge = self._make_gauge(self.latest_metrics.get('energy', 0), 100, Palette.GREEN)
         
         info_text = Text.assemble(
-            (f"CPU  ", "bold"), (f"{self.latest_metrics.get('cpu',0):.1f}% ", Palette.RED), cpu_gauge, "\n",
-            (f"MEM  ", "bold"), (f"{self.latest_metrics.get('memory',0):.1f}% ", Palette.MAGENTA), mem_gauge, "\n",
-            (f"NRG  ", "bold"), (f"{self.latest_metrics.get('energy',0)}%   ", Palette.GREEN), energy_gauge
+            ("CPU  ", "bold"), (f"{self.latest_metrics.get('cpu',0):.1f}% ", Palette.RED), cpu_gauge, "\n",
+            ("MEM  ", "bold"), (f"{self.latest_metrics.get('memory',0):.1f}% ", Palette.MAGENTA), mem_gauge, "\n",
+            ("NRG  ", "bold"), (f"{self.latest_metrics.get('energy',0)}%   ", Palette.GREEN), energy_gauge
         )
 
         stats_text = Text.assemble(
-            (f"\nTOKENS: ", "bold"), (f"{self.latest_metrics.get('tokens',0):,}", Palette.CYAN),
-            (f"\nCOST:   ", "bold"), (f"${self.latest_metrics.get('cost',0):.4f}", Palette.YELLOW),
+            ("\nTOKENS: ", "bold"), (f"{self.latest_metrics.get('tokens',0):,}", Palette.CYAN),
+            ("\nCOST:   ", "bold"), (f"${self.latest_metrics.get('cost',0):.4f}", Palette.YELLOW),
         )
 
         table.add_row(info_text, stats_text)

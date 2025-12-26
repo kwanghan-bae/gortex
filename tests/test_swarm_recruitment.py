@@ -1,8 +1,7 @@
 import unittest
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import MagicMock, patch
 import asyncio
 from gortex.agents.swarm import SwarmAgent
-from gortex.core.state import GortexState
 from gortex.core.registry import AgentMetadata
 
 class TestSwarmRecruitment(unittest.TestCase):

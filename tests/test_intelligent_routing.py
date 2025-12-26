@@ -1,8 +1,7 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from gortex.agents.manager import ManagerAgent
-from gortex.core.registry import registry, AgentMetadata
-from gortex.core.state import GortexState
+from gortex.core.registry import AgentMetadata
 from gortex.core.engine import GortexEngine
 
 class TestIntelligentRouting(unittest.TestCase):

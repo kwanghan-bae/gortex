@@ -1,6 +1,6 @@
 
 import unittest
-from unittest.mock import MagicMock, patch, ANY
+from unittest.mock import MagicMock
 from rich.panel import Panel
 from rich.table import Table
 from gortex.ui.components.memory_viewer import MemoryViewer

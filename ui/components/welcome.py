@@ -1,7 +1,6 @@
 from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
-from rich.columns import Columns
 from rich import box
 from rich.console import Group
 from gortex.ui.themes.palette import Palette
@@ -43,7 +42,7 @@ class WelcomeScreen:
         )
         
         welcome_text = Text.assemble(
-            (f"\nWelcome to Gortex Agent OS.\n", f"bold {Palette.BLUE}"),
+            ("\nWelcome to Gortex Agent OS.\n", f"bold {Palette.BLUE}"),
             ("Type your objective below to begin the neural orchestration.\n", Palette.GRAY)
         )
         

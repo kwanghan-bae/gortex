@@ -78,7 +78,6 @@ class AnalystAgent(BaseAgent):
         }}
         """
         try:
-            from gortex.core.tools.registry import tool_registry
             response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
             import re
             json_match = re.search(r'\{.*\}', response_text, re.DOTALL)

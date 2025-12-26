@@ -1,10 +1,8 @@
-import os
 import subprocess
 import logging
-import json
 import time
 import psutil
-from typing import List, Dict, Any, Optional
+from typing import Dict, Any
 
 logger = logging.getLogger("GortexInfra")
 

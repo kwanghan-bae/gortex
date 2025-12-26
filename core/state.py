@@ -2,7 +2,6 @@ import json
 import logging
 import os
 from typing import Dict, List, Any, Optional, TypedDict, Annotated, Literal
-import operator
 from langgraph.graph.message import add_messages
 
 logger = logging.getLogger("GortexState")

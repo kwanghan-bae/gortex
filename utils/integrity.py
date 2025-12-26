@@ -2,7 +2,7 @@ import os
 import hashlib
 import json
 import logging
-from typing import Dict, List, Any, Tuple
+from typing import Dict, List, Tuple
 from datetime import datetime
 
 logger = logging.getLogger("GortexIntegrity")

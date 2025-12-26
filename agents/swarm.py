@@ -65,7 +65,7 @@ class SwarmAgent:
                      "skill_score": 0,
                      "description": meta.description
                  })
-                 logger.info(f"🤝 Recruited Planner for facilitation (Fallback)")
+                 logger.info("🤝 Recruited Planner for facilitation (Fallback)")
 
         self.participants = recruits
         return recruits
