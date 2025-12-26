@@ -71,6 +71,19 @@ class GortexMessageBus:
         else:
             logger.debug(f"[DummyMQ] Enqueued task to {queue_name}")
 
+    def acquire_lock(self, lock_name: str, timeout: int = 10) -> bool:
+        """분산 락 획득 시도 (NX 옵션 사용)"""
+        if not self.is_connected:
+            return True # Dummy mode: 항상 성공
+        
+        # 락 획득 시도 (10초 후 자동 해제)
+        return bool(self.client.set(f"gortex:lock:{lock_name}", "locked", ex=timeout, nx=True))
+
+    def release_lock(self, lock_name: str):
+        """분산 락 해제"""
+        if self.is_connected:
+            self.client.delete(f"gortex:lock:{lock_name}")
+
     def call_remote_node(self, node_name: str, state: Dict[str, Any], timeout: int = 120) -> Optional[Dict[str, Any]]:
         """원격 노드에 실행을 요청하고 결과를 기다림 (RPC 패턴)"""
         results = self.call_remote_nodes_parallel([(node_name, state)], timeout=timeout)

@@ -107,18 +107,21 @@ class EvolutionaryMemory:
 
     def _persist_shard(self, category: str):
         data = self.shards.get(category, [])
-        # 1. Redis Sync
+        # 1. Redis Sync with Locking
         from gortex.core.mq import mq_bus
         if mq_bus.is_connected:
-            try:
-                redis_key = f"gortex:memory:shard:{category}"
-                mq_bus.client.set(redis_key, json.dumps(data, ensure_ascii=False, indent=2))
-                # 지식 갱신 이벤트 전파
-                mq_bus.publish_event("gortex:memory_updates", "Memory", "shard_updated", {"category": category})
-            except Exception as e:
-                logger.error(f"Failed to persist shard to Redis: {e}")
+            lock_name = f"shard_write:{category}"
+            if mq_bus.acquire_lock(lock_name):
+                try:
+                    redis_key = f"gortex:memory:shard:{category}"
+                    mq_bus.client.set(redis_key, json.dumps(data, ensure_ascii=False, indent=2))
+                    mq_bus.publish_event("gortex:memory_updates", "Memory", "shard_updated", {"category": category})
+                finally:
+                    mq_bus.release_lock(lock_name)
+            else:
+                logger.warning(f"Failed to acquire lock for shard '{category}'. Possible concurrent write.")
 
-        # 2. Local File Persistence
+        # 2. Local File Persistence (기존 로직)
         path = os.path.join(self.base_dir, f"{category}_shard.json")
         try:
             with open(path, 'w', encoding='utf-8') as f:

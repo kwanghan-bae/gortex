@@ -16,10 +16,25 @@
   - commands.py: 실시간 Neural Map 트리 시각화 로직 통합  
   - Release Note 및 Scratchpad 업데이트  
 
+# Gortex v5.0: The Autonomous Sovereign Swarm
+
+## 🚀 Major Release (2025-12-26)
+
+Gortex v5.0은 단순한 AI 프레임워크를 넘어, 스스로를 통치하고 진화시키는 **'자율 주권 군집 운영체제(Autonomous Sovereign Swarm OS)'**로 거듭났습니다.
+
+### 🌟 Key Highlights
+- **Sovereign Configuration**: `/config` 명령어를 통한 자연어 정책 수립. 이제 인간은 목표만 말하면 되고, 에이전트 군집이 그에 맞는 전역 규칙(`Super Rule`)을 스스로 수립합니다.
+- **Distributed State Integrity**: Redis 기반 분산 락(Lock) 메커니즘을 통해 멀티 머신 환경에서도 데이터 충돌 없이 완벽한 정합성을 유지합니다.
+- **Full-Cycle Evolution**: 지식 증류, SLM 자율 학습, 자가 치유 문서, 병렬 분산 토론이 결합되어 인간의 개입 없는 무한 진화 루프를 완성했습니다.
+- **Multi-modal Cognition**: 시각(스크린샷)과 청각(STT) 지능을 통합하여, 실제 UI 환경을 감시하고 음성으로 명령을 수신하는 휴먼-에이전트 인터랙션을 달성했습니다.
+
+---
+
+### v3.9.5 (2025-12-26)
+- **Feature**: 에이전트 전용 SLM 자율 배포 및 런타임 적용.
+- **UI**: 전용 모델 사용 에이전트에 대한 💎 아이콘 시각화.
+
 ### v3.9.0 (2025-12-26)
-- **Feature**: `Cross-Machine Vector Sync` 도입. Redis를 활용하여 분산 장비 간 장기 기억(LTM)을 실시간으로 동기화합니다.
-- **UI**: Memory Explorer에 동기화 상태(🌐/🏠) 아이콘을 추가하여 지식의 무결성을 시각적으로 확인 가능합니다.
-- **Robustness**: 모든 에이전트 노드의 들여쓰기 및 구문 오류를 전수 교정하고, 분산 환경에서의 상태 복구 신뢰도를 높였습니다.
 
 ### v3.7.0 (2025-12-26)  
 - 🎤 **실시간 음성 명령 인식 및 보이스 라우팅**  

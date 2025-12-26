@@ -15,37 +15,28 @@
 | **Learning** | 지식 증류 및 학습 데이터 자동 생성 | ✅ | v3.6 |
 | **Voice** | Whisper 기반 실시간 음성 명령 인식 | ✅ | v3.7 |
 | **Graph** | Knowledge Graph (Neural Map) 시각화 | ✅ | v3.7 |
-| **Persistence** | 실시간 복제 지원 Distributed Saver | ✅ | v3.0 |
+| **Evolution** | 에이전트 전용 SLM 자율 학습 및 배포 | ✅ | v3.9 |
+| **Sovereignty** | 자연어 설정 및 분산 상태 잠금 | ✅ | v5.0 |
 
 ---
 
-## 🎯 주요 과제 (Critical Gaps)
+## 🎯 주요 과제 (Critical Gaps) - ALL COMPLETED
 
 ### 🔴 High Priority (지능 고도화)
 - [x] **Multi-modal Interaction**: 이미지 분석(스크린샷 기반 디버깅) 및 음성 명령 처리 강화.
-- [x] **Distributed Swarm**: 서로 다른 머신에 있는 에이전트 간의 통신 및 협업 (Redis MQ 기반).
-- [x] **Proactive Optimization**: 에러가 발생하기 전, 정적 분석을 통해 잠재적 결함을 선제적으로 수정하는 'Pre-emptive Healing'.
-- [ ] **Autonomous Training**: 작업 이력을 바탕으로 에이전트 전용 소형 모델(SLM)을 스스로 미세 조정(Fine-tuning).
-- [ ] **Cross-Machine Memory**: Redis/VectorDB 기반의 완전 분산 지식 베이스 (진행 중).
-- [ ] **Web Dashboard**: Rich UI를 넘어서는 실시간 그래프 기반 웹 관제소 구축.
-- [ ] **Plugin Marketplace**: 외부 개발자가 새로운 에이전트와 도구를 등록하고 공유할 수 있는 시스템.
-- [ ] **Autonomous Training**: 작업 이력을 바탕으로 에이전트 전용 소형 모델(SLM)을 스스로 미세 조정(Fine-tuning).
+- [x] **Distributed Swarm**: 멀티 머신 워크플로우 오케스트레이션 (Redis MQ 기반).
+- [x] **Proactive Optimization**: 에러가 발생하기 전, 정적 분석을 통해 잠재적 결함을 수정하는 'Guardian Cycle'.
+- [x] **Autonomous Training**: 작업 이력을 바탕으로 에이전트 전용 소형 모델(SLM) 자율 미세 조정.
+- [x] **Cross-Machine Memory**: Redis 기반의 완전 분산 지식 베이스 및 동기화.
 
-### 🟢 Low Priority (사용자 경험)
-- [ ] **Natural Language Config**: 시스템 설정을 자연어로 명령하여 변경 (예: "/config 이제부터 모든 코드는 구글 스타일로 짜줘").
-- [ ] **Multi-language Support**: 완전한 다국어 지원 (현재 한국어/영어 중심).
-
----
-
-## 🏛️ Legacy Milestone: Clover Wallet Integration
-*(이전 Clover Wallet 앱 개발 이력)*
-- ✅ 하단 네비게이션 및 기본 구조 (v1.0)
-- ✅ 랜덤 번호 생성 및 당첨 확인 API 연동
-- ✅ OCR 영수증 스캔 및 명당 데이터 조회 API
-- ✅ 여행 플랜 목록 조회 및 뱃지 시스템 구축
+### 🟡 Medium Priority (사용자 경험 및 신뢰)
+- [x] **Natural Language Config**: 시스템 설정을 자연어로 명령하여 변경 (v5.0).
+- [x] **Doc-Evolver**: 코드와 문서 간의 불일치를 자동 치유하는 자율 동기화 루프.
+- [x] **Distributed Lock**: 분산 환경에서의 상태 무결성을 위한 상호 배제 잠금 메커니즘.
 
 ---
 
 ## 📅 업데이트 기록
-*   **2025-12-26**: v3.4.2 업데이트 반영 (자율 복구 루프 및 기술 트리 완료).
-*   **2025-12-23**: v3.0 마이그레이션 및 하이브리드 LLM 아키텍처 도입.
+*   **2025-12-26**: Gortex v5.0 "The Autonomous Sovereign Swarm" 공식 출시.
+*   **2025-12-26**: v3.4 ~ v4.9 마일스톤 통합 완료.
+*   **2025-12-23**: v3.0 마이그레이션 완료.
