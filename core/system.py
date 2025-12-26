@@ -267,6 +267,31 @@ class GortexSystem:
                             self.session_manager.all_sessions_cache, 
                             self.thread_id, self.theme_manager
                         )
+                        
+                        # [VOICE INTERACTION] 음성 입력 처리
+                        if cmd_result == "voice_input":
+                            live.stop()
+                            try:
+                                audio_file = self.vocal.record_audio(duration=5)
+                                if audio_file:
+                                    transcript = self.vocal.speech_to_text(audio_file)
+                                    if transcript:
+                                        mapped_cmd = self.vocal.map_to_command(transcript)
+                                        self.ui.chat_history.append(("user", f"🎙️ {transcript} (-> {mapped_cmd})"))
+                                        # 변환된 명령어로 다시 루프 실행
+                                        user_input = mapped_cmd
+                                    else:
+                                        self.ui.chat_history.append(("system", "❌ 음성을 인식하지 못했습니다."))
+                            except Exception as e:
+                                self.ui.chat_history.append(("system", f"❌ Voice Error: {e}"))
+                            finally:
+                                live.start()
+                                if not user_input.startswith("/"): # 명령어가 아닌 일반 텍스트면 워크플로우 실행
+                                    current_task = asyncio.create_task(execute_workflow(user_input))
+                                    continue
+                                # 명령어로 변환되었다면 다시 아래 / 처리 로직이나 다음 루프에서 처리되도록 함
+                                # 여기서는 간편하게 다시 위로 점프하기 위해 continue 처리하고 user_input을 보존
+                        
                         if cmd_result == "config_ui":
                             live.stop()
                             try:

@@ -261,11 +261,10 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
         ui.update_main([])
         return "skip"
 
-    elif cmd == "/bug":
-        bug_report_msg = "🐛 **버그 리포트**: [이슈 리포트 링크](https://github.com/kwanghan-bae/gortex/issues/new)"
-        ui.chat_history.append(("system", bug_report_msg))
+    elif cmd == "/voice":
+        ui.chat_history.append(("system", "🎤 **음성 인식 활성화**: 지금 말씀해 주세요 (5초)..."))
         ui.update_main(ui.chat_history)
-        return "skip"
+        return "voice_input"
 
     elif cmd == "/mode":
         if len(cmd_parts) < 2:

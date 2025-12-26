@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### v3.7.0 (2025-12-26)
+- **Feature**: `Advanced Voice Interaction` 도입. 마이크를 통한 실시간 음성 명령 인식(STT) 및 시스템 명령어 자동 매핑 기능을 구현했습니다.
+- **Tools**: `VocalBridge`에 `record_audio` 및 `map_to_command` 로직을 추가하여 핸즈프리 조작 환경을 구축했습니다.
+- **UX**: `/voice` 명령어를 통해 대화형 인터랙션을 즉시 시작할 수 있습니다.
+
 ### v3.6.5 (2025-12-26)
 - **Feature**: `Neural Distillation` 엔진 도입. 파편화된 지식을 고수준의 '최상위 원칙'으로 자동 증류하여 프롬프트 효율과 판단 정밀도를 높였습니다.
 - **Dataset**: `Autonomous Learning` 파이프라인 구축. 시스템의 모든 성공 사례를 LLM Fine-tuning용 데이터셋으로 자동 큐레이션하여 `training_jobs/`에 저장합니다.

@@ -12,3 +12,5 @@ requests
 typer
 pydantic
 pydantic-settings
+pyaudio
+wave

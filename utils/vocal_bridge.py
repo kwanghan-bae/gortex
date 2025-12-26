@@ -1,6 +1,8 @@
 import os
 import logging
-from typing import Optional
+import time
+import wave
+from typing import Optional, List
 try:
     from openai import OpenAI
 except ImportError:
@@ -15,11 +17,11 @@ class VocalBridge:
     def __init__(self):
         self.api_key = os.getenv("OPENAI_API_KEY")
         self.client = OpenAI(api_key=self.api_key) if (OpenAI and self.api_key) else None
+        self.is_active = False
 
     def text_to_speech(self, text: str, output_path: str = "logs/response.mp3") -> bool:
         """텍스트를 음성으로 변환하여 파일로 저장"""
         if not self.client:
-            logger.debug("OpenAI client not configured for TTS.")
             return False
             
         try:
@@ -30,15 +32,50 @@ class VocalBridge:
                 input=text
             )
             response.stream_to_file(output_path)
-            logger.info(f"🔊 Response converted to speech: {output_path}")
+            logger.info(f"🔊 TTS: {output_path}")
             return True
         except Exception as e:
             logger.error(f"TTS failed: {e}")
             return False
 
+    def record_audio(self, duration: int = 5, output_path: str = "logs/input.wav") -> str:
+        """마이크로부터 음성을 녹음함"""
+        try:
+            import pyaudio
+            CHUNK = 1024
+            FORMAT = pyaudio.paInt16
+            CHANNELS = 1
+            RATE = 44100
+            
+            p = pyaudio.PyAudio()
+            stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True, frames_per_buffer=CHUNK)
+            
+            logger.info(f"🎤 Listening for {duration} seconds...")
+            frames = []
+            for _ in range(0, int(RATE / CHUNK * duration)):
+                data = stream.read(CHUNK)
+                frames.append(data)
+            
+            stream.stop_stream()
+            stream.close()
+            p.terminate()
+            
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            wf = wave.open(output_path, 'wb')
+            wf.setnchannels(CHANNELS)
+            wf.setsampwidth(p.get_sample_size(FORMAT))
+            wf.setframerate(RATE)
+            wf.writeframes(b''.join(frames))
+            wf.close()
+            
+            return output_path
+        except Exception as e:
+            logger.error(f"Recording failed: {e}")
+            return ""
+
     def speech_to_text(self, audio_path: str) -> Optional[str]:
         """음성 파일을 텍스트로 변환 (Whisper)"""
-        if not self.client:
+        if not self.client or not os.path.exists(audio_path):
             return None
             
         try:
@@ -52,11 +89,34 @@ class VocalBridge:
             logger.error(f"STT failed: {e}")
             return None
 
+    def map_to_command(self, text: str) -> str:
+        """인식된 텍스트를 시스템 명령어로 변환"""
+        if not text: return ""
+        
+        text = text.lower().strip()
+        # 1. 명시적 슬래시 명령어 감지
+        if text.startswith("/") or "slash" in text:
+            return text.replace("slash ", "/").replace(" ", "")
+            
+        # 2. 자연어 명령어 매핑
+        mappings = {
+            "도움말": "/help", "help": "/help",
+            "상태": "/status", "status": "/status",
+            "정리": "/clear", "clear": "/clear",
+            "인덱스": "/index", "reindex": "/index",
+            "에이전트": "/agents", "agents": "/agents"
+        }
+        
+        for k, v in mappings.items():
+            if k in text:
+                return v
+                
+        return text
+
     def play_audio(self, path: str):
-        """저장된 음성 파일 재생 (시스템 명령어 활용)"""
+        """저장된 음성 파일 재생"""
         if os.path.exists(path):
-            if os.name == 'posix': # macOS/Linux
-                os.system(f"afplay {path} &") # Mac
-                # os.system(f"play {path} &") # Linux (sox)
-            elif os.name == 'nt': # Windows
+            if os.name == 'posix':
+                os.system(f"afplay {path} &")
+            elif os.name == 'nt':
                 os.system(f"start /min powershell -c (New-Object Media.SoundPlayer '{path}').PlaySync()")
