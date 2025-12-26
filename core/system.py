@@ -185,6 +185,13 @@ class GortexSystem:
                     self.ui.add_achievement(f"Evolved: {agent_name}")
                     self.ui.chat_history.append(("system", f"🚀 {msg_text} (Job: {job_id})"))
             
+            elif event_type == "agent_registered":
+                agent_name = payload.get("agent")
+                logger.info(f"🆕 New agent '{agent_name}' detected. Refreshing graph topology...")
+                # 핫스왑 실행
+                if self.engine.refresh_graph():
+                    self.ui.chat_history.append(("system", f"🕸️ **Neural Architecture Swapped**: '{agent_name}' is now active in the workflow."))
+            
             elif event_type == "task_failed":
                 self.ui.add_achievement(f"❌ Task Failed: {payload.get('task_id')}")
             

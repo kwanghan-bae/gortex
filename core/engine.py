@@ -19,13 +19,30 @@ class GortexEngine:
         self.ui = ui
         self.observer = observer
         self.vocal = vocal_bridge
-        self.graph = compile_gortex_graph()
         self.thread_id = thread_id or str(uuid.uuid4())
         self.config = {"configurable": {"thread_id": self.thread_id}}
+        
+        # 1. 초기 그래프 컴파일
+        self.graph = compile_gortex_graph()
+        
         self.healer = SelfHealingMemory()
         self.tracker = DailyTokenTracker()
         self.monitor = ResourceMonitor()
-        self.max_concurrency = 2 # 기본 동시 실행 한도
+        self.max_concurrency = 2 
+
+    def refresh_graph(self):
+        """런타임에 에이전트 그래프를 재컴파일함 (Zero-Downtime Evolution)"""
+        logger.info("🧠 Hot-swapping neural architecture: Re-compiling graph...")
+        try:
+            # 새로운 에이전트 레지스트리 상태를 반영하여 그래프 재구축
+            self.graph = compile_gortex_graph()
+            if self.ui:
+                self.ui.add_achievement("Neural Map Updated")
+            logger.info("✅ Graph successfully re-compiled and swapped.")
+            return True
+        except Exception as e:
+            logger.error(f"Failed to refresh graph: {e}")
+            return False
 
     def update_scaling_policy(self):
         """시스템 부하에 따라 동시 실행 한도 스케일링"""

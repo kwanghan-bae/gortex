@@ -180,77 +180,71 @@ async def async_evolution_node(state: GortexState):
 
 def compile_gortex_graph(checkpointer=None):
     """Gortex 시스템의 모든 에이전트를 연결하여 그래프 컴파일"""
+    from gortex.core.registry import registry
     workflow = StateGraph(GortexState)
 
-    # 노드 추가 (비동기 래퍼 적용)
-    workflow.add_node("manager", async_manager_node)
-    workflow.add_node("planner", async_planner_node)
-    workflow.add_node("coder", async_coder_node)
-    workflow.add_node("researcher", async_researcher_node)
-    workflow.add_node("analyst", async_analyst_node)
-    workflow.add_node("swarm", async_swarm_node)
-    workflow.add_node("trend_scout", async_trend_scout_node)
+    # 1. 레지스트리로부터 동적으로 노드 추가
+    all_agents = registry.list_agents()
+    logger.info(f"🕸️ Building graph with {len(all_agents)} registered agents...")
+    
+    for agent_name in all_agents:
+        # 이미 래핑된 노드 함수가 있다면 사용 (하위 호환성)
+        node_func_name = f"async_{agent_name.lower()}_node"
+        current_module = globals()
+        
+        if node_func_name in current_module:
+            workflow.add_node(agent_name.lower(), current_module[node_func_name])
+        else:
+            # 동적 래퍼 생성 (새로운 에이전트 대응)
+            async def dynamic_node(state: GortexState, name=agent_name):
+                from gortex.core.registry import registry
+                agent_cls = registry.get_agent(name)
+                if not agent_cls:
+                    return {"next_node": "manager", "messages": [("system", f"Agent {name} not found.")]}
+                instance = agent_cls()
+                return await run_async_node(instance.run, state)
+            
+            workflow.add_node(agent_name.lower(), dynamic_node)
+
+    # 2. 유틸리티 노드 추가 (Summarizer 등)
     workflow.add_node("summarizer", async_summarizer_node)
     workflow.add_node("optimizer", async_optimizer_node)
     workflow.add_node("evolution", async_evolution_node)
 
-    # 엣지 연결
+    # 3. 엣지 연결 (표준 워크플로우)
     workflow.add_edge(START, "manager")
 
-    # Manager의 라우팅
-    workflow.add_conditional_edges(
-        "manager",
-        route_manager,
-        {
-            "summarizer": "summarizer",
-            "planner": "planner",
-            "researcher": "researcher",
-            "analyst": "analyst",
-            "optimizer": "optimizer",
-            "swarm": "swarm",
-            "evolution": "evolution",
-            "__end__": END
-        }
-    )
+    # Manager의 지능형 라우팅 (모든 등록된 에이전트로 전이 가능)
+    routing_map = {name.lower(): name.lower() for name in all_agents}
+    routing_map.update({
+        "summarizer": "summarizer", "optimizer": "optimizer", 
+        "evolution": "evolution", "__end__": END
+    })
+    
+    workflow.add_conditional_edges("manager", route_manager, routing_map)
 
-    # Summarizer -> Target
-    workflow.add_conditional_edges(
-        "summarizer",
-        route_after_summary,
-        {
-            "planner": "planner",
-            "researcher": "researcher",
-            "analyst": "analyst",
-            "optimizer": "optimizer",
-            "swarm": "swarm",
-            "evolution": "evolution",
-            "manager": "manager"
-        }
-    )
+    # Summarizer 복귀 맵
+    workflow.add_conditional_edges("summarizer", route_after_summary, routing_map)
 
-    # Swarm, Researcher, Optimizer, Evolution 완료 후 Manager 복귀
-    workflow.add_edge("swarm", "manager")
-    workflow.add_edge("researcher", "manager")
-    workflow.add_edge("optimizer", "manager")
-    workflow.add_edge("evolution", "manager")
+    # 기본 수렴 에지
+    for name in all_agents:
+        if name.lower() not in ["manager", "coder"]:
+            workflow.add_edge(name.lower(), "manager")
 
-    # Planner -> Coder
-    workflow.add_edge("planner", "coder")
+    # Planner -> Coder 특수 경로
+    if "planner" in routing_map and "coder" in routing_map:
+        workflow.add_edge("planner", "coder")
 
-    # Coder 루프 및 완료 후 Analyst 검증 또는 Emergency Patch/Swarm Escalation
+    # Coder 특수 라우팅
     workflow.add_conditional_edges(
         "coder",
         route_coder,
-        {
-            "coder": "coder",
-            "analyst": "analyst",
-            "swarm": "swarm",
-            "manager": "manager"
-        }
+        {"coder": "coder", "analyst": "analyst", "swarm": "swarm", "manager": "manager"}
     )
 
-    # Analyst 완료 후 Manager 복귀
-    workflow.add_edge("analyst", "manager")
+    # Analyst -> Manager
+    if "analyst" in routing_map:
+        workflow.add_edge("analyst", "manager")
 
     # 그래프 컴파일
     if checkpointer is not None:

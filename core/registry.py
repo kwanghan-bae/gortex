@@ -35,6 +35,14 @@ class AgentRegistry:
             "metadata": metadata
         }
         logger.info(f"🆕 Agent '{agent_name}' (v{metadata.version}) registered to registry.")
+        
+        # [EVENT] 런타임 진화 이벤트 발행
+        from gortex.core.mq import mq_bus
+        if mq_bus.is_connected:
+            mq_bus.publish_event("gortex:system_events", "Registry", "agent_registered", {
+                "agent": agent_name,
+                "version": metadata.version
+            })
 
     def load_agent_from_file(self, file_path: str) -> bool:
         """소스 파일로부터 에이전트 클래스를 동적으로 로드하고 등록함"""
