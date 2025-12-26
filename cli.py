@@ -82,5 +82,38 @@ def config():
     """
     console.print(settings.model_dump())
 
+@app.command()
+def inherit(
+    seed_path: str = typer.Argument(..., help="Path to the Neural Seed (.zip) to inherit from")
+):
+    """
+    Inherit intelligence from a Neural Seed package.
+    (Imports rules, tools, and specialist agents)
+    """
+    if not os.path.exists(seed_path):
+        console.print(f"[bold red]❌ Seed file not found: {seed_path}[/bold red]")
+        return
+
+    console.print(f"[bold magenta]🌌 Inheriting Intelligence from {os.path.basename(seed_path)}...[/bold magenta]")
+    
+    import zipfile
+    import shutil
+    try:
+        with zipfile.ZipFile(seed_path, 'r') as zipf:
+            # 1. 지식 복원
+            for f in zipf.namelist():
+                if f.startswith("memory/"):
+                    zipf.extract(f, path=".")
+                if f == "tools/forged.py":
+                    zipf.extract(f, path="gortex/core/")
+                if f.startswith("agents/"):
+                    zipf.extract(f, path=".")
+            
+            console.print("[green]✅ Experience shards and forged tools inherited.[/green]")
+            console.print("[green]✅ Specialist agents recruited from seed.[/green]")
+            console.print("[bold cyan]🚀 Intelligence transplant complete. Run 'gortex start' to begin.[/bold cyan]")
+    except Exception as e:
+        console.print(f"[bold red]❌ Inheritance failed: {e}[/bold red]")
+
 if __name__ == "__main__":
     app()

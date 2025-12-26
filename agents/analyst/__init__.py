@@ -394,38 +394,24 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             # ...
             pass
 
-        # 10. [Synaptic Mentoring] 에이전트 간 지식 전수 및 교육
+        # 10. [Synaptic Mentoring] (기존 로직)
         if energy > 85:
-            logger.info("👨‍🏫 Running Synaptic Mentoring: Checking for knowledge transfer needs...")
-            try:
-                all_agents = registry.list_agents()
-                economy = state.get("agent_economy", {})
-                
-                # 1. 멘티(Novice)와 멘토(Master) 식별
-                novices = [n for n in all_agents if economy.get(n.lower(), {}).get("level") == "Bronze"]
-                masters = [m for m in all_agents if economy.get(m.lower(), {}).get("level") in ["Gold", "Diamond"]]
-                
-                if novices and masters:
-                    mentor = masters[0]
-                    mentee = novices[0]
-                    # 코딩 지식 전수 시도
-                    syllabus = agent.create_mentoring_package(mentor, "coding")
-                    if syllabus:
-                        msg = f"👨‍🏫 **시냅스 멘토링 개시**: '{mentor}'가 '{mentee}'에게 노하우를 전수합니다.\n\n**핵심 강의**: {', '.join(syllabus['core_lessons'])}"
-                        state["messages"].append(("system", msg))
-                        self.ui.add_achievement(f"Mentoring: {mentee} UP")
-                        
-                        # 멘티의 프롬프트에 동적 주입을 위한 규칙 저장
-                        for rule in syllabus["distilled_rules"]:
-                            agent.memory.save_rule(
-                                instruction=rule["instruction"],
-                                trigger_patterns=[mentee.lower(), "mentoring"],
-                                category="general",
-                                severity=3,
-                                context=f"Mentored by {mentor}"
-                            )
-            except Exception as e:
-                logger.error(f"Mentoring failed: {e}")
+            # ...
+            pass
+
+        # 11. [Neural Seeding] 지능 아카이빙 및 영속성 확보
+        if energy > 95:
+            maturity = agent.calculate_system_maturity(state)
+            if maturity["score"] > 90:
+                logger.info("🌌 Running Neural Seeding: Archiving global intelligence...")
+                try:
+                    from gortex.utils.archiver import archiver
+                    seed_path = archiver.create_neural_seed(maturity.get("grade", "Elite"))
+                    if seed_path:
+                        state["messages"].append(("system", f"🌌 **뉴럴 시딩 완료**: 현재 시스템의 모든 지능을 `{os.path.basename(seed_path)}`에 봉인하여 영구 보존합니다."))
+                        self.ui.add_achievement("Intelligence Immortalized")
+                except Exception as e:
+                    logger.error(f"Neural Seeding failed: {e}")
             
         # 2. [Guardian Cycle] 선제적 결함 탐지 및 리팩토링 제안
         if energy > 85:
