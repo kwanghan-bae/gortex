@@ -7,6 +7,7 @@ from datetime import datetime
 from gortex.core.state import GortexState
 from gortex.utils.translator import i18n
 from gortex.core.registry import registry
+from gortex.utils.tools import read_file
 from .base import AnalystAgent as BaseAnalyst
 from .reflection import ReflectionAnalyst
 from .organizer import WorkspaceOrganizer
@@ -172,30 +173,43 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
     # [Self-Evolution & Guardian Cycle]
     energy = state.get("agent_energy", 100)
     if energy > 70 and not debate_data:
-        # 1. 지식 최적화 및 증류 (Knowledge Distillation)
+        # 1. 지식 증류 및 전역 최적화 (Neural Distillation)
         if len(agent.memory.memory) > 10: 
             try: 
                 from gortex.core.llm.distiller import distiller
-                # Coding 분야의 공인 지혜 증류 시도
-                wisdom = distiller.distill_wisdom("coding")
-                if wisdom:
-                    logger.info("✨ Distilled new 최상위 원칙 for Coding.")
-                    agent.memory.save_rule(
-                        instruction=wisdom,
-                        trigger_patterns=["code", "python", "system"],
-                        category="coding",
-                        severity=5,
-                        is_super_rule=True,
-                        context="Neural Distillation from Certified Wisdom"
-                    )
+                # 분야별 공인 지혜 증류 (Coding, Analysis 등)
+                for cat in ["coding", "general"]:
+                    wisdom = distiller.distill_wisdom(cat)
+                    if wisdom:
+                        logger.info(f"✨ Distilled new '최상위 원칙' for {cat.capitalize()}.")
+                        agent.memory.save_rule(
+                            instruction=wisdom,
+                            trigger_patterns=[cat, "system", "rule"],
+                            category=cat,
+                            severity=5,
+                            is_super_rule=True,
+                            context=f"Neural Distillation from {cat} shard"
+                        )
                 
-                # 2. 자가 학습 데이터셋 큐레이션
-                if datetime.now().hour % 12 == 0: # 12시간마다 한 번씩
-                    distiller.prepare_training_dataset()
-                    
-                agent.synthesize_global_rules()
+                # 2. 자가 학습 데이터셋 큐레이션 및 학습 트리거
+                if datetime.now().hour % 12 == 0: 
+                    dataset_path = distiller.prepare_training_dataset()
+                    if dataset_path:
+                        with open(dataset_path, 'r') as f:
+                            sample_count = sum(1 for _ in f)
+                        
+                        if sample_count >= 50:
+                            logger.info(f"🧠 Dataset reached {sample_count} samples. Triggering autonomous training!")
+                            from gortex.core.llm.trainer import trainer
+                            job_id = trainer.create_training_job(dataset_path)
+                            trainer.start_job(job_id)
+                            state["messages"].append(("system", f"🚀 **자가 학습 개시**: {sample_count}개의 데이터를 기반으로 SLM 학습을 시작합니다. (Job: {job_id})"))
             except Exception as e:
-                logger.error(f"Distillation loop failed: {e}")
+                logger.error(f"Intelligence refinement failed: {e}")
+
+        # 3. 가비지 컬렉션 및 정적 최적화
+        agent.garbage_collect_knowledge()
+        agent.synthesize_global_rules()
             
         # 2. [Guardian Cycle] 선제적 결함 탐지 및 리팩토링 제안
         if energy > 85:

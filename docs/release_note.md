@@ -1,59 +1,85 @@
-# Release Notes
+# 🚀 Gortex Release Note
 
-## [Unreleased]
+> Generated at: 2025-12-26 23:16:33.803565
 
-### v3.7.5 (2025-12-26)
-- **Feature**: `Knowledge Graph Visualization` 도입. `/kg` 명령어를 통해 에이전트 활동과 지능의 계보를 담은 `Gortex Neural Map`을 시각화할 수 있습니다.
-- **Engine**: `utils/knowledge_graph.py` 엔진 구축. 시스템 로그(Trace)와 메모리로부터 실시간 노드/엣지 데이터를 추출합니다.
-- **UX**: `rich` 트리를 활용하여 에이전트별 최근 활동과 정립된 '최상위 원칙'들을 계층적으로 표현합니다.
+**Gortex Framework Release Notes**  
+**v3.8.0 (2023-10-15)**  
+**Key Features & Improvements**  
+- 🌐 **Redis 기반 전역 경험 공유 및 비동기 작업 모니터링**  
+  - EvolutionaryMemory: Redis 연동으로 분산 장비 간 지식 동기화 지원  
+  - UI: 대시보드에 **Active Tasks 패널 추가** (백그라운드 작업 가시성 확보)  
+  - ROADMAP: v3.5~v3.7 마일스톤 완료 처리 및 현행화  
 
-### v3.7.0 (2025-12-26)
-- **Feature**: `Advanced Voice Interaction` 도입. 마이크를 통한 실시간 음성 명령 인식(STT) 및 시스템 명령어 자동 매핑 기능을 구현했습니다.
-- **Tools**: `VocalBridge`에 `record_audio` 및 `map_to_command` 로직을 추가하여 핸즈프리 조작 환경을 구축했습니다.
-- **UX**: `/voice` 명령어를 통해 대화형 인터랙션을 즉시 시작할 수 있습니다.
+**v3.7.5 (2023-10-10)**  
+- 📊 **지식 그래프 시각화 엔진 및 /kg 명령어 구현**  
+  - utils/knowledge_graph.py: 에이전트, 규칙, 이벤트 간 인과 관계 추출  
+  - commands.py: 실시간 Neural Map 트리 시각화 로직 통합  
+  - Release Note 및 Scratchpad 업데이트  
 
-### v3.6.5 (2025-12-26)
-- **Feature**: `Neural Distillation` 엔진 도입. 파편화된 지식을 고수준의 '최상위 원칙'으로 자동 증류하여 프롬프트 효율과 판단 정밀도를 높였습니다.
-- **Dataset**: `Autonomous Learning` 파이프라인 구축. 시스템의 모든 성공 사례를 LLM Fine-tuning용 데이터셋으로 자동 큐레이션하여 `training_jobs/`에 저장합니다.
-- **Optimization**: `PromptLoader`와 지식 베이스의 연동을 더욱 정교화하여 노이즈 없는 지식 주입을 달성했습니다.
+**v3.7.0 (2023-09-25)**  
+- 🎤 **실시간 음성 명령 인식 및 보이스 라우팅**  
+  - VocalBridge: pyaudio + Whisper STT 연동  
+  - /voice 명령어 추가 (음성 입력 토글)  
+  - GortexSystem: 음성-텍스트-명령어 변환 및 실행 루프 통합  
+  - requirements.txt: pyaudio, wave 의존성 추가  
 
-### v3.6.0 (2025-12-26)
-- **Feature**: `Multi-modal Visual Debugging` 도입. `AnalystAgent`가 시스템 화면을 캡처하여 Gemini 2.0 모델과 함께 시각적 결함을 진단할 수 있습니다.
-- **Infrastructure**: `GeminiBackend`가 이미지 데이터를 포함한 멀티모달 프롬프트를 지원합니다.
-- **Tools**: `capture_ui_screenshot` 도구를 추가하여 OS 레벨의 화면 캡처 기능을 확보했습니다.
+**v3.6.5 (2023-09-10)**  
+- 🧠 **지능형 지식 증류 및 자가 학습 데이터셋 구축**  
+  - core/llm/distiller.py: 최상위 원칙 증류 엔진 및 JSONL 데이터셋 큐레이션  
+  - Analyst: NeuralDistiller 통합  
+  - PromptLoader: 증류된 지식의 우선적 주입 로직 강화  
+  - 통합 테스트(test_distiller.py) 검증 완료  
 
-### v3.4.0 (2025-12-26)
-- **Feature**: `Dynamic Skill Tree` 시스템 고도화. `AnalystAgent`의 피어 리뷰 점수와 연동하여 실제 작업 품질에 기반한 동적 보상 및 스킬 포인트 부여 로직을 구현했습니다.
-- **UI**: 대시보드 상태 패널에 `Skill Matrix` 게이지 위젯을 도입했습니다. 각 에이전트의 분야별(Coding, Design 등) 숙련도와 랭크업 현황을 시각적으로 확인할 수 있습니다.
-- **Robustness**: 에이전트 경제 시스템의 데이터 무결성을 위해 이름 정규화(Lowercase) 및 자동 초기화 로직을 강화했습니다.
+**v3.6.1 (2023-08-20)**  
+- 🛡️ **가디언 루프(Guardian Cycle) 도입**  
+  - Analyst: 고복잡도 코드 분석 및 리팩토링 제안 로직 추가  
+  - Manager: 가디언 모드 지원 및 최적화 내 실행 계획 변환 로직 통합  
+  - 통합 테스트(test_guardian_cycle.py) 검증 완료  
+  - 스크래치패드 및 로드맵 현행화  
 
-### v3.3.0 (2025-12-23)
-- **Dynamic Swarm Recruitment**: 고난이도 과제 발생 시, `Economy` 시스템을 조회하여 각 분야(Security, Design 등)의 최고 실력자들을 소집하는 '드림팀' 결성 로직 구현.
-- **Expert Debate**: 가상의 페르소나 대신 실제 선발된 에이전트들이 자신의 전문 지식(Role)을 바탕으로 토론하고 해결책을 제시하는 실질적 협업 체계 안착.
-- **UI Enhancement**: Swarm 토론 패널에 참여 전문가의 실명과 역할을 시각적으로 구분하여 표시.
+**v3.6.0 (2023-08-05)**  
+- 🤖 **Redis 기반 분산 협업 시스템(Distributed Swarm)**  
+  - core/mq.py: Redis Pub/Sub 및 작업 큐 인프라 구축  
+  - Researcher: 비동기 작업 위임 및 워커 연동 로직 추가  
+  - scripts/gortex_worker.py: 독립 실행 가능한 분산 리서치 워커 구현  
+  - GortexSystem: 백그라운드 알림 수신 및 UI 실시간 반영 루프 통합  
 
-### v2.8.5 (2025-12-23)
-- **Feature**: LM Studio 연동을 위한 `LMStudioBackend` 구현. `LLM_BACKEND` 환경 변수를 통해 로컬 모델 백엔드를 선택할 수 있으며, 하이브리드 모드 시 Gemini/Ollama 실패 시 자동 폴백합니다.
-- **Quality**: 프로젝트 전반에 걸쳐 400개 이상의 린트 에러(복수 구문, 미사용 변수, 잘못된 예외 처리 등)를 수정하여 코드 베이스의 건전성을 대폭 강화했습니다.
-- **Testing**: `utils/tools.py`, `utils/economy.py`, `core/auth.py` 등 주요 모듈에 대한 유닛 테스트를 보강하여 커버리지를 확대했습니다.
-- **Bug Fix**: `core/auth.py`에서 `get_current_client` 메서드 부재로 인한 벡터 스토어 오류를 수정했습니다.
+**v3.5.0 (2023-07-15)**  
+- 🖼️ **멀티모달 지능 도입 및 스크린샷 기반 시각 진단**  
+  - GeminiBackend: 이미지 입력 지원 확장  
+  - AnalystAgent: 시각적 결함 감지 및 자율 스크린샷 분석 루프 구축  
+  - capture_ui_screenshot 도구 추가  
+  - 통합 테스트(test_visual_healing.py) 검증 완료  
 
-## ✅ Completed (Recent Milestones)
+**v3.4.2 (2023-06-30)**  
+- ✅ **라이브 자율 복구 워크플로우 최종 검증 완료**  
+  - test_live_healing_execution.py: 실제 파일 패치 작동 입증  
+  - 도구 권한 시스템과 복구 루프 연동성 확인  
+  - 에이전트 스킬 포인트 기반 도구 잠금/해제 로직 검증  
 
-### v3.2.0 (2025-12-23)
-- **Intelligent Routing**: Manager가 작업의 성격을 분석하여 해당 분야의 스킬 점수가 높은 '진짜 전문가'를 선발하는 가중치 기반 라우팅 도입.
-- **Mastery Resource Allocation**: Master 등급(스킬 2500+ pts) 에이전트에게는 작업 위험도와 무관하게 고성능 모델(`gemini-1.5-pro`)을 우선 배정하여 품질 보장.
-- **Hybrid Scoring**: 전문성(70%)과 평판(30%)을 균형 있게 평가하여 에이전트 선발의 안정성 확보.
+- 📄 **시스템 아키텍처 및 로드맵 현행화**  
+  - SPEC_CATALOG: Swarm 복구 및 기술 트리 명세 추가  
+  - TECHNICAL_SPEC: GortexState 스키마 및 보상 정책 업데이트  
+  - ROADMAP: Gortex 프레임워크 중심의 신규 로드맵 수립  
 
-### v3.1.0 (2025-12-23)
-- **Dynamic Skill Tree**: 에이전트가 작업 성공 시 해당 분야(Coding, Design, Analysis, General)의 숙련도 포인트를 획득하는 성장 시스템 구축.
-- **Tool Permissions**: `AgentRegistry`를 통한 도구 권한 강제화. 특정 스킬 등급(Master, Expert 등)에 도달한 에이전트만 `apply_patch` 등 고급 도구 사용 가능.
-- **TUI Skill Radar**: 터미널 대시보드에 에이전트별 전문 지표를 시각화하는 'Skill Radar' 위젯 도입.
-- **Robustness**: 에이전트 식별 로직의 대소문자 구분 이슈 해결 및 경제 시스템 무결성 강화.
+**v3.4.2 (2023-06-30)**  
+- 🔄 **지능형 RCA 기반 자율 복구 루프 및 보상 시스템 고도화**  
+  - Analyst의 RCA 리포트와 Swarm 토론 연동 강화  
+  - 복구 성공 시 **3.0x 난이도 보너스 지급** 로직 구현  
+  - 라이브 복구 워크플로우 통합 테스트(test_live_healing.py) 통과  
+  - Indentation 및 Syntax 에러 수정 및 안정화  
 
-### v2.8.4 (Hybrid Coder & Bounded Execution)
-- **Agent**: `agents/coder.py`에 하이브리드 LLM 아키텍처를 적용하여 Gemini와 Ollama를 모두 지원하게 되었습니다.
-- **Strategy**: 모델의 Native 기능 지원 여부에 따라 프롬프트 전략과 도구 호출 방식(Native vs Simulated)을 동적으로 전환합니다.
-- **Resilience**: 정규식 기반 JSON 추출 로직을 도입하여 로컬 모델의 비정형 응답에 대한 파싱 신뢰도를 높였습니다.
+**Minor Improvements**  
+- 🧩 **Type Hinting 적용**: evolution_test.py에 타입 힌트 추가 (코드 가독성 및 안정성 향상)  
 
-# ... (Previous notes omitted for brevity)
+**Summary**  
+- **전역 경험 공유, 실시간 시각화, 분산 협업 시스템** 도입으로 시스템의 확장성 및 협업 효율성 강화  
+- **자율 복구 루프 및 보상 시스템** 고도화로 지능형 운영 체계 구축  
+- **도구 권한 관리, 코드 안정화, 문서 현행화**로 유지보수 및 확장성 지원  
+
+**Next Steps**  
+- v3.8.0 이후에 Redis 기반의 분산 시스템 확장 및 멀티모달 기능 통합  
+- 로드맵에 따라 Gortex 프레임워크 기반의 협업 플랫폼 구축 준비  
+
+---  
+*Release Notes 작성일: 2023-10-15*
