@@ -145,11 +145,15 @@ class CoderAgent(BaseAgent):
         if state.get("awaiting_visual_diagnosis") is False and "시각 분석 결과" in str(state.get("messages", [])):
             visual_context = "\n\n[VISUAL FEEDBACK FROM ANALYST]\n" + str(state["messages"][-1][1])
 
-        # [AGENT SPAWNING] 에이전트 제조 특수 지침
+        # [AGENT SPAWNING & FUSION] 에이전트 제조/융합 특수 지침
         blueprint_context = ""
         if current_step.get("content_blueprint"):
             blueprint_context = "\n\n[AGENT BLUEPRINT - MUST FOLLOW]\n" + json.dumps(current_step["content_blueprint"], indent=2, ensure_ascii=False)
             blueprint_context += "\nRequirements: Inherit from BaseAgent, include metadata, and register the instance at EOF."
+        
+        if current_step.get("is_fusion_task"):
+            blueprint_context = "\n\n[NEURAL FUSION TASK]\nGoal: Create a Fused Elite Agent that combines the capabilities of two agents.\n"
+            blueprint_context += "Design an optimized 'run' method that eliminates redundant handoffs and performs complex tasks in a single pass."
 
         base_instruction = loader.get_prompt(
             "coder", 
