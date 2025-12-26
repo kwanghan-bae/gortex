@@ -77,15 +77,25 @@ class GortexTrainer:
         """학습이 완료된 모델을 특정 에이전트의 전용 모델로 등록함."""
         status = self.check_status(job_id)
         if status.get("status") == "completed":
-            model_name = f"gortex-{agent_name.lower()}-{job_id}"
-            # GortexAuth에 사용자 정의 모델 힌트 추가 (Ollama 등에 로드 가능하도록)
+            model_name = f"custom:{agent_name.lower()}:{job_id}"
+            
+            # 1. GortexAuth 연동 (Ollama 우선순위 반영)
             from gortex.core.auth import GortexAuth
             auth = GortexAuth()
-            # OLLAMA_ROLE_MAP에 우선순위로 추가
             if agent_name.lower() in auth.OLLAMA_ROLE_MAP:
                 auth.OLLAMA_ROLE_MAP[agent_name.lower()].insert(0, model_name)
-                logger.info(f"🎓 Custom model '{model_name}' registered for agent '{agent_name}'.")
-                return True
+            
+            # 2. AgentRegistry 메타데이터 갱신 (공식 버전 업그레이드)
+            from gortex.core.registry import registry
+            meta = registry.get_metadata(agent_name)
+            if meta:
+                meta.version = f"{meta.version}+slm"
+                # 전용 모델 태그 추가
+                if "custom_model" not in meta.tools:
+                    meta.tools.append(f"model:{model_name}")
+                
+            logger.info(f"💎 Agent '{agent_name}' upgraded with Custom SLM: {model_name}")
+            return True
         return False
 
 # 글로벌 인스턴스

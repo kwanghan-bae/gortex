@@ -197,7 +197,16 @@ class DashboardUI:
         status_text = Text()
         status_text.append("Agent: ", style="bold")
         agent_style = get_agent_style(self.current_agent)
-        status_text.append(f"{self.current_agent.upper()}", style=agent_style if self.current_agent != "Idle" else "green")
+        
+        # [NEW] Check for Custom SLM version
+        from gortex.core.registry import registry
+        meta = registry.get_metadata(self.current_agent)
+        display_name = self.current_agent.upper()
+        if meta and "+slm" in meta.version:
+            display_name = f"💎 {display_name} (v{meta.version})"
+            agent_style = f"bold {Palette.MAGENTA}"
+        
+        status_text.append(f"{display_name}", style=agent_style if self.current_agent != "Idle" else "green")
         
         agent_id = self.current_agent.lower()
         if self.agent_economy and agent_id in self.agent_economy:

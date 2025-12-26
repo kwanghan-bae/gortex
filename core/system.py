@@ -161,11 +161,23 @@ class GortexSystem:
         def handle_notification(msg):
             event_type = msg.get("type")
             payload = msg.get("payload", {})
+            
             if event_type == "task_completed":
                 task_type = payload.get("type", "Task").upper()
                 msg_text = f"✨ **{task_type} Done**: {payload.get('query')}"
                 self.ui.add_achievement(msg_text)
                 self.ui.chat_history.append(("system", f"🔔 {msg_text}\nSummary: {payload.get('summary')}"))
+            
+            elif event_type == "training_completed":
+                job_id = payload.get("job_id")
+                agent_name = payload.get("agent", "Coder")
+                from gortex.core.llm.trainer import trainer
+                # 1. 모델 등록
+                if trainer.register_custom_model(job_id, agent_name):
+                    msg_text = f"💎 **Neural Evolution**: {agent_name} has evolved with a Custom SLM!"
+                    self.ui.add_achievement(f"Evolved: {agent_name}")
+                    self.ui.chat_history.append(("system", f"🚀 {msg_text} (Job: {job_id})"))
+            
             elif event_type == "task_failed":
                 self.ui.add_achievement(f"❌ Task Failed: {payload.get('task_id')}")
 
