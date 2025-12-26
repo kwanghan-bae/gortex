@@ -1,15 +1,31 @@
 # 📝 System 2 Scratchpad
 
-## 🎯 Current Goal: Debate Memory Integration Verification - COMPLETED
+## 🎯 Current Goal: Swarm-Driven Self-Healing Loop - COMPLETED
+
+
 
 **Status Analysis:**
-- `core/evolutionary_memory.py`: 'Super Rule' structure (`is_super_rule`) and priority logic (`get_active_constraints` sort key) verified.
-- `agents/swarm.py`: `synthesize_consensus` correctly saves `unified_rule` as a Super Rule. Cross-backend compatibility fixed by using dictionary config.
+
+- `agents/swarm.py`: Debug mode enhanced to produce technical `action_plan` and `unified_rule`.
+
+- `agents/manager.py`: Integrated Swarm consensus handling. Now translates `action_plan` into executable `Coder` tasks.
+
+- `tests/test_self_healing.py`: Integrated tests passed (Manager translation and Swarm debug structure).
+
+
 
 **Outcomes:**
-1.  **Persistence Verified**: Swarm consensus rules are correctly flagged as Super Rules.
-2.  **Priority Verified**: Super Rules take precedence in decision-making (returned at the top of active constraints).
-3.  **Cross-Backend Stability**: Fixed attribute error when using structured output hints across different LLM backends.
+
+1.  **Closed Healing Loop**: The system can now autonomously route from error detection to Swarm debate, and back to code implementation via Manager's plan translation.
+
+2.  **Technical Consensus**: Swarm agents now provide specific, tool-ready instructions (e.g., "apply_patch to file X") rather than vague advice.
+
+3.  **Emergency Visualization**: Manager triggers a distinct "Emergency Recovery Mode" message when acting on Swarm consensus.
+
+
 
 **Verification Results:**
-- `tests/test_swarm_memory.py`: 2/2 tests passed (persistence and retrieval priority).
+
+- `tests/test_self_healing.py`: 2/2 passed.
+
+- `tests/test_swarm_memory.py`: Verified Super Rule priority.

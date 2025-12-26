@@ -56,21 +56,32 @@ class ManagerAgent(BaseAgent):
         energy = state.get("agent_energy", 100)
         roadmap = state.get("evolution_roadmap", [])
 
-        # 2. 선제적 확장(Proactive Expansion) 처리
-        # TrendScout 등으로부터 에이전트 확장 제안이 온 경우
-        agent_proposals = state.get("agent_proposals", [])
-        if agent_proposals:
-            logger.info(f"⚡ Proactive expansion proposal detected: {agent_proposals[0]['agent_name']}")
-            # Analyst에게 넘겨 타당성 검토(identify_capability_gap과 유사한 흐름) 후 Coder에게 제조 지시
+        # 2. Swarm 토론 결과 처리 (합의안을 계획으로 전환)
+        debate_res = state.get("debate_result")
+        if debate_res and debate_res.get("action_plan"):
+            logger.info("⚖️ Translating Swarm Consensus into executable plan...")
+            action_plan = debate_res["action_plan"]
+            
+            # 합의안의 각 단계를 JSON 문자열 계획으로 변환
+            new_plan = []
+            for step in action_plan:
+                new_plan.append(json.dumps({
+                    "action": "execute_shell" if "run" in step.lower() or "test" in step.lower() else "apply_patch",
+                    "target": "Detected via Swarm Analysis",
+                    "description": step
+                }, ensure_ascii=False))
+            
+            # [HOTFIX] Coder에게 즉시 할당
             return {
-                "thought": f"TrendScout의 신규 에이전트 '{agent_proposals[0]['agent_name']}' 영입 제안을 분석합니다.",
-                "next_node": "analyst",
-                "required_capability": "capability_gap_analysis",
-                "handoff_instruction": f"다음 에이전트 제안의 타당성을 검토하라: {json.dumps(agent_proposals[0], ensure_ascii=False)}",
-                "messages": [("ai", f"🚀 **시스템 확장 감지**: '{agent_proposals[0]['agent_name']}' 전문가 영입을 위한 타당성 검토를 시작합니다.")]
+                "thought": f"Swarm의 합의안({debate_res.get('final_decision')[:50]}...)을 실행 계획으로 전환했습니다.",
+                "next_node": "coder",
+                "plan": new_plan,
+                "current_step": 0,
+                "debate_result": None, # 처리 완료 후 초기화
+                "messages": [("ai", f"🩺 **긴급 복구 모드 활성화**: Swarm 합의안에 따라 복구 계획을 수립했습니다.\n\n**결정**: {debate_res.get('final_decision')}")]
             }
 
-        # 3. 맥락 정보 수집 (최적화: 짧은 입력은 검색 건너뜀)
+        # 3. 선제적 확장(Proactive Expansion) 처리
         ltm_context = ""
         case_context = ""
         if len(internal_input) > 15:

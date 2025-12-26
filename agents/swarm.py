@@ -156,9 +156,15 @@ class SwarmAgent:
         role_title = "Debate Moderator" if not is_debug else "Chief System Surgeon"
         format_hint = "JSON format"
         
+        debug_specific = """
+        Your goal is to establish a 'Joint Diagnosis & Fix Plan'.
+        Provide a concrete 'unified_rule' if this is a recurring technical pattern.
+        The 'action_plan' MUST be a list of technical steps for the Coder agent.
+        """ if is_debug else ""
+
         prompt = f"""You are the {role_title}.
         Synthesize the following debate into a final consensus decision.
-        If this is a Knowledge Conflict Resolution, you MUST provide a 'unified_rule' structure.
+        {debug_specific}
         
         [Topic/Error]: {topic}
         [Debate History]:
@@ -169,7 +175,7 @@ class SwarmAgent:
             "final_decision": "Selected approach or compromise",
             "rationale": "Key reasons for this decision",
             "unified_rule": {{
-                "instruction": "The single authoritative instruction",
+                "instruction": "The single authoritative instruction to prevent this in future",
                 "trigger_patterns": ["pattern1", "pattern2"],
                 "severity": 1-5,
                 "category": "coding/research/general"
@@ -177,7 +183,7 @@ class SwarmAgent:
             "tradeoffs": [
                 {{ "aspect": "performance/safety/etc", "gain": "...", "loss": "..." }}
             ],
-            "action_plan": ["Step 1", "Step 2"]
+            "action_plan": ["Step 1: apply_patch to file X", "Step 2: run execute_shell test Y"]
         }}
         """
         
