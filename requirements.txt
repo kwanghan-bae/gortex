@@ -1,0 +1,11 @@
+google-genai
+langgraph
+langchain-core
+rich
+playwright
+beautifulsoup4
+python-dotenv
+pandas
+typer
+pydantic
+pydantic-settings
