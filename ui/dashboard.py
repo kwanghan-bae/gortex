@@ -388,10 +388,20 @@ class DashboardUI:
         side_l = Layout()
         side_l.split_column(
             Layout(name="status", size=8),
-            Layout(name="stats", size=10),
-            Layout(name="swarm", size=8), # [NEW] Distributed Swarm Monitor
+            Layout(name="stats", size=12), # Increased size for SMI
+            Layout(name="galactic", size=6), # [NEW] Galactic Mission Panel
+            Layout(name="swarm", size=8),
             Layout(name="trace", ratio=1)
         )
+        
+        # [GALACTIC MISSIONS] 연합 미션 현황 렌더링
+        gal_table = Table.grid(expand=True)
+        gal_table.add_column(style="bold magenta")
+        # (실제 구현 시 state에서 active_agendas 목록을 가져와서 표시)
+        gal_table.add_row("🌌 Project Singularity")
+        gal_table.add_row("[dim]Status: Voting (85% YES)[/]")
+        
+        side_l["galactic"].update(Panel(gal_table, title=" [bold]🌌 GLOBAL[/] ", border_style=Palette.GRAY, box=box.ROUNDED))
         
         trace_logs = "\n".join([f"[{get_agent_style(log.get('agent',''))}]{log.get('agent','Sys')[:3].upper()}[/] {log.get('event','')[:20]}" for log in self.recent_logs])
         

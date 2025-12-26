@@ -162,7 +162,28 @@ class GortexSystem:
         loop.run_in_executor(None, mq_bus.listen, "gortex:thought_stream", handle_notification)
         loop.run_in_executor(None, mq_bus.listen, "gortex:security_alerts", handle_notification)
         loop.run_in_executor(None, mq_bus.listen, "gortex:workspace_sync", self._handle_workspace_sync)
-        loop.run_in_executor(None, mq_bus.listen, "gortex:galactic:wisdom", self._handle_galactic_events)
+        loop.run_in_executor(None, mq_bus.listen, "gortex:galactic:wisdom", handle_galactic_events)
+        loop.run_in_executor(None, mq_bus.listen, "gortex:galactic:economy", handle_galactic_events)
+        
+        # [GALACTIC GOVERNANCE] 전역 안건 수신 리스너 (v10.2 New)
+        def handle_galactic_agendas(msg):
+            if msg.get("type") == "agenda_proposed":
+                payload = msg.get("payload", {})
+                title = payload.get("title")
+                logger.info(f"🌌 [Galactic] New agenda proposed: {title}")
+                
+                # Analyst를 통한 자동 검토
+                audit = AnalystAgent().audit_autonomous_mission({"goal": payload.get("goal"), "mission_name": title})
+                
+                # 투표 행사
+                ambassador.cast_federated_vote(
+                    payload["agenda_id"], 
+                    audit.get("is_approved", False),
+                    audit.get("findings", ["Aligned with local constitution"])[0]
+                )
+                self.ui.chat_history.append(("system", f"🌌 **전역 안건 투표**: '{title}' 제안에 대해 {'찬성' if audit.get('is_approved') else '반대'} 투표를 행사했습니다."))
+
+        loop.run_in_executor(None, mq_bus.listen, "gortex:galactic:agendas", handle_galactic_agendas)
 
     def _handle_workspace_sync(self, msg):
         if msg.get("type") == "file_changed":
