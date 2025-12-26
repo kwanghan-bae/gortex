@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### v3.5.0 (2025-12-26)
+- **Feature**: `Multi-modal Visual Debugging` 도입. `AnalystAgent`가 시스템 화면을 캡처하여 Gemini 2.0 모델과 함께 시각적 결함을 진단할 수 있습니다.
+- **Infrastructure**: `GeminiBackend`가 이미지 데이터를 포함한 멀티모달 프롬프트를 지원합니다.
+- **Tools**: `capture_ui_screenshot` 도구를 추가하여 OS 레벨의 화면 캡처 기능을 확보했습니다.
+
 ### v3.4.0 (2025-12-26)
 - **Feature**: `Dynamic Skill Tree` 시스템 고도화. `AnalystAgent`의 피어 리뷰 점수와 연동하여 실제 작업 품질에 기반한 동적 보상 및 스킬 포인트 부여 로직을 구현했습니다.
 - **UI**: 대시보드 상태 패널에 `Skill Matrix` 게이지 위젯을 도입했습니다. 각 에이전트의 분야별(Coding, Design 등) 숙련도와 랭크업 현황을 시각적으로 확인할 수 있습니다.

@@ -1,4 +1,6 @@
 import logging
+import re
+import os
 from typing import List, Dict, Any, Optional
 from gortex.core.llm.base import LLMBackend
 from gortex.core.auth import GortexAuth
@@ -37,23 +39,49 @@ class GeminiBackend(LLMBackend):
             # 또는 리스트 그대로 전달 시도 (auth.py 구현에 따라 다름)
             # auth.py 분석 결과 generate(self, model_name, contents, config=None)
             
-            # contents 포맷팅
+            from google.genai import types
+            
             formatted_contents = []
             for msg in messages:
                 role = msg.get("role", "user")
                 content = msg.get("content", "")
+                
                 # Gemini role mapping
                 if role == "system":
-                    # 시스템 메시지는 별도 처리가 필요할 수 있으나, 여기서는 user/model 흐름에 맞김
-                    # 최신 Gemini API는 system_instruction을 config에 넣는 것을 권장하나
-                    # auth.py가 이를 처리하는지 불확실하므로 일단 content로 포함
                     role = "user" 
                     content = f"[System Instruction]\n{content}"
                 elif role == "assistant":
                     role = "model"
                 
-                formatted_contents.append((role, content))
+                # [MULTIMODAL] Detect image paths
+                parts = []
+                # content가 리스트 형태인 경우와 문자열 형태인 경우 모두 대응
+                text_content = content if isinstance(content, str) else str(content)
                 
+                # 이미지 경로 패턴 찾기 (e.g., image:logs/screen.png)
+                image_matches = re.findall(r'image:([^\s,]+\.(?:png|jpg|jpeg|webp))', text_content)
+                
+                if image_matches:
+                    # 텍스트에서 이미지 태그 제거
+                    remaining_text = re.sub(r'image:[^\s,]+\.(?:png|jpg|jpeg|webp)', '', text_content).strip()
+                    if remaining_text:
+                        parts.append(types.Part.from_text(text=remaining_text))
+                    
+                    for img_path in image_matches:
+                        if os.path.exists(img_path):
+                            with open(img_path, "rb") as f:
+                                img_data = f.read()
+                            ext = img_path.split('.')[-1].lower()
+                            mime = f"image/{'jpeg' if ext in ['jpg', 'jpeg'] else ext}"
+                            parts.append(types.Part.from_bytes(data=img_data, mime_type=mime))
+                            logger.info(f"📸 Attached image to Gemini prompt: {img_path}")
+                else:
+                    parts.append(types.Part.from_text(text=text_content))
+                
+                # google-genai 라이브러리의 Content 객체 생성
+                formatted_contents.append(types.Content(role=role, parts=parts))
+                
+            # auth.py의 generate가 types.Content 리스트를 처리할 수 있도록 전달
             response = self.auth.generate(model, formatted_contents, gen_config)
             return response.text if response else ""
             

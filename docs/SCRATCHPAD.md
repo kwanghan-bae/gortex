@@ -1,33 +1,37 @@
 # 📝 System 2 Scratchpad
 
-## 🎯 Current Goal: Swarm-Driven Self-Healing Loop - FULLY VERIFIED
+## 🎯 Current Goal: Multi-modal Visual Debugging - COMPLETED
 
 
 
 **Status Analysis:**
 
-- `agents/analyst/__init__.py`: Enhanced to produce structured RCA reports (`current_issue`) and route to Swarm on failure.
+- `utils/multimodal.py`: New tool `capture_ui_screenshot` added.
 
-- `agents/manager.py`: Now triggers `is_recovery_mode=True` when executing Swarm consensus.
+- `core/llm/gemini_client.py`: GeminiBackend now supports image parts via `image:path` tagging.
 
-- `tests/test_live_healing.py`: Full cycle verified (Error -> RCA -> Swarm -> Plan -> Fix -> Bonus Reward).
+- `agents/analyst/__init__.py`: Visual issue detection and multimodal analysis loop implemented.
+
+- `tests/test_visual_healing.py`: Integrated tests passed.
 
 
 
 **Outcomes:**
 
-1.  **Contextual Healing**: Swarm agents now debate based on specific RCA evidence from the Analyst, not just generic error messages.
+1.  **Visual Perception**: Agents can now "see" the dashboard to diagnose CSS glitches, layout issues, or frozen states.
 
-2.  **Hero Incentives**: Successful recovery now grants 3.0x difficulty bonus, accelerating the growth of expert "System Surgeons".
+2.  **Multimodal Workflow**: Automatic transition from text-based problem reporting to image-based visual analysis.
 
-3.  **Closed-Loop Autonomy**: The system is now capable of identifying its own flaws, negotiating a fix, and executing it without human intervention.
+3.  **Cross-Platform Base**: Uses native OS tools (`screencapture`) for reliable visual observation.
 
 
 
 **Verification Results:**
 
-- `tests/test_live_healing.py`: Passed (Full transition and reward scaling).
+- `tests/test_gemini_multimodal.py`: Verified image to Part object conversion.
 
-- `tests/test_self_healing.py`: Passed (Plan translation).
+- `tests/test_visual_healing.py`: Verified Analyst's visual diagnosis workflow.
+
+
 
 

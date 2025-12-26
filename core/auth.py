@@ -318,6 +318,7 @@ class GortexAuth:
                     if not key_info:
                         break
                     try:
+                        # contents가 이미 Part/Content 리스트인 경우 그대로 전달
                         res = key_info.client.models.generate_content(model=model_id, contents=contents, config=config)
                         self.report_key_success(key_info)
                         duration = (time.time() - start_time) * 1000
