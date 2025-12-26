@@ -38,6 +38,32 @@ def compress_synapse(state: GortexState) -> GortexState:
         "history_summary": summary_text
     }
 
+def distill_messages_for_agent(state: GortexState, target_agent: str) -> str:
+    """다음 에이전트에게 필요한 핵심 정보만 추출하여 요약함 (시냅스 증류)"""
+    messages = state.get("messages", [])
+    if not messages: return ""
+    
+    # 텍스트 추출
+    history = "\n".join([f"[{m[0]}]: {m[1]}" for m in messages if isinstance(m, tuple)])
+    
+    prompt = f"""You are the Synaptic Distiller. 
+    Summarize the following chat history specifically for the '{target_agent}' agent.
+    Extract only technical requirements, tool outputs, and constraints relevant to their role.
+    Keep it extremely concise (under 150 words).
+    
+    [History]:
+    {history[-4000:]}
+    """
+    try:
+        from gortex.core.llm.factory import LLMFactory
+        backend = LLMFactory.get_default_backend()
+        summary = backend.generate("gemini-1.5-flash", [{"role": "user", "content": prompt}])
+        logger.info(f"🧪 Synaptic Distillation for {target_agent} complete.")
+        return summary.strip()
+    except Exception as e:
+        logger.error(f"Distillation failed: {e}")
+        return "Failed to distill history."
+
 class ContextPruner:
     """메시지의 가치와 관련성을 분석하여 선별적으로 가지치기를 수행함."""
     def __init__(self, state: GortexState):
@@ -87,6 +113,16 @@ class ContextPruner:
         remove_count = len(self.messages) - target_count
         to_remove_indices = {e["index"] for e in eval_list[:remove_count]}
         
+        # [MEMORY CONSOLIDATION] 삭제 전 고가치 메시지 백업
+        from gortex.utils.vector_store import LongTermMemory
+        ltm = LongTermMemory()
+        for e in eval_list[:remove_count]:
+            if e["score"] > 0.7: # 비록 순위상 삭제되지만 절대적 가치가 높은 경우
+                msg = self.messages[e["index"]]
+                content = str(msg[1])
+                ltm.memorize(f"Historical Context (Archived): {content}", {"type": "synaptic_archive", "original_index": e["index"]})
+                logger.info(f"💾 Consolidated high-value message before pruning: idx {e['index']}")
+
         new_messages = [m for i, m in enumerate(self.messages) if i not in to_remove_indices]
         return new_messages
 

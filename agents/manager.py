@@ -241,12 +241,17 @@ class ManagerAgent(BaseAgent):
             latency_ms = int((time.time() - start_time) * 1000)
             monitor.record_interaction("manager", model_id, True, len(response_text)//4, latency_ms)
 
+            # [REFINED HANDOFF] 다음 에이전트를 위한 컨텍스트 증류
+            from gortex.utils.memory import distill_messages_for_agent
+            refined_brief = distill_messages_for_agent(state, target_node)
+
             return {
                 "thought": res_data.get("thought"),
                 "next_node": target_node,
                 "assigned_model": final_assigned_model,
                 "agent_energy": max(0, energy - 5),
                 "required_capability": req_cap,
+                "handoff_instruction": refined_brief, # 증류된 엑기스 전달
                 "messages": [("ai", res_data.get("response_to_user"))] if res_data.get("response_to_user") else []
             }
         except Exception as e:
