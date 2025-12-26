@@ -56,20 +56,20 @@
 *   **Super Rules**: Swarm 합의안을 '초월적 규칙'으로 승격 저장하여 시스템 지능을 영구적으로 확장.
 *   **Memory Persistence**: 세션 간 기억을 유지하여 과거의 실수를 반복하지 않음.
 
-### 3.3 Energy & Economy System
-*   **Resource Management**: 에이전트 활동 시 '에너지' 소모. 휴식(Idle) 시 회복.
-*   **Dynamic Skill Tree**: 작업 성공 시 해당 분야(Coding, Design 등)의 숙련도 포인트 획득 및 랭크업(Apprentice -> Master).
-*   **Quality-Based Rewards**: Analyst의 피어 리뷰 점수에 따라 보상 차등 지급. 시스템 복구 성공 시 파격적인 보너스(3.0x) 제공.
-*   **Skill-Based Permissions**: 특정 숙련도에 도달한 에이전트만 고급 도구(apply_patch 등) 사용 가능.
-*   **Efficiency Metric**: 작업 효율성을 점수화하여 에이전트 성능 평가.
+### 3.4 Neural Governance & Architecture (v7.0)
+*   **Neural Constitution**: 시스템의 근본 철학을 정의하는 최상위 가이드라인. 모든 에이전트의 사고와 행동을 윤리적/안전적으로 정렬(Alignment).
+*   **Neural Fusion**: 고도로 협업하는 에이전트 쌍을 분석하여 하나의 '엘리트 융합 에이전트'로 병합, 시스템 효율성 극대화.
+*   **Weighted Consensus**: 에이전트의 평판과 신뢰도에 기반한 가중 투표 시스템으로 합리적 군집 의사결정 수행.
+*   **Multi-Sig Security**: 고위험 도구 실행 시 다수 전문가의 실시간 디지털 서명을 요구하는 강력한 보안 통제.
 
 ---
 
 ## 4. 기술 스택 및 아키텍처
 *   **Core**: Python 3.10+, LangGraph (Orchestration).
-*   **LLM**: Google Gemini (Primary), OpenAI/Ollama (Fallback/Local).
-*   **UI**: Rich (Terminal UI).
-*   **Storage**: JSON/SQLite (Local Persistence).
+*   **LLM**: Google Gemini (Primary), OpenAI/Ollama/LM Studio (Fallback/Local).
+*   **UI**: Rich (Terminal UI) & FastAPI/WebSockets (Web Dashboard API).
+*   **Distributed**: Redis MQ (Pub/Sub, RPC, Lock).
+*   **Storage**: JSON/SQLite (Local) & Redis (Global Knowledge Sync).
 
 ---
 

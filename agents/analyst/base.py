@@ -508,6 +508,40 @@ class AnalystAgent(BaseAgent):
                     })
         return fusions
 
+    def predict_runtime_errors(self, code: str, file_path: str) -> Dict[str, Any]:
+        """코드 변경분을 분석하여 잠재적 런타임 장애 발생 확률을 예측함."""
+        # 1. 과거 장애 패턴 소환
+        from gortex.utils.log_vectorizer import SemanticLogSearch
+        past_failures = SemanticLogSearch().search_similar_cases(f"Error in {file_path}", limit=10)
+        
+        prompt = f"""You are the Oracle Architect. 
+        Analyze the following code for potential runtime failures (e.g., unhandled exceptions, race conditions, edge cases).
+        Cross-reference with the historical failures provided.
+        
+        [Target File]: {file_path}
+        [New Code]:
+        {code[:3000]}
+        
+        [Historical Failure Patterns]:
+        {json.dumps(past_failures, ensure_ascii=False)}
+        
+        Return JSON ONLY:
+        {{
+            "risk_probability": 0.0 ~ 1.0,
+            "predicted_error_type": "ZeroDivisionError/KeyError/etc",
+            "reason": "Detailed justification",
+            "preemptive_fix": "Specific instruction to fix before it crashes"
+        }}
+        """
+        try:
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+        except Exception as e:
+            logger.error(f"Error prediction failed: {e}")
+            return {"risk_probability": 0.0}
+
     def evaluate_artifact_value(self, directory: str = "logs") -> List[Dict[str, Any]]:
         """작업 부산물들의 가치를 평가하여 삭제 후보 목록을 생성함."""
         cleanup_candidates = []

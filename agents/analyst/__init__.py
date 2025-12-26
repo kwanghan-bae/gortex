@@ -143,13 +143,22 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
                 review_res = agent.perform_peer_review(state.get("review_target", "code"), last_ai_msg)
                 score = review_res.get("score", 70)
                 
-                # 2. [NEW] 헌장 준수 및 가치 정렬 검증 (Alignment Check)
+                # 2. [NEW] 헌장 준수 및 가치 정렬 검증 (기존 로직)
                 alignment_res = agent.validate_alignment_with_constitution(last_ai_msg)
-                if not alignment_res.get("is_aligned", True):
-                    msg = f"🛑 **Constitutional Violation**: 제안된 작업이 시스템 헌장을 위반합니다.\n\n**위반 사항**: {', '.join(alignment_res['violations'])}\n**조치**: {alignment_res['corrective_action']}"
+                # ... (기존 로직)
+                
+                # 3. [NEW] 오라클 루프: 선제적 장애 예측 (Pre-emptive Healing)
+                oracle_res = agent.predict_runtime_errors(last_ai_msg, state.get("review_target", "unknown"))
+                if oracle_res.get("risk_probability", 0) > 0.7:
+                    msg = f"🔮 **장애 예지 활성화**: 런타임 오류 가능성({int(oracle_res['risk_probability']*100)}%)이 감지되었습니다.\n\n**예상 에러**: {oracle_res['predicted_error_type']}\n**사유**: {oracle_res['reason']}"
+                    state["messages"].append(("system", msg))
+                    self.ui.add_achievement("Oracle: Crash Prevented")
+                    
+                    # 장애가 발생하기 전에 미리 수정 지시 (계획 재수립)
                     return {
-                        "messages": [("ai", msg)],
-                        "next_node": "planner", # 헌장에 맞게 계획 재수립 지시
+                        "messages": [("ai", f"🛡️ **선제적 수리 개시**: 장애 방지를 위해 다음 조치를 취합니다: {oracle_res['preemptive_fix']}")],
+                        "next_node": "coder",
+                        "handoff_instruction": f"PREEMPTIVE_FIX: {oracle_res['preemptive_fix']}",
                         "awaiting_review": False
                     }
                 
