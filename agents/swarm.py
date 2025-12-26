@@ -71,10 +71,15 @@ class SwarmAgent:
         return recruits
 
     async def conduct_dynamic_round(self, topic: str, round_idx: int, history: List[Dict[str, str]], is_debug: bool = False) -> List[Dict[str, str]]:
-        """모집된 전문가들이 각자의 전문성을 바탕으로 의견을 제시함."""
-        responses = []
+        """모집된 전문가들이 각자의 전문성을 바탕으로 의견을 제시함 (병렬 지원)."""
+        from gortex.core.mq import mq_bus
         
-        # 만약 참여자가 없으면 기존 정적 페르소나 방식으로 폴백
+        # [PARALLEL DISTRIBUTED SWARM] 원격 워커가 있고 인원이 2명 이상이면 병렬 처리
+        if mq_bus.is_connected and len(self.participants) >= 2:
+            return await self.conduct_parallel_round(topic, round_idx, history, is_debug)
+
+        # (기존 순차 처리 로직 폴백)
+        responses = []
         if not self.participants:
             return await self.conduct_static_round(topic, round_idx, history, is_debug)
 
@@ -104,7 +109,45 @@ class SwarmAgent:
             loop = asyncio.get_event_loop()
             response_text = await loop.run_in_executor(None, self.backend.generate, "gemini-2.0-flash", [{"role": "user", "content": prompt}])
             
-            entry = {"role": expert["name"], "content": response_text, "round": round_idx, "persona": expert["role"]} # UI용 persona 필드 추가
+            entry = {"role": expert["name"], "content": response_text, "round": round_idx, "persona": expert["role"]} 
+            responses.append(entry)
+            history.append(entry)
+            
+        return responses
+
+    async def conduct_parallel_round(self, topic: str, round_idx: int, history: List[Dict[str, str]], is_debug: bool = False) -> List[Dict[str, str]]:
+        """모든 전문가의 의견을 원격지에서 병렬로 수집함 (v4.0 Alpha)"""
+        from gortex.core.mq import mq_bus
+        logger.info(f"⚡ [ParallelSwarm] Dispatching {len(self.participants)} experts in parallel...")
+        
+        requests = []
+        context_str = "\n".join([f"[{m['role'].upper()}]: {m['content']}" for m in history])
+        
+        for expert in self.participants:
+            role_ctx = f"You are {expert['name']}, the {expert['role']}."
+            obj = "Propose a solution." if round_idx == 1 else "Critique and refine."
+            
+            prompt = f"{role_ctx}\n[Topic]: {topic}\n[Round]: {round_idx}\n[Context]: {context_str}\nObjective: {obj}"
+            
+            # 각 전문가의 작업을 가상의 'remote_agent' 노드 실행으로 구성
+            # (실제로는 워커가 이 프롬프트를 받아 LLM을 호출함)
+            # 여기서는 편의상 Coder나 Analyst 노드에 특수 지침을 담아 보내는 방식 활용 가능
+            # v4.0 표준: 노드 실행 요청에 페르소나와 프롬프트 주입 지원
+            requests.append(("analyst", {
+                "messages": [("user", prompt)],
+                "assigned_persona": expert["role"],
+                "is_swarm_member": True
+            }))
+
+        # 병렬 호출 실행
+        loop = asyncio.get_running_loop()
+        raw_results = await loop.run_in_executor(None, mq_bus.call_remote_nodes_parallel, requests)
+        
+        responses = []
+        for i, res in enumerate(raw_results):
+            expert = self.participants[i]
+            content = res.get("thought") or res.get("messages", [("", "No response")])[-1][1]
+            entry = {"role": expert["name"], "content": str(content), "round": round_idx, "persona": expert["role"]}
             responses.append(entry)
             history.append(entry)
             

@@ -2,7 +2,8 @@ import json
 import logging
 import os
 import uuid
-from typing import Any, Dict, Optional, Callable, List
+import time
+from typing import Any, Dict, Optional, Callable, List, Tuple
 
 try:
     import redis
@@ -54,61 +55,53 @@ class GortexMessageBus:
 
     def call_remote_node(self, node_name: str, state: Dict[str, Any], timeout: int = 120) -> Optional[Dict[str, Any]]:
         """원격 노드에 실행을 요청하고 결과를 기다림 (RPC 패턴)"""
-        if not self.is_connected:
-            return None
+        results = self.call_remote_nodes_parallel([(node_name, state)], timeout=timeout)
+        return results[0] if results else None
 
-        request_id = str(uuid.uuid4())[:8]
-        response_channel = f"gortex:resp:{request_id}"
-        
-        message = {
-            "id": request_id,
-            "node": node_name,
-            "state": state,
-            "reply_to": response_channel,
-            "timestamp": time.time()
-        }
-        
-        # 1. 응답 구독 준비
+    def call_remote_nodes_parallel(self, requests: List[Tuple[str, Dict[str, Any]]], timeout: int = 120) -> List[Dict[str, Any]]:
+        """여러 원격 노드에 실행을 동시에 요청하고 모든 결과를 기다림 (v4.0 Parallel Swarm)"""
+        if not self.is_connected or not requests:
+            return []
+
+        pending_reqs = {}
         pubsub = self.client.pubsub()
-        pubsub.subscribe(response_channel)
         
-        # 2. 요청 전송
-        self.client.rpush("gortex:node_tasks", json.dumps(message))
-        logger.info(f"📤 Dispatched node '{node_name}' to distributed swarm (Req: {request_id})")
-        
-        # 3. 결과 대기 (Blocking)
+        # 1. 모든 요청에 대해 채널 생성 및 구독
+        for node_name, state in requests:
+            req_id = str(uuid.uuid4())[:8]
+            resp_chan = f"gortex:resp:{req_id}"
+            
+            message = {
+                "id": req_id, "node": node_name, "state": state,
+                "reply_to": resp_chan, "timestamp": time.time()
+            }
+            
+            pubsub.subscribe(resp_chan)
+            pending_reqs[resp_chan] = {"node": node_name, "id": req_id, "done": False, "result": None}
+            
+            # 요청 전송
+            self.client.rpush("gortex:node_tasks", json.dumps(message))
+            logger.info(f"📤 Parallel Dispatch: {node_name} (Req: {req_id})")
+
+        # 2. 결과 집계 대기
         try:
             start_time = time.time()
             while time.time() - start_time < timeout:
-                msg = pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0)
+                if all(r["done"] for r in pending_reqs.values()):
+                    break
+                    
+                msg = pubsub.get_message(ignore_subscribe_messages=True, timeout=0.5)
                 if msg:
-                    result_data = json.loads(msg['data'])
-                    logger.info(f"📥 Received response for node '{node_name}' (Req: {request_id})")
-                    return result_data
-                time.sleep(0.1)
+                    chan = msg['channel']
+                    if chan in pending_reqs:
+                        pending_reqs[chan]["result"] = json.loads(msg['data'])
+                        pending_reqs[chan]["done"] = True
+                        logger.info(f"📥 Received parallel result for {pending_reqs[chan]['node']}")
+                time.sleep(0.05)
         finally:
-            pubsub.unsubscribe(response_channel)
-            
-        logger.error(f"⌛ Remote node call timed out: {node_name}")
-        return None
+            pubsub.close()
 
-    def list_active_workers(self) -> List[Dict[str, Any]]:
-        """가동 중인 모든 원격 워커의 상태 목록을 반환함"""
-        if not self.is_connected:
-            return []
-            
-        workers = []
-        try:
-            # 워커 키 패턴 검색
-            keys = self.client.keys("gortex:workers:*")
-            for k in keys:
-                data_str = self.client.get(k)
-                if data_str:
-                    workers.append(json.loads(data_str))
-        except Exception as e:
-            logger.error(f"Failed to list workers: {e}")
-            
-        return workers
+        return [r["result"] for r in pending_reqs.values() if r["done"]]
 
     def listen(self, channel: str, callback: Callable[[Dict[str, Any]], None]):
         """특정 채널의 메시지를 구독함 (Blocking)"""
