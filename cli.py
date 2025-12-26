@@ -19,7 +19,7 @@ console = Console()
 @app.command()
 def start():
     """
-    Start the Gortex system.
+    Start the Gortex master system (TUI + Core).
     """
     if not os.path.exists(".env"):
         console.print("[bold yellow]⚠️  No .env file found. Running init first...[/bold yellow]")
@@ -33,6 +33,36 @@ def start():
     except Exception as e:
         console.print(f"[bold red]❌ Critical Error: {e}[/bold red]")
         sys.exit(1)
+
+@app.command()
+def worker():
+    """
+    Start a distributed worker node.
+    """
+    console.print("[bold green]🚀 Starting Gortex Distributed Worker...[/bold green]")
+    try:
+        from scripts.gortex_worker import main as worker_main
+        asyncio.run(worker_main())
+    except KeyboardInterrupt:
+        console.print("\n[yellow]👋 Worker shutting down.[/yellow]")
+    except Exception as e:
+        console.print(f"[bold red]❌ Worker Error: {e}[/bold red]")
+
+@app.command()
+def dashboard(
+    port: int = typer.Option(8000, help="Port to run the API server on")
+):
+    """
+    Start the Gortex Web API & Dashboard server.
+    """
+    console.print(f"[bold blue]📡 Starting Gortex Web API on port {port}...[/bold blue]")
+    try:
+        from gortex.core.web_api import start_web_server
+        asyncio.run(start_web_server(port=port))
+    except KeyboardInterrupt:
+        console.print("\n[yellow]👋 Dashboard shutting down.[/yellow]")
+    except Exception as e:
+        console.print(f"[bold red]❌ Dashboard Error: {e}[/bold red]")
 
 @app.command()
 def init(
