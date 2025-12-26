@@ -24,16 +24,20 @@ class GortexState(TypedDict):
     plan: List[str]          # Planner가 수립한 원자적 작업 단계들 (JSON 문자열)
     current_step: int        # 현재 실행 중인 단계 인덱스
     working_dir: str         # 현재 작업 디렉토리
-    file_cache: Dict[str, str] # {파일경로: 내용해시}
+    file_cache: Dict[str, Any] # {파일경로: 내용해시}
     next_node: Literal[...]  # 다음 노드 (planner, coder, analyst, swarm, optimizer, etc.)
     assigned_model: str      # 할당된 모델 ID
-    coder_iteration: int     # Coder 무한 루프 방지 카운터 (Max 30)
+    coder_iteration: int     # Coder 무한 루프 방지용 카운터 (Max 30)
+    step_count: int          # 전체 그래프 실행 단계 카운터 (무한 루프 차단용)
     history_summary: str     # 컨텍스트 압축 요약
     active_constraints: List[str] # 동적 주입 제약 조건
     agent_energy: int        # 가상 에너지 (0~100)
     last_efficiency: float   # 최근 작업 효율성 (0~100)
     efficiency_history: List[float] # 효율성 추세 분석용 이력
-    agent_economy: Dict[str, Any] # 에이전트 평판/포인트 데이터
+    agent_economy: Dict[str, Any] # 에이전트 평판/포인트/스킬 데이터
+    is_recovery_mode: bool   # 시스템 장애 복구 모드 활성화 여부
+    current_issue: str       # Swarm 토론을 위한 장애 RCA 리포트
+    debate_result: Dict[str, Any] # Swarm 합의 결과 데이터
 ```
 
 ---
@@ -98,9 +102,28 @@ class GortexState(TypedDict):
 *   **Innovation (The Pioneer)**: 최신 기술 도입, 효율성 극대화, 과감한 구조 개선 중심.
 *   **Stability (The Guardian)**: 하위 호환성, 보안 무결성, 운영 안정성, 리스크 최소화 중심.
 
-### 7.2 Consensus Synthesis Schema (`analyst`)
-토론 결과는 반드시 다음 JSON 형식을 따라 종합되어야 한다.
+### 7.2 Consensus Synthesis Schema (`analyst` / `swarm`)
+토론 결과는 반드시 다음 JSON 형식을 따라 종합되어야 하며, 합의된 지침은 `is_super_rule=True`로 저장될 수 있다.
 ```json
+{
+    "final_decision": "Selected approach or compromise",
+    "rationale": "Key reasons for this decision",
+    "unified_rule": {
+        "instruction": "The single authoritative instruction",
+        "trigger_patterns": ["pattern1", "pattern2"],
+        "severity": 1-5,
+        "category": "coding/research/general"
+    },
+    "action_plan": ["Step 1: ...", "Step 2: ..."]
+}
+```
+
+### 7.3 Recovery Reward Multipliers
+시스템 장애(is_recovery_mode=True) 상황에서 성공적인 패치를 수행한 에이전트에게는 다음과 같은 가중 보상이 적용된다.
+*   **Standard Success**: Difficulty Factor 1.5x
+*   **Emergency Recovery Success**: Difficulty Factor 3.0x
+*   **Skill Rank Up**: 500pts 단위로 Apprentice -> Journeyman -> Expert -> Master 칭호 부여.
+
 ## 8. Plugin-style Agent Registry (v3.0 Architecture)
 
 Gortex v3.0은 에이전트 간의 결합도를 낮추고 확장을 용이하게 하기 위해 **중앙 레지스트리** 기반의 플러그인 아키텍처를 채택한다.

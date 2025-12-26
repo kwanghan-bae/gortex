@@ -50,12 +50,17 @@
 *   **Real-time Status**: 에이전트 활동, 에너지 레벨, 비용, 토큰 사용량 실시간 표시.
 *   **Thought Tree**: 에이전트의 사고 과정을 트리 구조로 시각화.
 
-### 3.2 Self-Healing & Evolution
+### 3.2 Self-Healing & Evolution (v3.4)
 *   **Auto-Fix**: 실행 중 에러 발생 시 스스로 원인을 분석하고 코드를 수정하여 재시도.
+*   **Swarm Debugging**: 복잡한 장애 발생 시 분야별 전문가 에이전트들을 소집하여 토론을 통해 최적의 패치 안을 도출.
+*   **Super Rules**: Swarm 합의안을 '초월적 규칙'으로 승격 저장하여 시스템 지능을 영구적으로 확장.
 *   **Memory Persistence**: 세션 간 기억을 유지하여 과거의 실수를 반복하지 않음.
 
-### 3.3 Energy System
+### 3.3 Energy & Economy System
 *   **Resource Management**: 에이전트 활동 시 '에너지' 소모. 휴식(Idle) 시 회복.
+*   **Dynamic Skill Tree**: 작업 성공 시 해당 분야(Coding, Design 등)의 숙련도 포인트 획득 및 랭크업(Apprentice -> Master).
+*   **Quality-Based Rewards**: Analyst의 피어 리뷰 점수에 따라 보상 차등 지급. 시스템 복구 성공 시 파격적인 보너스(3.0x) 제공.
+*   **Skill-Based Permissions**: 특정 숙련도에 도달한 에이전트만 고급 도구(apply_patch 등) 사용 가능.
 *   **Efficiency Metric**: 작업 효율성을 점수화하여 에이전트 성능 평가.
 
 ---

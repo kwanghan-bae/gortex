@@ -1,41 +1,46 @@
-# 🗺️ CLOVER WALLET DEVELOPMENT ROADMAP
+# 🗺️ GORTEX DEVELOPMENT ROADMAP (v3.4+)
 
 ## 📊 현재 개발 현황 (Current Status)
 
 | 기능 분류 | 세부 기능 | 상태 | 비고 |
 | :--- | :--- | :---: | :--- |
-| **Core** | 하단 네비게이션 및 기본 구조 | ✅ | v1.0 |
-| **Lotto** | 랜덤 번호 생성 (홈) | ✅ | |
-| **Lotto** | 수동 번호 저장 (내 번호) | ✅ | shared_preferences 적용 |
-| **Lotto** | 당첨 확인 API 연동 | ✅ | 백엔드 비교 로직 완료 |
-| **Community** | 게시물 목록 및 작성 | ✅ | Provider 리팩토링 완료 |
-| **Community** | 게시물 상세/수정/삭제 | 🏗️ | 개발 중 |
-| **Intelligence** | **OCR 영수증 스캔** | ✅ | `flutter_native_ocr` 적용 완료 |
-| **Service** | 전국 명당 데이터 API | ✅ | 백엔드 크롤링/조회 구현 완료 |
-| **Service** | **여행 플랜 목록 조회** | ✅ | 테마별/명당별 조회 API 연동 완료 |
-| **Marketing** | **뱃지 시스템 (백엔드)** | ✅ | 10종 이상 자동 부여 로직 구현 완료 |
+| **Core** | tyepr 기반 CLI 아키텍처 | ✅ | v3.0 |
+| **Stability** | 비동기 노드 래퍼 및 Blocking 방지 | ✅ | v3.1 |
+| **LLM** | Gemini / Ollama / LM Studio 하이브리드 | ✅ | v3.2 |
+| **Memory** | 주제별 샤딩 및 Super Rule 통합 | ✅ | v3.3 |
+| **Intelligence** | Swarm 기반 자율 장애 복구 루프 | ✅ | v3.4 |
+| **Economy** | Dynamic Skill Tree & Matrix UI | ✅ | v3.4 |
+| **Persistence** | 실시간 복제 지원 Distributed Saver | ✅ | v3.0 |
 
 ---
 
 ## 🎯 주요 과제 (Critical Gaps)
 
-### 🔴 High Priority (사용자 경험 완성)
-- [ ] **여행 플랜 상세 화면 (`TravelPlanDetailScreen`)**: 목록 클릭 시 상세 정보(지도, 경로)를 보여주는 UI 구현 (현재 `SnackBar`로 대체됨).
-- [ ] **지도 UI 연동**: 백엔드의 `LottoSpot` 데이터를 지도(Google/Naver Map)에 마커로 표시하는 프론트엔드 작업.
-- [ ] **커뮤니티 인터랙션**: 좋아요 및 댓글 기능 프론트엔드 연결.
+### 🔴 High Priority (지능 고도화)
+- [ ] **Multi-modal Interaction**: 이미지 분석(스크린샷 기반 디버깅) 및 음성 명령 처리 강화.
+- [ ] **Distributed Swarm**: 서로 다른 머신에 있는 에이전트 간의 통신 및 협업 (Redis MQ 기반).
+- [ ] **Proactive Optimization**: 에러가 발생하기 전, 정적 분석을 통해 잠재적 결함을 선제적으로 수정하는 'Pre-emptive Healing'.
 
-### 🟡 Medium Priority (고도화)
-- [ ] **푸시 알림 스케줄러**: 매주 토요일 20:45 당첨 발표 자동 알림 (Cron Job).
-- [ ] **뱃지 UI 시각화 강화**: 획득한 뱃지를 마이페이지에서 화려한 애니메이션으로 연출.
-- [ ] **QR 코드 스캔 통합**: 현재 별도 화면인 QR 스캔을 OCR 화면과 UX적으로 통합 고려.
+### 🟡 Medium Priority (플랫폼 확장)
+- [ ] **Web Dashboard**: Rich UI를 넘어서는 실시간 그래프 기반 웹 관제소 구축.
+- [ ] **Plugin Marketplace**: 외부 개발자가 새로운 에이전트와 도구를 등록하고 공유할 수 있는 시스템.
+- [ ] **Autonomous Training**: 작업 이력을 바탕으로 에이전트 전용 소형 모델(SLM)을 스스로 미세 조정(Fine-tuning).
 
-### 🟢 Low Priority (폴리싱)
-- [ ] **아이콘/에셋 최적화**: 앱 용량 최적화를 위한 에셋 정리.
-- [ ] **접근성(Accessibility)**: 스크린 리더 지원 강화.
+### 🟢 Low Priority (사용자 경험)
+- [ ] **Natural Language Config**: 시스템 설정을 자연어로 명령하여 변경 (예: "/config 이제부터 모든 코드는 구글 스타일로 짜줘").
+- [ ] **Multi-language Support**: 완전한 다국어 지원 (현재 한국어/영어 중심).
+
+---
+
+## 🏛️ Legacy Milestone: Clover Wallet Integration
+*(이전 Clover Wallet 앱 개발 이력)*
+- ✅ 하단 네비게이션 및 기본 구조 (v1.0)
+- ✅ 랜덤 번호 생성 및 당첨 확인 API 연동
+- ✅ OCR 영수증 스캔 및 명당 데이터 조회 API
+- ✅ 여행 플랜 목록 조회 및 뱃지 시스템 구축
 
 ---
 
 ## 📅 업데이트 기록
-*   **2025-12-23**: 코드 기반 정밀 현행화 (OCR, 여행, 뱃지 구현 확인 및 상태 변경).
-*   **2025-12-07**: 커뮤니티 API 및 Provider 리팩토링 완료.
-*   **2025-12-04**: 초기 코드베이스 오디트 및 Gap Analysis 작성.
+*   **2025-12-26**: v3.4.2 업데이트 반영 (자율 복구 루프 및 기술 트리 완료).
+*   **2025-12-23**: v3.0 마이그레이션 및 하이브리드 LLM 아키텍처 도입.
