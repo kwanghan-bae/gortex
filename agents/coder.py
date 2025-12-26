@@ -145,11 +145,17 @@ class CoderAgent(BaseAgent):
         if state.get("awaiting_visual_diagnosis") is False and "시각 분석 결과" in str(state.get("messages", [])):
             visual_context = "\n\n[VISUAL FEEDBACK FROM ANALYST]\n" + str(state["messages"][-1][1])
 
+        # [AGENT SPAWNING] 에이전트 제조 특수 지침
+        blueprint_context = ""
+        if current_step.get("content_blueprint"):
+            blueprint_context = "\n\n[AGENT BLUEPRINT - MUST FOLLOW]\n" + json.dumps(current_step["content_blueprint"], indent=2, ensure_ascii=False)
+            blueprint_context += "\nRequirements: Inherit from BaseAgent, include metadata, and register the instance at EOF."
+
         base_instruction = loader.get_prompt(
             "coder", 
             persona_id=state.get("assigned_persona", "standard"),
             current_step_json=json.dumps(current_step, ensure_ascii=False, indent=2),
-            tool_output=(tool_output or "(N/A)") + visual_context,
+            tool_output=(tool_output or "(N/A)") + visual_context + blueprint_context,
             handoff_instruction=state.get("handoff_instruction", "")
         )
 

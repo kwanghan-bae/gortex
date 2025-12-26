@@ -85,6 +85,26 @@ class ManagerAgent(BaseAgent):
             except Exception as ge:
                 logger.warning(f"Git branching failed: {ge}")
 
+            # [AGENT SPAWNING] 에이전트 자가 증식 처리
+            blueprint = debate_res.get("agent_blueprint")
+            if blueprint:
+                new_name = blueprint["agent_name"]
+                new_plan = [json.dumps({
+                    "action": "write_file",
+                    "target": f"agents/auto_spawned_{new_name.lower()}.py",
+                    "description": f"Implement {new_name} class based on blueprint.",
+                    "content_blueprint": blueprint
+                }, ensure_ascii=False)]
+                
+                return {
+                    "thought": f"신규 전문가 '{new_name}'의 제조를 지시합니다.",
+                    "next_node": "coder",
+                    "plan": new_plan,
+                    "current_step": 0,
+                    "debate_result": None,
+                    "messages": [("ai", f"🧬 **제조 공정 개시**: '{new_name}' 에이전트를 시스템에 투입하기 위한 소스 코드 작성을 시작합니다.")]
+                }
+
             logger.info(f"⚖️ Translating {mode_desc} into executable plan...")
             action_plan = debate_res["action_plan"]
             

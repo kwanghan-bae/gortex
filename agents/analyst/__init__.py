@@ -205,33 +205,36 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
                             "is_recovery_mode": False,
                             "active_branch": None # 작업 완료 후 초기화
                         }
-    # [Self-Evolution, Guardian & ToolSmith Cycle]
+    # [Self-Evolution, Guardian, ToolSmith & Swarm Expansion]
     energy = state.get("agent_energy", 100)
     if energy > 70 and not debate_data:
-        # 1. [ToolSmith Cycle] 도구 공백 탐지 및 자동 제작 시도
-        if energy > 80:
-            last_failure = state.get("last_error_log")
-            if last_failure:
-                logger.info("🛠️ Initiating ToolSmith Cycle: Analyzing tool gap for recent failure...")
-                tool_blueprint = agent.identify_tool_gap(last_failure)
-                if tool_blueprint:
-                    msg = f"🛠️ **도구 자가 증식**: '{tool_blueprint['tool_name']}' 도구 제작을 시작합니다.\n\n**설명**: {tool_blueprint['description']}\n**대상**: {tool_blueprint['target_agent']}"
-                    
-                    # Coder에게 제작 지시를 위한 계획 수립
-                    state["debate_result"] = {
-                        "final_decision": f"Forge New Tool: {tool_blueprint['tool_name']}",
-                        "action_plan": [
-                            f"Step 1: Implement Python function {tool_blueprint['tool_name']} in core/tools/forged.py",
-                            f"Step 2: Register the tool via registry.load_tools_from_module"
-                        ]
-                    }
-                    
-                    return {
-                        "messages": [("ai", msg)],
-                        "next_node": "manager",
-                        "debate_result": state["debate_result"],
-                        "agent_energy": energy - 20
-                    }
+        # 1. [Swarm Expansion] 신규 전문가 에이전트 자가 증식 시도
+        if energy > 90 and state.get("coder_iteration", 0) > 5:
+            logger.info("🧬 Initiating Swarm Expansion: Designing a new specialist...")
+            last_error = str(state.get("messages", [])[-1])
+            agent_blueprint = agent.identify_capability_gap(error_log=last_error)
+            
+            if agent_blueprint:
+                new_name = agent_blueprint["agent_name"]
+                msg = f"🧬 **에이전트 자가 증식**: 신규 전문가 '{new_name}'을 설계했습니다.\n\n**역할**: {agent_blueprint['role']}\n**이유**: 현재 인력으로 해결하기 어려운 전문 분야 대응"
+                
+                state["debate_result"] = {
+                    "final_decision": f"Spawn New Specialist: {new_name}",
+                    "action_plan": [
+                        f"Step 1: Implement agent class in agents/auto_spawned_{new_name.lower()}.py",
+                        f"Step 2: Register the new agent to AgentRegistry"
+                    ],
+                    "agent_blueprint": agent_blueprint
+                }
+                
+                return {
+                    "messages": [("ai", msg)],
+                    "next_node": "manager",
+                    "debate_result": state["debate_result"],
+                    "agent_energy": energy - 30
+                }
+
+        # 2. [ToolSmith Cycle] 도구 공백 탐지 (기존 로직)
 
         # 2. 지식 증류 및 전역 최적화 (기존 로직)
         if len(agent.memory.memory) > 10: 
