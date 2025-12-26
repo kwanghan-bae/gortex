@@ -85,34 +85,32 @@ class GortexEngine:
             logger.error(f"❌ Defense generation failed for {target['file']}: {res.get('error') or res.get('reason')}")
 
     def select_optimal_model(self, state: GortexState, agent_name: str) -> str:
-        """에이전트 평판, 지갑 잔고, 작업 위험도를 고려하여 최적 모델 선택"""
+        """에이전트 평판, 지갑 잔고, 하드웨어 상태를 고려하여 최적 모델 선택"""
         risk = state.get("risk_score", 0.5)
         budget_status = self.tracker.get_budget_status()
         economy = state.get("agent_economy", {}).get(agent_name.lower(), {})
         
-        points = economy.get("points", 0)
-        credits = economy.get("credits", 0.0) # [NEW] 지불 능력 확인
+        # [ECO-THROTTLING] 하드웨어 상태 반영 (v10.4)
+        from gortex.utils.hardware import sensor
+        eco_mult = sensor.get_eco_multiplier()
         
-        # 1. 예산 고갈 상태 (시스템 전체)
-        if budget_status > 0.9:
+        points = economy.get("points", 0) * eco_mult # 에너지 상황에 따른 실질 실력 가중치 하락
+        credits = economy.get("credits", 0.0)
+        
+        # 1. 예산 또는 에너지 임계치 초과 시 (eco_mult < 0.5) 강제 저전력 모드
+        if budget_status > 0.9 or eco_mult < 0.5:
+            logger.warning(f"🔋 Eco-Mode Active (Mult: {eco_mult}). Powering down to Ollama.")
             return "ollama/llama3"
             
-        # 2. [ECONOMY] 지불 능력 기반 필터링
-        # Gemini Pro는 최소 $1.0의 잔고가 있어야 시도 가능
+        # 2. 지불 능력 및 리스크 기반 모델 결정 (기존 로직)
         can_afford_pro = credits >= 1.0
-        # Gemini Flash는 최소 $0.1의 잔고 필요
         can_afford_flash = credits >= 0.1
 
-        # 3. 모델 할당 로직
         if risk > 0.8 and points > 1000 and can_afford_pro:
             return "gemini-1.5-pro"
             
         if (points > 500 or risk > 0.4) and can_afford_flash:
             return "gemini-2.0-flash"
-            
-        # 4. 잔고 부족 시 강제 다운그레이드
-        if not can_afford_flash:
-            logger.info(f"💸 Agent {agent_name} is under-funded (${credits:.4f}). Downgrading to Ollama.")
             
         return "ollama/llama3"
 

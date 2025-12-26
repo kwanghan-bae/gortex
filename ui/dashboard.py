@@ -309,6 +309,21 @@ class DashboardUI:
             stats_group.append(Text(f"\nMATURITY: [{gauge}] {score}%", style=f"bold {color}"))
         except: pass
 
+        # [HARDWARE VITALS] 물리 상태 시각화 (v10.4)
+        try:
+            from gortex.utils.hardware import sensor
+            vitals = sensor.get_system_vitals()
+            eco_mult = sensor.get_eco_multiplier()
+            
+            thermal_color = Palette.GREEN if vitals["thermal_status"] == "nominal" else (Palette.YELLOW if vitals["thermal_status"] == "warning" else Palette.RED)
+            battery_icon = "🔋" if vitals["is_charging"] else "🪫"
+            
+            vitals_text = Text(f"\n{battery_icon} {vitals['battery_percent']}% | THERMAL: {vitals['thermal_status'].upper()}", style=thermal_color)
+            if eco_mult < 1.0:
+                vitals_text.append(f" [ECO:{int(eco_mult*100)}%]", style=f"bold {Palette.CYAN} blink")
+            stats_group.append(vitals_text)
+        except: pass
+
         return Panel(Group(*stats_group), title=" [bold]📊 STATS[/] ", border_style=Palette.GRAY, box=box.ROUNDED)
 
     @property
