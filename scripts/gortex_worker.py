@@ -117,6 +117,36 @@ async def send_heartbeat(worker_id: str):
             logger.error(f"Heartbeat failed: {e}")
         await asyncio.sleep(10)
 
+async def auction_listener_loop(worker_id: str):
+    """지능형 작업 경매 공고를 청취하고 입찰함"""
+    from gortex.core.mq import mq_bus
+    if not mq_bus.is_connected: return
+
+    def handle_auction(msg):
+        payload = msg.get("payload", {})
+        if msg.get("type") == "auction_started":
+            # 1. 입찰 점수 계산
+            # 점수 = (여유 CPU * 0.5) + (여유 RAM * 0.3) + (해당 노드 특화 점수)
+            cpu_free = 100 - psutil.cpu_percent()
+            mem_free = 100 - psutil.virtual_memory().percent
+            
+            # 특정 노드에 대한 가중치 (예: Coder 특화 워커)
+            specialty_bonus = 20 if payload.get("node") == os.getenv("WORKER_SPECIALTY", "") else 0
+            
+            bid_score = (cpu_free * 0.5) + (mem_free * 0.3) + specialty_bonus
+            
+            bid_data = {
+                "worker_id": worker_id,
+                "bid_score": bid_score,
+                "timestamp": time.time()
+            }
+            # 입찰 채널로 응답
+            mq_bus.client.publish(payload["reply_to"], json.dumps(bid_data))
+            logger.debug(f"💰 Bid placed for {payload['node']}: {bid_score:.1f}")
+
+    loop = asyncio.get_running_loop()
+    loop.run_in_executor(None, mq_bus.listen, "gortex:auctions", handle_auction)
+
 async def main():
     if not mq_bus.is_connected:
         logger.critical("Redis MQ not connected. Worker cannot start.")
@@ -145,6 +175,9 @@ async def main():
 
     loop = asyncio.get_running_loop()
     loop.run_in_executor(None, mq_bus.listen, "gortex:workspace_sync", handle_file_sync)
+    
+    # 3. [AUCTION] 입찰 리스너 시작
+    asyncio.create_task(auction_listener_loop(worker_id))
     
     logger.info("Monitoring 'gortex:tasks:research' and 'gortex:node_tasks'...")
     

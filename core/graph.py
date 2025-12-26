@@ -105,21 +105,20 @@ async def run_async_node(node_func, state: GortexState) -> Dict[str, Any]:
         raise e
 
 async def run_remote_node(node_name: str, state: GortexState) -> Dict[str, Any]:
-    """노드를 원격 분산 워커에서 실행하고 결과를 반환함 (v5.1 Neural Load Balanced)"""
+    """노드를 원격 분산 워커에서 실행하고 결과를 반환함 (v5.3 Neural Auctioned)"""
     from gortex.core.mq import mq_bus
     
-    # 1. 지능형 워커 선택 (로드 밸런싱)
-    target_worker = mq_bus.select_best_worker()
+    # 1. 지능형 자원 경매 시작 (v5.3 New)
+    target_worker = mq_bus.auction_task(node_name, dict(state))
     
     if not target_worker:
-        logger.warning(f"⚠️ No capable remote workers available for '{node_name}'. Using local backup.")
+        logger.warning(f"⚠️ No suitable bidders for '{node_name}'. Falling back to local execution.")
         local_funcs = {"manager": manager_node, "planner": planner_node, "coder": coder_node, "analyst": analyst_node}
         return await run_async_node(local_funcs[node_name], state)
 
-    logger.info(f"🌐 [NeuralBalancer] Routing {node_name} -> {target_worker}")
+    logger.info(f"🌐 [NeuralAuction] Node '{node_name}' assigned to winner: {target_worker}")
     
-    # 2. 원격 호출 (RPC with target hint)
-    # (mq_bus.call_remote_node 내부적으로 타겟 워커 힌트를 사용하도록 확장 필요)
+    # 2. 원격 호출 (RPC)
     result = mq_bus.call_remote_node(node_name, dict(state))
     
     if result:

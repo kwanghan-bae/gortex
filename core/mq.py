@@ -126,6 +126,52 @@ class GortexMessageBus:
         logger.info(f"⚖️ Load Balancer: Selected {best_worker} (Score: {scored_workers[0][0]:.1f})")
         return best_worker
 
+    def auction_task(self, node_name: str, state: Dict[str, Any], timeout: int = 5) -> Optional[str]:
+        """분산 군집에 작업을 공고하고 가장 적합한 워커의 ID를 낙찰받음"""
+        if not self.is_connected:
+            return None
+
+        auction_id = str(uuid.uuid4())[:6]
+        bid_channel = f"gortex:bids:{auction_id}"
+        
+        # 1. 입찰 공고 발행
+        message = {
+            "auction_id": auction_id,
+            "node": node_name,
+            "complexity": state.get("risk_score", 0.5),
+            "reply_to": bid_channel
+        }
+        
+        pubsub = self.client.pubsub()
+        pubsub.subscribe(bid_channel)
+        
+        self.publish_event("gortex:auctions", "Master", "auction_started", message)
+        logger.info(f"⚖️ Auction started for '{node_name}' (ID: {auction_id})")
+        
+        # 2. 입찰 수집 (짧은 대기 시간)
+        bids = []
+        try:
+            start_time = time.time()
+            while time.time() - start_time < timeout:
+                msg = pubsub.get_message(ignore_subscribe_messages=True, timeout=0.2)
+                if msg:
+                    bid_data = json.loads(msg['data'])
+                    bids.append(bid_data)
+                    # 충분한 입찰이 모이면 조기 종료 가능
+                    if len(bids) >= 3: break
+                time.sleep(0.05)
+        finally:
+            pubsub.unsubscribe(bid_channel)
+            
+        if not bids:
+            return self.select_best_worker() # 폴백: 기존 스케줄러 사용
+            
+        # 3. 최적 입찰자 선정 (부하가 적고 해당 노드 처리에 자신 있는 워커)
+        bids.sort(key=lambda x: x["bid_score"], reverse=True)
+        winner = bids[0]["worker_id"]
+        logger.info(f"🔨 Auction won by {winner} (Score: {bids[0]['bid_score']:.1f})")
+        return winner
+
     def call_remote_node(self, node_name: str, state: Dict[str, Any], timeout: int = 120) -> Optional[Dict[str, Any]]:
 
     def call_remote_nodes_parallel(self, requests: List[Tuple[str, Dict[str, Any]]], timeout: int = 120) -> List[Dict[str, Any]]:
