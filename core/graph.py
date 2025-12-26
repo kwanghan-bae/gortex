@@ -107,17 +107,29 @@ async def run_async_node(node_func, state: GortexState) -> Dict[str, Any]:
 async def run_remote_node(node_name: str, state: GortexState) -> Dict[str, Any]:
     """노드를 원격 분산 워커에서 실행하고 결과를 반환함 (v4.0 Alpha)"""
     from gortex.core.mq import mq_bus
-    logger.info(f"🌐 [RemoteWrapper] Dispatching {node_name} to swarm...")
     
-    # 1. 원격 호출 (RPC)
+    # 1. 워커 가용성 체크
+    active_workers = mq_bus.list_active_workers()
+    if not active_workers:
+        logger.warning(f"⚠️ No active remote workers found for '{node_name}'. Falling back to local execution.")
+        # 로컬 폴백 함수 매핑
+        local_funcs = {
+            "manager": manager_node, "planner": planner_node,
+            "coder": coder_node, "analyst": analyst_node
+        }
+        return await run_async_node(local_funcs[node_name], state)
+
+    logger.info(f"🌐 [RemoteWrapper] Dispatching {node_name} to swarm ({len(active_workers)} workers online)...")
+    
+    # 2. 원격 호출 (RPC)
     result = mq_bus.call_remote_node(node_name, dict(state))
     
     if result:
         logger.info(f"✅ [RemoteWrapper] {node_name} returned result from swarm.")
         return result
     else:
-        logger.error(f"❌ [RemoteWrapper] {node_name} remote call failed. Falling back to local.")
-        # 폴백 로직: 실패 시 로컬에서 직접 실행 (안전장치)
+        logger.error(f"❌ [RemoteWrapper] {node_name} remote call timed out or failed.")
+        # 최후의 수단: 로컬 실행
         local_funcs = {
             "manager": manager_node, "planner": planner_node,
             "coder": coder_node, "analyst": analyst_node

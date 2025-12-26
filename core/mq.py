@@ -92,6 +92,24 @@ class GortexMessageBus:
         logger.error(f"⌛ Remote node call timed out: {node_name}")
         return None
 
+    def list_active_workers(self) -> List[Dict[str, Any]]:
+        """가동 중인 모든 원격 워커의 상태 목록을 반환함"""
+        if not self.is_connected:
+            return []
+            
+        workers = []
+        try:
+            # 워커 키 패턴 검색
+            keys = self.client.keys("gortex:workers:*")
+            for k in keys:
+                data_str = self.client.get(k)
+                if data_str:
+                    workers.append(json.loads(data_str))
+        except Exception as e:
+            logger.error(f"Failed to list workers: {e}")
+            
+        return workers
+
     def listen(self, channel: str, callback: Callable[[Dict[str, Any]], None]):
         """특정 채널의 메시지를 구독함 (Blocking)"""
         if not self.is_connected:

@@ -4,6 +4,8 @@ import logging
 import sys
 import os
 import time
+import uuid
+import psutil
 
 # 모듈 경로 추가
 sys.path.append(os.getcwd())
@@ -75,12 +77,40 @@ async def process_node_execution(request: dict):
         logger.error(f"❌ Remote node execution failed: {e}")
         mq_bus.client.publish(reply_channel, json.dumps({"error": str(e), "status": "failed"}))
 
+import psutil
+
+# ... (기존 임포트 하단)
+
+async def send_heartbeat(worker_id: str):
+    """주기적으로 워커의 건강 상태를 Redis에 보고함"""
+    while True:
+        try:
+            stats = {
+                "worker_id": worker_id,
+                "status": "online",
+                "cpu_percent": psutil.cpu_percent(),
+                "memory_percent": psutil.virtual_memory().percent,
+                "active_tasks": 0, # 추후 세밀한 추적 로직 추가 가능
+                "last_seen": time.time(),
+                "hostname": os.uname().nodename if hasattr(os, "uname") else "unknown"
+            }
+            mq_bus.client.set(f"gortex:workers:{worker_id}", json.dumps(stats), ex=15)
+            logger.debug(f"💓 Heartbeat sent for {worker_id}")
+        except Exception as e:
+            logger.error(f"Heartbeat failed: {e}")
+        await asyncio.sleep(10)
+
 async def main():
     if not mq_bus.is_connected:
         logger.critical("Redis MQ not connected. Worker cannot start.")
         return
 
-    logger.info("🚀 Gortex Distributed Swarm Worker (v4.0 Alpha) is active.")
+    worker_id = f"worker_{os.uname().nodename}_{str(uuid.uuid4())[:4]}" if hasattr(os, "uname") else f"worker_win_{str(uuid.uuid4())[:4]}"
+    logger.info(f"🚀 Gortex Distributed Swarm Worker (v4.0 Alpha) is active: {worker_id}")
+    
+    # 하트비트 태스크 시작
+    asyncio.create_task(send_heartbeat(worker_id))
+    
     logger.info("Monitoring 'gortex:tasks:research' and 'gortex:node_tasks'...")
     
     while True:
