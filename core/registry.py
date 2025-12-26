@@ -71,6 +71,28 @@ class AgentRegistry:
             logger.error(f"Failed to load agent from {file_path}: {e}")
             return False
 
+    def ingest_remote_agent(self, url: str, agent_name: str) -> bool:
+        """원격 리포지토리에서 에이전트 코드를 가져와 시스템에 영입함."""
+        import urllib.request
+        plugin_dir = "agents/plugins"
+        os.makedirs(plugin_dir, exist_ok=True)
+        file_path = os.path.join(plugin_dir, f"{agent_name.lower()}.py")
+        
+        try:
+            logger.info(f"🌐 Ingesting remote agent '{agent_name}' from {url}...")
+            with urllib.request.urlopen(url) as response:
+                code = response.read().decode('utf-8')
+                
+            # [SECURITY] 저장 전 보안 검수 필요 (Analyst에게 위임 예정)
+            from gortex.utils.tools import write_file
+            write_file(file_path, code)
+            
+            # 동적 로딩 수행
+            return self.load_agent_from_file(file_path)
+        except Exception as e:
+            logger.error(f"Failed to ingest remote agent: {e}")
+            return False
+
     def is_tool_permitted(self, agent_name: str, tool_name: str, agent_economy: Dict[str, Any]) -> bool:
         """에이전트의 숙련도에 따라 특정 도구의 사용 가능 여부를 판별함."""
         # 1. 도구 존재 여부 확인 (동적 도구 포함)

@@ -332,6 +332,49 @@ class AnalystAgent(BaseAgent):
                 
         return bottlenecks
 
+    def audit_external_plugin(self, plugin_code: str, plugin_name: str) -> Dict[str, Any]:
+        """외부에서 가져온 플러그인 코드를 보안 관점에서 정밀 검수함."""
+        logger.info(f"🛡️ Auditing external plugin: {plugin_name}...")
+        
+        # 1. 정적 패턴 스캔 (기본 도구 활용)
+        from gortex.utils.tools import scan_security_risks
+        static_risks = scan_security_risks(plugin_code)
+        
+        # 2. LLM 기반 심층 분석
+        prompt = f"""You are the Chief Security Officer. 
+        Perform a deep security audit on the following external AI Agent code.
+        Look for malicious intent, hidden backdoors, unauthorized data exfiltration, or system-destructive logic.
+        
+        [Plugin Name]: {plugin_name}
+        [Code]:
+        {plugin_code[:4000]}
+        
+        Return JSON ONLY:
+        {{
+            "is_safe": true/false,
+            "risk_level": "Low/Medium/High/Critical",
+            "findings": ["finding 1", "finding 2"],
+            "recommendation": "Approve / Reject / Sandbox"
+        }}
+        """
+        try:
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            audit_res = json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+            
+            # 정적 분석 결과 통합
+            if static_risks:
+                audit_res["static_findings"] = static_risks
+                if any(r["type"] == "Hardcoded Secret" for r in static_risks):
+                    audit_res["is_safe"] = False
+                    audit_res["risk_level"] = "High"
+            
+            return audit_res
+        except Exception as e:
+            logger.error(f"Security audit failed: {e}")
+            return {"is_safe": False, "risk_level": "Critical", "recommendation": "Reject due to audit failure"}
+
     def evaluate_artifact_value(self, directory: str = "logs") -> List[Dict[str, Any]]:
         """작업 부산물들의 가치를 평가하여 삭제 후보 목록을 생성함."""
         cleanup_candidates = []
