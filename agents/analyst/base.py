@@ -375,6 +375,47 @@ class AnalystAgent(BaseAgent):
             logger.error(f"Security audit failed: {e}")
             return {"is_safe": False, "risk_level": "Critical", "recommendation": "Reject due to audit failure"}
 
+    def analyze_and_optimize_persona(self, agent_name: str) -> Optional[Dict[str, Any]]:
+        """에이전트의 작업 이력을 분석하여 페르소나 지침(System Prompt)을 최적화함."""
+        # 1. 최근 성과 데이터 수집
+        from gortex.utils.efficiency_monitor import EfficiencyMonitor
+        monitor = EfficiencyMonitor()
+        summary = monitor.get_summary(days=7)
+        
+        # 2. 현재 페르소나 지침 획득
+        from gortex.utils.prompt_loader import loader
+        current_instruction = loader.get_prompt(agent_name.lower())
+        
+        prompt = f"""You are the Neural Architect. 
+        Optimize the following System Instruction for the '{agent_name}' agent.
+        Analyze its recent performance and mutate the instruction to be more effective.
+        
+        [Current Instruction]:
+        {current_instruction}
+        
+        [Recent Performance Metrics]:
+        {json.dumps(summary.get(agent_name, {}), indent=2)}
+        
+        Goals:
+        1. Keep the core identity but refine the technical guidance.
+        2. Strengthen points that led to success, fix points that led to failure.
+        
+        Return JSON ONLY:
+        {{
+            "new_instruction": "Full optimized instruction text",
+            "changes": "Summary of what was changed and why",
+            "version": "X.Y.Z (bump minor)"
+        }}
+        """
+        try:
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+        except Exception as e:
+            logger.error(f"Persona optimization failed for {agent_name}: {e}")
+            return None
+
     def evaluate_artifact_value(self, directory: str = "logs") -> List[Dict[str, Any]]:
         """작업 부산물들의 가치를 평가하여 삭제 후보 목록을 생성함."""
         cleanup_candidates = []

@@ -299,26 +299,32 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             # ... (기존 Doc-Evolver 로직)
             pass
 
-        # 5. [Architecture Optimization] 워크플로우 병목 분석 및 자율 개선
+        # 5. [Architecture Optimization] 워크플로우 병목 분석 및 자율 개선 (기존 로직)
         if energy > 75:
-            logger.info("🕸️ Running Architecture Optimizer: Checking for workflow bottlenecks...")
-            try:
-                bottlenecks = agent.analyze_workflow_bottlenecks()
-                for b in bottlenecks:
-                    if b["severity"] == "High":
-                        # 즉시 해결을 위한 전역 정책 등록
+            # ... (기존 로직 수행)
+            pass
+
+        # 6. [Persona Evolution] 에이전트 페르소나 자율 튜닝
+        if energy > 95:
+            logger.info("🧬 Running Persona Evolver: Optimizing agent instructions...")
+            all_agents = registry.list_agents()
+            for a_name in all_agents:
+                try:
+                    evolved = agent.analyze_and_optimize_persona(a_name)
+                    if evolved:
+                        # [MEMORY] 진화된 지침을 '최상위 정책'으로 등록하여 즉시 반영 (PromptLoader 연동)
                         agent.memory.save_rule(
-                            instruction=f"WORKFLOW_OPTIMIZATION: {b['suggestion']}",
-                            trigger_patterns=b.get("agents", [b.get("agent")]),
+                            instruction=evolved["new_instruction"],
+                            trigger_patterns=[a_name.lower(), "persona", "instruction"],
                             category="general",
-                            severity=4,
+                            severity=3,
                             is_super_rule=True,
-                            context=f"Auto-Architecture Fix for {b['type']}: {b['reason']}"
+                            context=f"Persona Evolution v{evolved['version']}: {evolved['changes']}"
                         )
-                        state["messages"].append(("system", f"🕸️ **Architecture Optimized**: {b['reason']} 문제를 해결하기 위한 신규 지침이 등록되었습니다."))
-                        self.ui.add_achievement("Topology Refined")
-            except Exception as e:
-                logger.error(f"Architecture optimization failed: {e}")
+                        state["messages"].append(("system", f"🧬 **Persona Evolved**: '{a_name}' 에이전트의 지침이 v{evolved['version']}으로 진화했습니다.\n\n**변경**: {evolved['changes']}"))
+                        self.ui.add_achievement(f"Evolved {a_name}")
+                except Exception as e:
+                    logger.error(f"Evolver failed for {a_name}: {e}")
             
         # 2. [Guardian Cycle] 선제적 결함 탐지 및 리팩토링 제안
         if energy > 85:
