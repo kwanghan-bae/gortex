@@ -18,51 +18,57 @@ class SwarmAmbassador:
         self.memory = EvolutionaryMemory()
 
     def broadcast_wisdom(self, category: str = "coding"):
-        """로컬의 고성과 Super Rule을 연합 네트워크에 공유함"""
+        """로컬의 고성과 Super Rule을 연합 네트워크에 공유함 (유료/무료 구분 가능)"""
         if not mq_bus.is_connected: return
         
-        # 공인된 최상위 지침만 선별
         wisdom = [r for r in self.memory.shards.get(category, []) if r.get("is_super_rule") and r.get("severity") >= 4]
         
         if wisdom:
-            logger.info(f"🌌 [Ambassador] Broadcasting {len(wisdom)} rules to Galactic Swarm.")
-            mq_bus.publish_event("gortex:galactic:wisdom", self.swarm_id, "wisdom_shared", {
+            logger.info(f"🌌 [Ambassador] Offering {len(wisdom)} rules to Galactic Market.")
+            mq_bus.publish_event("gortex:galactic:wisdom", self.swarm_id, "wisdom_offered", {
                 "category": category,
-                "rules": wisdom
+                "rules": wisdom,
+                "price": 5.0 # 지식 묶음당 가격 ($)
             })
 
-    def integrate_remote_wisdom(self, remote_swarm_id: str, remote_rules: List[Dict[str, Any]]):
-        """외부 군집으로부터 수신한 지식을 로컬에 통합함"""
-        if remote_swarm_id == self.swarm_id: return
+    def purchase_remote_wisdom(self, seller_id: str, rules: List[Dict[str, Any]], price: float, state: GortexState):
+        """타 스웜의 지식을 구매하여 통합함"""
+        from gortex.utils.economy import get_economy_manager
+        eco = get_economy_manager()
         
-        integrated_count = 0
-        for rule in remote_rules:
-            # 중복 체크 후 저장 (context에 출처 명시)
-            rule_id = self.memory.save_rule(
-                instruction=rule["learned_instruction"],
-                trigger_patterns=rule["trigger_patterns"],
-                category=rule.get("category", "general"),
-                severity=rule.get("severity", 3),
-                is_super_rule=True,
-                context=f"Federated Wisdom from {remote_swarm_id}"
-            )
-            if rule_id: integrated_count += 1
+        # 1. 비용 지불 (모든 에이전트가 공동 부담하거나 Manager가 지불)
+        total_balance = sum(a.get("credits", 0) for a in state.get("agent_economy", {}).values())
+        if total_balance < price:
+            logger.warning(f"💸 Insufficient funds to buy wisdom from {seller_id}")
+            return False
             
-        if integrated_count > 0:
-            logger.info(f"🌌 [Ambassador] Integrated {integrated_count} rules from {remote_swarm_id}.")
-
-    def request_external_help(self, node_name: str, state: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-        """로컬 자원이 부족할 때 연합 군집에 지원 요청"""
-        # (v7.5의 핵심인 Cross-Swarm RPC 구현 지점)
-        logger.info(f"🌌 [Ambassador] Local resources exhausted. Requesting aid for '{node_name}'...")
-        # 연합 전용 큐에 태스크 전송
-        mq_bus.enqueue_task("gortex:galactic:tasks", {
-            "requester": self.swarm_id,
-            "node": node_name,
-            "state": state,
-            "reply_to": f"gortex:galactic:resp:{self.swarm_id}"
+        # 2. 지식 통합
+        self.integrate_remote_wisdom(seller_id, rules)
+        
+        # 3. 크레딧 차감 및 판매자 수익 알림 (판매자 정산은 MQ 이벤트로 처리)
+        for agent_id in state["agent_economy"]:
+            state["agent_economy"][agent_id]["credits"] -= (price / len(state["agent_economy"]))
+            
+        mq_bus.publish_event("gortex:galactic:economy", self.swarm_id, "payment_sent", {
+            "to": seller_id,
+            "amount": price,
+            "item": "wisdom_pack"
         })
-        return None # 비동기 대기 로직 필요
+        return True
+
+    def rent_compute_resource(self, node_name: str, state: GortexState, price_limit: float = 1.0) -> Optional[Dict[str, Any]]:
+        """타 스웜의 연산 자원을 임대하여 노드 실행"""
+        logger.info(f"🌌 [Ambassador] Renting compute for '{node_name}' from Galactic Swarm...")
+        
+        request_id = f"rent_{uuid.uuid4().hex[:4]}"
+        mq_bus.publish_event("gortex:galactic:compute", self.swarm_id, "compute_requested", {
+            "request_id": request_id,
+            "node": node_name,
+            "bid_limit": price_limit,
+            "state": state
+        })
+        # (실제 동기 대기 및 결과 수신 로직은 RPC 패턴 활용)
+        return None
 
 # 글로벌 인스턴스
 ambassador = SwarmAmbassador()

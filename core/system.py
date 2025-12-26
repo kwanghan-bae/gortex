@@ -248,15 +248,31 @@ class GortexSystem:
         # [SECURITY ALERTS] 보안 위반 실시간 감시 (기존 로직)
         loop.run_in_executor(None, mq_bus.listen, "gortex:security_alerts", handle_security)
         
-        # [GALACTIC SWARM] 연합 지식 수신 리스너 (v7.5 New)
+        # [GALACTIC SWARM] 연합 지식 및 경제 리스너 (v9.2 New)
         from gortex.core.collaboration import ambassador
-        def handle_galactic_wisdom(msg):
-            if msg.get("type") == "wisdom_shared":
-                payload = msg.get("payload", {})
-                ambassador.integrate_remote_wisdom(msg.get("agent"), payload.get("rules", []))
-                self.ui.add_achievement(f"Galactic Wisdom Integrated")
+        def handle_galactic_events(msg):
+            event_type = msg.get("type")
+            payload = msg.get("payload", {})
+            sender_id = msg.get("agent", "Unknown")
+            
+            if event_type == "wisdom_offered":
+                # [MARKET] 지능 구매 의사결정
+                price = payload.get("price", 0)
+                if price < 10.0: # 단순 정책: $10 미만이면 즉시 구매
+                    if ambassador.purchase_remote_wisdom(sender_id, payload["rules"], price, self.state):
+                        self.ui.add_achievement(f"Bought Wisdom from {sender_id}")
+                        self.ui.chat_history.append(("system", f"🛒 **지능 구매 완료**: {sender_id}로부터 최상위 지침 {len(payload['rules'])}개를 구매하여 통합했습니다."))
+            
+            elif event_type == "payment_sent" and payload.get("to") == ambassador.swarm_id:
+                # [REVENUE] 판매 수익 정산
+                amount = payload.get("amount", 0)
+                from gortex.utils.economy import get_economy_manager
+                get_economy_manager().add_credits(self.state, "Manager", amount)
+                self.ui.add_achievement("Wisdom Sold!")
+                self.ui.chat_history.append(("system", f"💰 **지식 판매 수익**: 연합 군집으로부터 ${amount}의 로열티를 수령했습니다."))
 
-        loop.run_in_executor(None, mq_bus.listen, "gortex:galactic:wisdom", handle_galactic_wisdom)
+        loop.run_in_executor(None, mq_bus.listen, "gortex:galactic:wisdom", handle_galactic_events)
+        loop.run_in_executor(None, mq_bus.listen, "gortex:galactic:economy", handle_galactic_events)
         
         # 주기적인 자신의 지식 홍보 (1시간마다)
         async def broadcast_loop():
