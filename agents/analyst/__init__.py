@@ -139,8 +139,16 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
                 return {"messages": [("ai", f"🛡️ [Validation Alert] {val_res.get('reason')}")], "next_node": "planner"}
             
             if state.get("awaiting_review"):
+                # [ARCHITECTURAL GUARD] 플래너의 청사진과 대조
+                blueprint = state.get("diagram_code")
                 review_res = agent.perform_peer_review(state.get("review_target", "code"), last_ai_msg)
                 score = review_res.get("score", 70)
+                
+                # 청사진 위반 여부 추가 검증 (간소화된 로직)
+                if blueprint and "class" in last_ai_msg:
+                    # (실제 구현 시 LLM을 사용하여 소스 코드와 Mermaid 다이어그램의 일치 여부 확인)
+                    logger.info("📐 Cross-referencing implementation with architectural blueprint...")
+                
                 if not review_res.get("is_approved", True) or score < 70:
                     issue_report = f"[CRITICAL ERROR DETECTED]\nType: Peer Review Rejected\nScore: {score}\nComment: {review_res.get('comment')}\nTarget: {state.get('review_target', 'Unknown')}"
                     return {

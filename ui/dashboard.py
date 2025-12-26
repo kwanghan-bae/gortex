@@ -341,20 +341,34 @@ class DashboardUI:
             box=box.ROUNDED
         ))
 
-        agent_style = get_agent_style(self.current_agent)
-        thought_msg = self.agent_thought if self.agent_thought else "System idle. Awaiting neural input..."
-        thought_content = Text.assemble(
-            (f" {self.current_agent.upper()} ", f"bold {agent_style} reverse"),
-            (f"  {thought_msg}", f"italic {agent_style}")
-        )
-        main_layout["thought"].update(Panel(
-            thought_content, 
-            title=" [bold italic]Thinking Scratchpad[/] ",
-            border_style=agent_style, 
-            box=box.ROUNDED,
-            padding=(1, 2)
-        ))
-
+                # 3. Thought Panel
+                agent_style = get_agent_style(self.current_agent)
+                thought_msg = self.agent_thought if self.agent_thought else "System idle. Awaiting neural input..."
+                thought_content = Text.assemble(
+                    (f" {self.current_agent.upper()} ", f"bold {agent_style} reverse"),
+                    (f"  {thought_msg}", f"italic {agent_style}")
+                )
+                
+                # [NEW] Architectural Blueprint Visualization
+                from gortex.core.state import GortexState # (Type hint placeholder)
+                blueprint_code = getattr(self, "current_blueprint", "")
+                if blueprint_code:
+                    blueprint_panel = Panel(
+                        Text(blueprint_code, style="dim cyan"),
+                        title=" [bold yellow]📐 ARCHITECTURAL BLUEPRINT[/] ",
+                        border_style="yellow"
+                    )
+                    thought_group = Group(thought_content, Text("\n"), blueprint_panel)
+                else:
+                    thought_group = thought_content
+        
+                main_layout["thought"].update(Panel(
+                    thought_group,
+                    title=" [bold italic]Thinking Scratchpad[/] ",
+                    border_style=agent_style,
+                    box=box.ROUNDED,
+                    padding=(1, 2)
+                ))
         side_l = Layout()
         side_l.split_column(
             Layout(name="status", size=8),

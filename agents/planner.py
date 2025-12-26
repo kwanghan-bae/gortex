@@ -96,9 +96,10 @@ class PlannerAgent(BaseAgent):
                         }
                     }
                 },
+                "diagram_code": {"type": "STRING"},
                 "handoff_instruction": {"type": "STRING"}
             },
-            "required": ["thought_process", "goal", "steps", "handoff_instruction"]
+            "required": ["thought_process", "goal", "steps", "handoff_instruction", "diagram_code"]
         }
 
         assigned_model = state.get("assigned_model", "gemini-1.5-flash")
