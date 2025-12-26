@@ -120,6 +120,13 @@ def execute_shell(command: str, timeout: int = 300) -> str:
                         with open(req_path, "a") as f:
                             f.write(f"\n{package_name}")
                         logger.info(f"✅ Automatically added '{package_name}' to requirements.txt")
+                        
+                        # [INTEGRITY] 서명 갱신 트리거
+                        try:
+                            from gortex.utils.integrity import guard
+                            guard.generate_master_signature()
+                            logger.info("🛡️ Master system signature refreshed after environment change.")
+                        except Exception: pass
             except Exception as e:
                 logger.warning(f"Failed to update requirements.txt: {e}")
 

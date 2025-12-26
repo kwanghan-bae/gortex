@@ -128,8 +128,38 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             "debate_context": []
         }
 
-    # [Cross-Validation / Peer Review]
-    if state.get("next_node") == "analyst" or state.get("awaiting_review"):
+    # [Cross-Validation / Peer Review / Dependency Healing]
+    if state.get("next_node") == "analyst" or state.get("awaiting_review") or "ImportError" in last_msg:
+        # [NEW] 의존성 누락 감지 및 자동 치유 (v12.0)
+        if "ImportError" in last_msg or "ModuleNotFoundError" in last_msg:
+            # 패키지명 추출 (예: No module named 'numpy' -> numpy)
+            pkg_match = re.search(r"module named '([^']+)'", last_msg)
+            if pkg_match:
+                package_name = pkg_match.group(1)
+                logger.info(f"💊 [Enclosure] Detected missing dependency: {package_name}")
+                
+                # 보안 오디트
+                audit_res = agent.audit_dependency(package_name)
+                if audit_res.get("is_approved"):
+                    msg = f"💊 **의존성 자동 치유**: `{package_name}` 패키지 누락을 감지하여 설치를 시작합니다.\n\n**보안 검수**: {audit_res.get('risk_level')}\n**의견**: {audit_res.get('recommendation')}"
+                    
+                    state["debate_result"] = {
+                        "final_decision": f"Install approved dependency: {package_name}",
+                        "action_plan": [
+                            f"Step 1: execute_shell pip install {package_name}",
+                            f"Step 2: Update requirements.txt",
+                            f"Step 3: Refresh system signature"
+                        ]
+                    }
+                    return {
+                        "messages": [("ai", msg)],
+                        "next_node": "manager",
+                        "debate_result": state["debate_result"],
+                        "agent_energy": energy - 10
+                    }
+                else:
+                    return {"messages": [("ai", f"🛑 **보안 반려**: `{package_name}` 설치가 거부되었습니다. (사유: {audit_res.get('findings')[0]})")], "next_node": "planner"}
+
         ai_outputs = [m for m in state["messages"] if (isinstance(m, tuple) and m[0] == "ai") or (hasattr(m, 'type') and m.type == "ai")]
         if ai_outputs:
             last_ai_msg = ai_outputs[-1][1] if isinstance(ai_outputs[-1], tuple) else ai_outputs[-1].content

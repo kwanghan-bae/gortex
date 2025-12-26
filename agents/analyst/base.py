@@ -718,6 +718,36 @@ class AnalystAgent(BaseAgent):
             logger.error(f"Mentoring package creation failed: {e}")
             return None
 
+    def audit_dependency(self, package_name: str) -> Dict[str, Any]:
+        """설치 제안된 외부 라이브러리의 보안성 및 타당성을 검수함."""
+        logger.info(f"🛡️ Auditing dependency: {package_name}...")
+        
+        prompt = f"""You are the Supply Chain Security Officer. 
+        Evaluate the following Python library for Gortex integration.
+        [Package Name]: {package_name}
+        
+        Analyze:
+        1. Popularity & Reliability (Is it well-maintained?)
+        2. Security Risk (Are there known vulnerabilities or dangerous behaviors?)
+        3. Necessity (Is there a built-in alternative?)
+        
+        Return JSON ONLY:
+        {{
+            "is_approved": true/false,
+            "risk_level": "Low/Medium/High",
+            "findings": ["finding 1", "finding 2"],
+            "recommendation": "Install / Use standard lib / Block"
+        }}
+        """
+        try:
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+        except Exception as e:
+            logger.error(f"Dependency audit failed: {e}")
+            return {"is_approved": False, "risk_level": "High", "findings": [str(e)]}
+
     def evaluate_artifact_value(self, directory: str = "logs") -> List[Dict[str, Any]]:
         """작업 부산물들의 가치를 평가하여 삭제 후보 목록을 생성함."""
         cleanup_candidates = []
