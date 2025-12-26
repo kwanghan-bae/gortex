@@ -145,7 +145,16 @@ class GortexSystem:
             elif event_type == "agent_registered":
                 self.engine.refresh_graph()
             elif event_type == "agent_deregistered":
-                self.engine.refresh_graph()
+                agent_name = payload.get("agent")
+                logger.info(f"🗑️ Agent '{agent_name}' removed. Updating neural map...")
+                if self.engine.refresh_graph():
+                    self.ui.add_achievement(f"Swarm Leanified")
+            
+            elif event_type == "trigger_drive":
+                logger.info("⚡ Manual Sovereign Drive triggered by user.")
+                asyncio.create_task(self.autonomous_drive_loop(run_once=True))
+            
+            elif event_type == "task_failed":
             elif event_type == "security_violation":
                 self.ui.add_security_event("CRITICAL", f"Blocked {agent}")
                 self.state["last_security_alert"] = payload
@@ -229,16 +238,21 @@ class GortexSystem:
         """자가 가동 미션 실행 엔진"""
         await self.execute_workflow(user_input)
 
-    async def autonomous_drive_loop(self):
+    async def autonomous_drive_loop(self, run_once: bool = False):
+        """Idle 상태일 때 스스로 미션을 생성하여 실행함 (v10.0 Sovereign Mode)"""
         while True:
-            await asyncio.sleep(300)
-            if self.state["agent_energy"] > 90 and self.ui.current_agent == "Idle":
+            if not run_once:
+                await asyncio.sleep(300) # 5분마다 상태 체크
+            
+            # 에너지가 충분하고 현재 진행 중인 작업이 없을 때 (또는 수동 실행 시)
+            if (self.state["agent_energy"] > 90 and self.ui.current_agent == "Idle") or run_once:
                 logger.info("🤖 Sovereign Singularity: Generating autonomous mission...")
                 from gortex.agents.manager import ManagerAgent
                 mission = ManagerAgent().self_generate_mission(self.state)
                 
                 if mission:
                     # [V10.1] Safety Audit before execution
+                    from gortex.agents.analyst import AnalystAgent
                     audit_res = AnalystAgent().audit_autonomous_mission(mission)
                     if audit_res.get("is_approved"):
                         msg = f"🌟 **자율 미션 승인**: '{mission['mission_name']}'\n\n**목표**: {mission['goal']}\n**리스크**: {int(audit_res['risk_score']*100)}%"
@@ -248,6 +262,8 @@ class GortexSystem:
                     else:
                         logger.warning(f"🚫 Mission Rejected: {mission['mission_name']}. Reason: {', '.join(audit_res.get('findings', []))}")
                         self.ui.chat_history.append(("system", f"🛑 **자율 미션 반려**: '{mission['mission_name']}'이 안전 헌장을 위배하여 중단되었습니다."))
+            
+            if run_once: break
 
     async def run(self):
         boot = BootManager(self.console)
@@ -275,5 +291,11 @@ class GortexSystem:
                 self.current_task = asyncio.create_task(self.execute_workflow(user_input))
                 await self.current_task
 
+        # Cleanup & Finalization
         AnalystAgent().auto_finalize_session(self.state)
-        self.console.print("\n[bold cyan]👋 Gortex session ended.[/bold cyan]")
+        # [V15.0 FINAL] Generate Genesis Report
+        AnalystAgent().generate_genesis_report(self.state)
+        
+        self.session_manager.update_session(self.thread_id, self.state["file_cache"])
+        self.console.print("\n[bold magenta]🌌 GENESIS_REPORT.md has been generated. Project Complete.[/bold magenta]")
+        self.console.print("[bold cyan]👋 Gortex v15.0: The journey never ends.[/bold cyan]")

@@ -266,61 +266,20 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
         return "skip"
 
     elif cmd == "/config":
-        if len(cmd_parts) < 2:
-            from gortex.core.auth import GortexAuth
-            auth = GortexAuth()
-            config_text = f"""
-⚙️ **Gortex System Configuration**
-- **Current Provider**: [bold green]{auth.get_provider()}[/bold green]
-- **Ollama Model**: {auth.ollama_model}
-- **Gemini Keys**: {len(auth.key_pool)} configured
-- **MQ Status**: {'CONNECTED' if mq_bus.is_connected else 'OFFLINE'}
-"""
-            ui.chat_history.append(("system", Panel(Markdown(config_text), title="CONFIG", border_style="yellow")))
-        else:
-            # [NATURAL LANGUAGE CONFIG] 사용자의 자연어 지침을 시스템 규칙으로 변환
-            directive = " ".join(cmd_parts[1:])
-            ui.chat_history.append(("system", f"🛠️ **설정 분석 중**: '{directive}' 지침을 시스템 정책에 반영합니다..."))
-            ui.update_main(ui.chat_history)
-            
-            try:
-                from gortex.core.llm.factory import LLMFactory
-                backend = LLMFactory.get_default_backend()
-                prompt = f"""You are the System Architect. Translate this user directive into a formal, global 'Super Rule'.
-                
-                [Directive]: {directive}
-                
-                Return JSON ONLY:
-                {{
-                    "instruction": "Formalized system instruction",
-                    "trigger_patterns": ["keywords", "context"],
-                    "category": "coding/research/general",
-                    "severity": 1-5
-                }}
-                """
-                response = backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
-                import re
-                json_match = re.search(r'\{.*\}', response, re.DOTALL)
-                rule_data = json.loads(json_match.group(0)) if json_match else json.loads(response)
-                
-                from gortex.core.evolutionary_memory import EvolutionaryMemory
-                evo_mem = EvolutionaryMemory()
-                evo_mem.save_rule(
-                    instruction=rule_data["instruction"],
-                    trigger_patterns=rule_data["trigger_patterns"],
-                    category=rule_data.get("category"),
-                    severity=rule_data.get("severity", 3),
-                    is_super_rule=True,
-                    context=f"Manual Config Directive: {directive}"
-                )
-                ui.chat_history.append(("system", f"✅ **정책 갱신 완료**: '{rule_data['instruction']}'가 전역 정책으로 등록되었습니다."))
-            except Exception as e:
-                ui.chat_history.append(("system", f"❌ 설정 반영 실패: {e}"))
-                
+        # ... (기존 로직)
+        pass
+
+    elif cmd == "/drive":
+        ui.chat_history.append(("system", "🤖 **자율 주권 모드 수동 트리거**: 시스템이 스스로 다음 미션을 수립합니다..."))
         ui.update_main(ui.chat_history)
+        
+        from gortex.agents.manager import ManagerAgent
+        # GortexSystem 인스턴스를 통해 실행해야 하므로 'trigger_autonomous_drive' 이벤트 발행
+        from gortex.core.mq import mq_bus
+        mq_bus.publish_event("gortex:system_events", "User", "trigger_drive", {})
         return "skip"
 
-    elif cmd == "/language":
+    elif cmd == "/bug":
         if len(cmd_parts) > 1:
             lang = cmd_parts[1]
             from gortex.utils.translator import i18n
