@@ -84,93 +84,26 @@ class GortexMessageBus:
         if self.is_connected:
             self.client.delete(f"gortex:lock:{lock_name}")
 
-    def list_active_workers(self) -> List[Dict[str, Any]]:
-        """가동 중인 모든 원격 워커의 상태 목록을 반환함"""
-        if not self.is_connected:
-            return []
-            
-        workers = []
-        try:
-            keys = self.client.keys("gortex:workers:*")
-            for k in keys:
-                data_str = self.client.get(k)
-                if data_str:
-                    workers.append(json.loads(data_str))
-        except Exception as e:
-            logger.error(f"Failed to list workers: {e}")
-            
-        return workers
-
-    def select_best_worker(self, required_cpu: float = 20.0) -> Optional[str]:
-        """부하 상태를 고려하여 가장 적합한 워커 ID를 선택함"""
-        workers = self.list_active_workers()
-        if not workers:
-            return None
-            
-        # 1. CPU 여유가 있고 태스크 수가 적은 워커 우선 (Score = (100-CPU) - (ActiveTasks * 10))
-        scored_workers = []
-        for w in workers:
-            if w.get("status") != "online": continue
-            
-            score = (100 - w.get("cpu_percent", 0)) - (w.get("active_tasks", 0) * 15)
-            # 메모리 임계치 체크 (90% 이상이면 제외)
-            if w.get("memory_percent", 0) > 90: score -= 100
-            
-            scored_workers.append((score, w["worker_id"]))
-            
-        if not scored_workers: return None
-        
-        # 점수 순 정렬 후 최고 득점 워커 반환
-        scored_workers.sort(key=lambda x: x[0], reverse=True)
-        best_worker = scored_workers[0][1]
-        logger.info(f"⚖️ Load Balancer: Selected {best_worker} (Score: {scored_workers[0][0]:.1f})")
-        return best_worker
-
-    def auction_task(self, node_name: str, state: Dict[str, Any], timeout: int = 5) -> Optional[str]:
-        """분산 군집에 작업을 공고하고 가장 적합한 워커의 ID를 낙찰받음"""
-        if not self.is_connected:
-            return None
-
-        auction_id = str(uuid.uuid4())[:6]
-        bid_channel = f"gortex:bids:{auction_id}"
-        
-        # 1. 입찰 공고 발행
+    # [GALACTIC SWARM] 군집 간 협업 기능
+    def announce_presence(self, swarm_id: str, capabilities: List[str]):
+        """다른 Gortex 군집에게 자신의 존재와 능력을 알림"""
         message = {
-            "auction_id": auction_id,
-            "node": node_name,
-            "complexity": state.get("risk_score", 0.5),
-            "reply_to": bid_channel
+            "swarm_id": swarm_id,
+            "status": "online",
+            "capabilities": capabilities,
+            "timestamp": time.time()
         }
-        
-        pubsub = self.client.pubsub()
-        pubsub.subscribe(bid_channel)
-        
-        self.publish_event("gortex:auctions", "Master", "auction_started", message)
-        logger.info(f"⚖️ Auction started for '{node_name}' (ID: {auction_id})")
-        
-        # 2. 입찰 수집 (짧은 대기 시간)
-        bids = []
+        self.publish_event("gortex:galactic:discovery", "Master", "swarm_online", message)
+
+    def list_remote_swarms(self) -> List[Dict[str, Any]]:
+        """연합된 다른 Gortex 군집 목록 조회"""
+        if not self.is_connected: return []
+        swarms = []
         try:
-            start_time = time.time()
-            while time.time() - start_time < timeout:
-                msg = pubsub.get_message(ignore_subscribe_messages=True, timeout=0.2)
-                if msg:
-                    bid_data = json.loads(msg['data'])
-                    bids.append(bid_data)
-                    # 충분한 입찰이 모이면 조기 종료 가능
-                    if len(bids) >= 3: break
-                time.sleep(0.05)
-        finally:
-            pubsub.unsubscribe(bid_channel)
-            
-        if not bids:
-            return self.select_best_worker() # 폴백: 기존 스케줄러 사용
-            
-        # 3. 최적 입찰자 선정 (부하가 적고 해당 노드 처리에 자신 있는 워커)
-        bids.sort(key=lambda x: x["bid_score"], reverse=True)
-        winner = bids[0]["worker_id"]
-        logger.info(f"🔨 Auction won by {winner} (Score: {bids[0]['bid_score']:.1f})")
-        return winner
+            # 타 스웜의 하트비트/프레즌스 정보 수집 로직 (간소화)
+            pass
+        except Exception: pass
+        return swarms
 
     def call_remote_node(self, node_name: str, state: Dict[str, Any], timeout: int = 120) -> Optional[Dict[str, Any]]:
 

@@ -245,18 +245,25 @@ class GortexSystem:
             "payload": msg.get("payload", {})
         }))
         
-        # [SECURITY ALERTS] 보안 위반 실시간 감시
-        def handle_security(msg):
-            payload = msg.get("payload", {})
-            agent = msg.get("agent", "Unknown")
-            violation = payload.get("violation", "Unknown Policy")
-            
-            self.ui.add_security_event("CRITICAL", f"Blocked {agent}: {violation}")
-            self.ui.chat_history.append(("system", f"🛑 **SECURITY ALERT**: Agent '{agent}' tried to violate policy: {violation}"))
-            # Analyst가 다음에 분석할 수 있도록 저장
-            self.state["last_security_alert"] = payload
-
+        # [SECURITY ALERTS] 보안 위반 실시간 감시 (기존 로직)
         loop.run_in_executor(None, mq_bus.listen, "gortex:security_alerts", handle_security)
+        
+        # [GALACTIC SWARM] 연합 지식 수신 리스너 (v7.5 New)
+        from gortex.core.collaboration import ambassador
+        def handle_galactic_wisdom(msg):
+            if msg.get("type") == "wisdom_shared":
+                payload = msg.get("payload", {})
+                ambassador.integrate_remote_wisdom(msg.get("agent"), payload.get("rules", []))
+                self.ui.add_achievement(f"Galactic Wisdom Integrated")
+
+        loop.run_in_executor(None, mq_bus.listen, "gortex:galactic:wisdom", handle_galactic_wisdom)
+        
+        # 주기적인 자신의 지식 홍보 (1시간마다)
+        async def broadcast_loop():
+            while True:
+                ambassador.broadcast_wisdom("coding")
+                await asyncio.sleep(3600)
+        asyncio.create_task(broadcast_loop())
 
     async def run(self):
         # 1. Boot Sequence
