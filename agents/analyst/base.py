@@ -290,6 +290,48 @@ class AnalystAgent(BaseAgent):
         diagram += "\n  classDef target fill:#f96,stroke:#333,stroke-width:4px;"
         return diagram
 
+    def analyze_workflow_bottlenecks(self) -> List[Dict[str, Any]]:
+        """에이전트 간 협업 매트릭스를 분석하여 비효율적인 워크플로우 패턴을 식별함."""
+        from gortex.core.observer import GortexObserver
+        observer = GortexObserver()
+        matrix = observer.get_collaboration_matrix(limit=1000)
+        
+        bottlenecks = []
+        if not matrix: return []
+        
+        # 1. 핑퐁 현상 감지 (A -> B -> A 반복)
+        for caller, callees in matrix.items():
+            for callee, count in callees.items():
+                if count > 5: # 임계치: 5회 이상 호출
+                    # 역방향 호출 확인
+                    back_count = matrix.get(callee, {}).get(caller, 0)
+                    if back_count > 5:
+                        bottlenecks.append({
+                            "type": "ping_pong",
+                            "agents": [caller, callee],
+                            "severity": "High" if min(count, back_count) > 10 else "Medium",
+                            "reason": f"{caller}와 {callee} 간의 잦은 핑퐁({count}:{back_count})이 감지되었습니다.",
+                            "suggestion": f"{caller}의 페르소나 지침을 강화하여 단번에 해결하도록 개선하거나, 중간 검증 로직을 단순화하십시오."
+                        })
+        
+        # 2. 고부하 노드 감지 (In-degree가 너무 높은 경우)
+        node_load = {}
+        for caller, callees in matrix.items():
+            for callee, count in callees.items():
+                node_load[callee] = node_load.get(callee, 0) + count
+                
+        for node, load in node_load.items():
+            if load > 50: # 과부하 임계치
+                bottlenecks.append({
+                    "type": "hotspot",
+                    "agent": node,
+                    "severity": "Medium",
+                    "reason": f"'{node}' 노드가 시스템 부하의 중심({load} calls)이 되고 있습니다.",
+                    "suggestion": f"'{node}'의 역할을 여러 전문가로 분리(Role Splitting)하여 병렬 처리를 유도하십시오."
+                })
+                
+        return bottlenecks
+
     def evaluate_artifact_value(self, directory: str = "logs") -> List[Dict[str, Any]]:
         """작업 부산물들의 가치를 평가하여 삭제 후보 목록을 생성함."""
         cleanup_candidates = []

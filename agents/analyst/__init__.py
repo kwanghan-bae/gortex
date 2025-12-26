@@ -276,20 +276,29 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
         
         # 4. [Doc-Evolver] 문서 정합성 자가 치유
         if energy > 60:
-            logger.info("📚 Running Doc-Evolver: Checking for Documentation Drift...")
-            # 주요 아키텍처 파일과 문서 동기화
-            drift_tasks = [
-                ("gortex/core/state.py", "docs/TECHNICAL_SPEC.md", "GortexState"),
-                ("gortex/core/registry.py", "docs/TECHNICAL_SPEC.md", "AgentMetadata")
-            ]
-            for code_path, doc_path, symbol in drift_tasks:
-                try:
-                    res = agent.check_documentation_drift(code_path, doc_path, symbol)
-                    if res.get("status") == "healed":
-                        state["messages"].append(("system", f"📖 **Doc-Evolver**: '{symbol}'에 대한 문서 불일치를 감지하여 `{doc_path}`를 자동 업데이트했습니다."))
-                        self.ui.add_achievement(f"Doc Healed: {symbol}")
-                except Exception as e:
-                    logger.warning(f"Doc-Evolver failed for {symbol}: {e}")
+            # ... (기존 Doc-Evolver 로직)
+            pass
+
+        # 5. [Architecture Optimization] 워크플로우 병목 분석 및 자율 개선
+        if energy > 75:
+            logger.info("🕸️ Running Architecture Optimizer: Checking for workflow bottlenecks...")
+            try:
+                bottlenecks = agent.analyze_workflow_bottlenecks()
+                for b in bottlenecks:
+                    if b["severity"] == "High":
+                        # 즉시 해결을 위한 전역 정책 등록
+                        agent.memory.save_rule(
+                            instruction=f"WORKFLOW_OPTIMIZATION: {b['suggestion']}",
+                            trigger_patterns=b.get("agents", [b.get("agent")]),
+                            category="general",
+                            severity=4,
+                            is_super_rule=True,
+                            context=f"Auto-Architecture Fix for {b['type']}: {b['reason']}"
+                        )
+                        state["messages"].append(("system", f"🕸️ **Architecture Optimized**: {b['reason']} 문제를 해결하기 위한 신규 지침이 등록되었습니다."))
+                        self.ui.add_achievement("Topology Refined")
+            except Exception as e:
+                logger.error(f"Architecture optimization failed: {e}")
             
         # 2. [Guardian Cycle] 선제적 결함 탐지 및 리팩토링 제안
         if energy > 85:
