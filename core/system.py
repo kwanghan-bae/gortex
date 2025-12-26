@@ -158,18 +158,18 @@ class GortexSystem:
         if not mq_bus.is_connected:
             return
 
-        from gortex.core.web_api import manager as web_manager
+        from gortex.core.web_api import manager as web_manager, format_event_for_web
         
         def handle_notification(msg):
             event_type = msg.get("type")
             payload = msg.get("payload", {})
             agent = msg.get("agent", "Unknown")
             
-            # [WEB BROADCAST] 실시간 웹 스트리밍
-            asyncio.create_task(web_manager.broadcast(json.dumps(msg, ensure_ascii=False)))
+            # [WEB BROADCAST] 시각화 최적화 포맷으로 전송
+            formatted_msg = format_event_for_web(msg)
+            asyncio.create_task(web_manager.broadcast(json.dumps(formatted_msg, ensure_ascii=False)))
             
-            # [THOUGHT STREAM] 실시간 사고 중계 처리
-            if msg.get("type") == "thought_update":
+            # [THOUGHT STREAM] 실시간 사고 중계 처리 (기존 로직)
                 thought_text = payload.get("text", "")
                 self.ui.update_thought(f"[Distributed] {thought_text}", agent_name=agent)
                 return
