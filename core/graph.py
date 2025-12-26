@@ -104,20 +104,50 @@ async def run_async_node(node_func, state: GortexState) -> Dict[str, Any]:
         logger.error(f"❌ [AsyncWrapper] Failed node {node_name}: {e}")
         raise e
 
-# Async Wrappers
+async def run_remote_node(node_name: str, state: GortexState) -> Dict[str, Any]:
+    """노드를 원격 분산 워커에서 실행하고 결과를 반환함 (v4.0 Alpha)"""
+    from gortex.core.mq import mq_bus
+    logger.info(f"🌐 [RemoteWrapper] Dispatching {node_name} to swarm...")
+    
+    # 1. 원격 호출 (RPC)
+    result = mq_bus.call_remote_node(node_name, dict(state))
+    
+    if result:
+        logger.info(f"✅ [RemoteWrapper] {node_name} returned result from swarm.")
+        return result
+    else:
+        logger.error(f"❌ [RemoteWrapper] {node_name} remote call failed. Falling back to local.")
+        # 폴백 로직: 실패 시 로컬에서 직접 실행 (안전장치)
+        local_funcs = {
+            "manager": manager_node, "planner": planner_node,
+            "coder": coder_node, "analyst": analyst_node
+        }
+        return await run_async_node(local_funcs[node_name], state)
+
+# Async Wrappers (Remote-capable)
 async def async_manager_node(state: GortexState):
+    # 환경변수나 설정을 통해 특정 노드만 원격으로 보낼 수 있음
+    if os.getenv("GORTEX_REMOTE_MANAGER") == "true":
+        return await run_remote_node("manager", state)
     return await run_async_node(manager_node, state)
 
 async def async_planner_node(state: GortexState):
+    if os.getenv("GORTEX_REMOTE_PLANNER") == "true":
+        return await run_remote_node("planner", state)
     return await run_async_node(planner_node, state)
 
 async def async_coder_node(state: GortexState):
+    # 코더는 리소스를 많이 소모하므로 분산 처리에 적합
+    if os.getenv("GORTEX_REMOTE_CODER") == "true":
+        return await run_remote_node("coder", state)
     return await run_async_node(coder_node, state)
 
-async def async_researcher_node(state: GortexState):
+async def async_researcher_node(state: GortexState): 
     return await run_async_node(researcher_node, state)
 
 async def async_analyst_node(state: GortexState):
+    if os.getenv("GORTEX_REMOTE_ANALYST") == "true":
+        return await run_remote_node("analyst", state)
     return await run_async_node(analyst_node, state)
 
 async def async_swarm_node(state: GortexState):

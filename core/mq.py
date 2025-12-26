@@ -52,6 +52,46 @@ class GortexMessageBus:
         else:
             logger.debug(f"[DummyMQ] Enqueued task to {queue_name}")
 
+    def call_remote_node(self, node_name: str, state: Dict[str, Any], timeout: int = 120) -> Optional[Dict[str, Any]]:
+        """원격 노드에 실행을 요청하고 결과를 기다림 (RPC 패턴)"""
+        if not self.is_connected:
+            return None
+
+        request_id = str(uuid.uuid4())[:8]
+        response_channel = f"gortex:resp:{request_id}"
+        
+        message = {
+            "id": request_id,
+            "node": node_name,
+            "state": state,
+            "reply_to": response_channel,
+            "timestamp": time.time()
+        }
+        
+        # 1. 응답 구독 준비
+        pubsub = self.client.pubsub()
+        pubsub.subscribe(response_channel)
+        
+        # 2. 요청 전송
+        self.client.rpush("gortex:node_tasks", json.dumps(message))
+        logger.info(f"📤 Dispatched node '{node_name}' to distributed swarm (Req: {request_id})")
+        
+        # 3. 결과 대기 (Blocking)
+        try:
+            start_time = time.time()
+            while time.time() - start_time < timeout:
+                msg = pubsub.get_message(ignore_subscribe_messages=True, timeout=1.0)
+                if msg:
+                    result_data = json.loads(msg['data'])
+                    logger.info(f"📥 Received response for node '{node_name}' (Req: {request_id})")
+                    return result_data
+                time.sleep(0.1)
+        finally:
+            pubsub.unsubscribe(response_channel)
+            
+        logger.error(f"⌛ Remote node call timed out: {node_name}")
+        return None
+
     def listen(self, channel: str, callback: Callable[[Dict[str, Any]], None]):
         """특정 채널의 메시지를 구독함 (Blocking)"""
         if not self.is_connected:
