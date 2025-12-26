@@ -1,8 +1,6 @@
 import os
 import json
 import logging
-import asyncio
-import shutil
 from datetime import datetime
 from rich.panel import Panel
 from rich.tree import Tree
@@ -10,9 +8,7 @@ from rich.table import Table
 from rich.text import Text
 from rich.markdown import Markdown
 
-from gortex.core.config import GortexConfig
 from gortex.core.observer import GortexObserver
-from gortex.utils.notifier import Notifier
 from gortex.utils.indexer import SynapticIndexer
 from gortex.agents.analyst import AnalystAgent
 from gortex.core.registry import registry
@@ -23,7 +19,9 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
     """모든 슬래시 명령어(/)를 유실 없이 처리합니다."""
     # 입력 정제 강화
     user_input = user_input.strip()
-    if not user_input.startswith("/"): return "pass"
+    logger.info(f"💾 [Command] Handling: {user_input}")
+    if not user_input.startswith("/"):
+        return "pass"
     
     cmd_parts = user_input.split()
     cmd = cmd_parts[0].lower()
@@ -91,8 +89,10 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
             for shard in evo_mem.shards.values():
                 for r in shard:
                     if r["id"] == rule_id:
-                        target_rule = r; break
-                if target_rule: break
+                        target_rule = r
+                        break
+                if target_rule:
+                    break
             
             if not target_rule:
                 ui.chat_history.append(("system", f"❌ 규칙 ID '{rule_id}'를 찾을 수 없습니다."))
@@ -115,7 +115,7 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
                     
                     def add_parents(parent_tree, rule_ids):
                         for p_id in rule_ids:
-                            node = parent_tree.add(f"[dim]{p_id}[/dim]")
+                            parent_tree.add(f"[dim]{p_id}[/dim]")
                             # 재귀적으로 부모 찾기 (여기서는 1단계만 예시, 실제로는 메모리 전체 검색 필요)
                             # 단순화를 위해 ID만 표시하거나, 실제 상위 규칙 검색 로직 추가 가능
                     
@@ -174,8 +174,10 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
     elif cmd == "/map":
         indexer = SynapticIndexer()
         if os.path.exists(indexer.index_path):
-            with open(indexer.index_path, "r", encoding='utf-8') as f: indexer.index = json.load(f)
-        else: indexer.scan_project()
+            with open(indexer.index_path, "r", encoding='utf-8') as f:
+                indexer.index = json.load(f)
+        else:
+            indexer.scan_project()
         proj_map = indexer.generate_map()
         root_tree = Tree("📁 [bold cyan]Gortex Project Map[/bold cyan]")
         for mod_name, info in proj_map["nodes"].items():
@@ -232,18 +234,6 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
 
     elif cmd == "/config":
         return "config_ui"
-        from gortex.core.auth import GortexAuth
-        auth = GortexAuth()
-        config_text = f"""
-⚙️ **Gortex System Configuration**
-- **Current Provider**: [bold green]{auth.get_provider()}[/bold green]
-- **Ollama Model**: {auth.ollama_model}
-- **Gemini Keys**: {len(auth.key_pool)} configured
-- **Config Path**: `{auth._CONFIG_PATH}`
-"""
-        ui.chat_history.append(("system", Panel(Markdown(config_text), title="CONFIG", border_style="yellow")))
-        ui.update_main(ui.chat_history)
-        return "skip"
 
     elif cmd == "/language":
         if len(cmd_parts) > 1:
@@ -256,11 +246,13 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
         return "skip"
 
     elif cmd == "/export":
-        export_dir = "logs/exports"; os.makedirs(export_dir, exist_ok=True)
+        export_dir = "logs/exports"
+        os.makedirs(export_dir, exist_ok=True)
         export_path = f"{export_dir}/session_{thread_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        serializable = [(r, c if isinstance(c, str) else f"[Rich Object]") for r, c in ui.chat_history]
+        serializable = [(r, c if isinstance(c, str) else "[Rich Object]") for r, c in ui.chat_history]
         data = {"thread_id": thread_id, "chat_history": serializable, "file_cache": all_sessions_cache.get(thread_id, {})}
-        with open(export_path, "w", encoding='utf-8') as f: json.dump(data, f, ensure_ascii=False, indent=2)
+        with open(export_path, "w", encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
         ui.chat_history.append(("system", f"✅ Exported: {export_path}"))
         ui.update_main(ui.chat_history)
         return "skip"
@@ -321,7 +313,7 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
                 with open(save_path, "r", encoding='utf-8') as f:
                     data = json.load(f)
                     all_sessions_cache[thread_id] = data
-                ui.chat_history.append(("system", f"📂 세션 상태가 복원되었습니다."))
+                ui.chat_history.append(("system", "📂 세션 상태가 복원되었습니다."))
             except Exception as e:
                 ui.chat_history.append(("system", f"❌ 복원 실패: {e}"))
         else:
@@ -344,7 +336,8 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
             if subcmd in ["explore", "view"]:
                 ui.toggle_memory_mode()
             elif subcmd == "clear":
-                if ui.memory_active: ui.toggle_memory_mode()
+                if ui.memory_active:
+                    ui.toggle_memory_mode()
             else:
                  # 검색 쿼리로 간주
                  query = " ".join(cmd_parts[1:])

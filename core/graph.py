@@ -1,7 +1,8 @@
 import os
+import asyncio
+import logging
 from typing import Dict, Any, Literal
 from langgraph.graph import StateGraph, START, END
-from langgraph.checkpoint.memory import MemorySaver
 
 from gortex.core.state import GortexState
 from gortex.utils.token_counter import count_tokens
@@ -17,16 +18,20 @@ from gortex.agents.evolution_node import evolution_node
 from gortex.utils.memory import summarizer_node
 from gortex.core.persistence import DistributedSaver
 
-import logging
 logger = logging.getLogger("GortexGraph")
 
 def route_manager(state: GortexState) -> Literal["summarizer", "planner", "researcher", "analyst", "optimizer", "swarm", "evolution", "__end__"]:
     """Manager의 결정에 따라 다음 노드로 라우팅."""
     next_node = state.get("next_node", "__end__")
+    logger.info(f"🛣️ [Router] Manager decided next_node: {next_node}")
     if next_node == "__end__":
         return "__end__"
 
     messages = state.get("messages", [])
+    # 메시지가 없는 경우 토큰 계산 및 요약 로직 건너뛰기
+    if not messages:
+        return result_node(next_node)
+
     total_tokens = sum(count_tokens(m.content if hasattr(m, 'content') else str(m)) for m in messages)
     
     # [Dynamic Threshold] 백엔드 타입에 따른 동적 임계값 적용
@@ -38,16 +43,32 @@ def route_manager(state: GortexState) -> Literal["summarizer", "planner", "resea
         logger.info(f"Triggering summarizer (Messages: {len(messages)}, Tokens: {total_tokens})")
         return "summarizer"
         
-    return "evolution" if next_node == "evolution" else next_node
+    # [Safety Breaker] 무한 루프 방지 (최대 25단계)
+    step_count = state.get("step_count", 0)
+    if step_count > 25:
+        logger.warning(f"🛑 [Safety Breaker] Max steps reached ({step_count}). Forcing termination.")
+        return "__end__"
+
+    return result_node(next_node)
+
+def result_node(next_node):
+    result = "evolution" if next_node == "evolution" else next_node
+    logger.info(f"🛣️ [Router] Manager routing to: {result}")
+    return result
 
 def route_after_summary(state: GortexState) -> str:
     """요약 후 원래 가려던 노드로 복귀"""
-    return state.get("next_node", "manager")
+    result = state.get("next_node", "manager")
+    logger.info(f"🛣️ [Router] Summarizer routing back to: {result}")
+    return result
 
 def route_coder(state: GortexState) -> Literal["coder", "analyst", "swarm", "manager"]:
     """Coder 노드의 다음 행방을 결정. 성공, 재시도, 에러, 반복 실패 대응."""
     messages = state.get("messages", [])
-    last_msg = str(messages[-1][1] if isinstance(messages[-1], tuple) else messages[-1].content if hasattr(messages[-1], 'content') else str(messages[-1]))
+    if not messages:
+        last_msg = ""
+    else:
+        last_msg = str(messages[-1][1] if isinstance(messages[-1], tuple) else messages[-1].content if hasattr(messages[-1], 'content') else str(messages[-1]))
     
     # 1. 반복 실패 감지 -> Swarm 집단 지성 요청
     if state.get("coder_iteration", 0) > 3:
@@ -63,21 +84,73 @@ def route_coder(state: GortexState) -> Literal["coder", "analyst", "swarm", "man
     target = state.get("next_node", "coder")
     return target if target in ["coder", "analyst", "manager"] else "coder"
 
+
+# [Hotfix] Sync Node Blocking Prevention
+# 에이전트 내부의 동기식 LLM 호출(requests 등)이 메인 루프를 차단하지 않도록
+# 별도 스레드에서 실행하는 비동기 래퍼를 적용합니다.
+
+async def run_async_node(node_func, state: GortexState) -> Dict[str, Any]:
+    node_name = node_func.__name__
+    logger.info(f"🔄 [AsyncWrapper] Starting node: {node_name}")
+    try:
+        # [Safety Breaker] 실행 단계 카운트 증가
+        state["step_count"] = state.get("step_count", 0) + 1
+        
+        loop = asyncio.get_running_loop()
+        result = await loop.run_in_executor(None, node_func, state)
+        logger.info(f"✅ [AsyncWrapper] Finished node: {node_name} (Step: {state['step_count']})")
+        return result
+    except Exception as e:
+        logger.error(f"❌ [AsyncWrapper] Failed node {node_name}: {e}")
+        raise e
+
+# Async Wrappers
+async def async_manager_node(state: GortexState):
+    return await run_async_node(manager_node, state)
+
+async def async_planner_node(state: GortexState):
+    return await run_async_node(planner_node, state)
+
+async def async_coder_node(state: GortexState):
+    return await run_async_node(coder_node, state)
+
+async def async_researcher_node(state: GortexState):
+    return await run_async_node(researcher_node, state)
+
+async def async_analyst_node(state: GortexState):
+    return await run_async_node(analyst_node, state)
+
+async def async_swarm_node(state: GortexState):
+    return await run_async_node(swarm_node, state)
+
+async def async_trend_scout_node(state: GortexState):
+    return await run_async_node(trend_scout_node, state)
+
+async def async_summarizer_node(state: GortexState):
+    return await run_async_node(summarizer_node, state)
+
+async def async_optimizer_node(state: GortexState):
+    return await run_async_node(optimizer_node, state)
+
+async def async_evolution_node(state: GortexState):
+    return await run_async_node(evolution_node, state)
+
+
 def compile_gortex_graph(checkpointer=None):
     """Gortex 시스템의 모든 에이전트를 연결하여 그래프 컴파일"""
     workflow = StateGraph(GortexState)
 
-    # 노드 추가
-    workflow.add_node("manager", manager_node)
-    workflow.add_node("planner", planner_node)
-    workflow.add_node("coder", coder_node)
-    workflow.add_node("researcher", researcher_node)
-    workflow.add_node("analyst", analyst_node)
-    workflow.add_node("swarm", swarm_node)
-    workflow.add_node("trend_scout", trend_scout_node)
-    workflow.add_node("summarizer", summarizer_node)
-    workflow.add_node("optimizer", optimizer_node)
-    workflow.add_node("evolution", evolution_node)
+    # 노드 추가 (비동기 래퍼 적용)
+    workflow.add_node("manager", async_manager_node)
+    workflow.add_node("planner", async_planner_node)
+    workflow.add_node("coder", async_coder_node)
+    workflow.add_node("researcher", async_researcher_node)
+    workflow.add_node("analyst", async_analyst_node)
+    workflow.add_node("swarm", async_swarm_node)
+    workflow.add_node("trend_scout", async_trend_scout_node)
+    workflow.add_node("summarizer", async_summarizer_node)
+    workflow.add_node("optimizer", async_optimizer_node)
+    workflow.add_node("evolution", async_evolution_node)
 
     # 엣지 연결
     workflow.add_edge(START, "manager")
@@ -142,4 +215,4 @@ def compile_gortex_graph(checkpointer=None):
         return workflow.compile(checkpointer=checkpointer)
     else:
         # v3.0 표준: 실시간 복제를 지원하는 분산형 체크포인터 사용
-        return workflow.compile(checkpointer=DistributedSaver())
+        return workflow.compile(checkpointer=DistributedSaver)

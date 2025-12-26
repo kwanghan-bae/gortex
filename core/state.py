@@ -26,6 +26,7 @@ class GortexState(TypedDict):
     assigned_model: str      # Manager가 할당한 모델 ID (예: gemini-1.5-pro)
     assigned_persona: str    # 현재 작업 맥락에 최적화된 에이전트 페르소나 (standard, innovation 등)
     coder_iteration: int     # Coder 무한 루프 방지용 카운터 (최대 30)
+    step_count: int          # 전체 그래프 실행 단계 카운터 (무한 루프 방지용)
     
     # 5. Advanced Memory & Evolution (기억 및 진화)
     history_summary: str     # 컨텍스트 압축 요약본

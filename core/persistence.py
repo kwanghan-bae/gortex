@@ -51,7 +51,8 @@ class DistributedSaver(BaseCheckpointSaver):
             # 원자적 쓰기 시도 (임시 파일 후 교체)
             tmp_path = self.mirror_path + ".tmp"
             with open(tmp_path, 'w', encoding='utf-8') as f:
-                json.dump(serializable_state, f, ensure_ascii=False, indent=2)
+                # [Fix] default=str 추가: _make_serializable이 놓친 객체(예: Runtime)도 문자열로 강제 변환하여 크래시 방지
+                json.dump(serializable_state, f, ensure_ascii=False, indent=2, default=str)
             os.replace(tmp_path, self.mirror_path)
             
         except Exception as e:
@@ -81,11 +82,11 @@ class DistributedSaver(BaseCheckpointSaver):
             logger.info("📡 Primary state lost or empty. Recovering from mirror...")
             try:
                 with open(self.mirror_path, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
+                    _ = json.load(f)
                 # 데이터 정합성 확인 후 CheckpointTuple 재구성 (단순화)
                 # 실제 운영 시에는 더 정교한 타입 변환이 필요할 수 있음
                 return None # (추후 실제 복구 객체 생성 로직 추가)
-            except:
+            except Exception:
                 return None
         return None
 
@@ -118,6 +119,10 @@ class DistributedSaver(BaseCheckpointSaver):
 
     def _make_serializable(self, data: Any) -> Any:
         """데이터를 JSON 직렬화 가능한 형태로 재귀적 변환 (BaseMessage 등 처리)"""
+        # [Scalar] 기본 타입은 그대로 반환 (가장 빈번하므로 최상단 배치)
+        if data is None or isinstance(data, (str, int, float, bool)):
+            return data
+            
         if isinstance(data, dict):
             return {k: self._make_serializable(v) for k, v in data.items()}
         elif isinstance(data, ChainMap):
@@ -130,4 +135,10 @@ class DistributedSaver(BaseCheckpointSaver):
             return {"type": data.type, "content": data.content}
         elif hasattr(data, "__dict__"):
             return str(data) # 객체는 문자열 표현으로 저장 (필요시 __dict__ 직렬화로 고도화)
-        return data
+        
+        # [Fallback] 위에 해당하지 않는 모든 타입(Runtime, SystemObject 등)은 문자열로 변환하여 저장
+        # 이렇게 하면 직렬화 에러로 시스템이 멈추는 것을 방지할 수 있습니다.
+        try:
+            return str(data)
+        except Exception:
+            return f"<Unserializable: {type(data).__name__}>"

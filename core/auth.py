@@ -44,7 +44,8 @@ class APIKeyInfo:
     error_log: List[str] = None
 
     def __post_init__(self):
-        if self.error_log is None: self.error_log = []
+        if self.error_log is None:
+            self.error_log = []
 
 class GortexAuth:
     """
@@ -143,21 +144,23 @@ class GortexAuth:
 
     def check_ollama_connection(self) -> bool:
         """Ollama 서버 연결 상태 확인"""
-        if requests is None: return False
+        if requests is None:
+            return False
         try:
             resp = requests.get(f"{self.ollama_base_url}/api/tags", timeout=2)
             return resp.status_code == 200
-        except:
+        except Exception:
             return False
 
     def list_ollama_models(self) -> List[str]:
         """설치된 Ollama 모델 목록 반환"""
-        if requests is None: return []
+        if requests is None:
+            return []
         try:
             resp = requests.get(f"{self.ollama_base_url}/api/tags", timeout=2)
             if resp.status_code == 200:
                 return [m['name'] for m in resp.json().get('models', [])]
-        except:
+        except Exception:
             pass
         return []
 
@@ -295,7 +298,8 @@ class GortexAuth:
             if self.key_pool:
                 for _ in range(len(self.key_pool) * 2):
                     key_info = self._get_available_gemini_key()
-                    if not key_info: break
+                    if not key_info:
+                        break
                     try:
                         res = key_info.client.models.generate_content(model=model_id, contents=contents, config=config)
                         self.report_key_success(key_info)
@@ -365,39 +369,29 @@ class GortexAuth:
                         model_found = True
                         break
                 
-                # 모델을 찾지 못한 경우 (Interactive Pull)
+                # 모델을 찾지 못한 경우 (Non-interactive only)
                 if not model_found:
                     primary_candidate = candidates[0]
-                    print(f"\n⚠️  Local model '{primary_candidate}' required for role '{model_id}' is missing.")
+                    logger.warning(f"⚠️ Local model '{primary_candidate}' required for role '{model_id}' is missing.")
                     
-                    # Auto-Approve check
+                    # Auto-Approve check (환경변수 기반으로만 동작, input() 제거)
+                    should_pull = False
                     if os.getenv("GORTEX_AUTO_APPROVE", "false").lower() == "true":
-                        should_pull = "y"
-                        print(f"🤖 Auto-approving pull request for '{primary_candidate}' (GORTEX_AUTO_APPROVE=true)")
-                    elif os.getenv("GORTEX_CI", "false").lower() == "true":
-                        should_pull = "n"
-                        print(f"🤖 Skipping pull request for '{primary_candidate}' (GORTEX_CI=true)")
-                    else:
-                        # CLI 환경에서 사용자 입력 요청 (기본값 'n')
-                        try:
-                            should_pull = input(f"⬇️  Do you want to pull '{primary_candidate}' via Ollama now? [y/N]: ").strip().lower()
-                        except (EOFError, KeyboardInterrupt):
-                            should_pull = "n"
-
-                    if should_pull in ["", "y", "yes"]:
-                        print(f"⏳ Pulling {primary_candidate}... (This may take a while)")
+                        should_pull = True
+                        logger.info(f"🤖 Auto-approving pull request for '{primary_candidate}'")
+                    
+                    if should_pull:
+                        logger.info(f"⏳ Pulling {primary_candidate}... (Non-interactive)")
                         try:
                             import subprocess
-                            # ollama pull 명령어 실행 (스트리밍 출력)
                             subprocess.run(["ollama", "pull", primary_candidate], check=True)
-                            print(f"✅ Successfully pulled {primary_candidate}!")
+                            logger.info(f"✅ Successfully pulled {primary_candidate}!")
                             target_model = primary_candidate
                         except Exception as e:
                             logger.error(f"Failed to pull model: {e}")
-                            print(f"❌ Pull failed. Falling back to default '{self.ollama_model}'.")
                             target_model = self.ollama_model
                     else:
-                        logger.warning(f"User skipped pulling {primary_candidate}. Using default.")
+                        logger.warning(f"Skipping pull for {primary_candidate}. Using default model '{self.ollama_model}'.")
                         target_model = self.ollama_model
 
         except Exception as e:
