@@ -193,8 +193,21 @@ class SwarmAgent:
         return responses
 
     def synthesize_consensus(self, topic: str, history: List[Dict[str, str]], is_debug: bool = False) -> Dict[str, Any]:
-        """토론 히스토리를 종합하여 최종 합의(Consensus) 도출"""
-        context_str = "\n".join([f"[{m['role'].upper()}]: {m['content']}" for m in history])
+        """토론 히스토리를 종합하여 최종 합의(Consensus) 도출 (가중 투표 반영)"""
+        # [REPUTATION WEIGHTS] 각 참가자의 투표권 계산
+        from gortex.utils.economy import get_economy_manager
+        eco_manager = get_economy_manager()
+        
+        weighted_history = []
+        for msg in history:
+            agent_name = msg.get("role")
+            # 가상의 페르소나(innovation 등)는 기본 가중치 1.0, 실제 에이전트는 평판 반영
+            power = 1.0
+            # participants 리스트에서 실제 에이전트 이름 매칭 확인 (간소화된 로직)
+            power = eco_manager.get_voting_power({}, agent_name) if agent_name else 1.0
+            weighted_history.append(f"[{msg['role'].upper()} (Influence: {power})]: {msg['content']}")
+
+        context_str = "\n".join(weighted_history)
         
         role_title = "Debate Moderator" if not is_debug else "Chief System Surgeon"
         format_hint = "JSON format"
@@ -203,7 +216,8 @@ class SwarmAgent:
         Your goal is to establish a 'Joint Diagnosis & Fix Plan'.
         Provide a concrete 'unified_rule' if this is a recurring technical pattern.
         The 'action_plan' MUST be a list of technical steps for the Coder agent.
-        """ if is_debug else ""
+        IMPORTANT: Heavily weight the arguments from agents with higher 'Influence' scores.
+        """ if is_debug else "IMPORTANT: Heavily weight the arguments from agents with higher 'Influence' scores."
 
         prompt = f"""You are the {role_title}.
         Synthesize the following debate into a final consensus decision.
@@ -216,7 +230,7 @@ class SwarmAgent:
         Output strictly in {format_hint}:
         {{
             "final_decision": "Selected approach or compromise",
-            "rationale": "Key reasons for this decision",
+            "rationale": "Key reasons for this decision (mention influence weights if applicable)",
             "unified_rule": {{
                 "instruction": "The single authoritative instruction to prevent this in future",
                 "trigger_patterns": ["pattern1", "pattern2"],
@@ -226,7 +240,7 @@ class SwarmAgent:
             "tradeoffs": [
                 {{ "aspect": "performance/safety/etc", "gain": "...", "loss": "..." }}
             ],
-            "action_plan": ["Step 1: apply_patch to file X", "Step 2: run execute_shell test Y"]
+            "action_plan": ["Step 1: ...", "Step 2: ..."]
         }}
         """
         

@@ -143,5 +143,23 @@ class EconomyManager:
             self.initialize_agent(economy, agent_name)
         return economy[agent_id].get("points", 0) >= self.pro_threshold
 
+    def get_voting_power(self, state: GortexState, agent_name: str) -> float:
+        """에이전트의 평판과 숙련도에 기반한 투표권(영향력) 계산"""
+        economy = state.get("agent_economy", {})
+        agent_id = agent_name.lower()
+        if agent_id not in economy: return 1.0 # 기본 가중치
+        
+        data = economy[agent_id]
+        # 기본 점수 기반 (100점당 0.1 가중치)
+        base_power = 1.0 + (data.get("points", 0) / 1000.0)
+        
+        # 레벨 보너스
+        level_multipliers = {
+            "Bronze": 1.0, "Silver": 1.2, "Gold": 1.5, "Diamond": 2.0
+        }
+        multiplier = level_multipliers.get(data.get("level", "Bronze"), 1.0)
+        
+        return round(base_power * multiplier, 2)
+
 def get_economy_manager() -> EconomyManager:
     return EconomyManager()
