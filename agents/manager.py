@@ -62,7 +62,12 @@ class ManagerAgent(BaseAgent):
             is_recovery = state.get("is_recovery_mode", False)
             is_guardian = state.get("is_guardian_mode", False)
             
+            # [VISUAL] 시각적 이슈 여부 판단
+            is_visual = "👁️" in str(state.get("messages", [])) or "image:" in str(state.get("current_issue", ""))
+            
             mode_title = "🩺 **긴급 복구 모드 활성화**" if is_recovery else "🛡️ **선제적 가디언 모드 활성화**"
+            if is_visual: mode_title = "🎨 **UI/UX 시각 복구 활성화**"
+            
             mode_desc = "Swarm 합의안" if not is_guardian else "가디언 최적화 안"
             
             # [GIT] 자율 브랜치 생성
@@ -99,6 +104,7 @@ class ManagerAgent(BaseAgent):
                 "debate_result": None, 
                 "is_recovery_mode": is_recovery,
                 "is_guardian_mode": is_guardian,
+                "is_visual_recovery": is_visual,
                 "active_branch": new_branch,
                 "messages": [("ai", f"{mode_title}: {mode_desc}에 따라 코드 개선을 시작합니다.{git_msg}\n\n**목표**: {debate_res.get('final_decision')}")]
             }

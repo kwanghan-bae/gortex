@@ -139,11 +139,17 @@ class CoderAgent(BaseAgent):
         elif action == "list_files": tool_output = list_files(target)
         
         from gortex.utils.prompt_loader import loader
+        
+        # [VISUAL FEEDBACK] 시각적 분석 결과가 있다면 지침에 포함
+        visual_context = ""
+        if state.get("awaiting_visual_diagnosis") is False and "시각 분석 결과" in str(state.get("messages", [])):
+            visual_context = "\n\n[VISUAL FEEDBACK FROM ANALYST]\n" + str(state["messages"][-1][1])
+
         base_instruction = loader.get_prompt(
             "coder", 
             persona_id=state.get("assigned_persona", "standard"),
             current_step_json=json.dumps(current_step, ensure_ascii=False, indent=2),
-            tool_output=tool_output or "(N/A)",
+            tool_output=(tool_output or "(N/A)") + visual_context,
             handoff_instruction=state.get("handoff_instruction", "")
         )
 

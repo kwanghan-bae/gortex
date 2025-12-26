@@ -152,6 +152,21 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
                 else:
                     state["messages"].append(("system", f"✅ [Peer Review Approved] {review_res.get('comment')} (Score: {review_res.get('score')})"))
 
+            # [VISUAL VERIFICATION] 시각적 복구 모드인 경우 재캡처 및 검증
+            if state.get("is_visual_recovery"):
+                from gortex.utils.multimodal import capture_ui_screenshot
+                new_screenshot = capture_ui_screenshot()
+                logger.info(f"📸 Visual verification: Captured new state at {new_screenshot}")
+                
+                analysis_msg = f"시각적 복구 작업이 완료되었습니다. 이전 결함이 해결되었는지 다음 새 스크린샷을 분석하라. image:{new_screenshot}"
+                return {
+                    "messages": [("ai", "👁️ **시각적 최종 검증 시작**: 수정 후의 화면 상태를 분석 중입니다.")],
+                    "next_node": "analyst",
+                    "handoff_instruction": analysis_msg,
+                    "awaiting_visual_diagnosis": True,
+                    "is_visual_recovery": False # 검증 진입 시 모드 해제 (결과에 따라 재설정)
+                }
+
             from gortex.utils.economy import get_economy_manager
             eco_manager = get_economy_manager()
             target_agent = state.get("review_target_agent", "Coder")
