@@ -182,9 +182,8 @@ class SwarmAgent:
         """
         
         config = {}
-        if self.backend.supports_structured_output():
-            from google.genai import types
-            config = types.GenerateContentConfig(response_mime_type="application/json")
+        # Structured output hint for LLM
+        config["response_mime_type"] = "application/json"
 
         try:
             response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], config)
