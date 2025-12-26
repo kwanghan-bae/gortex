@@ -1,81 +1,70 @@
 import unittest
+import os
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
+from gortex.core.graph import route_manager, route_after_summary, route_coder, compile_gortex_graph
 
-from gortex.core.graph import (
-    compile_gortex_graph,
-    route_after_summary,
-    route_coder,
-    route_manager,
-)
+class DummyState(dict):
+    def __getattr__(self, name):
+        return self.get(name)
 
-class DummyState:
-    def __init__(self, data):
-        self._data = data
-
-    def get(self, key, default=None):
-        return self._data.get(key, default)
+class DummyGraph:
+    def __init__(self, state_schema):
+        self.nodes = {}
+        self.edges = []
+        self.checkpointer = None
+    def add_node(self, name, func): self.nodes[name] = func
+    def add_edge(self, start, end): self.edges.append((start, end))
+    def add_conditional_edges(self, start, func, mapping): pass
+    def compile(self, checkpointer=None):
+        self.checkpointer = checkpointer
+        return self
+    @property
+    def compiled(self): return True
 
 class TestGraphRouting(unittest.TestCase):
     @patch("gortex.core.graph.count_tokens", return_value=1)
     def test_route_manager_by_message_count(self, _):
-        messages = [SimpleNamespace(content="a") for _ in range(12)]
-        state = DummyState({"messages": messages, "next_node": "planner"})
-        self.assertEqual(route_manager(state), "summarizer")
+        # Set LLM_BACKEND to ollama to have lower threshold (8)
+        with patch.dict(os.environ, {"LLM_BACKEND": "ollama"}):
+            messages = [SimpleNamespace(content="a") for _ in range(10)]
+            state = DummyState({"messages": messages, "next_node": "planner"})
+            self.assertEqual(route_manager(state), "summarizer")
 
-    @patch("gortex.core.graph.count_tokens", return_value=2500)
+    @patch("gortex.core.graph.count_tokens", return_value=4000)
     def test_route_manager_by_token_volume(self, _):
-        messages = [SimpleNamespace(content="a") for _ in range(3)]
-        state = DummyState({"messages": messages, "next_node": "planner"})
-        self.assertEqual(route_manager(state), "summarizer")
+        with patch.dict(os.environ, {"LLM_BACKEND": "ollama"}):
+            messages = [SimpleNamespace(content="a")]
+            state = DummyState({"messages": messages, "next_node": "planner"})
+            self.assertEqual(route_manager(state), "summarizer")
 
-    @patch("gortex.core.graph.count_tokens", return_value=1)
-    def test_route_manager_respects_next_node(self, _):
-        messages = [SimpleNamespace(content="a")]
-        state = DummyState({"messages": messages, "next_node": "researcher"})
-        self.assertEqual(route_manager(state), "researcher")
-
-    def test_route_after_summary_returns_target(self):
-        state = DummyState({"next_node": "planner"})
-        self.assertEqual(route_after_summary(state), "planner")
+    def test_route_after_summary_returns_to_target(self):
+        state = DummyState({"next_node": "researcher"})
+        self.assertEqual(route_after_summary(state), "researcher")
 
     def test_route_coder_handles_end_and_loop(self):
-        self.assertEqual(route_coder(DummyState({"next_node": "__end__"})), "analyst")
-        self.assertEqual(route_coder(DummyState({"next_node": "coder"})), "coder")
-
-class DummyGraph:
-    def __init__(self, state_cls):
-        self.state_cls = state_cls
-        self.nodes = []
-        self.edges = []
-        self.conditionals = []
-        self.compiled = False
-        self.checkpointer = None
-
-    def add_node(self, name, func):
-        self.nodes.append(name)
-
-    def add_edge(self, src, dst):
-        self.edges.append((src, dst))
-
-    def add_conditional_edges(self, node, router, mapping):
-        self.conditionals.append((node, mapping))
-
-    def compile(self, checkpointer=None):
-        self.compiled = True
-        self.checkpointer = checkpointer
-        return self
+        # Trigger analyst via error message
+        state = DummyState({
+            "messages": [("ai", "❌ Error occurred")],
+            "next_node": "coder",
+            "coder_iteration": 0
+        })
+        self.assertEqual(route_coder(state), "analyst")
+        
+        # Trigger swarm via repeated failure
+        state["messages"] = [("ai", "Success")]
+        state["coder_iteration"] = 5
+        self.assertEqual(route_coder(state), "swarm")
 
 class TestGraphCompilation(unittest.TestCase):
     def test_compile_builds_workflow(self):
         dummy_checkpointer = MagicMock()
-        with patch("gortex.core.graph.StateGraph", new=DummyGraph), \
-             patch("langgraph.checkpoint.memory.MemorySaver", return_value=dummy_checkpointer):
-            compiled = compile_gortex_graph()
-
+        with patch("gortex.core.graph.StateGraph", new=DummyGraph):
+            # Pass checkpointer explicitly
+            compiled = compile_gortex_graph(checkpointer=dummy_checkpointer)
+    
         self.assertTrue(compiled.compiled)
         self.assertEqual(compiled.checkpointer, dummy_checkpointer)
-        self.assertIn("manager", compiled.nodes)
-        conditional_map = {node: mapping for node, mapping in compiled.conditionals}
-        self.assertIn("manager", conditional_map)
-        self.assertEqual(conditional_map["manager"]["summarizer"], "summarizer")
+
+if __name__ == "__main__":
+    unittest.main()

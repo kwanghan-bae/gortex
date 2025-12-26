@@ -138,15 +138,10 @@ class EconomyManager:
     def can_use_pro_model(self, state: GortexState, agent_name: str) -> bool:
         """에이전트가 고성능 모델을 사용할 자격이 있는지 확인"""
         economy = state.get("agent_economy", {})
-<<<<<<< HEAD
         agent_id = agent_name.lower()
-        if agent_id not in economy: return False
-        return economy[agent_id]["points"] >= self.pro_threshold
-=======
-        if agent_name not in economy:
+        if agent_id not in economy:
             return False
-        return economy[agent_name]["points"] >= self.pro_threshold
->>>>>>> origin/main
+        return economy[agent_id]["points"] >= self.pro_threshold
 
 def get_economy_manager() -> EconomyManager:
     return EconomyManager()

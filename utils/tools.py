@@ -227,12 +227,12 @@ def scan_security_risks(code: str) -> List[Dict[str, str]]:
     """생성된 코드 내의 보안 취약점 패턴 스캔"""
     risks = []
     patterns = [
-        (r"(?i)(password|passwd|secret|api_key|token)\s*=\s*['"]\S+['"]", "Hardcoded Secret"),
-        (r"eval\(", "Dangerous function: eval()") ,
-        (r"exec\(", "Dangerous function: exec()") ,
-        (r"os\.system\(", "Dangerous function: os.system()") ,
-        (r"subprocess\.Popen\(.*shell=True", "Subprocess with shell=True") ,
-        (r"cursor\.execute\(f?['"].*\{.*}", "Potential SQL Injection")
+        (r'''(?i)(password|passwd|secret|api_key|token)\s*=\s*['"].*['"]''', "Hardcoded Secret"),
+        (r"eval\(", "Dangerous function: eval()"),
+        (r"exec\(", "Dangerous function: exec()"),
+        (r"os\.system\(", "Dangerous function: os.system()"),
+        (r"subprocess\.Popen\(.*shell=True", "Subprocess with shell=True"),
+        (r'''cursor\.execute\(f?['"].*\{.*}''', "Potential SQL Injection")
     ]
     for pattern, risk_type in patterns:
         if re.search(pattern, code):
@@ -326,8 +326,7 @@ def repair_and_load_json(text: str) -> Dict[str, Any]:
         json_str = match.group(0)
     else:
         # 괄호가 쌍으로 안 맞아도 일단 시작점부터 끝까지 시도
-        match_start = re.search(r"(\{|\[).
-*", clean_text, re.DOTALL)
+        match_start = re.search(r"(\{|\[).*", clean_text, re.DOTALL)
         json_str = match_start.group(0) if match_start else clean_text
 
     # 3. 홑따옴표를 쌍따옴표로 먼저 변환 (흔한 오류)
