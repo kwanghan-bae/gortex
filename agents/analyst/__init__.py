@@ -429,19 +429,30 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             # ...
             pass
 
-        # 11. [Neural Seeding] 지능 아카이빙 및 영속성 확보
+        # 11. [Neural Seeding] (기존 로직)
         if energy > 95:
-            maturity = agent.calculate_system_maturity(state)
-            if maturity["score"] > 90:
-                logger.info("🌌 Running Neural Seeding: Archiving global intelligence...")
-                try:
-                    from gortex.utils.archiver import archiver
-                    seed_path = archiver.create_neural_seed(maturity.get("grade", "Elite"))
-                    if seed_path:
-                        state["messages"].append(("system", f"🌌 **뉴럴 시딩 완료**: 현재 시스템의 모든 지능을 `{os.path.basename(seed_path)}`에 봉인하여 영구 보존합니다."))
-                        self.ui.add_achievement("Intelligence Immortalized")
-                except Exception as e:
-                    logger.error(f"Neural Seeding failed: {e}")
+            # ...
+            pass
+
+        # 12. [Chaos Engineering] 자율 카오스 테스트 및 부활 (v13.0 New)
+        if energy > 99: # 에너지가 충만할 때만 단련 시도
+            logger.info("🔥 Running Neural Chaos: Testing system antifragility...")
+            try:
+                from gortex.utils.chaos import chaos
+                fault = chaos.inject_random_fault()
+                if fault["type"] != "none":
+                    msg = f"🔥 **카오스 엔진 가동**: 시스템의 강건함을 테스트하기 위해 '{fault['type']}' 결함을 주입했습니다.\n\n**대상**: {fault['target']}\n**목표**: 자율 부활(Resurrection) 능력 검증"
+                    state["messages"].append(("system", msg))
+                    self.ui.add_achievement("Chaos Initiated")
+                    # 즉시 복구 모드 활성화
+                    return {
+                        "messages": [("ai", "🩺 **부활 루프(Resurrection) 가동**: 주입된 결함을 감지하고 자율 수복을 시작합니다.")],
+                        "next_node": "analyst", # 원인 분석을 위해 다시 분석
+                        "is_recovery_mode": True,
+                        "current_issue": f"Chaos Injection: {fault['type']} at {fault['target']}"
+                    }
+            except Exception as e:
+                logger.error(f"Chaos injection failed: {e}")
             
         # 2. [Guardian Cycle] 선제적 결함 탐지 및 리팩토링 제안
         if energy > 85:
