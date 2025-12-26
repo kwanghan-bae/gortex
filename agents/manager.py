@@ -30,6 +30,41 @@ class ManagerAgent(BaseAgent):
             version="3.0.0"
         )
 
+    def self_generate_mission(self, state: GortexState) -> Dict[str, Any]:
+        """시스템 상태와 지식 맵을 분석하여 스스로 다음 미션을 수립함."""
+        from gortex.utils.tech_radar import radar
+        from gortex.utils.knowledge_graph import KnowledgeGraph
+        
+        kg = KnowledgeGraph()
+        kg.build_from_system()
+        
+        prompt = f"""You are the Sovereign Strategist of Gortex. 
+        Based on the current intelligence map and tech radar, define the next CRITICAL MISSION for this swarm.
+        Focus on self-improvement, architecture scaling, or solving complex engineering gaps.
+        
+        [Current Intelligence Graph]:
+        {kg.generate_summary()}
+        
+        [Tech Radar Strategic Advice]:
+        {radar.get_strategic_advice()}
+        
+        Return JSON ONLY:
+        {{
+            "mission_name": "Unique Mission ID",
+            "goal": "Self-assigned objective",
+            "rationale": "Why this mission is important now",
+            "assigned_persona": "innovation/stability/etc"
+        }}
+        """
+        try:
+            response_text = self.backend.generate("gemini-2.0-flash", [{"role": "user", "content": prompt}], {"response_mime_type": "application/json"})
+            import re
+            json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+            return json.loads(json_match.group(0)) if json_match else json.loads(response_text)
+        except Exception as e:
+            logger.error(f"Self-mission generation failed: {e}")
+            return None
+
     def run(self, state: GortexState) -> Dict[str, Any]:
         log_search = SemanticLogSearch()
         translator = SynapticTranslator()

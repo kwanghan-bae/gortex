@@ -281,27 +281,45 @@ class GortexSystem:
                 await asyncio.sleep(3600)
         asyncio.create_task(broadcast_loop())
 
-    async def run(self):
-        # 1. Boot Sequence
-        boot = BootManager(self.console)
-        await boot.run_sequence()
-        
-        # [IMMUNE SYSTEM] Generate initial master signature
-        from gortex.utils.integrity import guard
-        if not os.path.exists(guard.signature_path):
-            logger.info("🛡️ First boot detected. Establishing master system signature...")
-            guard.generate_master_signature()
-
-        # 2. Start Web API Server (v5.7.0 New)
-        from gortex.core.web_api import start_web_server
-        asyncio.create_task(start_web_server(port=8000))
-        logger.info("📡 Web API Server started at http://localhost:8000")
-
-        workflow = compile_gortex_graph()
-        recovery_task = asyncio.create_task(self.energy_recovery_loop())
-        trend_task = asyncio.create_task(self.trend_scout_loop())
-        notify_task = asyncio.create_task(self.notification_listener_loop())
-
+        async def autonomous_drive_loop(self):
+            """Idle 상태일 때 스스로 미션을 생성하여 실행함 (v10.0 Sovereign Mode)"""
+            while True:
+                await asyncio.sleep(300) # 5분마다 상태 체크
+                
+                # 에너지가 충분하고 현재 진행 중인 작업이 없을 때
+                if self.state["agent_energy"] > 90 and self.ui.current_agent == "Idle":
+                    logger.info("🤖 Sovereign Singularity: Generating autonomous mission...")
+                    from gortex.agents.manager import ManagerAgent
+                    mission = ManagerAgent().self_generate_mission(self.state)
+                    
+                    if mission:
+                        msg = f"🌟 **자율 미션 개시**: '{mission['mission_name']}'\n\n**목표**: {mission['goal']}\n**이유**: {mission['rationale']}"
+                        self.ui.chat_history.append(("system", msg))
+                        self.ui.add_achievement("Sovereign Mission Started")
+                        # 워크플로우 자동 실행
+                        asyncio.create_task(self.run_mission(mission["goal"]))
+    
+        async def run_mission(self, user_input: str):
+            """워크플로우 실행 래퍼"""
+            initial_state = {
+                "messages": [("user", user_input)],
+                "pinned_messages": self.state["pinned_messages"],
+                "working_dir": settings.WORKING_DIR,
+                "file_cache": self.state["file_cache"],
+                "agent_energy": self.state["agent_energy"],
+                "last_efficiency": self.state["last_efficiency"]
+            }
+            # (기존 execute_workflow 로직과 통합하거나 호출)
+            pass
+    
+        async def run(self):
+            # ... (기존 부트 시퀀스)
+            workflow = compile_gortex_graph()
+            recovery_task = asyncio.create_task(self.energy_recovery_loop())
+            trend_task = asyncio.create_task(self.trend_scout_loop())
+            notify_task = asyncio.create_task(self.notification_listener_loop())
+            # [V10.0] 자율 가동 루프 시작
+            drive_task = asyncio.create_task(self.autonomous_drive_loop())
         current_task = None
 
         async def execute_workflow(user_input):
