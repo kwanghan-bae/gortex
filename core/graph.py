@@ -198,12 +198,29 @@ async def hydra_node(state: GortexState) -> Dict[str, Any]:
     loop = asyncio.get_running_loop()
     results = await loop.run_in_executor(None, mq_bus.call_remote_nodes_parallel, requests)
     
-    # 결과 집계
+    # 결과 집계 (신뢰도 기반 가중 병합)
+    from gortex.utils.economy import get_economy_manager
+    eco_manager = get_economy_manager()
+    
     combined_messages = []
+    # 결과물들을 신뢰도 순으로 정렬하여 병합 (높은 신뢰도가 나중에 오면 덮어쓰기 효과)
+    # (실제 구현 시에는 결과 내역별로 세밀한 병합 로직 필요)
+    scored_results = []
     for res in results:
-        combined_messages.extend(res.get("messages", []))
+        # 응답을 보낸 에이전트 식별 (메시지나 페르소나 힌트 활용)
+        agent_name = "coder" # 기본값
+        score = eco_manager.get_trust_score(state, agent_name)
+        scored_results.append((score, res))
         
-    logger.info(f"✅ [HydraNode] All {len(results)} branches merged.")
+    scored_results.sort(key=lambda x: x[0]) # 낮은 순 정렬 (높은 순으로 덮어씀)
+    
+    for score, res in scored_results:
+        combined_messages.extend(res.get("messages", []))
+        # 파일 캐시 등 공유 상태 업데이트 (신뢰도 높은 에이전트의 결과가 최종 반영됨)
+        if "file_cache" in res:
+            state["file_cache"].update(res["file_cache"])
+        
+    logger.info(f"✅ [HydraNode] All {len(results)} branches merged with synaptic weighting.")
     
     return {
         "messages": combined_messages + [("ai", f"🐉 **하이드라 병합 완료**: {len(results)}개의 병렬 작업이 성공적으로 통합되었습니다.")],

@@ -7,7 +7,7 @@ logger = logging.getLogger("GortexEconomy")
 
 class EconomyManager:
     """
-    에이전트 평판, 포인트, 업적 등 시스템 내부 경제를 관리함.
+    에이전트 평판, 포인트, 업적 및 신뢰도를 관리함.
     """
     def __init__(self):
         self.base_reward = 10
@@ -84,7 +84,6 @@ class EconomyManager:
 
     def calculate_weighted_reward(self, quality_score: float, difficulty: float = 1.0, efficiency_bonus: float = 0.0) -> int:
         """난이도, 품질, 효율성을 고려한 가중 보상액 계산"""
-        # 기본 보상(10) * 품질(0~2) * 난이도(1~3) + 효율 보너스
         reward = (self.base_reward * quality_score * difficulty) + (efficiency_bonus * 5)
         return int(max(1, reward))
 
@@ -94,32 +93,25 @@ class EconomyManager:
         self.initialize_agent(economy, agent_name)
         
         agent_id = agent_name.lower()
-        # 가중 보상 계산
         reward = self.calculate_weighted_reward(quality_score, difficulty, efficiency_bonus)
         economy[agent_id]["points"] += reward
         economy[agent_id]["total_tasks"] += 1
         
-        # 레벨 업 로직 (단순화)
         points = economy[agent_id]["points"]
         old_level = economy[agent_id]["level"]
         new_level = old_level
         
-        if points > 2000:
-            new_level = "Diamond"
-        elif points > 1000:
-            new_level = "Gold"
-        elif points > 500:
-            new_level = "Silver"
+        if points > 2000: new_level = "Diamond"
+        elif points > 1000: new_level = "Gold"
+        elif points > 500: new_level = "Silver"
         
         if new_level != old_level:
             economy[agent_id]["level"] = new_level
             achievement = f"🌟 Agent {agent_name} promoted to {new_level}!"
-            if "achievements" not in state:
-                state["achievements"] = []
+            if "achievements" not in state: state["achievements"] = []
             state["achievements"].append({"time": datetime.now().strftime("%H:%M:%S"), "text": achievement})
             logger.info(f"🏆 ACHIEVEMENT UNLOCKED: {achievement}")
         
-        logger.info(f"💰 Agent {agent_name} rewarded {reward} points. (Total: {points})")
         return reward
 
     def record_failure(self, state: GortexState, agent_name: str, penalty_factor: float = 1.0):
@@ -147,19 +139,28 @@ class EconomyManager:
         """에이전트의 평판과 숙련도에 기반한 투표권(영향력) 계산"""
         economy = state.get("agent_economy", {})
         agent_id = agent_name.lower()
-        if agent_id not in economy: return 1.0 # 기본 가중치
+        if agent_id not in economy: return 1.0
         
         data = economy[agent_id]
-        # 기본 점수 기반 (100점당 0.1 가중치)
         base_power = 1.0 + (data.get("points", 0) / 1000.0)
-        
-        # 레벨 보너스
-        level_multipliers = {
-            "Bronze": 1.0, "Silver": 1.2, "Gold": 1.5, "Diamond": 2.0
-        }
+        level_multipliers = {"Bronze": 1.0, "Silver": 1.2, "Gold": 1.5, "Diamond": 2.0}
         multiplier = level_multipliers.get(data.get("level", "Bronze"), 1.0)
-        
         return round(base_power * multiplier, 2)
+
+    def get_trust_score(self, state: GortexState, agent_name: str) -> float:
+        """에이전트의 작업 신뢰도 점수 산출 (0.0 ~ 1.0)"""
+        economy = state.get("agent_economy", {})
+        agent_id = agent_name.lower()
+        if agent_id not in economy: return 0.5
+        
+        data = economy[agent_id]
+        total = data.get("total_tasks", 0)
+        if total == 0: return 0.5
+        
+        success_rate = data.get("points", 0) / (total * self.base_reward + 1)
+        success_rate = min(1.0, success_rate)
+        quality_bonus = 0.1 if data.get("level") in ["Gold", "Diamond"] else 0.0
+        return round(min(1.0, (success_rate * 0.7) + quality_bonus + 0.2), 2)
 
 def get_economy_manager() -> EconomyManager:
     return EconomyManager()

@@ -215,6 +215,17 @@ class DashboardUI:
             pts = eco.get("points", 0)
             status_text.append(f" [{lvl}] {pts}pts", style="italic yellow")
             
+            # [TRUST BADGE] 신뢰 지수 시각화
+            from gortex.utils.economy import get_economy_manager
+            trust_score = get_economy_manager().get_trust_score({}, self.current_agent)
+            trust_label = "STANDARD"
+            trust_color = Palette.GRAY
+            if trust_score > 0.9: trust_label = "ELITE"; trust_color = "bold " + Palette.MAGENTA
+            elif trust_score > 0.7: trust_label = "TRUSTED"; trust_color = "bold " + Palette.CYAN
+            elif trust_score > 0.5: trust_label = "VERIFIED"; trust_color = Palette.GREEN
+            
+            status_text.append(f" [{trust_label}]", style=trust_color)
+            
             # [SKILL MATRIX] 숙련도 게이지 렌더링
             status_text.append("\n\n-- SKILL MATRIX --\n", style="dim")
             skills = eco.get("skill_points", {})
