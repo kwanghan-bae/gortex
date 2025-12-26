@@ -85,7 +85,41 @@ class ManagerAgent(BaseAgent):
             except Exception as ge:
                 logger.warning(f"Git branching failed: {ge}")
 
-            # [AGENT SPAWNING] 에이전트 자가 증식 처리
+            # [NEURAL FUSION] 에이전트 융합 처리 (v7.0 New)
+            if debate_res.get("is_fusion"):
+                pair = debate_res["fused_pair"]
+                fused_name = f"{pair[0]}_{pair[1]}_Elite"
+                
+                # 1. 융합 지침(DNA) 생성 및 Super Rule 등록
+                fusion_instruction = f"뉴럴 퓨전 가이드: 앞으로 {pair[0]}와 {pair[1]}의 역할이 결합된 {fused_name}을 최우선적으로 활용하라."
+                from gortex.core.evolutionary_memory import EvolutionaryMemory
+                EvolutionaryMemory().save_rule(
+                    instruction=fusion_instruction,
+                    trigger_patterns=[pair[0].lower(), pair[1].lower(), "fusion"],
+                    category="general",
+                    severity=5,
+                    is_super_rule=True,
+                    context=f"Neural Fusion established: {pair[0]} + {pair[1]}"
+                )
+                
+                # 2. 제조 공정 개시 (Spawning 로직 재활용)
+                new_plan = [json.dumps({
+                    "action": "write_file",
+                    "target": f"agents/auto_spawned_{fused_name.lower()}.py",
+                    "description": f"Implement fused elite agent {fused_name}.",
+                    "is_fusion_task": True
+                }, ensure_ascii=False)]
+                
+                return {
+                    "thought": f"뉴럴 퓨전 '{fused_name}' 제조 공정을 시작합니다.",
+                    "next_node": "coder",
+                    "plan": new_plan,
+                    "current_step": 0,
+                    "debate_result": None,
+                    "messages": [("ai", f"⚛️ **뉴럴 퓨전 가동**: 두 지능이 하나로 결합되는 고차원 진화 공정을 시작합니다.")]
+                }
+
+            # [AGENT SPAWNING] (기존 로직)
             blueprint = debate_res.get("agent_blueprint")
             if blueprint:
                 new_name = blueprint["agent_name"]

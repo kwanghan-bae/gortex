@@ -486,6 +486,28 @@ class AnalystAgent(BaseAgent):
             logger.error(f"Alignment check failed: {e}")
             return {"is_aligned": True, "severity": "Low", "violations": []} # Fallback to true to avoid deadlock, but log error
 
+    def detect_agent_fusion_opportunities(self) -> List[Dict[str, Any]]:
+        """에이전트 간의 강한 결합도를 분석하여 융합(Fusion) 가능성을 식별함."""
+        from gortex.core.observer import GortexObserver
+        matrix = GortexObserver().get_collaboration_matrix(limit=1000)
+        
+        fusions = []
+        if not matrix: return []
+        
+        # 호출 빈도가 매우 높은 쌍 찾기 (예: A -> B 호출이 전체의 40% 이상)
+        for caller, callees in matrix.items():
+            total_calls = sum(callees.values())
+            for callee, count in callees.items():
+                if count / total_calls > 0.4 and count > 10:
+                    fusions.append({
+                        "type": "agent_fusion",
+                        "pair": [caller, callee],
+                        "strength": round(count / total_calls, 2),
+                        "reason": f"'{caller}'와 '{callee}'가 매우 강하게 결합되어 작업 중입니다. (결합도: {int(count/total_calls*100)}%)",
+                        "suggestion": f"두 에이전트를 '{caller}_{callee}_Fused'로 병합하여 중간 핸드오프 비용을 제거하십시오."
+                    })
+        return fusions
+
     def evaluate_artifact_value(self, directory: str = "logs") -> List[Dict[str, Any]]:
         """작업 부산물들의 가치를 평가하여 삭제 후보 목록을 생성함."""
         cleanup_candidates = []

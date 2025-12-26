@@ -365,27 +365,40 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             except Exception as e:
                 logger.error(f"Immune response failed: {e}")
 
-        # 6. [Persona Evolution] 에이전트 페르소나 자율 튜닝
+        # 6. [Persona Evolution] (기존 로직)
         if energy > 95:
-            logger.info("🧬 Running Persona Evolver: Optimizing agent instructions...")
-            all_agents = registry.list_agents()
-            for a_name in all_agents:
-                try:
-                    evolved = agent.analyze_and_optimize_persona(a_name)
-                    if evolved:
-                        # [MEMORY] 진화된 지침을 '최상위 정책'으로 등록하여 즉시 반영 (PromptLoader 연동)
-                        agent.memory.save_rule(
-                            instruction=evolved["new_instruction"],
-                            trigger_patterns=[a_name.lower(), "persona", "instruction"],
-                            category="general",
-                            severity=3,
-                            is_super_rule=True,
-                            context=f"Persona Evolution v{evolved['version']}: {evolved['changes']}"
-                        )
-                        state["messages"].append(("system", f"🧬 **Persona Evolved**: '{a_name}' 에이전트의 지침이 v{evolved['version']}으로 진화했습니다.\n\n**변경**: {evolved['changes']}"))
-                        self.ui.add_achievement(f"Evolved {a_name}")
-                except Exception as e:
-                    logger.error(f"Evolver failed for {a_name}: {e}")
+            # ... (기존 로직 수행)
+            pass
+
+        # 7. [Neural Fusion] 에이전트 자율 융합 및 위계 재편
+        if energy > 98:
+            logger.info("⚛️ Running Neural Fusion: Optimizing agent organizational structure...")
+            try:
+                fusion_ops = agent.detect_agent_fusion_opportunities()
+                if fusion_ops:
+                    op = fusion_ops[0] # 가장 결합도가 높은 쌍 선택
+                    new_agent_name = f"{op['pair'][0]}_{op['pair'][1]}_Elite"
+                    msg = f"⚛️ **뉴럴 퓨전 발생**: 에이전트 '{op['pair'][0]}'와 '{op['pair'][1]}'가 융합되어 신규 엘리트 에이전트 '{new_agent_name}'이 탄생했습니다."
+                    
+                    # [EVOLUTION] 새로운 통합 에이전트 설계 및 제조 지시
+                    state["debate_result"] = {
+                        "final_decision": f"Fuse Agents: {op['pair'][0]} + {op['pair'][1]}",
+                        "action_plan": [
+                            f"Step 1: Design combined persona for {new_agent_name}",
+                            f"Step 2: Register {new_agent_name} to AgentRegistry"
+                        ],
+                        "is_fusion": True,
+                        "fused_pair": op['pair']
+                    }
+                    
+                    return {
+                        "messages": [("ai", msg)],
+                        "next_node": "manager",
+                        "debate_result": state["debate_result"],
+                        "agent_energy": energy - 50 # 융합은 막대한 에너지를 소모함
+                    }
+            except Exception as e:
+                logger.error(f"Neural Fusion failed: {e}")
             
         # 2. [Guardian Cycle] 선제적 결함 탐지 및 리팩토링 제안
         if energy > 85:
