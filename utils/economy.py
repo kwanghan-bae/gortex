@@ -140,8 +140,8 @@ class EconomyManager:
         economy = state.get("agent_economy", {})
         agent_id = agent_name.lower()
         if agent_id not in economy:
-            return False
-        return economy[agent_id]["points"] >= self.pro_threshold
+            self.initialize_agent(economy, agent_name)
+        return economy[agent_id].get("points", 0) >= self.pro_threshold
 
 def get_economy_manager() -> EconomyManager:
     return EconomyManager()

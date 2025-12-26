@@ -113,21 +113,29 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             
             if state.get("awaiting_review"):
                 review_res = agent.perform_peer_review(state.get("review_target", "code"), last_ai_msg)
-                if not review_res.get("is_approved", True) or review_res.get("score", 100) < 70:
-                    return {"messages": [("ai", f"🧐 [Peer Review Rejected] {review_res.get('comment')} (Score: {review_res.get('score')})")], "next_node": "coder"}
+                score = review_res.get("score", 70)
+                if not review_res.get("is_approved", True) or score < 70:
+                    return {"messages": [("ai", f"🧐 [Peer Review Rejected] {review_res.get('comment')} (Score: {score})")], "next_node": "coder"}
                 else:
-                    state["messages"].append(("system", f"✅ [Peer Review Approved] {review_res.get('comment')} (Score: {review_res.get('score')})"))
+                    state["messages"].append(("system", f"✅ [Peer Review Approved] {review_res.get('comment')} (Score: {score})"))
 
-            economy = state.get("agent_economy", {}).copy()
-            credits = state.get("token_credits", {}).copy()
-            if "coder" not in economy: economy["coder"] = {"points": 0, "level": "Novice"}
-            if "coder" not in credits: credits["coder"] = 100.0
-            economy["coder"]["points"] += 10
-            credits["coder"] += 10.0
+            # [DYNAMIC REWARD] 에이전트 경제 시스템 연동
+            from gortex.utils.economy import get_economy_manager
+            eco_manager = get_economy_manager()
+            
+            target_agent = state.get("review_target_agent", "Coder")
+            quality = score / 100.0 if 'score' in locals() else 1.0
+            
+            # 보상 및 스킬 포인트 지급
+            eco_manager.record_success(state, target_agent, quality_score=quality, difficulty=1.5)
+            eco_manager.update_skill_points(state, target_agent, category="Coding", quality_score=quality, difficulty=1.5)
             
             return {
                 "messages": [("ai", i18n.t("analyst.review_complete", risk_count=0))], 
-                "agent_economy": economy, "token_credits": credits, "next_node": "manager", "awaiting_review": False
+                "agent_economy": state.get("agent_economy"), 
+                "token_credits": state.get("token_credits"), 
+                "next_node": "manager", 
+                "awaiting_review": False
             }
 
     # [Self-Evolution]

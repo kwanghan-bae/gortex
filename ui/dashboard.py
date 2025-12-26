@@ -199,23 +199,34 @@ class DashboardUI:
         agent_style = get_agent_style(self.current_agent)
         status_text.append(f"{self.current_agent.upper()}", style=agent_style if self.current_agent != "Idle" else "green")
         
-        if self.agent_economy and self.current_agent.lower() in self.agent_economy:
-            eco = self.agent_economy[self.current_agent.lower()]
+        agent_id = self.current_agent.lower()
+        if self.agent_economy and agent_id in self.agent_economy:
+            eco = self.agent_economy[agent_id]
             lvl = eco.get("level", "N/A")
             pts = eco.get("points", 0)
             status_text.append(f" [{lvl}] {pts}pts", style="italic yellow")
+            
+            # [SKILL MATRIX] 숙련도 게이지 렌더링
+            status_text.append("\n\n-- SKILL MATRIX --\n", style="dim")
+            skills = eco.get("skill_points", {})
+            for cat, pts in skills.items():
+                # 3000pts를 마스터 기준으로 게이지 계산
+                filled = min(10, int(pts / 3000 * 10))
+                gauge = "█" * filled + "░" * (10 - filled)
+                # 점수대에 따른 색상
+                color = Palette.CYAN if pts > 1500 else (Palette.GREEN if pts > 500 else Palette.GRAY)
+                status_text.append(f"{cat[:3].upper()} ", style="bold")
+                status_text.append(f"[{gauge}]", style=color)
+                status_text.append(f" {pts}p\n", style="dim")
+        
         status_text.append("\n")
-        
         if self.current_agent != "Idle":
-            status_text.append("Skill: ", style="bold")
-            status_text.append(f"{self.current_capability}\n", style="italic cyan")
-
-        status_text.append("LLM  : ", style="bold")
-        provider_style = "bold blue" if self.provider == "GEMINI" else "bold green"
-        status_text.append(f"{self.provider}\n", style=provider_style)
-        
-        status_text.append("Step : ", style="bold")
-        status_text.append(f"{self.current_step}\n")
+            status_text.append("LLM  : ", style="bold")
+            provider_style = "bold blue" if self.provider == "GEMINI" else "bold green"
+            status_text.append(f"{self.provider}\n", style=provider_style)
+            
+            status_text.append("Step : ", style="bold")
+            status_text.append(f"{self.current_step}\n")
         
         return Panel(status_text, title=" [bold]🛰️ STATUS[/] ", border_style=Palette.GRAY, box=box.ROUNDED)
 
