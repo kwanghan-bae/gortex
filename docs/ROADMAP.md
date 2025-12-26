@@ -10,6 +10,11 @@
 | **Memory** | 주제별 샤딩 및 Super Rule 통합 | ✅ | v3.3 |
 | **Intelligence** | Swarm 기반 자율 장애 복구 루프 | ✅ | v3.4 |
 | **Economy** | Dynamic Skill Tree & Matrix UI | ✅ | v3.4 |
+| **Multi-modal** | 스크린샷 기반 시각적 디버깅 | ✅ | v3.5 |
+| **Distributed** | Redis MQ 및 분산 워커 시스템 | ✅ | v3.6 |
+| **Learning** | 지식 증류 및 학습 데이터 자동 생성 | ✅ | v3.6 |
+| **Voice** | Whisper 기반 실시간 음성 명령 인식 | ✅ | v3.7 |
+| **Graph** | Knowledge Graph (Neural Map) 시각화 | ✅ | v3.7 |
 | **Persistence** | 실시간 복제 지원 Distributed Saver | ✅ | v3.0 |
 
 ---
@@ -17,11 +22,11 @@
 ## 🎯 주요 과제 (Critical Gaps)
 
 ### 🔴 High Priority (지능 고도화)
-- [ ] **Multi-modal Interaction**: 이미지 분석(스크린샷 기반 디버깅) 및 음성 명령 처리 강화.
-- [ ] **Distributed Swarm**: 서로 다른 머신에 있는 에이전트 간의 통신 및 협업 (Redis MQ 기반).
-- [ ] **Proactive Optimization**: 에러가 발생하기 전, 정적 분석을 통해 잠재적 결함을 선제적으로 수정하는 'Pre-emptive Healing'.
-
-### 🟡 Medium Priority (플랫폼 확장)
+- [x] **Multi-modal Interaction**: 이미지 분석(스크린샷 기반 디버깅) 및 음성 명령 처리 강화.
+- [x] **Distributed Swarm**: 서로 다른 머신에 있는 에이전트 간의 통신 및 협업 (Redis MQ 기반).
+- [x] **Proactive Optimization**: 에러가 발생하기 전, 정적 분석을 통해 잠재적 결함을 선제적으로 수정하는 'Pre-emptive Healing'.
+- [ ] **Autonomous Training**: 작업 이력을 바탕으로 에이전트 전용 소형 모델(SLM)을 스스로 미세 조정(Fine-tuning).
+- [ ] **Cross-Machine Memory**: Redis/VectorDB 기반의 완전 분산 지식 베이스 (진행 중).
 - [ ] **Web Dashboard**: Rich UI를 넘어서는 실시간 그래프 기반 웹 관제소 구축.
 - [ ] **Plugin Marketplace**: 외부 개발자가 새로운 에이전트와 도구를 등록하고 공유할 수 있는 시스템.
 - [ ] **Autonomous Training**: 작업 이력을 바탕으로 에이전트 전용 소형 모델(SLM)을 스스로 미세 조정(Fine-tuning).

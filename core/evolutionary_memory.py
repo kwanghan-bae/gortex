@@ -83,6 +83,19 @@ class EvolutionaryMemory:
             self.shards[cat] = self._load_shard(cat)
 
     def _load_shard(self, category: str) -> List[Dict[str, Any]]:
+        # 1. Redis에서 최신 샤드 데이터 조회 시도 (우선순위)
+        from gortex.core.mq import mq_bus
+        if mq_bus.is_connected:
+            try:
+                redis_key = f"gortex:memory:shard:{category}"
+                data_str = mq_bus.client.get(redis_key)
+                if data_str:
+                    logger.debug(f"🌐 Loaded '{category}' shard from Redis.")
+                    return json.loads(data_str)
+            except Exception as e:
+                logger.warning(f"Failed to load shard from Redis: {e}")
+
+        # 2. Local File (Fallback)
         path = os.path.join(self.base_dir, f"{category}_shard.json")
         if os.path.exists(path):
             try:
@@ -93,10 +106,23 @@ class EvolutionaryMemory:
         return []
 
     def _persist_shard(self, category: str):
+        data = self.shards.get(category, [])
+        # 1. Redis Sync
+        from gortex.core.mq import mq_bus
+        if mq_bus.is_connected:
+            try:
+                redis_key = f"gortex:memory:shard:{category}"
+                mq_bus.client.set(redis_key, json.dumps(data, ensure_ascii=False, indent=2))
+                # 지식 갱신 이벤트 전파
+                mq_bus.publish_event("gortex:memory_updates", "Memory", "shard_updated", {"category": category})
+            except Exception as e:
+                logger.error(f"Failed to persist shard to Redis: {e}")
+
+        # 2. Local File Persistence
         path = os.path.join(self.base_dir, f"{category}_shard.json")
         try:
             with open(path, 'w', encoding='utf-8') as f:
-                json.dump(self.shards.get(category, []), f, ensure_ascii=False, indent=2)
+                json.dump(data, f, ensure_ascii=False, indent=2)
         except Exception as e:
             logger.error(f"Failed to persist {category} shard: {e}")
 

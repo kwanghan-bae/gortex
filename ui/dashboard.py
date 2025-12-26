@@ -237,6 +237,12 @@ class DashboardUI:
         stats_group.append(Text.from_markup(f"[{Palette.YELLOW}]📜 Rules[/] : [bold]{self.active_rules_count}[/]"))
         stats_group.append(Text.from_markup(f"[{Palette.MAGENTA}]📈 Efficiency[/]: [bold]{self.efficiency:.1f}%[/]"))
         
+        # [ACTIVE TASKS] 비동기 작업 목록 표시
+        if self.suggested_actions: # suggested_actions 필드를 활성 태스크 표시용으로 재활용하거나 확장
+            stats_group.append(Text("\n⚙️ ACTIVE TASKS", style="bold yellow"))
+            for task in self.suggested_actions[:3]:
+                stats_group.append(Text(f" ● {task.get('label', 'Task')}", style="cyan dim"))
+
         from gortex.utils.efficiency_monitor import EfficiencyMonitor
         try:
             health_hist = EfficiencyMonitor().get_health_history(limit=10)
