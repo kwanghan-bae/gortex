@@ -125,14 +125,24 @@ async def handle_command(user_input: str, ui, observer: GortexObserver, all_sess
         return "skip"
 
     elif cmd == "/status":
+        from gortex.core.mq import mq_bus
+        workers = mq_bus.list_active_workers()
+        total_cpu = sum(w.get("cpu_percent", 0) for w in workers)
+        avg_mem = sum(w.get("memory_percent", 0) for w in workers) / len(workers) if workers else 0
+        
+        status_msg = f"""
+📊 **Gortex Cluster Status**
+- **Nodes**: {len(workers)} Active (Remote)
+- **Local Control**: Online
+- **Aggregate CPU**: {total_cpu:.1f}%
+- **Cluster Memory**: {avg_mem:.1f}%
+- **MQ Status**: [bold green]{'CONNECTED' if mq_bus.is_connected else 'DUMMY'}[/bold green]
+"""
+        ui.chat_history.append(("system", Panel(Markdown(status_msg), title="SYSTEM ORCHESTRATION", border_style="magenta")))
+        ui.update_main(ui.chat_history)
+        
         if hasattr(ui, "toggle_monitor_mode"):
             ui.toggle_monitor_mode()
-        else:
-            # Fallback for older UI versions (safety check)
-            stats = observer.get_stats()
-            report = f"### System Status\nTokens: {stats.get('total_tokens',0):,}\nCost: ${stats.get('total_cost',0):.4f}"
-            ui.chat_history.append(("system", Panel(Markdown(report), title="STATUS", border_style="magenta")))
-            ui.update_main(ui.chat_history)
         return "skip"
 
     elif cmd == "/rca":

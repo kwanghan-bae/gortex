@@ -337,13 +337,31 @@ class DashboardUI:
         side_l.split_column(
             Layout(name="status", size=8),
             Layout(name="stats", size=10),
+            Layout(name="swarm", size=8), # [NEW] Distributed Swarm Monitor
             Layout(name="trace", ratio=1)
         )
         
         trace_logs = "\n".join([f"[{get_agent_style(log.get('agent',''))}]{log.get('agent','Sys')[:3].upper()}[/] {log.get('event','')[:20]}" for log in self.recent_logs])
         
+        # [SWARM MONITOR] 연결된 워커 목록 렌더링
+        swarm_table = Table.grid(expand=True)
+        swarm_table.add_column(ratio=1)
+        swarm_table.add_column(justify="right")
+        
+        from gortex.core.mq import mq_bus
+        active_workers = mq_bus.list_active_workers()
+        if not active_workers:
+            swarm_table.add_row("[dim]No remote workers.[/]", "")
+        else:
+            for w in active_workers[:3]: # 상위 3개만 표시
+                w_id = w.get("worker_id", "???")[-4:]
+                cpu = w.get("cpu_percent", 0)
+                color = "green" if cpu < 50 else ("yellow" if cpu < 80 else "red")
+                swarm_table.add_row(f"🌐 ID:{w_id}", f"[{color}]{cpu}%[/]")
+        
         side_l["status"].update(self._render_status_panel())
         side_l["stats"].update(self._render_stats_panel())
+        side_l["swarm"].update(Panel(swarm_table, title=" [bold]📡 SWARM MAP[/] ", border_style=Palette.GRAY, box=box.ROUNDED))
         side_l["trace"].update(Panel(Text.from_markup(trace_logs), title=" [bold]🔍 TRACE[/] ", border_style=Palette.GRAY, box=box.ROUNDED))
         
         main_layout["side"].update(side_l)

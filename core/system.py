@@ -180,6 +180,11 @@ class GortexSystem:
             
             elif event_type == "task_failed":
                 self.ui.add_achievement(f"❌ Task Failed: {payload.get('task_id')}")
+            
+            elif event_type == "worker_heartbeat":
+                # 하트비트 수신 시 별도 메시지는 생략하되, UI 갱신을 위해 힌트만 제공
+                # (list_active_workers를 통해 UI 렌더링 시점에 최신화됨)
+                pass
 
         # Non-blocking listen via executor
         loop = asyncio.get_running_loop()
