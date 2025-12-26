@@ -36,7 +36,7 @@ class LongTermMemory:
                     data = json.load(f)
                     self.shards[namespace] = data
                     return data
-            except:
+            except Exception:
                 return []
         return []
 
@@ -123,7 +123,8 @@ class LongTermMemory:
         final_results = []
         for score, item in scored_results[:limit]:
             if score > 0.3:
-                if score > 0.5: item["usage_count"] = item.get("usage_count", 0) + 1
+                if score > 0.5:
+                    item["usage_count"] = item.get("usage_count", 0) + 1
                 final_results.append({
                     "content": item["content"], 
                     "metadata": item.get("metadata", {}), 

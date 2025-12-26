@@ -1,10 +1,7 @@
 import unittest
 import os
 import shutil
-import json
-from unittest.mock import MagicMock, patch
 from gortex.core.evolutionary_memory import EvolutionaryMemory
-from gortex.agents.swarm import SwarmAgent
 from gortex.agents.analyst.base import AnalystAgent
 
 class TestConflictResolution(unittest.TestCase):

@@ -1,7 +1,7 @@
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 from gortex.core.state import GortexState
-from gortex.utils.memory import ContextPruner, summarizer_node
+from gortex.utils.memory import ContextPruner
 
 class TestContextPruning(unittest.TestCase):
     def setUp(self):

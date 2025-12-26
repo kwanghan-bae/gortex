@@ -1,5 +1,4 @@
 import unittest
-import os
 from gortex.utils.cache import GortexCache
 
 class TestGortexCache(unittest.TestCase):

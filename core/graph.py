@@ -215,4 +215,4 @@ def compile_gortex_graph(checkpointer=None):
         return workflow.compile(checkpointer=checkpointer)
     else:
         # v3.0 표준: 실시간 복제를 지원하는 분산형 체크포인터 사용
-        return workflow.compile(checkpointer=DistributedSaver)
+        return workflow.compile(checkpointer=DistributedSaver())

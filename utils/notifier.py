@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import urllib.request
-from typing import Optional
 
 logger = logging.getLogger("GortexNotifier")
 
@@ -43,7 +42,7 @@ class Notifier:
                 url, data=data, 
                 headers={'Content-Type': 'application/json'}
             )
-            with urllib.request.urlopen(req) as response:
+            with urllib.request.urlopen(req):
                 pass
         except Exception as e:
             logger.error(f"Failed to send notification: {e}")

@@ -2,7 +2,7 @@ import json
 import os
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List
 from gortex.core.llm.factory import LLMFactory
 from gortex.core.state import GortexState
 from gortex.agents.researcher import ResearcherAgent
@@ -322,7 +322,6 @@ class TrendScoutAgent:
         return []
 
 import asyncio
-import re
 
 def trend_scout_node(state: GortexState) -> Dict[str, Any]:
     """TrendScout 노드 엔트리 포인트"""

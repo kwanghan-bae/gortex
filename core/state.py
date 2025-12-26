@@ -1,16 +1,15 @@
-from typing import Annotated, Sequence, TypedDict, List, Dict, Literal, Any
-from langchain_core.messages import BaseMessage
+import json
+import logging
+import os
+from typing import Dict, List, Any, Optional, TypedDict, Annotated, Literal
+import operator
 from langgraph.graph.message import add_messages
 
-class GortexState(TypedDict):
-    """
-    Gortex 시스템의 전역 상태(Global State).
-    LangGraph의 StateGraph에서 노드 간 데이터 전달에 사용됩니다.
-    """
-    # 1. Chat History (LangGraph가 자동으로 메시지를 병합/누적함)
-    messages: Annotated[Sequence[BaseMessage], add_messages]
-    # 영구 고정된 핵심 컨텍스트 메시지 리스트
-    pinned_messages: List[BaseMessage]
+logger = logging.getLogger("GortexState")
+
+class GortexState(TypedDict, total=False):
+    # Use add_messages to append messages instead of overwriting, ensuring chat history is preserved.
+    messages: Annotated[List[Any], add_messages]
     
     # 2. Planner Context (작업 계획 및 진행 상황)
     plan: List[str]          # Planner가 수립한 원자적 작업 단계들
@@ -18,7 +17,7 @@ class GortexState(TypedDict):
     
     # 3. File System Context (파일 시스템 상태)
     working_dir: str         # 현재 작업 디렉토리 경로
-    file_cache: Dict[str, str] # {파일경로: 내용해시} - 토큰 절약을 위한 캐시
+    file_cache: Dict[str, Any] # {파일경로: 내용해시} - 토큰 절약을 위한 캐시
     
     # 4. Control Flow & Safety (제어 흐름 및 안전장치)
     # 다음으로 실행할 노드 지정
@@ -35,7 +34,7 @@ class GortexState(TypedDict):
     
     # 6. Agent Economy (게임화 및 평판)
     # {agent_name: {"points": int, "level": str, "achievements": List[str]}}
-    agent_economy: Dict[str, Dict[str, Any]] 
+    agent_economy: Dict[str, Any] 
     # 에이전트별 가상 화폐 (고성능 모델 사용권 구매용)
     token_credits: Dict[str, float]
     # UI 및 에이전트 출력 타겟 언어 (ko, en, ja, zh 등)
@@ -45,30 +44,47 @@ class GortexState(TypedDict):
     agent_energy: int 
     # 최근 작업의 효율성 점수 (0.0~100.0)
     last_efficiency: float
-    # 최근 효율성 점수 이력 (최대 10개 유지)
     efficiency_history: List[float]
-    # 에너짓 간 토론 시나리오 데이터 (Consensus용)
-    debate_context: List[Dict[str, Any]]
-    # 합의 결과 및 사후 성과 데이터 이력
-    consensus_history: List[Dict[str, Any]]
-    # 교차 리뷰 관련 상태
-    awaiting_review: bool
-    review_target: str
-    # 자가 진화 로드맵
-    evolution_roadmap: List[Dict[str, Any]]
-    # 8. Intelligent Handoff (에이전트 간 직접 지침 전달)
-    handoff_instruction: str # 직전 에이전트가 다음 에이전트에게 남기는 귓속말/팁
     
-    # 9. Replication & Sync Metadata (상태 복제 및 동기화)
-    replication_version: int # 상태 복제 시퀀스 번호
-    last_sync_ts: float      # 마지막 외부 동기화 타임스탬프
-    node_id: str             # 현재 상태를 갱신한 노드 식별자
-    
-    # 10. Proactive Self-Expansion (자가 확장 및 영입)
-    agent_proposals: List[Dict[str, Any]] # TrendScout가 제안한 신규 에이전트 명세
-    spawned_agents: List[str]             # 런타임에 동적으로 생성된 에이전트 목록
+    # Additional fields that might be used
+    pinned_messages: List[Any]
+    last_event_id: Optional[str]
+    last_question: Optional[str]
+    current_predicted_usage: Optional[Any]
+    total_tokens: int
+    total_cost: float
+    required_capability: Optional[str]
+    question_to_user: Optional[str]
+    predicted_usage: Optional[Any]
+    session_cache: Dict[str, Any]
 
 
+# We also need a way to manage the persistent session cache which was in main.py
+class SessionManager:
+    def __init__(self, cache_path: str = "logs/file_cache.json"):
+        self.cache_path = cache_path
+        self.all_sessions_cache = self._load_cache()
 
+    def _load_cache(self) -> Dict[str, Any]:
+        if os.path.exists(self.cache_path):
+            try:
+                with open(self.cache_path, "r", encoding='utf-8') as f:
+                    return json.load(f)
+            except Exception as e:
+                logger.error(f"Failed to load session cache: {e}")
+        return {}
 
+    def save_cache(self):
+        try:
+            os.makedirs(os.path.dirname(self.cache_path), exist_ok=True)
+            with open(self.cache_path, "w", encoding='utf-8') as f:
+                json.dump(self.all_sessions_cache, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            logger.error(f"Failed to save session cache: {e}")
 
+    def get_session(self, thread_id: str) -> Dict[str, Any]:
+        return self.all_sessions_cache.get(thread_id, {})
+
+    def update_session(self, thread_id: str, session_data: Dict[str, Any]):
+        self.all_sessions_cache[thread_id] = session_data
+        self.save_cache()

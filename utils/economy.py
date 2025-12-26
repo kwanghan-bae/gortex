@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any
 from gortex.core.state import GortexState
 
 logger = logging.getLogger("GortexEconomy")
@@ -104,14 +104,18 @@ class EconomyManager:
         old_level = economy[agent_id]["level"]
         new_level = old_level
         
-        if points > 2000: new_level = "Diamond"
-        elif points > 1000: new_level = "Gold"
-        elif points > 500: new_level = "Silver"
+        if points > 2000:
+            new_level = "Diamond"
+        elif points > 1000:
+            new_level = "Gold"
+        elif points > 500:
+            new_level = "Silver"
         
         if new_level != old_level:
             economy[agent_id]["level"] = new_level
             achievement = f"🌟 Agent {agent_name} promoted to {new_level}!"
-            if "achievements" not in state: state["achievements"] = []
+            if "achievements" not in state:
+                state["achievements"] = []
             state["achievements"].append({"time": datetime.now().strftime("%H:%M:%S"), "text": achievement})
             logger.info(f"🏆 ACHIEVEMENT UNLOCKED: {achievement}")
         
@@ -134,9 +138,15 @@ class EconomyManager:
     def can_use_pro_model(self, state: GortexState, agent_name: str) -> bool:
         """에이전트가 고성능 모델을 사용할 자격이 있는지 확인"""
         economy = state.get("agent_economy", {})
+<<<<<<< HEAD
         agent_id = agent_name.lower()
         if agent_id not in economy: return False
         return economy[agent_id]["points"] >= self.pro_threshold
+=======
+        if agent_name not in economy:
+            return False
+        return economy[agent_name]["points"] >= self.pro_threshold
+>>>>>>> origin/main
 
 def get_economy_manager() -> EconomyManager:
     return EconomyManager()

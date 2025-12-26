@@ -2,7 +2,7 @@ import unittest
 import json
 import os
 import shutil
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from gortex.utils.economy import get_economy_manager
 from gortex.agents.analyst.reflection import ReflectionAnalyst
 from gortex.core.evolutionary_memory import EvolutionaryMemory

@@ -3,6 +3,7 @@ import logging
 import os
 import json
 import urllib.request
+from typing import List, Dict, Any
 
 logger = logging.getLogger("GortexGitTool")
 

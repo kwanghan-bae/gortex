@@ -1,7 +1,6 @@
 import unittest
 import asyncio
-import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from gortex.core.engine import GortexEngine
 
 class TestGortexEngineAdvanced(unittest.TestCase):

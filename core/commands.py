@@ -10,7 +10,6 @@ from rich.markdown import Markdown
 
 from gortex.core.observer import GortexObserver
 from gortex.utils.indexer import SynapticIndexer
-from gortex.agents.analyst import AnalystAgent
 from gortex.core.registry import registry
 
 logger = logging.getLogger("GortexCommands")

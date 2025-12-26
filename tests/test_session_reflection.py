@@ -1,8 +1,7 @@
 import unittest
 import os
 import json
-import shutil
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from gortex.agents.analyst.reflection import ReflectionAnalyst
 
 class TestSessionReflection(unittest.TestCase):

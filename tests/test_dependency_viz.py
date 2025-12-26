@@ -1,6 +1,4 @@
 import unittest
-import os
-from unittest.mock import MagicMock
 from gortex.utils.indexer import SynapticIndexer
 from gortex.agents.analyst.base import AnalystAgent
 from gortex.ui.dashboard import DashboardUI

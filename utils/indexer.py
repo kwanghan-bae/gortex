@@ -60,7 +60,8 @@ class SynapticIndexer:
                         try:
                             call_name = ast.unparse(subnode.func)
                             calls.append(call_name)
-                        except: pass
+                        except Exception:
+                            pass
                 
                 definitions.append({
                     "type": "function",
@@ -162,7 +163,7 @@ class SynapticIndexer:
                 response = auth.generate("gemini-1.5-flash", [("user", prompt)], None)
                 search_query = response.text.strip().lower()
                 logger.info(f"🔍 Normalized query: '{query}' -> '{search_query}'")
-            except:
+            except Exception:
                 pass
 
         results = []
@@ -215,7 +216,8 @@ class SynapticIndexer:
         
         # 1단계: 직접 임포트 또는 호출하는 모듈 찾기
         for file_path, defs in self.index.items():
-            if file_path == target_file: continue
+            if file_path == target_file:
+                continue
             
             is_direct = False
             for d in defs:
@@ -234,7 +236,8 @@ class SynapticIndexer:
 
         # 2단계: 간접 영향(직접 영향 받는 모듈을 다시 참조하는 모듈)
         for file_path, defs in self.index.items():
-            if file_path == target_file or file_path in direct_impact: continue
+            if file_path == target_file or file_path in direct_impact:
+                continue
             
             for direct in direct_impact:
                 direct_mod = direct.replace("/", ".").replace(".py", "")

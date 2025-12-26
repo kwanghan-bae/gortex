@@ -1,8 +1,6 @@
 import unittest
 import os
-import json
 import shutil
-from unittest.mock import MagicMock, patch
 from gortex.core.engine import GortexEngine
 from gortex.core.state import GortexState
 from gortex.utils.token_counter import DailyTokenTracker

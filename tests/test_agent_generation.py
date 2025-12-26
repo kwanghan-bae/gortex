@@ -1,12 +1,8 @@
 import unittest
 import os
-import shutil
-import json
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from gortex.agents.coder import CoderAgent
-from gortex.agents.trend_scout import TrendScoutAgent
 from gortex.core.registry import registry
-from gortex.core.state import GortexState
 
 class TestAgentGeneration(unittest.TestCase):
     def setUp(self):

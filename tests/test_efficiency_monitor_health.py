@@ -1,8 +1,6 @@
 import unittest
 import os
-import json
 import shutil
-from datetime import datetime
 from utils.efficiency_monitor import EfficiencyMonitor
 
 class TestEfficiencyMonitorHealth(unittest.TestCase):
