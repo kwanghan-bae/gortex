@@ -52,24 +52,22 @@ class GortexState(TypedDict):
 *   **Rule**: 코드를 수정하는 단계가 포함되면 반드시 `tests/test_*.py` 작성 단계를 추가해야 한다.
 *   **Feature**: `diagram_code` 필드에 Mermaid 다이어그램을 생성하여 구조를 시각화한다.
 
-### 3.3 Coder (The Executor)
-*   **Loop**: 최대 30회 반복 가능. 
-*   **Pattern (CoVe)**: Read -> Edit -> Verify(Execute Shell) -> Self-Correction.
-*   **Standard**: 테스트 코드는 반드시 `unittest` 표준을 따른다.
+### 3.4 Neural Governance (v15.0)
+*   **System Maturity Index (SMI)**: `(Intel * 0.4) + (Capital * 0.3) + (Trust * 0.3)`. 시스템의 진화 수준을 정량화하는 통합 지표.
+*   **Autonomous Drive (`/drive`)**: 사용자의 입력 없이도 스스로 미션을 수립, 오디트, 실행하는 자율 주권 루프.
+*   **Galactic Consensus**: 전 지구적 군집 연합 간의 외교 및 합의 투표 시스템.
+*   **Neural Seeding**: 지능의 모든 자산을 ZIP 패키지로 아카이빙하고 상속하는 영속성 기술.
 
 ---
 
-## 4. Core Utilities & Tools (`utils/tools.py`)
+## 4. 실행 및 배포 (Operations)
+*   **Full Cluster Mode**: `./start.sh full` (Master + Worker + API).
+*   **Intelligence Inheritance**: `gortex inherit <seed_path>`.
+*   **Self-Mission Engine**: `ManagerAgent.self_generate_mission`.
+*   **Genesis Reporting**: 세션 종료 시 `GENESIS_REPORT.md` 자동 발행.
 
-*   **`write_file` (Atomic)**: 
-    1. `filename.tmp`에 쓰기
-    2. 원본을 `logs/backups/`로 백업
-    3. `os.replace`로 원자적 교체
-*   **`execute_shell` (Secure)**: 
-    *   블랙리스트 명령어(`rm -rf` 등) 차단 및 타임아웃(300s) 강제.
-    *   출력 결과가 5000자를 초과하면 Head/Tail만 남기고 절삭.
-*   **`Memory Compression`**: 
-    *   메시지가 12개 이상 쌓이면 `gemini-2.5-flash-lite`를 사용하여 구조화된 요약본 생성.
+---
+> "Gortex Specification v15.0: Final Version"
 
 ---
 
