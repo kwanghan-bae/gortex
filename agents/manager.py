@@ -78,6 +78,7 @@ class ManagerAgent(BaseAgent):
                 "plan": new_plan,
                 "current_step": 0,
                 "debate_result": None, # 처리 완료 후 초기화
+                "is_recovery_mode": True, # 복구 모드 활성화
                 "messages": [("ai", f"🩺 **긴급 복구 모드 활성화**: Swarm 합의안에 따라 복구 계획을 수립했습니다.\n\n**결정**: {debate_res.get('final_decision')}")]
             }
 

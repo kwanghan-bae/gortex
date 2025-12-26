@@ -49,7 +49,7 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
     """
     agent = analyst_instance
     
-    # [Priority 1] 데이터 분석 요청 즉시 처리 (테스트 및 사용자 요청 대응)
+    # [Priority 1] 데이터 분석 요청 즉시 처리
     last_msg_obj = state["messages"][-1]
     last_msg = last_msg_obj[1] if isinstance(last_msg_obj, tuple) else last_msg_obj.content
     data_files = [f for f in last_msg.split() if f.lower().endswith(('.csv', '.xlsx', '.json'))]
@@ -84,7 +84,6 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             state["evolution_roadmap"] = roadmap 
     except: pass
 
-    last_msg_lower = last_msg.lower()
     debate_data = state.get("debate_context", [])
 
     # [Consensus] Swarm으로부터 토론 결과가 넘어온 경우
@@ -115,9 +114,16 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
                 review_res = agent.perform_peer_review(state.get("review_target", "code"), last_ai_msg)
                 score = review_res.get("score", 70)
                 if not review_res.get("is_approved", True) or score < 70:
-                    return {"messages": [("ai", f"🧐 [Peer Review Rejected] {review_res.get('comment')} (Score: {score})")], "next_node": "coder"}
+                    # [RCA Generation] Swarm 토론을 위한 상세 이슈 리포트 생성
+                    issue_report = f"[CRITICAL ERROR DETECTED]\nType: Peer Review Rejected\nScore: {score}\nComment: {review_res.get('comment')}\nTarget: {state.get('review_target', 'Unknown')}"
+                    return {
+                        "messages": [("ai", f"🧐 [Peer Review Rejected] {review_res.get('comment')} (Score: {score})")], 
+                        "next_node": "swarm",
+                        "current_issue": issue_report,
+                        "awaiting_review": False
+                    }
                 else:
-                    state["messages"].append(("system", f"✅ [Peer Review Approved] {review_res.get('comment')} (Score: {score})"))
+                    state["messages"].append(("system", f"✅ [Peer Review Approved] {review_res.get('comment')} (Score: {review_res.get('score')})"))
 
             # [DYNAMIC REWARD] 에이전트 경제 시스템 연동
             from gortex.utils.economy import get_economy_manager
@@ -125,17 +131,18 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             
             target_agent = state.get("review_target_agent", "Coder")
             quality = score / 100.0 if 'score' in locals() else 1.0
+            difficulty = 3.0 if state.get("is_recovery_mode") else 1.5
             
-            # 보상 및 스킬 포인트 지급
-            eco_manager.record_success(state, target_agent, quality_score=quality, difficulty=1.5)
-            eco_manager.update_skill_points(state, target_agent, category="Coding", quality_score=quality, difficulty=1.5)
+            eco_manager.record_success(state, target_agent, quality_score=quality, difficulty=difficulty)
+            eco_manager.update_skill_points(state, target_agent, category="Coding", quality_score=quality, difficulty=difficulty)
             
             return {
-                "messages": [("ai", i18n.t("analyst.review_complete", risk_count=0))], 
+                "messages": [("ai", i18n.t("analyst.review_complete", risk_count=0))],
                 "agent_economy": state.get("agent_economy"), 
                 "token_credits": state.get("token_credits"), 
                 "next_node": "manager", 
-                "awaiting_review": False
+                "awaiting_review": False,
+                "is_recovery_mode": False # 복구 완료 후 모드 해제
             }
 
     # [Self-Evolution]
