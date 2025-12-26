@@ -44,6 +44,20 @@ class AgentRegistry:
                 "version": metadata.version
             })
 
+    def deregister(self, agent_name: str) -> bool:
+        """에이전트를 레지스트리에서 제거함 (도태)"""
+        name_lower = agent_name.lower()
+        if name_lower in self._agents:
+            del self._agents[name_lower]
+            logger.info(f"🗑️ Agent '{agent_name}' deregistered from system.")
+            
+            # [EVENT] 도태 이벤트 발행
+            from gortex.core.mq import mq_bus
+            if mq_bus.is_connected:
+                mq_bus.publish_event("gortex:system_events", "Registry", "agent_deregistered", {"agent": agent_name})
+            return True
+        return False
+
     def load_agent_from_file(self, file_path: str) -> bool:
         """소스 파일로부터 에이전트 클래스를 동적으로 로드하고 등록함"""
         if not os.path.exists(file_path):

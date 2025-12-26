@@ -197,6 +197,12 @@ class GortexSystem:
                 if self.engine.refresh_graph():
                     self.ui.chat_history.append(("system", f"🕸️ **Neural Architecture Swapped**: '{agent_name}' is now active in the workflow."))
             
+            elif event_type == "agent_deregistered":
+                agent_name = payload.get("agent")
+                logger.info(f"🗑️ Agent '{agent_name}' removed. Updating neural map...")
+                if self.engine.refresh_graph():
+                    self.ui.add_achievement(f"Swarm Leanified")
+            
             elif event_type == "task_failed":
                 self.ui.add_achievement(f"❌ Task Failed: {payload.get('task_id')}")
             

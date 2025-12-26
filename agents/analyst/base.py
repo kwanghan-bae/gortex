@@ -542,6 +542,32 @@ class AnalystAgent(BaseAgent):
             logger.error(f"Error prediction failed: {e}")
             return {"risk_probability": 0.0}
 
+    def identify_dormant_assets(self) -> Dict[str, List[str]]:
+        """시스템 내의 도태 대상(Dormant/Underperforming) 자산을 식별함."""
+        from gortex.core.registry import registry
+        from gortex.utils.efficiency_monitor import EfficiencyMonitor
+        monitor = EfficiencyMonitor()
+        summary = monitor.get_summary(days=30)
+        
+        dormant_agents = []
+        # 1. 저성과 에이전트 식별
+        for agent_name in registry.list_agents():
+            if agent_name.lower() in ["manager", "analyst", "planner", "coder"]: continue
+            
+            stats = summary.get(agent_name, {})
+            calls = stats.get("calls", 0)
+            success_rate = stats.get("success_rate", 100)
+            
+            # 조건: 10회 이상 호출되었으나 성공률이 30% 미만인 경우
+            if calls >= 10 and success_rate < 30:
+                dormant_agents.append(agent_name)
+                logger.info(f"🥀 Agent '{agent_name}' identified for offboarding (Success Rate: {success_rate:.1f}%)")
+
+        # 2. 융합(Fusion)에 의해 대체된 원본 에이전트 식별
+        # (실제 구현 시 Super Rules의 'Neural Fusion established' 기록 대조)
+        
+        return {"agents": dormant_agents}
+
     def evaluate_artifact_value(self, directory: str = "logs") -> List[Dict[str, Any]]:
         """작업 부산물들의 가치를 평가하여 삭제 후보 목록을 생성함."""
         cleanup_candidates = []

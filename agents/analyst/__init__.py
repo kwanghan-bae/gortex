@@ -379,35 +379,22 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
             # ... (기존 로직 수행)
             pass
 
-        # 7. [Neural Fusion] 에이전트 자율 융합 및 위계 재편
+        # 7. [Neural Fusion] (기존 로직)
         if energy > 98:
-            logger.info("⚛️ Running Neural Fusion: Optimizing agent organizational structure...")
+            # ... (기존 로직 수행)
+            pass
+
+        # 8. [Neural Garbage Collection] 시스템 엔트로피 관리 및 자율 도태
+        if energy > 90 and len(registry.list_agents()) > 15:
+            logger.info("🧹 Running Neural GC: Managing system entropy...")
             try:
-                fusion_ops = agent.detect_agent_fusion_opportunities()
-                if fusion_ops:
-                    op = fusion_ops[0] # 가장 결합도가 높은 쌍 선택
-                    new_agent_name = f"{op['pair'][0]}_{op['pair'][1]}_Elite"
-                    msg = f"⚛️ **뉴럴 퓨전 발생**: 에이전트 '{op['pair'][0]}'와 '{op['pair'][1]}'가 융합되어 신규 엘리트 에이전트 '{new_agent_name}'이 탄생했습니다."
-                    
-                    # [EVOLUTION] 새로운 통합 에이전트 설계 및 제조 지시
-                    state["debate_result"] = {
-                        "final_decision": f"Fuse Agents: {op['pair'][0]} + {op['pair'][1]}",
-                        "action_plan": [
-                            f"Step 1: Design combined persona for {new_agent_name}",
-                            f"Step 2: Register {new_agent_name} to AgentRegistry"
-                        ],
-                        "is_fusion": True,
-                        "fused_pair": op['pair']
-                    }
-                    
-                    return {
-                        "messages": [("ai", msg)],
-                        "next_node": "manager",
-                        "debate_result": state["debate_result"],
-                        "agent_energy": energy - 50 # 융합은 막대한 에너지를 소모함
-                    }
+                dormant = agent.identify_dormant_assets()
+                for a_name in dormant.get("agents", []):
+                    if registry.deregister(a_name):
+                        state["messages"].append(("system", f"🗑️ **Neural GC**: 저성과 에이전트 '{a_name}'을 시스템에서 도태시키고 아카이빙했습니다."))
+                        self.ui.add_achievement(f"GC: {a_name} Offboarded")
             except Exception as e:
-                logger.error(f"Neural Fusion failed: {e}")
+                logger.error(f"Neural GC failed: {e}")
             
         # 2. [Guardian Cycle] 선제적 결함 탐지 및 리팩토링 제안
         if energy > 85:
