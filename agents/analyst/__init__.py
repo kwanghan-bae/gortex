@@ -235,6 +235,23 @@ def analyst_node(state: GortexState) -> Dict[str, Any]:
         # 3. 가비지 컬렉션 및 정적 최적화
         agent.garbage_collect_knowledge()
         agent.synthesize_global_rules()
+        
+        # 4. [Doc-Evolver] 문서 정합성 자가 치유
+        if energy > 60:
+            logger.info("📚 Running Doc-Evolver: Checking for Documentation Drift...")
+            # 주요 아키텍처 파일과 문서 동기화
+            drift_tasks = [
+                ("gortex/core/state.py", "docs/TECHNICAL_SPEC.md", "GortexState"),
+                ("gortex/core/registry.py", "docs/TECHNICAL_SPEC.md", "AgentMetadata")
+            ]
+            for code_path, doc_path, symbol in drift_tasks:
+                try:
+                    res = agent.check_documentation_drift(code_path, doc_path, symbol)
+                    if res.get("status") == "healed":
+                        state["messages"].append(("system", f"📖 **Doc-Evolver**: '{symbol}'에 대한 문서 불일치를 감지하여 `{doc_path}`를 자동 업데이트했습니다."))
+                        self.ui.add_achievement(f"Doc Healed: {symbol}")
+                except Exception as e:
+                    logger.warning(f"Doc-Evolver failed for {symbol}: {e}")
             
         # 2. [Guardian Cycle] 선제적 결함 탐지 및 리팩토링 제안
         if energy > 85:
