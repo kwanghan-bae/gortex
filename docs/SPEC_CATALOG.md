@@ -62,14 +62,20 @@
 *   **Weighted Consensus**: 에이전트의 평판과 신뢰도에 기반한 가중 투표 시스템으로 합리적 군집 의사결정 수행.
 *   **Multi-Sig Security**: 고위험 도구 실행 시 다수 전문가의 실시간 디지털 서명을 요구하는 강력한 보안 통제.
 
+### 3.5 Gortex CLI (Local Dev Environment)
+*   **Chat REPL**: 터미널에서 에이전트와 직접 대화하며 코딩, 문서 요약, 쉘 명령 실행을 수행하는 인터랙티브 환경.
+*   **Context Management**: `/add <file>` 명령어로 작업 컨텍스트를 동적으로 관리.
+*   **Safety Mode**: 파일 수정이나 쉘 실행과 같은 부작용(Side-effect)이 있는 도구 실행 시 사용자에게 명시적 승인(Y/n)을 요청.
+*   **Local First**: 외부 서버 의존 없이 로컬 파일 시스템과 직접 상호작용.
+
 ---
 
 ## 4. 기술 스택 및 아키텍처
 *   **Core**: Python 3.10+, LangGraph (Orchestration).
 *   **LLM**: Google Gemini (Primary), OpenAI/Ollama/LM Studio (Fallback/Local).
 *   **UI**: Rich (Terminal UI) & FastAPI/WebSockets (Web Dashboard API).
-*   **Distributed**: Redis MQ (Pub/Sub, RPC, Lock).
-*   **Storage**: JSON/SQLite (Local) & Redis (Global Knowledge Sync).
+*   **Distributed**: Redis MQ (Optional: Distributed Mode Only).
+*   **Storage**: StorageProvider Abstraction (SQLite for Local, Redis for Distributed).
 
 ---
 

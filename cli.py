@@ -16,6 +16,20 @@ app = typer.Typer(
 console = Console()
 
 @app.command()
+def chat():
+    """
+    Start the local Gortex CLI (Claude-Code style).
+    """
+    try:
+        from gortex.core.cli.repl import run_repl
+        asyncio.run(run_repl())
+    except KeyboardInterrupt:
+        console.print("\n[bold cyan]👋 Goodbye![/bold cyan]")
+    except Exception as e:
+        console.print(f"[bold red]❌ Critical Error: {e}[/bold red]")
+        sys.exit(1)
+
+@app.command()
 def start():
     """
     Start the Gortex master system (TUI + Core).

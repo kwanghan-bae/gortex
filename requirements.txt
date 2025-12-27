@@ -17,3 +17,5 @@ redis
 fastapi
 uvicorn
 python-multipart
+pytest
+pytest-asyncio

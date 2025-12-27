@@ -71,9 +71,18 @@ class GortexState(TypedDict):
 
 ---
 
-## 5. Persistence & Observability
+## 5. Persistence & Storage Architecture
 
-*   **Persistence**: `AsyncSqliteSaver`를 사용하여 노드 실행 직후 상태를 영구 저장한다. (`gortex_sessions.db`)
+### 5.1 Storage Abstraction (`core/storage.py`)
+Gortex v16.0부터는 `StorageProvider` 인터페이스를 통해 저장소 구현을 추상화하여 **Local First** 아키텍처를 지원한다.
+
+*   **Interface**: `get`, `set` (with TTL, NX), `delete`, `keys`.
+*   **Implementations**:
+    *   `SqliteStorage`: 로컬 파일(`.gortex/storage.db`) 기반의 Key-Value 저장소. `GORTEX_ENV=local`일 때 기본 사용.
+    *   `RedisStorage`: Redis 기반의 고성능 저장소. `GORTEX_ENV=distributed`일 때 사용.
+
+### 5.2 Persistence Strategy
+*   **State Persistence**: `AsyncSqliteSaver`와 `mq_bus.storage`를 이중으로 사용하여 상태를 안전하게 보존한다.
 *   **Observability**: 모든 도구 호출과 에이전트의 "생각"은 `logs/trace.jsonl`에 인과 관계(`cause_id`)와 함께 기록된다.
 
 ---
@@ -140,8 +149,29 @@ class AgentMetadata:
     version: str     # 에이전트 버전
 ```
 
-### 8.3 Dynamic Capability Discovery
-*   **Capability Discovery**: 특정 도구(예: `git_push`)가 필요한 경우, `Registry`는 해당 도구를 지원하는 가장 적합한 에이전트를 추천할 수 있다.
-*   **Version Control**: 동일한 역할의 에이전트라도 버전에 따라 성능이 다를 수 있으며, 평판 데이터와 결합하여 최적의 에이전트를 동적으로 선택한다.
+## 9. Message Queue Architecture
+
+시스템은 `GortexMessageBus`를 통해 에이전트 간 비동기 통신을 수행하며, 환경에 따라 유연하게 동작한다.
+
+*   **Local Mode**: Python 인메모리 `dict` 기반의 `Local PubSub`을 사용하여 외부 의존성 없이 메시지를 라우팅한다.
+*   **Distributed Mode**: Redis Pub/Sub을 사용하여 멀티 노드 간 이벤트를 전파하고 작업을 분산한다.
+*   **Unified Interface**: `mq.publish_event`, `mq.listen` 등의 메서드는 내부 구현과 무관하게 동일한 인터페이스를 제공한다.
+
+
+## 10. CLI Architecture (Local Chat)
+
+`claude-code`와 유사한 로컬 개발 경험을 제공하기 위한 아키텍처이다. `cli.py`의 `chat` 커맨드로 진입한다.
+
+### 10.1 REPL Loop (`core/cli/repl.py`)
+*   `Rich` 라이브러리의 `Console`을 사용하여 사용자 입력을 받고 출력을 렌더링한다.
+*   **Special Commands**:
+    *   `/add <path>`: 파일을 읽어 컨텍스트에 추가.
+    *   `/clear`: 대화 기록 및 컨텍스트 초기화.
+    *   `/exit`: 종료.
+
+### 10.2 Safety Middleware (`core/cli/safety.py`)
+*   LLM이 `write_file` 또는 `run_shell_command` 도구를 호출하려고 할 때 가로챈다(Intercept).
+*   사용자에게 `[Tool Request] Write to 'main.py'? (y/n)` 형태의 프롬프트를 띄운다.
+*   `y` 입력 시 실행, `n` 입력 시 `ToolRefusedError`를 LLM에게 반환하여 대안을 찾게 한다.
 
 
