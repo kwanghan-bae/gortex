@@ -1,27 +1,28 @@
 # Next Session
 
 ## Session Goal
-- **Local CLI Bootstrap**: `claude-code` 수준의 사용자 경험을 제공하는 로컬 터미널 인터페이스(`gortex-cli`) 구축.
+- **Advanced CLI UX**: 안전 모드에서 파일 변경 사항을 직관적으로 보여주는 **Rich Diff View** 구현.
+- **Dynamic Agent Loader**: `agents.yaml` 설정을 통해 사용자 정의 에이전트를 로드하는 **Agent DSL** 프로토타이핑.
 
 ## Context
-- 사용자의 전략 변경 요청: 분산/Swarm 기능 개발을 잠시 중단하고, 로컬에서 즉시 사용 가능한 강력한 CLI 도구 개발에 집중.
-- 벤치마크: `claude-code` (REPL, 컨텍스트 인식, 파일 직접 수정, 안전 모드).
+- `gortex chat`이 기본적으로 동작하지만, 파일 수정 시 검토가 불편함.
+- 사용자는 자유로운 에이전트 빌딩을 원하므로, 코드 수정 없이 YAML로 에이전트를 정의하는 구조가 필요함.
 
 ## Scope
 ### Do
-- `cli.py` 기반의 `typer` 애플리케이션 스캐폴딩.
-- `Rich` 라이브러리를 활용한 이쁘고 가독성 높은 TUI(Text User Interface).
-- REPL(Read-Eval-Print Loop) 내에서 LLM과 대화하며 도구(파일 읽기/쓰기, 쉘 실행) 실행.
-- **Safety**: 도구 실행 시 사용자 승인(Y/n) 절차 구현.
+- [ ] **Rich Diff View**: `core/cli/safety.py` 개선. `difflib`와 `rich`를 사용하여 변경 전/후 차이를 시각화.
+- [ ] **Agent DSL**: `agents.yaml` 정의 및 로더(`core/loader.py`) 구현.
+- [ ] **CLI Extension**: `/reload` 명령어로 런타임에 에이전트 설정 다시 불러오기.
+- [ ] **Context Logic**: `/add` 명령어 개선 (와일드카드 지원, 예: `/add core/*.py`).
+
 ### Do NOT
-- 복잡한 Swarm(집단 지성) 로직이나 Redis 의존성.
-- 웹 대시보드 연동.
+- 복잡한 Web Dashboard 연동.
+- 아직은 멀티 에이전트 간의 복잡한 그래프 로직(순차적 실행 정도만).
 
 ## 🏁 Documentation Sync Checklist
-- [ ] `SPEC_CATALOG.md` (CLI 기능 명세 추가)
-- [ ] `TECHNICAL_SPEC.md` (CLI 아키텍처 추가)
+- [ ] `SPEC_CATALOG.md` (Agent DSL 명세 추가)
+- [ ] `TECHNICAL_SPEC.md` (Diff View 구현 상세 추가)
 
 ## Completion Criteria
-- 터미널에서 `python cli.py chat` 실행 시 대화형 인터페이스 진입.
-- 사용자가 "README.md 읽어서 요약해줘"라고 하면 `read_file` 도구를 사용하여 수행.
-- 사용자가 "새로운 파일 hello.py 만들어줘"라고 하면 `write_file` 도구 승인 요청 후 수행.
+- 파일 수정 도구 실행 시, 터미널에 컬러풀한 Diff가 출력되고 승인 여부를 물어봐야 함.
+- `agents.yaml`에 새로운 에이전트를 정의하고 `/reload` 하면, 해당 에이전트와 대화할 수 있어야 함.

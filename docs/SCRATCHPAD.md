@@ -1,31 +1,45 @@
 # 🧠 System 2 Scratchpad
 
-## Current Objective: Bootstrap Local Gortex CLI
-*   **Origin**: User Request (Shift from Distributed/Swarm to Local CLI)
-*   **Benchmark**: `claude-code` (Primary), `gemini-cli`
-*   **Core Philosophy**: State-of-the-art Terminal Experience, Safety-First, Autonomous but Controllable.
+## Current Objective: Enhance Local CLI Experience & Prepare Agent Foundry
+*   **Origin**: Roadmap Phase 1 (Foundation) & Phase 2 (Agent Foundry)
+*   **Key Metrics**: UX Smoothness (Diff View), Modularity (DSL design).
 
-## 1. Research Findings & Gap Analysis
-| Feature | Claude Code | Gortex (Current) | Gortex (Target MVP) |
-| :--- | :--- | :--- | :--- |
-| **Interface** | Terminal REPL | Scripts (`main.py`) | `typer` based CLI (`gortex chat`) |
-| **Context** | Project-aware | Manual Loading | Auto-index + `/add` command |
-| **Safety** | Approval Modes | Basic Prompt | Explicit Permission Logic (y/n) |
-| **Tools** | Edit, Run, Commit | Basic Tools | Integrated Toolbelt (Read/Write/Exec) |
+## 1. Feature Specification: Rich Diff View
+*   **Problem**: Current `SafetyMiddleware` shows raw text difference or just the new content, which is hard to review for large files.
+*   **Solution**: Use `rich.syntax` and `difflib` to render a side-by-side or unified diff view in the terminal before asking for confirmation.
+*   **Implementation**:
+    -   Modify `core/cli/safety.py`.
+    -   Compute diff between `read_file(path)` and `new_content`.
+    -   Render using `Syntax` with lexer 'diff' or custom coloring.
 
-## 2. Architecture Design (Local CLI)
-*   **EntryPoint**: `cli.py` (using `typer`)
-*   **State Management**: `Rich` console for UI, `LangGraph` for agent state.
-*   **Safety Layer**: Middleware that intercepts `write_file` and `run_shell_command` to force user confirmation if not in 'Auto' mode.
+## 2. Feature Specification: Intelligent Context
+*   **Problem**: User manually adds files with `/add`. This is tedious.
+*   **Solution**:
+    -   Implement `/auto-context` or smart add.
+    -   When user mentions a symbol (e.g., `GortexState`), automatically find defining file and add it (with limits).
+    -   Use `grep` or simple indexing to find file paths.
 
-## 3. Implementation Steps (Atomic)
-1.  **Refactor**: Establish `cli.py` as the main entry point.
-2.  **UI**: Implement `Rich` based REPL loop.
-3.  **Agent**: Connect `Manager` agent to the REPL.
-4.  **Tools**: Ensure local tools are correctly wired.
-5.  **Test**: Verify atomic file edits and shell execution.
+## 3. Design: Agent DSL (Draft)
+*   **Concept**: Allow users to define agents without touching core code.
+*   **File**: `workspace/agents.yaml`
+*   **Structure**:
+    ```yaml
+    agents:
+      - name: "FrontendDev"
+        role: "coder"
+        model: "gemini-1.5-pro"
+        system_prompt: "You are a React expert..."
+        tools: ["read_file", "write_file", "npm_run"]
+        temperature: 0.2
+    
+    workflow:
+      - from: "FrontendDev"
+        to: "Reviewer"
+        condition: "task_completed"
+    ```
+*   **Loader**: `core/registry.py` needs to load this YAML and register agents dynamically.
 
-## 4. Risks & Mitigations
-*   **Risk**: Infinite loop in REPL. -> **Mitigation**: `Ctrl+C` handler & step limits.
-*   **Risk**: Context window overflow. -> **Mitigation**: Implement "Context Pruning" or simple `/clear` command first.
-*   **Risk**: Blind execution. -> **Mitigation**: STRICT user confirmation prompt for *every* side-effect tool initially.
+## 4. Immediate Action Items
+1.  Implement `DiffViewer` in `core/cli/safety.py`.
+2.  Refactor `gortex chat` to support a simple `/agent` command stub.
+3.  Draft `agents.yaml` parser.

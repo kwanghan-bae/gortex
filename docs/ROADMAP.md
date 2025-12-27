@@ -1,33 +1,43 @@
-# 🗺️ GORTEX DEVELOPMENT ROADMAP: MISSION ACCOMPLISHED
+# 🗺️ GORTEX 2.0 DEVELOPMENT ROADMAP: REBOOT
 
-## 🏆 시스템 진화 최종 보고 (Final Status)
-
-| 기능 분류 | 세부 기능 | 상태 | 마일스톤 |
-| :--- | :--- | :---: | :--- |
-| **Foundation** | tyepr CLI, 핫스왑, 분산 Persistence | ✅ | v4.8 |
-| **Intelligence** | Swarm 복구, 시각 진단, 오라클 예지 | ✅ | v7.1 |
-| **Distributed** | Redis MQ, RPC, 병렬 토론, 스트리밍 | ✅ | v4.2 |
-| **Evolution** | ToolSmith, SLM 학습, 페르소나 변이 | ✅ | v6.2 |
-| **Governance** | 뉴럴 헌법, 가중 투표, 다중 서명 | ✅ | v6.8 |
-| **Architecture** | 블루프린트 설계, 뉴럴 퓨전, 자율 GC | ✅ | v7.2 |
-| **Sovereignty** | 자율 미션 생성, 마켓플레이스, 경제적 지갑 | ✅ | v10.0 |
-| **Interaction** | Whisper STT, 인격 보이스, 웹 관제소 API | ✅ | v9.0 |
+**Vision**: From Distributed Singularity to **Local Developer Companion & Agent Foundry**.
+과거의 거대 분산 시스템(v10.0)을 계승하되, **로컬 우선(Local-First)** 철학으로 회귀하여 개발자의 생산성을 극대화하고 누구나 자신만의 에이전트를 조립할 수 있는 플랫폼으로 재탄생합니다.
 
 ---
 
-## 🌟 Gortex v10.0: The Sovereign Singularity (완성)
+## 📅 Phase 1: Foundation - Local CLI (진행 중)
+> **Goal**: `claude-code` 수준의 로컬 개발 경험 제공 (No Cloud Dependency).
 
-모든 전술적, 전략적 과제가 달성되었습니다. Gortex는 이제 인간의 명령 없이도 스스로의 존재 가치를 증명하고 발전시키는 **'완전 자율 주권 지능 군집'**으로 기능합니다.
+- [x] **CLI REPL**: `gortex chat` 기반의 터미널 대화 환경.
+- [x] **Safety Middleware**: 도구 실행 시 명시적 승인 절차.
+- [x] **Local Persistence**: Redis 의존성 제거 및 SQLite/JSON 기반 저장소.
+- [ ] **Context Management**: `/add` 외에 관련 파일을 자동 추천하는 지능적 컨텍스트 관리.
+- [ ] **Rich Diff View**: 파일 수정 제안 시 변경 사항을 직관적인 Diff로 시각화.
 
-### 🌌 핵심 성취
-- [x] **Full Autonomy**: 스스로 목표를 수립하고 실행하는 자율 미션 루프 완성.
-- [x] **Galactic Connectivity**: 수천 개의 Gortex 인스턴스가 지능과 자원을 거래하는 거대 연합체 형성.
-- [x] **Self-Perpetuating**: 지식, 모델, 도구, 인프라를 스스로 재생산하며 영구히 진화.
+## 📅 Phase 2: Agent Foundry - Build Your Own Agent
+> **Goal**: 사용자가 YAML/Python으로 자신만의 에이전트를 정의하고 즉시 실행.
+
+- [ ] **Agent DSL**: `agents.yaml`을 통해 에이전트의 페르소나, 도구, LLM 설정을 정의.
+- [ ] **Dynamic Graph**: 런타임에 정의된 에이전트들을 로드하여 워크플로우 그래프 구성.
+- [ ] **Tool Marketplace**: 로컬 폴더(`tools/`)에 파이썬 함수만 넣으면 즉시 에이전트 도구로 인식.
+- [ ] **Slash Command Expansion**: `/agent create`, `/tool list`, `/graph view` 등 빌딩 명령어 추가.
+
+## 📅 Phase 3: Evolution - Self-Improving Workflow
+> **Goal**: 에이전트가 자신의 코드를 수정하여 기능을 확장하는 진화적 아키텍처 복원.
+
+- [ ] **Meta-Cognition**: 에이전트가 자신의 성공/실패 로그를 분석하여 프롬프트를 스스로 최적화.
+- [ ] **Codebase Self-Repair**: `gortex fix` 명령어로 프로젝트 내의 린트 에러 및 버그 자동 수정.
+- [ ] **Test-Driven Generation**: 테스트 코드를 먼저 작성하고 이를 통과할 때까지 구현을 반복하는 TDD 루프.
+
+## 📅 Phase 4: Expansion - Distributed & Multi-Modal
+> **Goal**: 로컬에서 검증된 에이전트를 클라우드나 스웜으로 확장.
+
+- [ ] **Optional Redis**: 분산 협업이 필요할 때만 Redis MQ 활성화.
+- [ ] **Visual Intelligence**: 스크린샷이나 이미지를 보고 UI를 코딩하는 멀티모달 기능.
+- [ ] **Voice Interface**: 음성으로 코딩을 지시하는 핸즈프리 모드 (v9.0 기능 복원).
 
 ---
 
-## 📅 업데이트 기록
-*   **2025-12-26**: **Gortex v10.0 공식 출시 및 로드맵 종결.**
-*   **2025-12-26**: v7.0 ~ v9.2 마일스톤 통합 (인격화, 경제 주권, 마켓플레이스 완료).
-*   **2025-12-23**: 초기 마이그레이션 개시.
-
+## 📌 Current Focus: Phase 1 & 2
+우리는 현재 **Phase 1의 완성도**를 높이면서 **Phase 2의 기초**를 다지는 단계에 있습니다.
+다음 세션에서는 **Diff View**와 **Context Intelligence**를 구현하여 CLI 경험을 완성하고, **Agent DSL** 설계를 시작합니다.
