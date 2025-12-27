@@ -83,51 +83,44 @@ class EvolutionaryMemory:
             self.shards[cat] = self._load_shard(cat)
 
     def _load_shard(self, category: str) -> List[Dict[str, Any]]:
-        # 1. Redis에서 최신 샤드 데이터 조회 시도 (우선순위)
+        # Storage Provider Abstraction (Redis or Local/SQLite)
         from gortex.core.mq import mq_bus
-        if mq_bus.is_connected:
-            try:
-                redis_key = f"gortex:memory:shard:{category}"
-                data_str = mq_bus.client.get(redis_key)
-                if data_str:
-                    logger.debug(f"🌐 Loaded '{category}' shard from Redis.")
-                    return json.loads(data_str)
-            except Exception as e:
-                logger.warning(f"Failed to load shard from Redis: {e}")
-
-        # 2. Local File (Fallback)
+        key = f"gortex:memory:shard:{category}"
+        try:
+            data_str = mq_bus.storage.get(key)
+            if data_str:
+                logger.debug(f"Loaded '{category}' shard from Storage.")
+                return json.loads(data_str)
+        except Exception as e:
+            logger.warning(f"Failed to load shard from Storage: {e}")
+        
+        # Legacy File Fallback (Migration support only, prioritized Storage)
         path = os.path.join(self.base_dir, f"{category}_shard.json")
         if os.path.exists(path):
-            try:
+             try:
                 with open(path, 'r', encoding='utf-8') as f:
                     return json.load(f)
-            except:
-                return []
+             except: pass
         return []
 
     def _persist_shard(self, category: str):
         data = self.shards.get(category, [])
-        # 1. Redis Sync with Locking
         from gortex.core.mq import mq_bus
-        if mq_bus.is_connected:
-            lock_name = f"shard_write:{category}"
-            if mq_bus.acquire_lock(lock_name):
-                try:
-                    redis_key = f"gortex:memory:shard:{category}"
-                    mq_bus.client.set(redis_key, json.dumps(data, ensure_ascii=False, indent=2))
-                    mq_bus.publish_event("gortex:memory_updates", "Memory", "shard_updated", {"category": category})
-                finally:
-                    mq_bus.release_lock(lock_name)
-            else:
-                logger.warning(f"Failed to acquire lock for shard '{category}'. Possible concurrent write.")
-
-        # 2. Local File Persistence (기존 로직)
-        path = os.path.join(self.base_dir, f"{category}_shard.json")
-        try:
-            with open(path, 'w', encoding='utf-8') as f:
-                json.dump(data, f, ensure_ascii=False, indent=2)
-        except Exception as e:
-            logger.error(f"Failed to persist {category} shard: {e}")
+        key = f"gortex:memory:shard:{category}"
+        
+        # Logic: Acquire Lock -> Set to Storage -> Publish Event
+        lock_name = f"shard_write:{category}"
+        if mq_bus.acquire_lock(lock_name):
+            try:
+                # Save to Unified Storage
+                mq_bus.storage.set(key, json.dumps(data, ensure_ascii=False, indent=2))
+                mq_bus.publish_event("gortex:memory_updates", "Memory", "shard_updated", {"category": category})
+            except Exception as e:
+                logger.error(f"Failed to persist {category} shard to Storage: {e}")
+            finally:
+                mq_bus.release_lock(lock_name)
+        else:
+            logger.warning(f"Failed to acquire lock for shard '{category}'. Possible concurrent write.")
 
     def _guess_category(self, text: str) -> str:
         """텍스트 내용을 분석하여 적절한 샤드 카테고리 결정"""

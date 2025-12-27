@@ -4,6 +4,8 @@ import os
 import uuid
 import time
 from typing import Any, Dict, Optional, Callable, List, Tuple
+from core.storage import StorageProvider, SqliteStorage, RedisStorage
+from gortex.config.settings import settings
 
 try:
     import redis
@@ -18,20 +20,34 @@ class GortexMessageBus:
     에이전트 간 비동기 작업 전달 및 상태 동기화를 담당합니다.
     """
     def __init__(self, url: Optional[str] = None):
+        self.env = settings.GORTEX_ENV
         self.url = url or os.getenv("REDIS_URL", "redis://localhost:6379/0")
         self.client = None
         self.is_connected = False
         
-        if redis:
-            try:
-                self.client = redis.from_url(self.url, decode_responses=True)
-                self.client.ping()
-                self.is_connected = True
-                logger.info(f"🌐 Connected to Redis MQ: {self.url}")
-            except Exception as e:
-                logger.warning(f"⚠️ Redis connection failed: {e}. MQ will operate in dummy mode.")
+        # Storage Initialization
+        if self.env == "distributed":
+            if redis:
+                try:
+                    self.client = redis.from_url(self.url, decode_responses=True)
+                    self.client.ping()
+                    self.is_connected = True
+                    self.storage = RedisStorage(client=self.client)
+                    logger.info(f"🌐 Connected to Redis MQ: {self.url}")
+                except Exception as e:
+                    logger.warning(f"⚠️ Redis connection failed: {e}. Falling back to Local Storage.")
+                    self.storage = SqliteStorage()
+            else:
+                logger.warning("⚠️ 'redis' package not installed. Using Local Storage.")
+                self.storage = SqliteStorage()
         else:
-            logger.warning("⚠️ 'redis' package not installed. MQ will operate in dummy mode.")
+            # Local Mode
+            logger.info("🏠 Running in Local Mode (SqliteStorage).")
+            self.storage = SqliteStorage()
+            self.client = None # Explicitly None for local mode to avoid accidental redis usage
+
+        # Local In-Memory PubSub for standalone mode
+        self._local_subscribers: Dict[str, List[Callable]] = {}
 
     def publish_event(self, channel: str, agent: str, event_type: str, payload: Dict[str, Any]):
         """이벤트를 방송(Broadcast)함"""
@@ -45,7 +61,14 @@ class GortexMessageBus:
         if self.is_connected:
             self.client.publish(channel, json.dumps(message))
         else:
-            logger.debug(f"[DummyMQ] Broadcast on {channel}: {event_type}")
+            # Local PubSub
+            if channel in self._local_subscribers:
+                for callback in self._local_subscribers[channel]:
+                    try:
+                        callback(message)
+                    except Exception as e:
+                        logger.error(f"Local subscriber error on {channel}: {e}")
+            logger.debug(f"[LocalMQ] Broadcast on {channel}: {event_type}")
 
     def stream_thought(self, agent: str, thought: str):
         """에이전트의 현재 사고 과정을 실시간으로 스트리밍함"""
@@ -152,11 +175,16 @@ class GortexMessageBus:
         return [r["result"] for r in pending.values() if r["done"]]
 
     def listen(self, channel: str, callback: Callable[[Dict[str, Any]], None]):
-        if not self.is_connected: return
-        pubsub = self.client.pubsub()
-        pubsub.subscribe(channel)
-        for msg in pubsub.listen():
-            if msg['type'] == 'message': callback(json.loads(msg['data']))
+        if self.is_connected:
+            pubsub = self.client.pubsub()
+            pubsub.subscribe(channel)
+            for msg in pubsub.listen():
+                if msg['type'] == 'message': callback(json.loads(msg['data']))
+        else:
+            # Local PubSub Registration
+            if channel not in self._local_subscribers:
+                self._local_subscribers[channel] = []
+            self._local_subscribers[channel].append(callback)
 
     def announce_presence(self, swarm_id: str, capabilities: List[str]):
         self.publish_event("gortex:galactic:discovery", "Master", "swarm_online", {"swarm_id": swarm_id, "capabilities": capabilities})

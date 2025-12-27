@@ -23,8 +23,8 @@ class LongTermMemory:
         # [DISTRIBUTED] MQ 연동 및 백그라운드 리스너 시작
         from gortex.core.mq import mq_bus
         self.mq = mq_bus
-        if self.mq.is_connected:
-            self._start_sync_listener()
+        # Always start listener (Local or Distributed)
+        self._start_sync_listener()
 
     def _start_sync_listener(self):
         """실시간 지식 동기화를 위한 백그라운드 스레드 시작"""
@@ -48,21 +48,23 @@ class LongTermMemory:
         thread = threading.Thread(target=_listen, daemon=True)
         thread.start()
 
+    def _get_shard_path(self, namespace: str) -> str:
+        return os.path.join(self.store_dir, f"{namespace}_shard.json")
+
     def _load_shard(self, namespace: str) -> List[Dict[str, Any]]:
         if namespace in self.shards:
             return self.shards[namespace]
             
-        # 1. Redis 전역 저장소 확인
-        if self.mq.is_connected:
-            try:
-                redis_key = f"gortex:ltm:shard:{namespace}"
-                data_str = self.mq.client.get(redis_key)
-                if data_str:
-                    data = json.loads(data_str)
-                    self.shards[namespace] = data
-                    return data
-            except Exception as e:
-                logger.warning(f"Failed to load LTM shard from Redis: {e}")
+        # 1. Storage Provider 확인
+        try:
+            redis_key = f"gortex:ltm:shard:{namespace}"
+            data_str = self.mq.storage.get(redis_key)
+            if data_str:
+                data = json.loads(data_str)
+                self.shards[namespace] = data
+                return data
+        except Exception as e:
+            logger.warning(f"Failed to load LTM shard from Storage: {e}")
 
         # 2. 로컬 파일 (Fallback)
         path = self._get_shard_path(namespace)
@@ -81,15 +83,14 @@ class LongTermMemory:
             return
         data = self.shards[namespace]
         
-        # 1. Redis 전역 싱크
-        if self.mq.is_connected:
-            try:
-                redis_key = f"gortex:ltm:shard:{namespace}"
-                self.mq.client.set(redis_key, json.dumps(data, ensure_ascii=False, indent=2), ex=3600*48)
-                # 동기화 이벤트 발행
-                self.mq.publish_event("gortex:memory_sync", "Memory", "ltm_updated", {"namespace": namespace})
-            except Exception as e:
-                logger.error(f"Failed to sync LTM to Redis: {e}")
+        # 1. Storage Provider 싱크
+        try:
+            redis_key = f"gortex:ltm:shard:{namespace}"
+            self.mq.storage.set(redis_key, json.dumps(data, ensure_ascii=False, indent=2), ex=3600*48)
+            # 동기화 이벤트 발행
+            self.mq.publish_event("gortex:memory_sync", "Memory", "ltm_updated", {"namespace": namespace})
+        except Exception as e:
+            logger.error(f"Failed to sync LTM to Storage: {e}")
 
         # 2. 로컬 파일 저장
         path = self._get_shard_path(namespace)

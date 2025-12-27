@@ -54,14 +54,17 @@ class DistributedSaver(BaseCheckpointSaver):
                 json.dump(serializable_state, f, ensure_ascii=False, indent=2, default=str)
             os.replace(tmp_path, self.mirror_path)
             
-            # [Mirror 2] Redis Global Sync (Distributed Swarm Support)
+            # [Mirror 2] Global Sync (StorageProvider)
             from gortex.core.mq import mq_bus
-            if mq_bus.is_connected:
-                thread_id = config.get("configurable", {}).get("thread_id", "global")
-                redis_key = f"gortex:state:{thread_id}"
-                mq_bus.client.set(redis_key, json.dumps(serializable_state, default=str), ex=3600*24)
-                # 상태 변경 이벤트 전파
+            thread_id = config.get("configurable", {}).get("thread_id", "global")
+            redis_key = f"gortex:state:{thread_id}"
+            
+            try:
+                mq_bus.storage.set(redis_key, json.dumps(serializable_state, default=str), ex=3600*24)
+                # 상태 변경 이벤트 전파 (mq_bus handles local/remote publishing)
                 mq_bus.publish_event("gortex:state_updates", "Persistence", "state_synced", {"thread_id": thread_id})
+            except Exception as e:
+                logger.warning(f"Storage sync failed: {e}")
             
         except Exception as e:
             logger.error(f"Replication failed: {e}")
@@ -85,19 +88,19 @@ class DistributedSaver(BaseCheckpointSaver):
         return self._recover_from_mirror()
 
     def _recover_from_mirror(self, config: Optional[Dict[str, Any]] = None) -> Optional[CheckpointTuple]:
-        # 1. Redis Recovery Attempt (Highest Priority)
+        # 1. Storage Recovery Attempt (Highest Priority)
         from gortex.core.mq import mq_bus
-        if mq_bus.is_connected and config:
+        if config:
             thread_id = config.get("configurable", {}).get("thread_id", "global")
             redis_key = f"gortex:state:{thread_id}"
             try:
-                data_str = mq_bus.client.get(redis_key)
+                data_str = mq_bus.storage.get(redis_key)
                 if data_str:
-                    logger.info(f"📡 Recovered state for {thread_id} from Redis.")
+                    logger.info(f"📡 Recovered state for {thread_id} from Storage.")
                     # (실제 CheckpointTuple 복원 로직은 스키마 고도화 필요 - 현재는 로직 흐름 구축)
                     return None
             except Exception as e:
-                logger.warning(f"Redis recovery failed: {e}")
+                logger.warning(f"Storage recovery failed: {e}")
 
         # 2. Local File Recovery (Fallback)
         if os.path.exists(self.mirror_path):

@@ -121,7 +121,7 @@ class GortexSystem:
 
     async def notification_listener_loop(self):
         from gortex.core.mq import mq_bus
-        if not mq_bus.is_connected: return
+        # Always listen (Local or Distributed)
         from gortex.core.web_api import manager as web_manager, format_event_for_web
         from gortex.core.collaboration import ambassador
 
@@ -155,6 +155,9 @@ class GortexSystem:
                 asyncio.create_task(self.autonomous_drive_loop(run_once=True))
             
             elif event_type == "task_failed":
+                # Handle task failure logging or UI update
+                logger.warning(f"Task failed: {payload}")
+                
             elif event_type == "security_violation":
                 self.ui.add_security_event("CRITICAL", f"Blocked {agent}")
                 self.state["last_security_alert"] = payload
@@ -164,8 +167,8 @@ class GortexSystem:
         loop.run_in_executor(None, mq_bus.listen, "gortex:thought_stream", handle_notification)
         loop.run_in_executor(None, mq_bus.listen, "gortex:security_alerts", handle_notification)
         loop.run_in_executor(None, mq_bus.listen, "gortex:workspace_sync", self._handle_workspace_sync)
-        loop.run_in_executor(None, mq_bus.listen, "gortex:galactic:wisdom", handle_galactic_events)
-        loop.run_in_executor(None, mq_bus.listen, "gortex:galactic:economy", handle_galactic_events)
+        loop.run_in_executor(None, mq_bus.listen, "gortex:galactic:wisdom", self._handle_galactic_events)
+        loop.run_in_executor(None, mq_bus.listen, "gortex:galactic:economy", self._handle_galactic_events)
         
         # [GALACTIC GOVERNANCE] 전역 안건 수신 리스너 (v10.2 New)
         def handle_galactic_agendas(msg):

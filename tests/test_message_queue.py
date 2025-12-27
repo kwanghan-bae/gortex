@@ -7,7 +7,10 @@ class TestGortexMQ(unittest.TestCase):
     def setUp(self):
         # Redis 클라이언트를 모킹하여 테스트
         self.mock_redis = MagicMock()
-        with patch("redis.from_url", return_value=self.mock_redis):
+        # Ensure distributed mode for these tests
+        with patch("gortex.core.mq.settings") as mock_settings, \
+             patch("redis.from_url", return_value=self.mock_redis):
+            mock_settings.GORTEX_ENV = "distributed"
             self.mq = GortexMessageBus(url="redis://mock:6379/0")
 
     def test_publish_event(self):

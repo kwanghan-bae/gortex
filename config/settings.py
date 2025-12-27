@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     OLLAMA_MODEL: str = "qwen2.5-coder:7b"
     
     LLM_BACKEND: str = "hybrid" # gemini, ollama, openai, hybrid
+    GORTEX_ENV: str = "local" # local, distributed
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

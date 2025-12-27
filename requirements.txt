@@ -13,7 +13,6 @@ typer
 pydantic
 pydantic-settings
 pyaudio
-wave
 redis
 fastapi
 uvicorn

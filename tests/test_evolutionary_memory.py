@@ -10,9 +10,29 @@ class TestEvolutionaryMemory(unittest.TestCase):
         self.test_dir = "tests/temp_memory"
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
+            
+        # Patch mq_bus to isolate storage state
+        self.mq_patcher = patch("gortex.core.mq.mq_bus")
+        self.mock_mq = self.mq_patcher.start()
+        
+        # Fake Storage logic
+        self.fake_storage = {}
+        def fake_get(key):
+            return self.fake_storage.get(key)
+        def fake_set(key, val, ex=None, nx=False):
+            self.fake_storage[key] = val
+            return True
+            
+        self.mock_mq.storage = MagicMock()
+        self.mock_mq.storage.get.side_effect = fake_get
+        self.mock_mq.storage.set.side_effect = fake_set
+        self.mock_mq.acquire_lock.return_value = True
+        self.mock_mq.is_connected = True # simulate connected so we use storage logic if checked (though we removed check)
+
         self.memory = EvolutionaryMemory(base_dir=self.test_dir)
 
     def tearDown(self):
+        self.mq_patcher.stop()
         if os.path.exists(self.test_dir):
             shutil.rmtree(self.test_dir)
 

@@ -2,11 +2,23 @@ import json
 import os
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 
 from gortex.utils.vector_store import LongTermMemory
 
 class TestLongTermMemory(unittest.TestCase):
+    def setUp(self):
+        # Patch mq_bus globally for this test class
+        self.mq_patcher = patch("gortex.core.mq.mq_bus")
+        self.mock_mq = self.mq_patcher.start()
+        self.mock_mq.storage = MagicMock()
+        self.mock_mq.storage.get.return_value = None
+        self.mock_mq.storage.set.return_value = True
+        self.mock_mq.listen.return_value = None 
+
+    def tearDown(self):
+        self.mq_patcher.stop()
+
     def test_memorize_and_recall_increments_usage(self):
         with patch.object(LongTermMemory, "_get_embedding", return_value=[1.0, 0.0]):
             with tempfile.TemporaryDirectory() as tmpdir:
@@ -15,7 +27,8 @@ class TestLongTermMemory(unittest.TestCase):
                 results = ltm.recall("test knowledge", namespace="test_ns", limit=2)
                 self.assertEqual(len(results), 1)
                 self.assertEqual(results[0]["score"], 1.0)
-                shard_path = os.path.join(tmpdir, "shard_test_ns.json")
+                # Check fallback file creation
+                shard_path = os.path.join(tmpdir, "test_ns_shard.json")
                 with open(shard_path, "r", encoding='utf-8') as f:
                     data = json.load(f)
                 self.assertEqual(data[0]["usage_count"], 1)
