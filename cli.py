@@ -34,10 +34,6 @@ def start():
     """
     Start the Gortex master system (TUI + Core).
     """
-    if not os.path.exists(".env"):
-        console.print("[bold yellow]⚠️  No .env file found. Running init first...[/bold yellow]")
-        init(force=False)
-
     try:
         system = GortexSystem()
         asyncio.run(system.run())

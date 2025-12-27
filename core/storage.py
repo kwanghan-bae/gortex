@@ -139,3 +139,47 @@ class SqliteStorage(StorageProvider):
             WHERE key LIKE ? AND (expires_at IS NULL OR expires_at > ?)
         """, (sql_pattern, now))
         return [row[0] for row in cursor.fetchall()]
+
+class MockStorage(StorageProvider):
+    """In-Memory Storage for Testing"""
+    def __init__(self):
+        self.data = {}
+        self.expiry = {}
+
+    def get(self, key: str) -> Optional[str]:
+        if key in self.expiry and self.expiry[key] < time.time():
+            del self.data[key]
+            del self.expiry[key]
+            return None
+        return self.data.get(key)
+
+    def set(self, key: str, value: str, ex: Optional[int] = None, nx: bool = False) -> bool:
+        if nx and key in self.data:
+            if key in self.expiry and self.expiry[key] < time.time():
+                pass # Expired, treat as non-existent
+            else:
+                return False
+        
+        self.data[key] = value
+        if ex:
+            self.expiry[key] = time.time() + ex
+        elif key in self.expiry:
+            del self.expiry[key]
+        return True
+
+    def delete(self, key: str) -> None:
+        if key in self.data:
+            del self.data[key]
+        if key in self.expiry:
+            del self.expiry[key]
+
+    def keys(self, pattern: str) -> List[str]:
+        import fnmatch
+        keys = []
+        now = time.time()
+        for k in self.data.keys():
+            if k in self.expiry and self.expiry[k] < now:
+                continue
+            if fnmatch.fnmatch(k, pattern):
+                keys.append(k)
+        return keys

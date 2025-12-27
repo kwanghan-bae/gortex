@@ -81,4 +81,5 @@
 
 ## 5. 참조 문서
 *   `docs/TECHNICAL_SPEC.md`: 구체적 기술 명세 (데이터 구조, 클래스)
+*   `docs/REFACTORING_SPEC_LITE.md`: **[NEW]** Gortex Lite (v2.0) 리팩토링 명세서
 *   `docs/RULES.md`: 코딩 컨벤션 및 하드 규칙

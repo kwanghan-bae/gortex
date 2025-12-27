@@ -4,7 +4,7 @@ import os
 import uuid
 import time
 from typing import Any, Dict, Optional, Callable, List, Tuple
-from core.storage import StorageProvider, SqliteStorage, RedisStorage
+from gortex.core.storage import StorageProvider, SqliteStorage, RedisStorage, MockStorage
 from gortex.config.settings import settings
 
 try:
@@ -40,6 +40,10 @@ class GortexMessageBus:
             else:
                 logger.warning("⚠️ 'redis' package not installed. Using Local Storage.")
                 self.storage = SqliteStorage()
+        elif self.env == "test":
+            logger.info("🧪 Running in Test Mode (MockStorage).")
+            self.storage = MockStorage()
+            self.client = None
         else:
             # Local Mode
             logger.info("🏠 Running in Local Mode (SqliteStorage).")

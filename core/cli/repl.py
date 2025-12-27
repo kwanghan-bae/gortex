@@ -67,6 +67,21 @@ async def run_repl():
     console = Console()
     ui = CliAdapterUI(console)
     
+    # [Zero-Config] API Key Check
+    from gortex.config.settings import settings
+    if not settings.GEMINI_API_KEY_1 and not settings.OPENAI_API_KEY:
+        # Check environment variables directly as fallback
+        import os
+        if not os.getenv("GEMINI_API_KEY_1") and not os.getenv("OPENAI_API_KEY"):
+            console.print(Panel("[bold yellow]⚠️  No Cloud API Keys Detected[/bold yellow]\nGortex will run in [bold cyan]Local Mode (Ollama)[/bold cyan] unless you provide a key.", title="Configuration Check"))
+            if Confirm.ask("Would you like to provide a Gemini API Key for better performance?", default=True):
+                key = Prompt.ask("Enter Gemini API Key", password=True)
+                if key:
+                    settings.GEMINI_API_KEY_1 = key
+                    console.print("[green]✅ Key loaded into memory.[/green]")
+            else:
+                console.print("[dim]Using local models only.[/dim]")
+
     # Init Engine
     console.print("[bold green]🧠 Gortex CLI v1.0 (Awakened)[/bold green]")
     engine = GortexEngine(ui=ui)
