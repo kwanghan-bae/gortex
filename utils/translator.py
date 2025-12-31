@@ -1,7 +1,7 @@
 import json
 import os
 import logging
-from typing import Dict
+from typing import Dict, Any, List
 from gortex.core.auth import GortexAuth
 
 logger = logging.getLogger("GortexSystemTranslator")
